@@ -76,3 +76,15 @@ dist
 *.vsix
 .history
 .ionide
+.data/*
+node_modules/*
+docs/node_modules/*
+docs/.vitepress/cache/*
+docs/.vitepress/dist/*
+.data
+node_modules
+docs/node_modules
+docs/.vitepress/cache
+docs/.vitepress/dist
+.DS_Store
+.data/
