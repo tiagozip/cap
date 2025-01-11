@@ -3,36 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PoW Captcha Demo</title>
+    <title>Cap demo</title>
   </head>
   <body>
-    <p>homepage should be docs page</p>
+    <p>Simple widget</p>
+    <cap-widget onsolve="gotToken(event.detail.token);"></cap-widget>
 
-    <cap-widget
-      onsolve="gotToken(event.detail.token);"
-    ></cap-widget>
+    <p>Floating widget</p>
+    <cap-widget id="floating"></cap-widget>
+    <button
+      data-cap-floating="#floating"
+      data-cap-floating-offset="1"
+      onclick="console.log('solved')"
+      style="
+        padding: 15px 20px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        margin-top: 30px;
+        margin-left: 100px;
+      "
+      data-cap-floating-position="bottom"
+    >
+      Trigger Floating
+    </button>
 
-    <cap-widget
-    id="floatator"
-  ></cap-widget>
-  <!-- location.search = 'test' -->
-    <button data-cap-floating="#floatator" data-cap-floating-offset="1" onclick="console.log('hiii')" style="padding: 15px 20px;background-color: black;color: white;border: none;border-radius: 10px;margin-top: 30px;margin-left: 100px;" data-cap-floating-position="bottom">Floating!</button>
-
-
-    <button onclick="capInterstitial()" style="padding: 15px 20px;background-color: black;color: white;border: none;border-radius: 10px;margin-top: 30px;margin-left: 100px;">Interstitial!</button>
+    <p>Interstitial mode</p>
+    <button
+      onclick="capInterstitial()"
+      style="
+        padding: 15px 20px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        margin-top: 30px;
+        margin-left: 100px;
+      "
+    >
+      Trigger Interstitial
+    </button>
   </body>
   <script>
     async function gotToken(token) {
-      console.log("got token", token);;
-      console.log(await (await fetch(`/api/validate`, {
-        headers: {
-          "Content-Type": "application/json"
-        },
-        method: "POST",
-        body: JSON.stringify({ token })
-      })).json());
+      console.log("Checking token...", token);
+      console.log(
+        await (
+          await fetch(`/api/validate`, {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify({ token }),
+          })
+        ).json()
+      );
     }
-    </script>
+  </script>
+  
   <script src="/cap.min.js"></script>
   <script src="/cap-floating.min.js"></script>
   <script src="/cap-interstitial.min.js"></script>
