@@ -15,11 +15,12 @@ export default defineConfig({
     sidebar: [
       { text: "Get started", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md"},
+      { text: "Demo", link: "../demo/" },
       {
-        text: "Examples",
+        text: "Modules",
         items: [
-          { text: "Markdown Examples", link: "/markdown-examples" },
-          { text: "Runtime API Examples", link: "/api-examples" },
+          { text: "Floating", link: "/guide/floating.md" },
+          { text: "Interstitial", link: "/guide/interstitial.md" },
         ],
       },
     ],

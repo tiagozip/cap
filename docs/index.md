@@ -10,9 +10,9 @@ hero:
     - theme: brand
       text: Documentation
       link: /guide
-  - theme: alt
-    text: Demo
-    link: ../demo/
+    - theme: alt
+      text: Demo
+      link: ../demo/
 
 features:
   - icon: ⚡️

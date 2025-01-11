@@ -7,7 +7,7 @@ Cap is a library designed for safeguarding against spam and abuse by utilizing a
 
 ## Adding the Cap widget
 
-Cap is built to be straightforward and requires no API tokens for setup. Start by importing the Cap library:
+Cap is built to be straightforward and requires no API tokens for setup. Start by importing the Cap library from JSDelivr:
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/src/js/min/cap.min.js"></script>
@@ -16,8 +16,10 @@ Cap is built to be straightforward and requires no API tokens for setup. Start b
 Next, add the `<cap-widget>` component to your HTML.
 
 ```html
-<cap-widget id="cap" data-api-endpoint="https://trycap.glitch.me/api/"></cap-widget>
+<cap-widget id="cap" data-api-endpoint="https://<your website url>/api/"></cap-widget>
 ```
+
+**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `data-api-endpoint` attribute.
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
