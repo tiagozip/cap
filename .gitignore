@@ -88,3 +88,5 @@ docs/.vitepress/cache
 docs/.vitepress/dist
 .DS_Store
 .data/
+.vscode/
+.data/tokenslist.json
