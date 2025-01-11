@@ -1,0 +1,15 @@
+{
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/node-modules": true,
+    "**/.gitignore": true,
+    "**/bun.lockb": true,
+    "**/bun.lock": true,
+    "**/package-lock.json": true
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "cap",
+  "version": "0.0.1",
+  "author": "Tiago Rangel",
+  "main": "index.js",
+  "description": "A modern, lightning-quick PoW captcha",
+  "keywords": [
+    "captcha",
+    "pow",
+    "crypto",
+    "encryption",
+    "recaptcha",
+    "js",
+    "node"
+  ],
+  "scripts": {
+    "start": "command bun &> /dev/null && bun run index.js || node index.js",
+    "build": "command bun &> /dev/null && bun run build.js || node build.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:dev": "cd docs && bun run docs:dev",
+    "docs:build": "cd docs && bun run docs:build",
+    "docs:preview": "cd docs && bun run docs:preview"
+  },
+  "dependencies": {
+    "@babel/core": "^7.25.8",
+    "@babel/preset-env": "^7.25.8",
+    "@koa/router": "^13.1.0",
+    "@rollup/rollup-darwin-arm64": "^4.29.1",
+    "koa": "^2.15.3",
+    "koa-bodyparser": "^4.4.1",
+    "koa-compress": "^5.1.1",
+    "koa-json": "^2.0.2",
+    "koa-mount": "^4.0.0",
+    "koa-ratelimit": "^5.1.0",
+    "koa-send": "^5.0.1",
+    "koa-static": "^5.0.0",
+    "terser": "^5.35.0"
+  },
+  "devDependencies": {
+    "vitepress": "^1.4.1"
+  }
+}
