@@ -10,7 +10,7 @@ Cap is a library designed for safeguarding against spam and abuse by utilizing a
 Cap is built to be straightforward and requires no API tokens for setup. Start by importing the Cap library:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap@latest/cap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/src/js/min/cap.min.js"></script>
 ```
 
 Next, add the `<cap-widget>` component to your HTML.

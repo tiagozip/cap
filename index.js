@@ -154,27 +154,6 @@ router.get("/", async (ctx) => {
 router.get("/demo", async (ctx) => {
   await send(ctx, "src/index.html", { root: __dirname });
 });
-router.get("/cap.js", async (ctx) => {
-  await send(ctx, "src/js/cap.js", { root: __dirname });
-});
-router.get("/cap-floating.js", async (ctx) => {
-  await send(ctx, "src/js/cap-floating.js", { root: __dirname });
-});
-
-router.get("/cap.min.js", async (ctx) => {
-  ctx.type = "application/javascript";
-  await send(ctx, "src/js/min/cap.min.js", { root: __dirname });
-});
-
-router.get("/cap-floating.min.js", async (ctx) => {
-  ctx.type = "application/javascript";
-  await send(ctx, "src/js/min/cap-floating.min.js", { root: __dirname });
-});
-
-router.get("/cap-interstitial.min.js", async (ctx) => {
-  ctx.type = "application/javascript";
-  await send(ctx, "src/js/min/cap-interstitial.min.js", { root: __dirname });
-});
 
 router.get("/wasm-hashes.min.js", async (ctx) => {
   ctx.type = "application/javascript";
