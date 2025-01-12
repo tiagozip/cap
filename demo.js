@@ -3,7 +3,6 @@ const Koa = require("koa");
 const path = require("path");
 const crypto = require("crypto");
 const json = require("koa-json");
-const send = require("koa-send");
 const mount = require("koa-mount");
 const Router = require("@koa/router");
 const compress = require("koa-compress");

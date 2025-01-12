@@ -32,7 +32,6 @@
     "koa-json": "^2.0.2",
     "koa-mount": "^4.0.0",
     "koa-ratelimit": "^5.1.0",
-    "koa-send": "^5.0.1",
     "koa-static": "^5.0.0",
     "terser": "^5.35.0"
   },
