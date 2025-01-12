@@ -1,4 +1,4 @@
-Cap
+Cap    
 Copyright (C) 2025 Tiago Rangel
 
 This program is free software: you can redistribute it and/or modify
