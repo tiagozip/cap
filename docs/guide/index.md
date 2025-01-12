@@ -7,11 +7,33 @@ Cap is a library designed for safeguarding against spam and abuse by utilizing a
 
 ## Adding the Cap widget
 
-Cap is built to be straightforward and requires no API tokens for setup. Start by importing the Cap library from JSDelivr:
+Cap is built to be straightforward and requires no API tokens for setup. Start by importing the Cap library:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/capdotjs"></script>
+```
+
+::: details Other CDNs
+While it is recommended to use JSDelivr, you can also import Cap from other CDNs like unpkg or GitHub.
+
+##### unpkg
+
+```html
+<script src="https://unpkg.com/capdotjs"></script>
+```
+
+##### jsdelivr + GitHub
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/lib/cap.min.js"></script>
 ```
+
+##### GitHub
+
+```html
+<script src="https://raw.githubusercontent.com/tiagorangel1/cap/master/lib/cap.min.js"></script>
+```
+:::
 
 Next, add the `<cap-widget>` component to your HTML.
 
