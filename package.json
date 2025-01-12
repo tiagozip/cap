@@ -17,7 +17,7 @@
     "demo": "bun run demo.js",
     "build": "bun run build.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    
+
     "docs:dev": "cd docs && bun run docs:dev",
     "docs:build": "cd docs && bun run docs:build",
     "docs:preview": "cd docs && bun run docs:preview"
@@ -39,5 +39,6 @@
   },
   "devDependencies": {
     "vitepress": "^1.4.1"
-  }
+  },
+  "liecense": "AGPL-3.0"
 }
