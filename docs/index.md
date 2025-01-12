@@ -37,11 +37,11 @@ features:
     title: Floating mode
     details: Improve UX by automatically hiding the captcha until the form is submitted.
   - icon: 🧑
-    title: Made for humans, not bots 
+    title: Made for humans, not bots
     details: Cap's web component is super easy to use & integrate into your website.
 ---
 
 <div style="margin-top: 70px;display: flex;align-items: center;justify-content: center;margin-bottom: 20px;flex-direction: column;">
-<p>Try it out for yourself.</p>
-    <div style="width: 300px;height: 60px;background-color: white;"></div>
+  <p>Try it out for yourself.</p>
+  <div style="width: 300px;height: 60px;background-color: white;"></div>
 </div>
