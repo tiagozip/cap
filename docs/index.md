@@ -12,7 +12,7 @@ hero:
       link: /guide
     - theme: alt
       text: Demo
-      link: ../demo/
+      link: /demo/
 
 features:
   - icon: ⚡️

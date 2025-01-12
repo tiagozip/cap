@@ -5,17 +5,16 @@ export default defineConfig({
   title: "Cap",
   description: "A modern, lightning-quick PoW captcha",
   themeConfig: {
-    // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
-      { text: "Dashboard", link: "/dashboard" },
+      { text: "Demo", link: "/demo" },
     ],
 
     sidebar: [
       { text: "Get started", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md"},
-      { text: "Demo", link: "../demo/" },
+      { text: "Demo", link: "/demo" },
       {
         text: "Modules",
         items: [
