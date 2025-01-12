@@ -9,8 +9,7 @@ export default defineConfig({
     [
       "script",
       {
-        // src: "https://cdn.jsdelivr.net/npm/capdotjs/lib/cap-floating.min.js",
-        src: "/src/cap-floating.js",
+        src: "https://cdn.jsdelivr.net/npm/capdotjs/lib/cap-floating.min.js",
         async: true,
       },
     ],

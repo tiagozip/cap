@@ -19,7 +19,6 @@ app.proxy = true;
 
 const serve = require("koa-static");
 app.use(mount("/docs", serve(path.join(__dirname, "/docs/.vitepress/dist/"))));
-app.use(mount("/src", serve(path.join(__dirname, "/src/"))));
 
 const TOKENS_PATH = path.join(__dirname, ".data", "tokensList.json");
 const state = {
@@ -151,10 +150,6 @@ router.post("/api/validate", createRateLimit(), async (ctx) => {
 
 router.get("/", async (ctx) => {
   ctx.redirect("/docs");
-});
-
-router.get("/demo", async (ctx) => {
-  await send(ctx, "src/demo.html", { root: __dirname });
 });
 
 setInterval(async () => {
