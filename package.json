@@ -14,9 +14,10 @@
     "node"
   ],
   "scripts": {
-    "demo": "command bun &> /dev/null && bun run index.js || node index.js",
-    "build": "command bun &> /dev/null && bun run build.js || node build.js",
+    "demo": "bun run demo.js",
+    "build": "bun run build.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    
     "docs:dev": "cd docs && bun run docs:dev",
     "docs:build": "cd docs && bun run docs:build",
     "docs:preview": "cd docs && bun run docs:preview"
