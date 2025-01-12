@@ -9,8 +9,8 @@ Cap can automatically hide the captcha until the form is submitted. To use this 
 
 You'll also need to import both the Cap library and the floating mode script from JSDelivr:
 ```html
-<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/src/js/min/cap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/src/js/min/cap-floating.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/lib/cap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/lib/cap-floating.min.js"></script>
 ```
 
 The following attributes are supported:

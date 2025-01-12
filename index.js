@@ -151,13 +151,9 @@ router.post("/api/validate", createRateLimit(), async (ctx) => {
 router.get("/", async (ctx) => {
   ctx.redirect("/docs");
 });
-router.get("/demo", async (ctx) => {
-  await send(ctx, "src/index.html", { root: __dirname });
-});
 
-router.get("/wasm-hashes.min.js", async (ctx) => {
-  ctx.type = "application/javascript";
-  await send(ctx, "src/js/min/wasm-hashes.min.js", { root: __dirname });
+router.get("/demo", async (ctx) => {
+  await send(ctx, "src/demo.html", { root: __dirname });
 });
 
 setInterval(async () => {

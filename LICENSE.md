@@ -1,5 +1,5 @@
 Cap — A modern, lightning-quick PoW captcha    
-Copyright (C) 2025 Tiago Rangel
+Copyright © 2025 Tiago Rangel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by

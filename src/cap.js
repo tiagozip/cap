@@ -494,7 +494,7 @@
 
   setTimeout(async function () {
     workerScript =
-      (await (await fetch("/wasm-hashes.min.js")).text()) +
+      (await (await fetch("https://cdn.jsdelivr.net/gh/tiagorangel1/cap/lib/wasm-hashes.min.js")).text()) +
       workerFunct
         .toString()
         .replace(/^function\s*\([^\)]*\)\s*{|\}$/g, "")
