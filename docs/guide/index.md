@@ -45,8 +45,7 @@ Next, add the `<cap-widget>` component to your HTML.
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
-```js
-
+```js{3}
 const widget = document.querySelector("#cap");
 
 widget.addEventListener("solve", function (e) { 

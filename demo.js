@@ -19,6 +19,7 @@ app.proxy = true;
 
 const serve = require("koa-static");
 app.use(mount("/docs", serve(path.join(__dirname, "/docs/.vitepress/dist/"))));
+app.use(mount("/src", serve(path.join(__dirname, "/src/"))));
 
 const TOKENS_PATH = path.join(__dirname, ".data", "tokensList.json");
 const state = {

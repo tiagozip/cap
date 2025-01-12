@@ -4,24 +4,38 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "Cap",
   description: "A modern, lightning-quick PoW captcha",
+  head: [
+    ["script", { src: "https://cdn.jsdelivr.net/npm/capdotjs", async: true }],
+    [
+      "script",
+      {
+        // src: "https://cdn.jsdelivr.net/npm/capdotjs/lib/cap-floating.min.js",
+        src: "/src/cap-floating.js",
+        async: true,
+      },
+    ],
+  ],
+  vue: {
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => {
+          return tag.toLowerCase().indexOf("cap-widget") === 0;
+        },
+      },
+    },
+  },
   themeConfig: {
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
-      { text: "Demo", link: "/demo" },
+      { text: "Demo", link: "/guide/demo.md" },
     ],
 
     sidebar: [
-      { text: "Get started", link: "/guide/index.md" },
-      { text: "Effectiveness", link: "/guide/effectiveness.md"},
-      { text: "Demo", link: "/demo" },
-      {
-        text: "Modules",
-        items: [
-          { text: "Floating", link: "/guide/floating.md" },
-          { text: "Interstitial", link: "/guide/interstitial.md" },
-        ],
-      },
+      { text: "Quickstart", link: "/guide/index.md" },
+      { text: "Effectiveness", link: "/guide/effectiveness.md" },
+      { text: "Floating mode", link: "/guide/floating.md" },
+      { text: "Demo", link: "/guide/demo.md" },
     ],
 
     socialLinks: [
@@ -33,7 +47,8 @@ export default defineConfig({
 
     footer: {
       message: "Released under the AGPLv3 License.",
-      copyright: "Copyright © 2024-present <a href='https://tiagorangel.com' target='_blank'>Tiago Rangel</a>",
+      copyright:
+        "Copyright © 2025-present <a href='https://tiagorangel.com' target='_blank'>Tiago Rangel</a>",
     },
   },
   markdown: {
@@ -42,7 +57,7 @@ export default defineConfig({
     },
   },
   ssr: {
-    noExternal: ['vitepress-plugin-nprogress']
+    noExternal: ["vitepress-plugin-nprogress"],
   },
-  base: '/docs/'
+  base: "/docs/",
 });

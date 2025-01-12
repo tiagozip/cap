@@ -1,6 +1,8 @@
 // https://vitepress.dev/guide/custom-theme
 import { h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
+import Demo from './Demo.vue'
+import DemoFloating from './DemoFloating.vue'
 import './style.css'
 
 import vitepressNprogress from 'vitepress-plugin-nprogress'
@@ -15,6 +17,8 @@ export default {
     })
   },
   enhanceApp: (ctx) => {
+    ctx.app.component('Demo', Demo)
+    ctx.app.component('DemoFloating', DemoFloating)
     vitepressNprogress(ctx)
   }
 }

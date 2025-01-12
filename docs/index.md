@@ -8,11 +8,11 @@ hero:
   tagline: "Cap is the open-source & modern ReCAPTCHA alternative designed for speed. Lightweight, powerful, private and secure."
   actions:
     - theme: brand
-      text: Documentation
+      text: Quickstart
       link: /guide
     - theme: alt
       text: Demo
-      link: /demo/
+      link: /guide/demo.md
 
 features:
   - icon: ⚡️
@@ -43,5 +43,5 @@ features:
 
 <div style="margin-top: 70px;display: flex;align-items: center;justify-content: center;margin-bottom: 20px;flex-direction: column;">
   <p>Try it out for yourself.</p>
-  <div style="width: 300px;height: 60px;background-color: white;"></div>
+  <Demo />
 </div>

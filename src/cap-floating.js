@@ -1,10 +1,4 @@
 (() => {
-  if (!window.Cap) {
-    console.warn(
-      "[Cap floating] window.Cap not found, this might cause issues"
-    );
-  }
-
   const handleClick = (evt, element, capWidget, handlers) => {
     const trigger = () => {
       handlers.forEach((h) => {
@@ -28,7 +22,8 @@
 
     Object.assign(capWidget.style, {
       display: "block",
-      position: "absolute",
+      position: "fixed",
+      zIndex: "99999"
     });
 
     const centerX = rect.left + (rect.width - capWidget.offsetWidth) / 2;
@@ -45,15 +40,17 @@
         window.innerHeight - capWidget.offsetHeight
       )}px`;
     }
-    capWidget.style.left = `${Math.max(safeX, 2)}px`;
 
+    capWidget.style.left = `${Math.max(safeX, 2)}px`;
     capWidget.solve();
+
     capWidget.addEventListener("solve", ({ detail }) => {
       element.setAttribute("data-cap-token", detail.token);
       element.setAttribute("data-cap-progress", "done");
       setTimeout(() => {
         trigger();
       }, 500);
+
       setTimeout(() => {
         capWidget.style.display = "none";
       }, 700);
@@ -65,8 +62,8 @@
     if (!capWidgetSelector) return;
 
     const capWidget = document.querySelector(capWidgetSelector);
-    if (!document.contains(capWidget)) {
-      throw new Error("[Cap floating] Element doesn't exist");
+    if (!document.contains(capWidget) && !capWidget.solve) {
+      throw new Error(`[Cap floating] Element "${capWidgetSelector}" doesn't exist or isn't a Cap widget`);
     }
 
     capWidget.style.display = "none";
@@ -81,12 +78,13 @@
     if (handlers.length) {
       element.onclick = null;
       handlers.forEach((h) => element.removeEventListener("click", h));
-      element.addEventListener("click", (e) => {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-        handleClick(e, element, capWidget, handlers);
-      });
     }
+
+    element.addEventListener("click", (e) => {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      handleClick(e, element, capWidget, handlers);
+    });
   };
 
   const init = (root) => {
