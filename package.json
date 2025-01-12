@@ -1,6 +1,6 @@
 {
   "name": "capdotjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Tiago Rangel",
   "main": "lib/cap.min.js",
   "description": "A modern, lightning-quick PoW captcha",
