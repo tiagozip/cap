@@ -49,8 +49,8 @@
       this.dispatchEvent("progress", { progress: 0 });
 
       try {
-        // MARK: Todo
         const apiEndpoint = this.#el.getAttribute("cap-api-endpoint");
+        if (!apiEndpoint) throw new Error("Missing API endpoint");
 
         const { challenge, target, token } = await (
           await fetch(

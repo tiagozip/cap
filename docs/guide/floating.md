@@ -3,7 +3,7 @@
 Cap can automatically hide the captcha until the form is submitted. To use this feature, add the `data-cap-floating` attribute to the Cap widget with the query selector of the `cap-widget` element you want to use.
 
 ```html
-<cap-widget id="floating" onsolve="alert(`Verification token: ${event.detail.token}`)" data-api-endpoint="<api endpoint>"></cap-widget>
+<cap-widget id="floating" onsolve="alert(`Verification token: ${event.detail.token}`)" cap-api-endpoint="<api endpoint>"></cap-widget>
 
 <button data-cap-floating="#floating" data-cap-floating-position="bottom">Trigger floating mode</button>
 ```

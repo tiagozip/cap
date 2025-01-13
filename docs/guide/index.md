@@ -8,7 +8,7 @@ Cap is a library designed for safeguarding against spam and abuse by utilizing a
 ## Adding the Cap widget
 
 ### Server-side
-Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `data-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
+Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
 Start by installing it using npm or bun:
 
@@ -64,10 +64,10 @@ Cap's widget is really easy to add. Start by adding it from a CDN:
 Next, add the `<cap-widget>` component to your HTML.
 
 ```html
-<cap-widget id="cap" data-api-endpoint="<your cap api endpoint>"></cap-widget>
+<cap-widget id="cap" cap-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `data-api-endpoint` attribute. In the server-side example we provided, the `data-api-endpoint` attribute is set to `/api`. You can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. In the server-side example we provided, the `cap-api-endpoint` attribute is set to `/api`. You can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
