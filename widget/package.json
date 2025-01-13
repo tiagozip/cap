@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/widget",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Cap widget",
   "keywords": [
     "captcha",
@@ -24,7 +24,7 @@
   "license": "AGPL-3.0",
   "author": "Tiago Rangel",
   "type": "commonjs",
-  "main": "cap.js",
+  "main": "cap.min.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "npm:publish": "sudo npm publish --access public"

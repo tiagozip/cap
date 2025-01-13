@@ -1,6 +1,24 @@
 (function () {
   let workerScript;
 
+  const until = (predFn, timeout = 10000) => {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error("Initialize timeout"));
+      }, timeout);
+
+      const poll = () => {
+        if (predFn()) {
+          clearTimeout(timeoutId);
+          resolve();
+        } else {
+          setTimeout(poll, 500);
+        }
+      };
+      poll();
+    });
+  };
+
   class CapBase {
     #workerUrl = "";
     #el = null;
@@ -9,24 +27,6 @@
     #token = null;
 
     async initialize() {
-      const until = (predFn, timeout = 10000) => {
-        return new Promise((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            reject(new Error("Initialize timeout"));
-          }, timeout);
-
-          const poll = () => {
-            if (predFn()) {
-              clearTimeout(timeoutId);
-              resolve();
-            } else {
-              setTimeout(poll, 500);
-            }
-          };
-          poll();
-        });
-      };
-
       if (this.#workerUrl) {
         URL.revokeObjectURL(this.#workerUrl);
       }

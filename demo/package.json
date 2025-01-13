@@ -1,0 +1,16 @@
+{
+  "name": "cap-demo",
+  "version": "0.0.1",
+  "description": "Cap demo",
+  "license": "AGPL-3.0",
+  "author": "Tiago Rangel",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@cap.js/server": "^1.0.1",
+    "express": "^4.21.2"
+  }
+}

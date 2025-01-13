@@ -20,7 +20,7 @@ Now, you'll need to change your server code to add the routes that Cap needs to 
 
 ```js
 const express = require('express');
-const Cap = require('./index.js');
+const Cap = require('@cap.js/server');
 
 const app = express();
 app.use(express.json());
