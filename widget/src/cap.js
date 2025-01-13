@@ -50,14 +50,11 @@
 
       try {
         // MARK: Todo
-        const apiEndpoint =
-          location.hostname === "localhost"
-            ? "/api/"
-            : this.#el.getAttribute("cap-api-endpoint");
+        const apiEndpoint = this.#el.getAttribute("cap-api-endpoint");
 
         const { challenge, target, token } = await (
           await fetch(
-            `${apiEndpoint || "https://trycap.glitch.me/api/"}challenge`,
+            `${apiEndpoint}challenge`,
             {
               method: "POST",
             }
@@ -71,7 +68,7 @@
 
         const resp = await (
           await fetch(
-            `${apiEndpoint || "https://trycap.glitch.me/api/"}redeem`,
+            `${apiEndpoint}redeem`,
             {
               method: "POST",
               body: JSON.stringify({ token, solutions }),
