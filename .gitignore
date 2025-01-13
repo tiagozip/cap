@@ -1,3 +1,4 @@
+.old
 build/Release
 bun.lockb
 package-lock.json

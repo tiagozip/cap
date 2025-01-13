@@ -1,8 +1,6 @@
 {
-  "name": "capdotjs",
-  "version": "0.0.4",
+  "name": "cap",
   "author": "Tiago Rangel",
-  "main": "lib/cap.min.js",
   "description": "A modern, lightning-quick PoW captcha",
   "keywords": [
     "captcha",
@@ -14,12 +12,15 @@
     "node"
   ],
   "scripts": {
-    "demo": "bun run demo.js",
     "build": "bun run build.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+
     "docs:dev": "cd docs && bun run docs:dev",
     "docs:build": "cd docs && bun run docs:build",
-    "docs:preview": "cd docs && bun run docs:preview"
+    "docs:preview": "cd docs && bun run docs:preview",
+
+    "widget:publish": "cd widget && sudo npm publish --access public",
+    "server:publish": "cd server && sudo npm publish --access public"
   },
   "dependencies": {
     "@babel/core": "^7.25.8",

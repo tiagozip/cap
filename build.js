@@ -3,8 +3,8 @@ const babel = require("@babel/core");
 const { minify } = require("terser");
 
 const paths = [
-  ["./src/cap.js", "./lib/cap.min.js"],
-  ["./src/cap-floating.js", "./lib/cap-floating.min.js"],
+  ["./widget/src/cap.js", "./widget/cap.min.js"],
+  ["./widget/src/cap-floating.js", "./widget/cap-floating.min.js"],
 ];
 
 paths.forEach(async function ([inpath, outpath]) {

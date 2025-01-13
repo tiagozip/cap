@@ -1,5 +1,7 @@
 # Demo
 
+**Note:** Please note that the demo implementation is still experimental! Don't consider it to be representative of the stability or behavior of Cap overall.
+
 ### Normal button:
 
 <Demo />

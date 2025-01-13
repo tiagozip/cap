@@ -7,41 +7,67 @@ Cap is a library designed for safeguarding against spam and abuse by utilizing a
 
 ## Adding the Cap widget
 
-Cap is built to be straightforward and requires no API tokens for setup. Start by importing the Cap library:
+### Server-side
+Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `data-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/capdotjs"></script>
+Start by installing it using npm or bun:
+
+```
+npm i @cap.js/server
 ```
 
-::: details Other CDNs
-While it is recommended to use JSDelivr, you can also import Cap from other CDNs like unpkg or GitHub.
+Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example with Express.js:
 
-##### unpkg
+```js
+const express = require('express');
+const Cap = require('./index.js');
 
-```html
-<script src="https://unpkg.com/capdotjs"></script>
+const app = express();
+app.use(express.json());
+
+const cap = new Cap({
+  tokens_store_path: '.data/tokensList.json' // make sure this file has already been created and added to your gitignore
+});
+
+app.post('/api/challenge', (req, res) => {
+  res.json(cap.createChallenge({
+    challengeCount: 2,
+    challengeSize: 16,
+    challengeDifficulty: 3,
+    expiresMs: 300000
+  }));
+});
+
+app.post('/api/redeem', async (req, res) => {
+  const { token, solutions } = req.body;
+  if (!token || !solutions) {
+    return res.status(400).json({ success: false });
+  }
+  res.json(await cap.redeemChallenge({ token, solutions }));
+});
+
+app.listen(3000, () => {
+  console.log('Listening on port 3000');
+})
 ```
 
-##### jsdelivr + GitHub
+It should be easy to adapt this to work with other frameworks such as Hono.
+
+### Client-side
+
+Cap's widget is really easy to add. Start by adding it from a CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/tiagorangel1/cap/lib/cap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
 ```
-
-##### GitHub
-
-```html
-<script src="https://raw.githubusercontent.com/tiagorangel1/cap/master/lib/cap.min.js"></script>
-```
-:::
 
 Next, add the `<cap-widget>` component to your HTML.
 
 ```html
-<cap-widget id="cap" data-api-endpoint="https://<your website url>/api/"></cap-widget>
+<cap-widget id="cap" data-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `data-api-endpoint` attribute.
+**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `data-api-endpoint` attribute. In the server-side example we provided, the `data-api-endpoint` attribute is set to `/api`. You can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
@@ -60,21 +86,6 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 ## Server-Side Validation
 
-Once you have the token, verify it server-side with a simple POST request:
+Once the token is generated and captured, you can use it later to validate the user's identity. This is typically done by sending the token to a server-side endpoint that uses the Cap API for validation.
 
-```http
-POST <api-endpoint>/validate
-Content-Type: application/json
-
-{
-  "token": "xxxxxxxxxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-}
-```
-
-The server response will confirm the validity and immediately invalidate the token:
-
-```json
-{
-  "success": true
-}
-```
+To do this, you'll only need to call `await cap.validateToken("...")`. This will return `{ success: Boolean }`. Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.

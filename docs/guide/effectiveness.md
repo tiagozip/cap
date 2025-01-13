@@ -16,7 +16,7 @@ Cap is fully compliant with GDPR and CCPA. It doesn't use cookies or track you i
 
 ## Security
 
-- IP addresses are only stored in-memory
+- IP addresses are not stored by default
 - Requests are stored in-memory in make sure they are not tampered with (hashed tokens only, this is stored in .data/tokensList.json by default)
 - Confirmation tokens reset after 20 minutes
 - Challenges are only valid for 10 minutes
