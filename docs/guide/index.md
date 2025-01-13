@@ -30,12 +30,7 @@ const cap = new Cap({
 });
 
 app.post('/api/challenge', (req, res) => {
-  res.json(cap.createChallenge({
-    challengeCount: 2,
-    challengeSize: 16,
-    challengeDifficulty: 3,
-    expiresMs: 300000
-  }));
+  res.json(cap.createChallenge());
 });
 
 app.post('/api/redeem', async (req, res) => {
