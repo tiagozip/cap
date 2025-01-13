@@ -1,6 +1,6 @@
 # Demo
 
-**Note:** Please note that the demo implementation is still experimental! Don't consider it to be representative of the stability or behavior of Cap overall.
+**Note:** The docs demo might not work. Please download and use the code from the [demo folder in the repo](https://github.com/tiagorangel1/cap/tree/main/demo) instead — it includes all of the setup needed with an Express.js server.
 
 ### Normal button:
 
