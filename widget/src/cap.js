@@ -45,6 +45,7 @@
     }
 
     async solve() {
+      await until(() => !!this.#workerUrl);
       this.dispatchEvent("progress", { progress: 0 });
 
       try {
@@ -494,7 +495,7 @@
 
   setTimeout(async function () {
     workerScript =
-      (await (await fetch("https://cdn.jsdelivr.net/gh/tiagorangel1/cap/lib/wasm-hashes.min.js")).text()) +
+      (await (await fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget/wasm-hashes.min.js")).text()) +
       workerFunct
         .toString()
         .replace(/^function\s*\([^\)]*\)\s*{|\}$/g, "")
