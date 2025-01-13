@@ -57,6 +57,5 @@ export default defineConfig({
   },
   ssr: {
     noExternal: ["vitepress-plugin-nprogress"],
-  },
-  base: "/docs/",
+  }
 });
