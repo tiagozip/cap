@@ -2,9 +2,7 @@
 outline: deep
 ---
 
-# Geting Started
-Cap is a library designed for safeguarding against spam and abuse by utilizing a PoW mechanism using both an open-source client-side widget that you can seamlessly integrate with your website and a server-side verification process which typically involves only a few lines of code.
-
+# Quickstart
 ## Adding the Cap widget
 
 ### Server-side
@@ -45,12 +43,11 @@ app.listen(3000, () => {
   console.log('Listening on port 3000');
 })
 ```
-
-It should be easy to adapt this to work with other frameworks such as Hono.
+It should be pretty easy to replicate this code but with other frameworks such as Hono.
 
 ### Client-side
 
-Cap's widget is really easy to add. Start by adding it from a CDN:
+Start by adding it from a CDN:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
@@ -62,7 +59,12 @@ Next, add the `<cap-widget>` component to your HTML.
 <cap-widget id="cap" cap-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. In the server-side example we provided, the `cap-api-endpoint` attribute is set to `/api`. You can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+
+The following attributes are supported:
+
+* `cap-api-endpoint`: API endpoint (required)
+* `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
@@ -83,4 +85,10 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 Once the token is generated and captured, you can use it later to validate the user's identity. This is typically done by sending the token to a server-side endpoint that uses the Cap API for validation.
 
-To do this, you'll only need to call `await cap.validateToken("...")`. This will return `{ success: Boolean }`. Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.
+You can do this by calling `cap.validateToken`:
+
+```js
+await cap.validateToken("...") // returns { success: Boolean }
+```
+
+Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.

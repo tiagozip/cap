@@ -1,6 +1,11 @@
 {
   "name": "cap",
   "author": "Tiago Rangel",
+  "dependencies": {
+    "@babel/core": "^7.25.8",
+    "@babel/preset-env": "^7.25.8",
+    "terser": "^5.37.0"
+  },
   "description": "A modern, lightning-quick PoW captcha",
   "keywords": [
     "captcha",
@@ -11,33 +16,15 @@
     "js",
     "node"
   ],
+  "license": "AGPL-3.0",
   "scripts": {
     "build": "bun run build.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-
     "docs:dev": "cd docs && bun run docs:dev",
     "docs:build": "cd docs && bun run docs:build",
     "docs:preview": "cd docs && bun run docs:preview",
-
     "widget:publish": "cd widget && sudo npm publish --access public",
     "server:publish": "cd server && sudo npm publish --access public"
   },
-  "dependencies": {
-    "@babel/core": "^7.25.8",
-    "@babel/preset-env": "^7.25.8",
-    "@koa/router": "^13.1.0",
-    "@rollup/rollup-darwin-arm64": "^4.29.1",
-    "koa": "^2.15.3",
-    "koa-bodyparser": "^4.4.1",
-    "koa-compress": "^5.1.1",
-    "koa-json": "^2.0.2",
-    "koa-mount": "^4.0.0",
-    "koa-ratelimit": "^5.1.0",
-    "koa-static": "^5.0.0",
-    "terser": "^5.35.0"
-  },
-  "devDependencies": {
-    "vitepress": "^1.4.1"
-  },
-  "liecense": "AGPL-3.0"
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

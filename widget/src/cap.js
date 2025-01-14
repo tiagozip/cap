@@ -49,7 +49,7 @@
       this.dispatchEvent("progress", { progress: 0 });
 
       try {
-        const apiEndpoint = this.#el.getAttribute("cap-api-endpoint");
+        const apiEndpoint = this.#el.getAttribute("data-cap-api-endpoint");
         if (!apiEndpoint) throw new Error("Missing API endpoint");
 
         const { challenge, target, token } = await (
@@ -270,7 +270,8 @@
       this.addEventListeners();
       await this.#capBase.initialize();
       this.#div.removeAttribute("disabled");
-      const workers = this.getAttribute("cap-worker-count");
+      const workers = this.getAttribute("data-cap-worker-count");
+      
       this.#capBase.setWorkersCount(
         parseInt(workers)
           ? parseInt(workers, 10)
@@ -407,7 +408,7 @@
       });
 
       if (config.apiEndpoint) {
-        element.setAttribute("cap-api-endpoint", config.apiEndpoint);
+        element.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
       }
 
       capBase.setElement(element);
