@@ -40,7 +40,3 @@ features:
     title: Made for humans, not bots
     details: Cap's web component is super easy to use & integrate into your website.
 ---
-
-<div style="text-align: center">
-Licensed under AGPL-3.0
-</div>
