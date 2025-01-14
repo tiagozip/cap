@@ -6,6 +6,9 @@ hero:
   name: "Cap"
   text: "A modern, lightning-quick PoW captcha"
   tagline: "Cap is the open-source & modern ReCAPTCHA alternative designed for speed. Lightweight, powerful, private and secure."
+  image:
+    src: /assets/logo.png
+    alt: VitePress
   actions:
     - theme: brand
       text: Quickstart
