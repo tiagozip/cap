@@ -12,7 +12,7 @@ hero:
       link: /guide
     - theme: alt
       text: Demo
-      link: /guide/demo.md
+      link: https://cap-starter.glitch.me/
 
 features:
   - icon: ⚡️

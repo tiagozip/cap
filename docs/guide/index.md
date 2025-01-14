@@ -46,8 +46,6 @@ widget.addEventListener("solve", function (e) {
 
 Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data).
 
-
-
 ## Server-side
 Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
@@ -56,6 +54,9 @@ Start by installing it using npm or bun:
 ```
 npm i @cap.js/server
 ```
+
+> [!NOTE]
+> It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example with Express.js:
 

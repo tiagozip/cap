@@ -27,14 +27,14 @@ export default defineConfig({
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
-      { text: "Demo", link: "/guide/demo.md" },
+      { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
     sidebar: [
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Floating mode", link: "/guide/floating.md" },
-      { text: "Demo", link: "/guide/demo.md" },
+      { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
     socialLinks: [
