@@ -8,7 +8,7 @@ hero:
   tagline: "Cap is the open-source & modern ReCAPTCHA alternative designed for speed. Lightweight, powerful, private and secure."
   actions:
     - theme: brand
-      text: Guide
+      text: Quickstart
       link: /guide
     - theme: alt
       text: Demo
