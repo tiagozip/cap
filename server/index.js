@@ -17,11 +17,9 @@ const encodeBigInt = (num, base = 62) => {
 (function (define) {
   define(function (require, exports, module) {
     class Cap extends EventEmitter {
-      config;
-      #cleanupPromise = null;
-
       constructor(configObj) {
         super();
+        this._cleanupPromise = null;
         this.config = {
           tokens_store_path: ".data/tokensList.json",
           state: {
@@ -31,7 +29,7 @@ const encodeBigInt = (num, base = 62) => {
           ...configObj,
         };
 
-        this.#loadTokens().catch(() => {});
+        this._loadTokens().catch(() => {});
 
         process.on("beforeExit", () => this.cleanup());
 
@@ -44,20 +42,20 @@ const encodeBigInt = (num, base = 62) => {
         });
       }
 
-      async #loadTokens() {
+      async _loadTokens() {
         try {
           const data = await fs.readFile(
             this.config.tokens_store_path,
             "utf-8"
           );
           this.config.state.tokensList = JSON.parse(data) || {};
-          this.#cleanExpiredTokens();
+          this._cleanExpiredTokens();
         } catch (error) {
           this.config.state.tokensList = {};
         }
       }
 
-      #cleanExpiredTokens() {
+      _cleanExpiredTokens() {
         const now = Date.now();
         let tokensChanged = false;
 
@@ -78,10 +76,10 @@ const encodeBigInt = (num, base = 62) => {
       }
 
       async cleanup() {
-        if (this.#cleanupPromise) return this.#cleanupPromise;
+        if (this._cleanupPromise) return this._cleanupPromise;
 
-        this.#cleanupPromise = (async () => {
-          const tokensChanged = this.#cleanExpiredTokens();
+        this._cleanupPromise = (async () => {
+          const tokensChanged = this._cleanExpiredTokens();
 
           if (tokensChanged) {
             await fs.writeFile(
@@ -92,30 +90,30 @@ const encodeBigInt = (num, base = 62) => {
           }
         })();
 
-        return this.#cleanupPromise;
+        return this._cleanupPromise;
       }
 
       createChallenge(conf) {
-        this.#cleanExpiredTokens();
+        this._cleanExpiredTokens();
 
         const challenges = Array.from(
-          { length: conf?.challengeCount || 18 },
+          { length: (conf && conf.challengeCount) || 18 },
           () => [
             crypto
-              .randomBytes(Math.ceil((conf?.challengeSize || 32) / 2))
+              .randomBytes(Math.ceil(((conf && conf.challengeSize) || 32) / 2))
               .toString("hex")
-              .slice(0, conf?.challengeSize || 32),
+              .slice(0, (conf && conf.challengeSize) || 32),
             crypto
-              .randomBytes(Math.ceil((conf?.challengeDifficulty || 4) / 2))
+              .randomBytes(Math.ceil(((conf && conf.challengeDifficulty) || 4) / 2))
               .toString("hex")
-              .slice(0, conf?.challengeDifficulty || 4),
+              .slice(0, (conf && conf.challengeDifficulty) || 4),
           ]
         );
 
         const token = crypto.randomBytes(25).toString("hex");
-        const expires = Date.now() + (conf?.expiresMs || 600000);
+        const expires = Date.now() + ((conf && conf.expiresMs) || 600000);
 
-        if (conf?.store === false) {
+        if (conf && conf.store === false) {
           return { challenge: challenges, expires };
         }
 
@@ -129,7 +127,7 @@ const encodeBigInt = (num, base = 62) => {
       }
 
       async redeemChallenge({ token, solutions }) {
-        this.#cleanExpiredTokens();
+        this._cleanExpiredTokens();
 
         const challengeData = this.config.state.challengesList[token];
         if (!challengeData || challengeData.expires < Date.now()) {
@@ -157,7 +155,10 @@ const encodeBigInt = (num, base = 62) => {
 
         const vertoken = crypto.randomBytes(15).toString("hex");
         const expires = Date.now() + 20 * 60 * 1000;
-        const hash = encodeBigInt(Bun.hash(vertoken));
+        const hash = crypto
+          .createHash("sha256")
+          .update(vertoken)
+          .digest("hex");
         const id = crypto.randomBytes(8).toString("hex");
 
         this.config.state.tokensList[`${id}:${hash}`] = expires;
@@ -172,14 +173,17 @@ const encodeBigInt = (num, base = 62) => {
       }
 
       async validateToken(token, conf) {
-        this.#cleanExpiredTokens();
+        this._cleanExpiredTokens();
 
         const [id, vertoken] = token.split(":");
-        const hash = encodeBigInt(Bun.hash(vertoken));
+        const hash = crypto
+          .createHash("sha256")
+          .update(vertoken)
+          .digest("hex");
         const key = `${id}:${hash}`;
 
         if (this.config.state.tokensList[key]) {
-          if (conf?.keepToken) {
+          if (conf && conf.keepToken) {
             delete this.config.state.tokensList[key];
 
             await fs.writeFile(
