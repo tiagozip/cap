@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Cap server-side helper",
   "keywords": [
     "captcha",
