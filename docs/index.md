@@ -11,7 +11,7 @@ hero:
     alt: VitePress
   actions:
     - theme: brand
-      text: Quickstart
+      text: Quickstart & docs
       link: /guide
     - theme: alt
       text: Demo
