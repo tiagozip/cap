@@ -16,20 +16,20 @@ Start by adding it from a CDN:
 Next, add the `<cap-widget>` component to your HTML.
 
 ```html
-<cap-widget id="cap" cap-api-endpoint="<your cap api endpoint>"></cap-widget>
+<cap-widget id="cap" data-cap-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
 
 > [!NOTE]
-> You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute.
+> You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute.
 > In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
 
 
 > [!TIP]
 > The following attributes are supported:
 > 
-> * `cap-api-endpoint`: API endpoint (required)
+> * `data-cap-api-endpoint`: API endpoint (required)
 > * `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
@@ -49,7 +49,7 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 
 ## Server-side
-Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
+Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
 Start by installing it using npm or bun:
 
