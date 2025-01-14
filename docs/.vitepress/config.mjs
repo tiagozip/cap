@@ -5,16 +5,6 @@ export default defineConfig({
   title: "Cap",
   description: "A modern, lightning-quick PoW captcha",
   lastUpdated: true,
-  head: [
-    ["script", { src: "https://cdn.jsdelivr.net/npm/capdotjs", async: true }],
-    [
-      "script",
-      {
-        src: "https://cdn.jsdelivr.net/npm/capdotjs/lib/cap-floating.min.js",
-        async: true,
-      },
-    ],
-  ],
   vue: {
     template: {
       compilerOptions: {
