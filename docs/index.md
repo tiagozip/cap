@@ -31,8 +31,8 @@ features:
     title: Safe and fast
     details: Cap doesn't make you sign away your private data - it's open-source, secure and fast.
   - icon: 🌳
-    title: 100% open-source
-    details: Everything about Cap is open-sourced on Github and Glitch for you to check out.
+    title: Truly free
+    details: Everything about Cap is open-sourced on Github under AGPL-3.0 for you to check out.
   - icon: ☁️
     title: Floating mode
     details: Improve UX by automatically hiding the captcha until the form is submitted.
@@ -41,7 +41,6 @@ features:
     details: Cap's web component is super easy to use & integrate into your website.
 ---
 
-<div style="margin-top: 70px;display: flex;align-items: center;justify-content: center;margin-bottom: 20px;flex-direction: column;">
-  <p>Try it out for yourself.</p>
-  <Demo />
+<div style="text-align: center">
+Licensed under AGPL-3.0
 </div>
