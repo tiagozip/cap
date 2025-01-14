@@ -4,6 +4,7 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   title: "Cap",
   description: "A modern, lightning-quick PoW captcha",
+  lastUpdated: true,
   head: [
     ["script", { src: "https://cdn.jsdelivr.net/npm/capdotjs", async: true }],
     [
@@ -24,6 +25,10 @@ export default defineConfig({
     },
   },
   themeConfig: {
+    editLink: {
+      pattern: 'https://github.com/tiagorangel1/cap/edit/main/docs/:path'
+    },
+
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
