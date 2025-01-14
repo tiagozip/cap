@@ -3,9 +3,52 @@ outline: deep
 ---
 
 # Quickstart
-## Adding the Cap widget
+[[toc]]
 
-### Server-side
+## Client-side
+
+Start by adding it from a CDN:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+```
+
+Next, add the `<cap-widget>` component to your HTML.
+
+```html
+<cap-widget id="cap" cap-api-endpoint="<your cap api endpoint>"></cap-widget>
+```
+
+**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+
+> [!NOTE]
+> You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute.
+> In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+
+
+> [!TIP]
+> The following attributes are supported:
+> 
+> * `cap-api-endpoint`: API endpoint (required)
+> * `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
+
+Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
+
+```js{3}
+const widget = document.querySelector("#cap");
+
+widget.addEventListener("solve", function (e) { 
+  const token = e.detail.token;
+  
+  // Handle the token as needed
+});
+```
+
+Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data).
+
+
+
+## Server-side
 Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
 Start by installing it using npm or bun:
@@ -45,47 +88,63 @@ app.listen(3000, () => {
 ```
 It should be pretty easy to replicate this code but with other frameworks such as Hono.
 
-### Client-side
 
-Start by adding it from a CDN:
+::: details Methods
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+The following methods are supported:
+
+#### `new Cap({ ... })`
+Creates a new Cap instance.
+
+**Arguments**
+```json
+{
+  tokens_store_path: ".data/tokensList.json",
+  state: {
+    challengesList: {},
+    tokensList: {},
+  },
+}
 ```
 
-Next, add the `<cap-widget>` component to your HTML.
+> [!TIP]
+> You can always access or set the options of the `Cap` class by accessing or modifying the `cap.config` object.
 
-```html
-<cap-widget id="cap" cap-api-endpoint="<your cap api endpoint>"></cap-widget>
+#### `cap.createChallenge({ ... })`
+**Arguments**
+```json
+{
+  challengeCount: 18,
+  challengeSize: 32,
+  challengeDifficulty: 4,
+  expiresMs: 600000
+}
+```
+**Output:** `{ challenge, expires }`
+
+#### `cap.redeemChallenge({ ... })`
+```json
+{
+  token,
+  solutions
+}
 ```
 
-**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+**Output:** `{ success, token }`
 
-The following attributes are supported:
-
-* `cap-api-endpoint`: API endpoint (required)
-* `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
-
-Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
-
-```js{3}
-const widget = document.querySelector("#cap");
-
-widget.addEventListener("solve", function (e) { 
-  const token = e.detail.token;
-  
-  // Handle the token as needed
-});
+#### `await cap.validateToken("...", { ... })`
+**Arguments:**
+```json
+{
+  keepToken: false
+}
 ```
+**Output:** `{ success }`
+:::
 
-Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data).
+### Token Validation
 
-
-## Server-Side Validation
-
-Once the token is generated and captured, you can use it later to validate the user's identity. This is typically done by sending the token to a server-side endpoint that uses the Cap API for validation.
-
-You can do this by calling `cap.validateToken`:
+Once the token is generated and captured, you can use it later to validate the user's identity. You can do this by calling `await cap.validateToken` in your server-side code:
 
 ```js
 await cap.validateToken("...") // returns { success: Boolean }
