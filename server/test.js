@@ -42,7 +42,7 @@ app.post('/api/validate', async (req, res) => {
   if (!token) {
     return res.status(400).json({ success: false });
   }
-  res.json(await cap.validateToken({ token }));
+  res.json(await cap.validateToken(token));
 });
 
 async function test() {
