@@ -15,6 +15,8 @@ export default defineConfig({
     },
   },
   themeConfig: {
+    logo: '/logo.png',
+
     editLink: {
       pattern: 'https://github.com/tiagorangel1/cap/edit/main/docs/:path'
     },
