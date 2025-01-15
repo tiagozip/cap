@@ -38,6 +38,7 @@ export default defineConfig({
           { text: '@cap.js/client', link: '/guide/changelog/client.md' }
         ]
       },
+      { text: "Vulnerabilities", link: "/guide/vulnerabilities.md" },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
