@@ -7,7 +7,7 @@ outline: deep
 
 ## Client-side
 
-Start by adding it from a CDN:
+Start by adding importing the Cap widget library from a CDN:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
