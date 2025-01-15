@@ -16,7 +16,7 @@
     "js",
     "node"
   ],
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "build": "bun run build.js",
     "test": "echo \"Error: no test specified\" && exit 1",

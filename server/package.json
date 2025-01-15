@@ -23,7 +23,7 @@
     "node",
     "hcaptcha"
   ],
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-only",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "npm:publish": "sudo npm publish --access public"
