@@ -31,6 +31,13 @@ export default defineConfig({
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Floating mode", link: "/guide/floating.md" },
+      {
+        text: 'Changelogs',
+        items: [
+          { text: '@cap.js/server', link: '/guide/changelog/server.md' },
+          { text: '@cap.js/client', link: '/guide/changelog/client.md' }
+        ]
+      },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
