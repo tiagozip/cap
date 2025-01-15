@@ -21,7 +21,7 @@
     "type": "git",
     "url": "git+https://github.com/tiagorangel1/cap.git"
   },
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-only",
   "author": "Tiago Rangel",
   "type": "commonjs",
   "main": "cap.min.js",
