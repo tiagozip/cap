@@ -19,12 +19,35 @@
     });
   };
 
-  class CapBase {
+  class CapWidget extends HTMLElement {
     #workerUrl = "";
-    #el = null;
     #resetTimer = null;
     #workersCount = navigator.hardwareConcurrency || 8;
     #token = null;
+    #shadow;
+    #div;
+    #host;
+    #solving = false;
+    #eventHandlers;
+
+    static get observedAttributes() {
+      return ["onsolve", "onprogress", "onreset", "onerror", "workers"];
+    }
+
+    constructor() {
+      super();
+      if (this.#eventHandlers) {
+        this.#eventHandlers.forEach((handler, eventName) => {
+          this.removeEventListener(eventName.slice(2), handler);
+        });
+      }
+
+      this.#eventHandlers = new Map();
+      this.boundHandleProgress = this.handleProgress.bind(this);
+      this.boundHandleSolve = this.handleSolve.bind(this);
+      this.boundHandleError = this.handleError.bind(this);
+      this.boundHandleReset = this.handleReset.bind(this);
+    }
 
     async initialize() {
       if (this.#workerUrl) {
@@ -44,60 +67,104 @@
       }
     }
 
+    attributeChangedCallback(name, oldValue, newValue) {
+      if (name.startsWith("on")) {
+        const eventName = name.slice(2);
+        const oldHandler = this.#eventHandlers.get(name);
+        if (oldHandler) {
+          this.removeEventListener(eventName, oldHandler);
+        }
+
+        if (newValue) {
+          const handler = (event) => {
+            const callback = this.getAttribute(name);
+            if (typeof window[callback] === "function") {
+              window[callback].call(this, event);
+            }
+          };
+          this.#eventHandlers.set(name, handler);
+          this.addEventListener(eventName, handler);
+        }
+      }
+    }
+
+    async connectedCallback() {
+      this.#host = this;
+      this.#shadow = this.attachShadow({ mode: "open" });
+      this.#div = document.createElement("div");
+      this.createUI();
+      this.addEventListeners();
+      await this.initialize();
+      this.#div.removeAttribute("disabled");
+
+      const workers = this.getAttribute("data-cap-worker-count");
+      this.setWorkersCount(
+        parseInt(workers)
+          ? parseInt(workers, 10)
+          : navigator.hardwareConcurrency || 8
+      );
+      this.#host.innerHTML = `<input type="hidden" name="cap-token">`;
+    }
+
     async solve() {
-      await until(() => !!this.#workerUrl);
-      this.dispatchEvent("progress", { progress: 0 });
+      if (this.#solving) {
+        return;
+      }
 
       try {
-        const apiEndpoint = this.#el.getAttribute("data-cap-api-endpoint");
-        if (!apiEndpoint) throw new Error("Missing API endpoint");
+        this.#solving = true;
+        this.updateUI("verifying", "Verifying...", true);
 
-        const { challenge, target, token } = await (
-          await fetch(
-            `${apiEndpoint}challenge`,
-            {
+        await until(() => !!this.#workerUrl);
+        this.dispatchEvent("progress", { progress: 0 });
+
+        try {
+          const apiEndpoint = this.getAttribute("data-cap-api-endpoint");
+          if (!apiEndpoint) throw new Error("Missing API endpoint");
+
+          const { challenge, target, token } = await (
+            await fetch(`${apiEndpoint}challenge`, {
               method: "POST",
-            }
-          )
-        ).json();
-        const solutions = await this.solveChallenges({
-          challenge,
-          target,
-          token,
-        });
+            })
+          ).json();
+          const solutions = await this.solveChallenges({
+            challenge,
+            target,
+            token,
+          });
 
-        const resp = await (
-          await fetch(
-            `${apiEndpoint}redeem`,
-            {
+          const resp = await (
+            await fetch(`${apiEndpoint}redeem`, {
               method: "POST",
               body: JSON.stringify({ token, solutions }),
               headers: { "Content-Type": "application/json" },
-            }
-          )
-        ).json();
+            })
+          ).json();
 
-        if (!resp.success) throw new Error("Invalid solution");
+          if (!resp.success) throw new Error("Invalid solution");
 
-        this.dispatchEvent("progress", { progress: 100 });
-        this.dispatchEvent("solve", { token: resp.token });
-        this.#token = resp.token;
-        if (this.#el.querySelector("input[name='cap-token']")) {
-          this.#el.querySelector("input[name='cap-token']").value = resp.token;
+          this.dispatchEvent("progress", { progress: 100 });
+          this.dispatchEvent("solve", { token: resp.token });
+          this.#token = resp.token;
+          if (this.querySelector("input[name='cap-token']")) {
+            this.querySelector("input[name='cap-token']").value = resp.token;
+          }
+
+          if (this.#resetTimer) clearTimeout(this.#resetTimer);
+          const expiresIn = new Date(resp.expires).getTime() - Date.now();
+          if (expiresIn > 0 && expiresIn < 24 * 60 * 60 * 1000) {
+            this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
+          } else {
+            this.error("Invalid expiration time");
+          }
+
+          return { success: true, token: this.#token };
+        } catch (err) {
+          this.error(err.message);
+          throw err;
         }
-
-        if (this.#resetTimer) clearTimeout(this.#resetTimer);
-        const expiresIn = new Date(resp.expires).getTime() - Date.now();
-        if (expiresIn > 0 && expiresIn < 24 * 60 * 60 * 1000) {
-          this.#resetTimer = setTimeout(() => this.reset(), expiresIn); // 24h
-        } else {
-          this.error("Invalid expiration time");
-        }
-
-        return { success: true, token: this.#token };
-      } catch (err) {
-        this.error(err.message);
-        throw err;
+      } finally {
+        this.#solving = false;
       }
     }
 
@@ -156,36 +223,6 @@
       return results;
     }
 
-    reset() {
-      if (this.#resetTimer) {
-        clearTimeout(this.#resetTimer);
-        this.#resetTimer = null;
-      }
-      this.dispatchEvent("reset");
-      this.#token = null;
-      if (this.#el.querySelector("input[name='cap-token']")) {
-        this.#el.querySelector("input[name='cap-token']").value = "";
-      }
-    }
-
-    error(message = "Unknown error") {
-      console.error("[Cap] Error:", message);
-      this.dispatchEvent("error", { isCap: true, message });
-    }
-
-    dispatchEvent(eventName, detail = {}) {
-      const event = new CustomEvent(eventName, {
-        bubbles: true,
-        composed: true,
-        detail,
-      });
-      this.#el.dispatchEvent(event);
-    }
-
-    setElement(el) {
-      this.#el = el;
-    }
-
     setWorkersCount(workers) {
       const parsedWorkers = parseInt(workers, 10);
       const maxWorkers = Math.min(navigator.hardwareConcurrency || 8, 16);
@@ -195,89 +232,6 @@
         parsedWorkers <= maxWorkers
           ? parsedWorkers
           : navigator.hardwareConcurrency || 8;
-    }
-
-    getToken() {
-      return this.#token;
-    }
-
-    cleanup() {
-      if (this.#resetTimer) {
-        clearTimeout(this.#resetTimer);
-        this.#resetTimer = null;
-      }
-
-      if (this.#workerUrl) {
-        URL.revokeObjectURL(this.#workerUrl);
-        this.#workerUrl = "";
-      }
-    }
-  }
-
-  class CapWidget extends HTMLElement {
-    #capBase = new CapBase();
-    #shadow;
-    #div;
-    #host;
-    #solving = false;
-    eventHandlers;
-
-    static get observedAttributes() {
-      return ["onsolve", "onprogress", "onreset", "onerror", "workers"];
-    }
-
-    constructor() {
-      super();
-      if (this.eventHandlers) {
-        this.eventHandlers.forEach((handler, eventName) => {
-          this.removeEventListener(eventName.slice(2), handler);
-        });
-      }
-      this.eventHandlers = new Map();
-      this.boundHandleProgress = this.handleProgress.bind(this);
-      this.boundHandleSolve = this.handleSolve.bind(this);
-      this.boundHandleError = this.handleError.bind(this);
-      this.boundHandleReset = this.handleReset.bind(this);
-    }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-      if (name.startsWith("on")) {
-        const eventName = name.slice(2);
-        const oldHandler = this.eventHandlers.get(name);
-        if (oldHandler) {
-          this.removeEventListener(eventName, oldHandler);
-        }
-
-        if (newValue) {
-          const handler = (event) => {
-            const callback = this.getAttribute(name);
-            if (typeof window[callback] === "function") {
-              window[callback].call(this, event);
-            }
-          };
-          this.eventHandlers.set(name, handler);
-          this.addEventListener(eventName, handler);
-        }
-      }
-    }
-
-    async connectedCallback() {
-      this.#host = this;
-      this.#shadow = this.attachShadow({ mode: "open" });
-      this.#capBase.setElement(this);
-      this.#div = document.createElement("div");
-      this.createUI();
-      this.addEventListeners();
-      await this.#capBase.initialize();
-      this.#div.removeAttribute("disabled");
-      const workers = this.getAttribute("data-cap-worker-count");
-      
-      this.#capBase.setWorkersCount(
-        parseInt(workers)
-          ? parseInt(workers, 10)
-          : navigator.hardwareConcurrency || 8
-      );
-      this.#host.innerHTML = `<input type="hidden" name="cap-token">`;
     }
 
     createUI() {
@@ -309,29 +263,14 @@
       this.addEventListener("reset", this.boundHandleReset);
     }
 
-    async solve() {
-      if (this.#solving) {
-        return;
-      }
-
-      try {
-        this.#solving = true;
-        this.updateUI("verifying", "Verifying...", true);
-        const result = await this.#capBase.solve();
-        return result;
-      } finally {
-        this.#solving = false;
-      }
-    }
-
     updateUI(state, text, disabled = false) {
-        this.#div.setAttribute("data-state", state);
-        this.#div.querySelector("p").innerText = text;
-        if (disabled) {
-          this.#div.setAttribute("disabled", "true");
-        } else {
-          this.#div.removeAttribute("disabled");
-        }
+      this.#div.setAttribute("data-state", state);
+      this.#div.querySelector("p").innerText = text;
+      if (disabled) {
+        this.#div.setAttribute("disabled", "true");
+      } else {
+        this.#div.removeAttribute("disabled");
+      }
     }
 
     handleProgress(event) {
@@ -369,12 +308,34 @@
       func.call(this, event);
     }
 
+    error(message = "Unknown error") {
+      console.error("[Cap] Error:", message);
+      this.dispatchEvent("error", { isCap: true, message });
+    }
+
+    dispatchEvent(eventName, detail = {}) {
+      const event = new CustomEvent(eventName, {
+        bubbles: true,
+        composed: true,
+        detail,
+      });
+      super.dispatchEvent(event);
+    }
+
     reset() {
-      this.#capBase.reset();
+      if (this.#resetTimer) {
+        clearTimeout(this.#resetTimer);
+        this.#resetTimer = null;
+      }
+      this.dispatchEvent("reset");
+      this.#token = null;
+      if (this.querySelector("input[name='cap-token']")) {
+        this.querySelector("input[name='cap-token']").value = "";
+      }
     }
 
     get token() {
-      return this.#capBase.getToken();
+      return this.#token;
     }
 
     disconnectedCallback() {
@@ -383,60 +344,63 @@
       this.removeEventListener("error", this.boundHandleError);
       this.removeEventListener("reset", this.boundHandleReset);
 
-      this.eventHandlers.forEach((handler, eventName) => {
+      this.#eventHandlers.forEach((handler, eventName) => {
         this.removeEventListener(eventName.slice(2), handler);
       });
-      this.eventHandlers.clear();
+      this.#eventHandlers.clear();
 
       if (this.#shadow) {
         this.#shadow.innerHTML = "";
       }
 
-      this.#capBase.reset();
-      this.#capBase.cleanup();
+      this.reset();
+      this.cleanup();
+    }
+
+    cleanup() {
+      if (this.#resetTimer) {
+        clearTimeout(this.#resetTimer);
+        this.#resetTimer = null;
+      }
+
+      if (this.#workerUrl) {
+        URL.revokeObjectURL(this.#workerUrl);
+        this.#workerUrl = "";
+      }
     }
   }
 
   class Cap {
-    constructor(el, config = {}) {
-      let capBase = new CapBase();
-      let element = el || document.createElement("div");
+    constructor(config = {}, el) {
+      let widget = el || document.createElement("cap-widget");
 
-      if (!el) element.style.display = "none";
       Object.entries(config).forEach(([a, b]) => {
-        element.setAttribute(a, b);
+        widget.setAttribute(a, b);
       });
 
       if (config.apiEndpoint) {
-        element.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
+        console.log(config);
+        widget.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
       } else {
-        element.remove();
+        widget.remove();
         throw new Error("Missing API endpoint");
       }
 
-      capBase.setElement(element);
-      capBase.setWorkersCount(
-        config.workers || navigator.hardwareConcurrency || 8
-      );
-      capBase.initialize();
-
-      this.solve = async function () {
-        return await capBase.solve();
-      };
-
-      this.reset = function () {
-        capBase.reset();
-      };
-
-      this.addEventListener = function (event, callback) {
-        element.addEventListener(event, callback);
-      };
+      this.widget = widget;
+      this.solve = this.widget.solve.bind(this.widget);
+      this.reset = this.widget.reset.bind(this.widget);
+      this.addEventListener = this.widget.addEventListener.bind(this.widget);
 
       Object.defineProperty(this, "token", {
-        get: () => capBase.getToken(),
+        get: () => widget.getToken(),
         configurable: true,
         enumerable: true,
       });
+
+      if (!el) {
+        widget.style.display = "none";
+        document.documentElement.appendChild(widget);
+      }
     }
   }
 
@@ -496,7 +460,11 @@
 
   setTimeout(async function () {
     workerScript =
-      (await (await fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget/wasm-hashes.min.js")).text()) +
+      (await (
+        await fetch(
+          "https://cdn.jsdelivr.net/npm/@cap.js/widget/wasm-hashes.min.js"
+        )
+      ).text()) +
       workerFunct
         .toString()
         .replace(/^function\s*\([^\)]*\)\s*{|\}$/g, "")

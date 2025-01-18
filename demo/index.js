@@ -5,6 +5,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.static('public'));
+/* app.use("/capsource", express.static('../widget/src/cap.js')); */
 
 const cap = new Cap({
   tokens_store_path: '.data/tokensList.json'
