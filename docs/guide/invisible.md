@@ -17,7 +17,7 @@ console.log(result.token);
 The following methods are supported:
 
 #### `new Cap({ ... })`
-Creates a new Cap instance.
+Creates a new Cap instance. If a 2nd argument is provided, it will use that element instead of creating a new one in memory.
 
 **Arguments**
 ```json
