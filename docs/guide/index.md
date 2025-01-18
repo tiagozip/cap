@@ -19,18 +19,10 @@ Next, add the `<cap-widget>` component to your HTML.
 <cap-widget id="cap" data-cap-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-**Note:** You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
-
 > [!NOTE]
 > You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute.
 > In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
 
-
-> [!TIP]
-> The following attributes are supported:
-> 
-> * `data-cap-api-endpoint`: API endpoint (required)
-> * `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
@@ -87,61 +79,8 @@ app.listen(3000, () => {
   console.log('Listening on port 3000');
 })
 ```
+
 It should be pretty easy to replicate this code but with other frameworks such as Hono.
-
-
-::: details Methods
-
-The following methods are supported:
-
-#### `new Cap({ ... })`
-Creates a new Cap instance.
-
-**Arguments**
-```json
-{
-  tokens_store_path: ".data/tokensList.json",
-  state: {
-    challengesList: {},
-    tokensList: {},
-  },
-}
-```
-
-> [!TIP]
-> You can always access or set the options of the `Cap` class by accessing or modifying the `cap.config` object.
-
-#### `cap.createChallenge({ ... })`
-**Arguments**
-```json
-{
-  challengeCount: 18,
-  challengeSize: 32,
-  challengeDifficulty: 4,
-  expiresMs: 600000
-}
-```
-**Output:** `{ challenge, expires }`
-
-#### `cap.redeemChallenge({ ... })`
-```json
-{
-  token,
-  solutions
-}
-```
-
-**Output:** `{ success, token }`
-
-#### `await cap.validateToken("...", { ... })`
-**Arguments:**
-```json
-{
-  keepToken: false
-}
-```
-**Output:** `{ success }`
-:::
 
 ### Token Validation
 

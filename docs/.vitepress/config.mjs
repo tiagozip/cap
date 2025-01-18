@@ -31,11 +31,19 @@ export default defineConfig({
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Floating mode", link: "/guide/floating.md" },
+      { text: "Invisible mode", link: "/guide/invisible.md" },
+      {
+        text: 'Libraries',
+        items: [
+          { text: '@cap.js/server', link: '/guide/server.md' },
+          { text: '@cap.js/widget', link: '/guide/widget.md' }
+        ]
+      },
       {
         text: 'Changelogs',
         items: [
           { text: '@cap.js/server', link: '/guide/changelog/server.md' },
-          { text: '@cap.js/client', link: '/guide/changelog/client.md' }
+          { text: '@cap.js/widget', link: '/guide/changelog/widget.md' }
         ]
       },
       { text: "Vulnerabilities", link: "/guide/vulnerabilities.md" },

@@ -5,13 +5,13 @@ Cap is the modern open-source ReCAPTCHA alternative designed for speed. FOSS, li
 
 [![npm @cap.js/server](https://img.shields.io/badge/@cap.js/-server-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/server) [![npm @cap.js/widget](https://img.shields.io/badge/@cap.js/-widget-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/widget) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)
 
-<img alt="Cap captcha" src="./assets/thumb.png">
-
 <center>
 
 ### [Get started →](https://cap.tiagorangel.com/guide)
 
 </center>
+
+<img alt="Cap captcha" src="./assets/thumb.png">
 
 > [!WARNING]
 > Work in progress. Don't use this in production yet.
