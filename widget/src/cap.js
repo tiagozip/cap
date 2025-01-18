@@ -409,6 +409,9 @@
 
       if (config.apiEndpoint) {
         element.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
+      } else {
+        element.remove();
+        throw new Error("Missing API endpoint");
       }
 
       capBase.setElement(element);
