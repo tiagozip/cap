@@ -7,7 +7,8 @@ npm i @cap.js/server
 ```
 
 > [!NOTE]
-> It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.
+> It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.    
+> If you're using Glitch, make sure to set node 14 or higher in your `engines` field in `package.json`
 
 ## Example code
 
