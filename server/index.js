@@ -2,18 +2,6 @@ const crypto = require("crypto");
 const fs = require("fs/promises");
 const { EventEmitter } = require("events");
 
-const encodeBigInt = (num, base = 62) => {
-  const chars =
-    "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let res = "",
-    n = BigInt(num);
-  while (n > 0) {
-    res = chars[Number(n % BigInt(base))] + res;
-    n /= BigInt(base);
-  }
-  return res || "0";
-};
-
 (function (define) {
   define(function (require, exports, module) {
     class Cap extends EventEmitter {
