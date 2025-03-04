@@ -30,6 +30,7 @@ export default defineConfig({
     sidebar: [
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
+      { text: "Alternatives", link: "/guide/alternatives.md" },
       { text: "Floating mode", link: "/guide/floating.md" },
       { text: "Invisible mode", link: "/guide/invisible.md" },
       {
