@@ -22,7 +22,7 @@
 
     Object.assign(capWidget.style, {
       display: "block",
-      position: "fixed",
+      position: "absolute",
       zIndex: "99999"
     });
 
@@ -31,13 +31,13 @@
 
     if (position === "top") {
       capWidget.style.top = `${Math.max(
-        0,
-        rect.top - capWidget.offsetHeight - offset
+        window.scrollY,
+        rect.top - capWidget.offsetHeight - offset + window.scrollY
       )}px`;
     } else {
       capWidget.style.top = `${Math.min(
-        rect.bottom + offset,
-        window.innerHeight - capWidget.offsetHeight
+        rect.bottom + offset + window.scrollY,
+        window.innerHeight - capWidget.offsetHeight + window.scrollY
       )}px`;
     }
 

@@ -4,8 +4,9 @@
   "license": "AGPL-3.0",
   "author": "Tiago Rangel",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "bun server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
