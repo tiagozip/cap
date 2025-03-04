@@ -5,6 +5,11 @@ outline: deep
 # Quickstart
 [[toc]]
 
+## Requirements
+* **Server-side library:** At least Node 14. Most modern Bun or Deno versions should work too. If you're using Glitch, make sure to set node 14 or higher in your `engines` field in `package.json`
+
+* **Client-side widget:** All modern browsers should be supported, but the build script specifically targets the last 10 versions of Chrome, Firefox, Safari and Edge.
+
 ## Client-side
 
 Start by adding importing the Cap widget library from a CDN:

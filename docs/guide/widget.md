@@ -1,5 +1,9 @@
 # @cap.js/widget
 
+> [!NOTE]
+> **Requirements:** All modern browsers should be supported, but the build script specifically targets the last 10 versions of Chrome, Firefox, Safari and Edge.
+
+
 `@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the Captcha solver. It is recommended to use unpkg to install it:
 
 ```html
