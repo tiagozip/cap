@@ -11,8 +11,7 @@ Cap is the modern open-source ReCAPTCHA alternative designed for speed. FOSS, li
 
 <img alt="Cap captcha" src="./assets/thumb.png">
 
-> [!WARNING]
-> Work in progress. Don't use this in production yet.
+**Note:** This is still a work in progress. It *should* work in production but you might stumble upon unexpected errors.
 
 ## Features
 - ⚡️ **250x smaller than hCaptcha**:
