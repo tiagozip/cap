@@ -32,13 +32,27 @@ const { EventEmitter } = require("events");
 
       async _loadTokens() {
         try {
-          const data = await fs.readFile(
-            this.config.tokens_store_path,
-            "utf-8"
-          );
-          this.config.state.tokensList = JSON.parse(data) || {};
-          this._cleanExpiredTokens();
+          await fs.mkdir(".data", { recursive: true });
+
+          try {
+            await fs.access(this.config.tokens_store_path);
+            const data = await fs.readFile(
+              this.config.tokens_store_path,
+              "utf-8"
+            );
+            this.config.state.tokensList = JSON.parse(data) || {};
+            this._cleanExpiredTokens();
+          } catch {
+            console.log(
+              `[cap] Tokens file not found, creating a new empty one`
+            );
+            await fs.writeFile(this.config.tokens_store_path, "{}", "utf-8");
+            this.config.state.tokensList = {};
+          }
         } catch (error) {
+          console.log(
+            `[cap] Couldn't load or write tokens file, using empty state`
+          );
           this.config.state.tokensList = {};
         }
       }
@@ -92,7 +106,9 @@ const { EventEmitter } = require("events");
               .toString("hex")
               .slice(0, (conf && conf.challengeSize) || 32),
             crypto
-              .randomBytes(Math.ceil(((conf && conf.challengeDifficulty) || 4) / 2))
+              .randomBytes(
+                Math.ceil(((conf && conf.challengeDifficulty) || 4) / 2)
+              )
               .toString("hex")
               .slice(0, (conf && conf.challengeDifficulty) || 4),
           ]
@@ -143,10 +159,7 @@ const { EventEmitter } = require("events");
 
         const vertoken = crypto.randomBytes(15).toString("hex");
         const expires = Date.now() + 20 * 60 * 1000;
-        const hash = crypto
-          .createHash("sha256")
-          .update(vertoken)
-          .digest("hex");
+        const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
         const id = crypto.randomBytes(8).toString("hex");
 
         this.config.state.tokensList[`${id}:${hash}`] = expires;
@@ -164,10 +177,7 @@ const { EventEmitter } = require("events");
         this._cleanExpiredTokens();
 
         const [id, vertoken] = token.split(":");
-        const hash = crypto
-          .createHash("sha256")
-          .update(vertoken)
-          .digest("hex");
+        const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
         const key = `${id}:${hash}`;
 
         if (this.config.state.tokensList[key]) {
