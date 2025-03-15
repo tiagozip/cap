@@ -25,10 +25,7 @@ fastify.get("/cap-floating.js", (req, res) => {
 
 fastify.post("/api/challenge", (req, res) => {
   res.send(
-    cap.createChallenge({
-      challengeCount: 32,
-      challengeDifficulty: 3,
-    })
+    cap.createChallenge()
   );
 });
 
