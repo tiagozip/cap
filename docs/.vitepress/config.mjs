@@ -40,13 +40,6 @@ export default defineConfig({
           { text: '@cap.js/widget', link: '/guide/widget.md' }
         ]
       },
-      {
-        text: 'Changelogs',
-        items: [
-          { text: '@cap.js/server', link: '/guide/changelog/server.md' },
-          { text: '@cap.js/widget', link: '/guide/changelog/widget.md' }
-        ]
-      },
       { text: "Vulnerabilities", link: "/guide/vulnerabilities.md" },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
