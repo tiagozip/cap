@@ -17,9 +17,9 @@ paths.forEach(async function ([inpath, outpath]) {
         [
           "@babel/preset-env",
           {
-            targets: "last 10 Chrome versions, last 10 Firefox versions, last 10 Safari versions, last 10 Edge versions",
+            targets:
+              "last 10 Chrome versions, last 10 Firefox versions, last 10 Safari versions, last 10 Edge versions",
             loose: true,
-
           },
         ],
       ],
@@ -35,7 +35,7 @@ paths.forEach(async function ([inpath, outpath]) {
             drop_console: true,
             dead_code: true,
             reduce_vars: true,
-            drop_console: false
+            drop_console: false,
           },
           output: {
             beautify: false,

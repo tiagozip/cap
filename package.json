@@ -2,9 +2,9 @@
   "name": "cap",
   "author": "Tiago Rangel",
   "dependencies": {
-    "@babel/core": "^7.25.8",
-    "@babel/preset-env": "^7.25.8",
-    "terser": "^5.37.0"
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "terser": "^5.39.0"
   },
   "description": "A modern, lightning-quick PoW captcha",
   "keywords": [
