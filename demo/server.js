@@ -1,6 +1,6 @@
+import fs from "fs";
 import path from "path";
 import Cap from "@cap.js/server";
-import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 
 const fastify = Fastify();
@@ -8,21 +8,19 @@ const cap = new Cap({
   tokens_store_path: ".data/tokensList.json",
 });
 
-fastify.register(fastifyStatic, {
-  root: path.join(__dirname),
-  prefix: "/",
-});
-
 fastify.get("/", (req, res) => {
-  res.sendFile("index.html");
+  res.header("Content-Type", "text/html");
+  res.send(fs.createReadStream(path.join(__dirname, "index.html")));
 });
 
 fastify.get("/cap.js", (req, res) => {
-  res.sendFile("../widget/src/cap.js");
+  res.header("Content-Type", "application/javascript");
+  res.send(fs.createReadStream(path.join(__dirname, "../widget/src/cap.js")));
 });
 
 fastify.get("/cap-floating.js", (req, res) => {
-  res.sendFile("../widget/src/cap-floating.js");
+  res.header("Content-Type", "application/javascript");
+  res.send(fs.createReadStream(path.join(__dirname, "../widget/src/cap-floating.js")));
 });
 
 fastify.post("/api/challenge", (req, res) => {
