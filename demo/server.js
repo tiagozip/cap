@@ -1,23 +1,32 @@
-const express = require("express");
-const Cap = require("@cap.js/server");
+import path from "path";
+import Cap from "@cap.js/server";
+import fastifyStatic from "@fastify/static";
+import Fastify from "fastify";
 
-const app = express();
-
-app.use(express.json());
-
-// app.use("/cap.js", express.static('../widget/src/cap.js'));
-// app.use("/cap-floating.js", express.static('../widget/src/cap-floating.js'));
-
+const fastify = Fastify();
 const cap = new Cap({
   tokens_store_path: ".data/tokensList.json",
 });
 
-app.get("/", (req, res) => {
-  res.sendFile("index.html", { root: __dirname });
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname),
+  prefix: "/",
 });
 
-app.post("/api/challenge", (req, res) => {
-  res.json(
+fastify.get("/", (req, res) => {
+  res.sendFile("index.html");
+});
+
+fastify.get("/cap.js", (req, res) => {
+  res.sendFile("../widget/src/cap.js");
+});
+
+fastify.get("/cap-floating.js", (req, res) => {
+  res.sendFile("../widget/src/cap-floating.js");
+});
+
+fastify.post("/api/challenge", (req, res) => {
+  res.send(
     cap.createChallenge({
       challengeCount: 32,
       challengeDifficulty: 3,
@@ -25,15 +34,15 @@ app.post("/api/challenge", (req, res) => {
   );
 });
 
-app.post("/api/redeem", async (req, res) => {
+fastify.post("/api/redeem", async (req, res) => {
   const { token, solutions } = req.body;
   if (!token || !solutions) {
-    return res.status(400).json({ success: false });
+    return res.code(400).send({ success: false });
   }
-  
-  res.json(await cap.redeemChallenge({ token, solutions }));
+
+  res.send(await cap.redeemChallenge({ token, solutions }));
 });
 
-app.listen(3000, () => {
-  console.log("Listening on http://localhost:3000");
+fastify.listen({ port: 3000, host: "0.0.0.0" }).then(() => {
+  console.log("Server is running on http://localhost:3000");
 });
