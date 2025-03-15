@@ -19,6 +19,7 @@
     });
   };
 
+  // MARK: Widget
   class CapWidget extends HTMLElement {
     #workerUrl = "";
     #resetTimer = null;
@@ -370,6 +371,7 @@
     }
   }
 
+  // MARK: Invisible
   class Cap {
     constructor(config = {}, el) {
       let widget = el || document.createElement("cap-widget");
@@ -410,6 +412,7 @@
   );
   document.adoptedStyleSheets.push(sheet);
 
+  // MARK: Solver worker
   const workerFunct = function () {
     let hasher;
 
