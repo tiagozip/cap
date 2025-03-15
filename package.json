@@ -20,9 +20,9 @@
   "scripts": {
     "build": "bun run build.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs:dev": "cd docs && bun run docs:dev",
-    "docs:build": "cd docs && bun run docs:build",
-    "docs:preview": "cd docs && bun run docs:preview",
+    "docs:dev": "cd docs && bun run dev",
+    "docs:build": "cd docs && bun run build",
+    "docs:preview": "cd docs && bun run preview",
     "widget:publish": "cd widget && sudo npm publish --access public",
     "server:publish": "cd server && sudo npm publish --access public"
   }
