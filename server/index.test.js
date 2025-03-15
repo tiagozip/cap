@@ -1,6 +1,5 @@
 const express = require('express');
 const crypto = require('crypto');
-const fs = require('fs').promises;
 const Cap = require('./index.js');
 
 const app = express();
