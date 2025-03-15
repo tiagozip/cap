@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@cap.js/server": "^1.0.1",
+    "@cap.js/server": "^1.0.5",
     "express": "^4.21.2"
   }
 }
