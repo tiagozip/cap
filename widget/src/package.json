@@ -1,0 +1,32 @@
+{
+  "name": "@cap.js/widget",
+  "version": "0.0.11",
+  "description": "Cap widget",
+  "keywords": [
+    "captcha",
+    "pow",
+    "crypto",
+    "encryption",
+    "recaptcha",
+    "bun",
+    "js",
+    "node",
+    "hcaptcha"
+  ],
+  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "bugs": {
+    "url": "https://github.com/tiagorangel1/cap/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagorangel1/cap.git"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "Tiago Rangel",
+  "type": "commonjs",
+  "main": "cap.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "npm:publish": "sudo npm publish --access public"
+  }
+}

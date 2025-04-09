@@ -1,11 +1,6 @@
 {
   "name": "cap",
   "author": "Tiago Rangel",
-  "dependencies": {
-    "@babel/core": "^7.26.10",
-    "@babel/preset-env": "^7.26.9",
-    "terser": "^5.39.0"
-  },
   "description": "A modern, lightning-quick PoW captcha",
   "keywords": [
     "captcha",
@@ -19,11 +14,11 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "build": "bun run build.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "docs:dev": "cd docs && bun run dev",
     "docs:build": "cd docs && bun run build",
     "docs:preview": "cd docs && bun run preview",
-    "widget:publish": "cd widget && sudo npm publish --access public",
+    "widget:build": "cd widget && bun run build.js",
+    "widget:publish": "cd widget && cd src && sudo npm publish --access public",
     "server:publish": "cd server && sudo npm publish --access public"
   }
 }

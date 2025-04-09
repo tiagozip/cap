@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "Cap"
   text: "A modern, lightning-quick PoW captcha"
-  tagline: "Cap is the modern open-source ReCAPTCHA alternative designed for speed. FOSS, lightweight, private and secure."
+  tagline: "Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW."
   image:
     src: /logo.png
     alt: VitePress
@@ -45,5 +45,4 @@ features:
   - icon: 🧑
     title: Made for humans, not bots
     details: Cap's web component & server-side library are super easy to integrate into your website
-
 ---
