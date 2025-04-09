@@ -2,7 +2,7 @@
 
 # cap — modern, lightning-quick PoW captcha
 
-Cap is the modern open-source ReCAPTCHA alternative designed for speed. FOSS, lightweight, private and secure.
+Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.
 
 | [Learn more](https://cap.tiagorangel.com)
 |----------|
