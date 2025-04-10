@@ -41,7 +41,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Install dependencies
-        run: bun install # or pnpm install / yarn install / bun install
+        run: cd docs && bun install # or pnpm install / yarn install / bun install
       - name: Build with VitePress
         run: bun run docs:build # or pnpm docs:build / yarn docs:build / bun run docs:build
       - name: Upload artifact
