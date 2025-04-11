@@ -23,26 +23,26 @@ hero:
 features:
   - icon: ⚡️
     title: 250x smaller than hCaptcha
-    details: Cap is lightning fast, so your pages load instantly and users don't wait around
+    details: Cap's widget library is extremely small, only 12kb minified and brotli'd.
   - icon: 🔒️
-    title: Private & GDPR compliant
-    details: No more tracking or data collection. Cap is GDPR compliant and keeps your users' data private
+    title: Private
+    details: Cap's usage of proof-of-work eliminates the need for any tracking, fingerprinting or data collection.
   - icon: 🌈
     title: Fully customizable
     details: Cap is self-hostable so you can customize both the backend & frontend — or you can just use CSS variables
   - icon: 🤖
     title: PoW-based
-    details: Cap uses PoW instead of frustrating image puzzles, making it easier for humans and harder for bots
+    details: Cap uses proof-of-work instead of complex puzzles, making it easier for humans and harder for bots
+  - icon: 🧩
+    title: Standalone mode
+    details: Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS.
   - icon: 💨
-    title: Headless mode
-    details: Need silent protection? Cap can run invisibly in the background without any user interface
+    title: Invisible mode
+    details: Cap can run invisibly in the background using a simple JS API.
   - icon: ☁️
     title: Floating mode
-    details: The floating mode keeps your CAPTCHA hidden until it's needed, creating a smoother experience
+    details: Floating mode keeps your CAPTCHA hidden until it's needed
   - icon: 🌳
-    title: Truly free
-    details: Completely open source under AGPL-3.0. No hidden costs, no premium features, no surprises and completely FOSS
-  - icon: 🧑
-    title: Made for humans, not bots
-    details: Cap's web component & server-side library are super easy to integrate into your website
+    title: Fully FOSS
+    details: Completely open source under AGPL-3.0, with no premium versions.
 ---

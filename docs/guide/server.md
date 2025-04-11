@@ -71,7 +71,7 @@ Creates a new Cap instance.
   expiresMs: 600000
 }
 ```
-**Output:** `{ challenge, expires }`
+**Response:** `{ challenge, expires }`
 
 #### `cap.redeemChallenge({ ... })`
 ```json
@@ -81,7 +81,7 @@ Creates a new Cap instance.
 }
 ```
 
-**Output:** `{ success, token }`
+**Response:** `{ success, token }`
 
 #### `await cap.validateToken("...", { ... })`
 **Arguments:**
@@ -90,4 +90,4 @@ Creates a new Cap instance.
   keepToken: false
 }
 ```
-**Output:** `{ success }`
+**Response:** `{ success }`
