@@ -35,7 +35,14 @@ fastify.post("/api/redeem", async (req, res) => {
     return res.code(400).send({ success: false });
   }
 
-  res.send(await cap.redeemChallenge({ token, solutions }));
+  const answer = await cap.redeemChallenge({ token, solutions });
+
+  res.send(answer);
+
+  console.log("new challenge redeemed", {
+    ...answer,
+    isValid: (await cap.validateToken(answer.token)).success,
+  });
 });
 
 fastify.listen({ port: 3000, host: "0.0.0.0" }).then(() => {
