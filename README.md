@@ -11,38 +11,21 @@ Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-
 
 <img alt="Cap captcha" src="./assets/thumb.png">
 
-**Note:** This is still a work in progress. It *should* work in production but you might stumble upon unexpected errors.
+## Why Cap?
 
-## Features
-- **250x smaller than hCaptcha**:
-  Cap is lightning fast, so your pages load instantly and users don't wait around
-- **Private & GDPR compliant**:
-  No more tracking or data collection. Cap is GDPR compliant and keeps your users' data private
-- **Fully customizable**:
-  Cap is self-hostable so you can customize both the backend & frontend — or you can just use CSS variables
-- **PoW-based**:
-  Cap uses PoW instead of frustrating image puzzles, making it easier and more private for humans
-- **Headless mode**:
-  Need silent protection? Cap can run invisibly in the background without any user interface
-- **Floating mode**:
-  The floating mode keeps your CAPTCHA hidden until it's needed, creating a smoother experience
-- **Truly free**:
-  Completely open source under AGPL-3.0. No hidden costs, no premium features, no surprises and completely FOSS
-- **Easy to integrate**:
-  Cap's web component & server-side library are super easy to integrate into your website
-
-# Why Cap over Cloudflare Turnstile and other CAPTCHAS?
-
-* **Why use this over Turnstile:** Cloudflare Turnstile is known for having an extremely high error rate, especially for users using private browsers such as Brave or Librewolf. Also, Cap is open-source.
-
-* **Why use this over RECAPTCHA:** Cap is significantly smaller and faster than RECAPTCHA, open-source, fully free and  doesn't require you checking traffic signs due to its PoW nature.
-
-* **Why use this over hCAPTCHA:** Not only is Cap's bundle 250x smaller than hCAPTCHA, it's open-source and doesn't require you checking traffic signs
-
-* **Why use this over Altcha:** Cap is slightly smaller than altcha and easier to integrate, but if you don't care about that and want a more mature solution I would highly recommend checking it out.
-
-* **Why use this over FriendlyCaptcha:** Unlike FriendlyCaptcha, Cap is free & open-source (FriendlyCaptcha is €39/month for 5,000 requests and 5 domains) and has a smaller footprint.
-
-* **Why use this over MTCaptcha:** Cap is more lightweight, doesn't rely on users solving an image puzzle that AIs like GPT-4o can solve, is open-source, more private and doesn't depend on third-party servers for verification.
-
-* **Why use this over GeeTest:** Cap doesn't require an account or API keys, has no usage limits, and is completely open-source with a simpler integration process. It also doesn't rely on slow, complex image-based puzzles that frustrate users
+- ⚡️ **250x smaller than hCaptcha**    
+  Cap's widget library is extremely small, only 12kb minified and brotli'd.
+- 🔒️ **Private**    
+   Cap's usage of proof-of-work eliminates the need for any tracking, fingerprinting or data collection.
+- 🌈 **Fully customizable**    
+   Cap is self-hostable so you can customize both the backend & frontend — or you can just use CSS variables
+- 🤖 **PoW-based**    
+   Cap uses proof-of-work instead of complex puzzles, making it easier for humans and harder for bots
+- 🧩 **Standalone mode**    
+   Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS.
+- 💨 **Invisible mode**    
+   Cap can run invisibly in the background using a simple JS API.
+- ☁️ **Floating mode**    
+   Floating mode keeps your CAPTCHA hidden until it's needed
+- 🌳 **Fully FOSS**    
+   Completely open source under AGPL-3.0, with no premium versions.

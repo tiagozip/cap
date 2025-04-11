@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login to Cap</title>
+    <link rel="icon" href="./public/logo.png" />
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+          Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
+      }
+      body {
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0px;
+        padding: 0px;
+        min-height: 100vh;
+        background-color: #121214;
+        color: #e8e8ea;
+      }
+      form {
+        max-width: 300px;
+        margin: 0px auto;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        text-align: left;
+      }
+      img {
+        width: 60px;
+      }
+      label {
+        font-size: 14px;
+        line-height: 1.5;
+        display: block;
+        margin-bottom: 3px;
+        color: #d9dfe5eb;
+      }
+      input {
+        font-size: 24px;
+        line-height: 1.33333333;
+        width: 100%;
+        padding: 12px;
+        margin: 0 6px 16px 0;
+        height: 40px;
+        color: inherit;
+        font-weight: 400;
+        border-radius: 6px;
+        border: 1px solid #e3e4e810;
+        background-color: #e3e4e807;
+        letter-spacing: -2px;
+        margin: 0px;
+        margin-bottom: 8px;
+      }
+
+      input:focus {
+        outline: none;
+        box-shadow: 0px 0px 0px 2px rgba(255, 255, 255, 0.5);
+      }
+
+      button {
+        padding: 6px 10px;
+        border-radius: 6px;
+        height: 40px;
+        text-align: center;
+        font-weight: 500;
+        border: none;
+        color: black;
+        background: white;
+        background-origin: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      button:focus {
+        box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
+          0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
+          0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
+        outline: 0;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+
+      p.credits {
+        text-align: right;
+      }
+
+      p.err {
+        color: #ffffff;
+        display: none;
+        margin: 0px;
+        margin-top: 12px;
+        font-size: 14px;
+      }
+
+      a {
+        color: rgb(255, 255, 255);
+        opacity: 0.4;
+        font-size: 14px;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .logo img {
+        width: 45px;
+        height: 45px;
+        margin-bottom: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <form action="/internal/auth" method="POST">
+      <div class="logo">
+        <img src="./public/logo.png" alt="Cap logo" />
+      </div>
+      <label for="key">Admin key</label>
+      <input type="password" name="password" placeholder="••••••••••••••" />
+      <cap-widget
+        style="
+          --cap-widget-width: 270px;
+          --cap-color: #ffffff;
+          --cap-background: #1b1b1d;
+          --cap-border-color: #dddddd21;
+          --cap-checkbox-border: 1px solid #aaaaaa7d;
+          --cap-checkbox-background: transparent;
+          --cap-spinner-color: #ffffff;
+          --cap-spinner-background-color: #ffffff5e;
+          margin-bottom: 12px;
+        "
+        data-cap-api-endpoint="/internal/auth/cap/"
+      ></cap-widget>
+
+      <button type="submit" disabled>Continue</button>
+      <p class="err"></p>
+      <p class="credits">
+        <a href="https://cap.tiagorangel.com" target="_blank">Powered by Cap</a>
+      </p>
+    </form>
+    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+  </body>
+  <script>
+    let token;
+    document.querySelector("input").focus();
+
+    document
+      .querySelector("form")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        if (!token) return;
+
+        document.querySelector("cap-widget").reset();
+
+        const password = document.querySelector("input[name=password]").value;
+
+        document.querySelector("button[type=submit]").disabled = true;
+
+        const { success } = await (
+          await fetch("/internal/auth", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              password,
+              "cap-token": token,
+            }),
+          })
+        ).json();
+
+        if (success) {
+          document.querySelector("p.err").style.display = "none";
+          window.location.href = "/";
+          return;
+        }
+
+        document.querySelector("p.err").style.display = "block";
+        document.querySelector("p.err").innerText =
+          "Invalid key or captcha. Please try again.";
+        document.querySelector("input[name=password]").value = "";
+      });
+
+    document
+      .querySelector("cap-widget")
+      .addEventListener("solve", async function (e) {
+        token = e.detail.token;
+        document.querySelector("button[type=submit]").disabled = false;
+      });
+  </script>
+</html>

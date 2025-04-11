@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cap</title>
+    <link rel="icon" href="./public/logo.png" />
+    <style>
+      * {
+        font-family: system, -apple-system, "BlinkMacSystemFont",
+          ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI",
+          "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
+        box-sizing: border-box;
+      }
+
+      body {
+        max-width: 600px;
+        padding: 15px;
+        margin: 3rem auto;
+        background-color: #121214;
+        color: #e8e8ea;
+      }
+
+      nav .logo {
+        width: 30px;
+        height: 30px;
+        display: block;
+        margin-bottom: -4px;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      nav a {
+        margin-left: auto;
+        color: inherit;
+        text-decoration: none;
+        font-size: 14px;
+        opacity: 0.7;
+      }
+      nav a:hover {
+        opacity: 1;
+      }
+
+      nav h1 {
+        font-weight: 500;
+        margin: 0px;
+        font-size: 20px;
+        margin-left: 6px;
+      }
+
+      p.text {
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 15px;
+      }
+
+      h2 {
+        font-weight: 600;
+        font-size: 23px;
+      }
+
+      .title {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .title button {
+        margin-left: auto;
+      }
+
+      button.btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        color: black;
+        background: white;
+        background-origin: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      button.btn:focus {
+        box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
+          0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
+          0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
+        outline: 0;
+      }
+
+      button.btn:disabled {
+        opacity: 0.4;
+        filter: grayscale(1);
+        pointer-events: none;
+      }
+
+      .dialog-wrapper {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        bottom: 0px;
+        background-color: rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fade-in 0.2s;
+      }
+
+      @keyframes fade-in {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .dialog-wrapper .dialog {
+        max-width: 450px;
+        width: 100%;
+        background-color: #1b1b20;
+        border-radius: 18px;
+        padding: 20px;
+        position: relative;
+        animation: dialog-in 0.2s;
+      }
+
+      @keyframes dialog-in {
+        0% {
+          transform: scale(0.98);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .dialog .close-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: transparent;
+        border: none;
+        color: #e8e8ea;
+        cursor: pointer;
+      }
+
+      .dialog h2 {
+        margin: 0px;
+        font-size: 20px;
+        margin-bottom: 10px;
+        user-select: none;
+      }
+
+      .dialog .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        user-select: none;
+      }
+
+      .key-creation-form {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 18px;
+        margin-top: 6px;
+      }
+
+      .key-creation-form label {
+        font-size: 15px;
+        margin-bottom: 6px;
+        user-select: none;
+      }
+
+      .key-creation-form input {
+        border-radius: 8px;
+        border: none;
+        padding: 10px 14px;
+        background-color: #2a2a31;
+        color: inherit;
+      }
+
+      .key-creation-form input:focus {
+        outline: none;
+        box-shadow: 0px 0px 0px 2px rgba(255, 255, 255, 0.5);
+      }
+
+      .key-creation-form input:disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .keys p {
+        text-align: center;
+        margin: 0px;
+        margin-top: 8px;
+        opacity: 0.8;
+        font-size: 15px;
+      }
+
+      .keys .copy-key {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+        background-origin: border-box;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .keys .copy-key:focus {
+        box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
+          0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
+          0px 0px 0px 3.5px rgba(255, 255, 255, 0.1);
+        outline: 0;
+      }
+
+      .keys .edit-key {
+        border: none;
+        background-color: transparent;
+        touch-action: manipulation;
+        cursor: pointer;
+        opacity: 0.8;
+        color: inherit;
+        padding: 0px;
+        margin-right: 8px;
+        margin-bottom: -4px;
+        display: block;
+      }
+
+      .keys .edit-key:hover {
+        opacity: 1;
+      }
+
+      .keys .key {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+      }
+
+      .key > span {
+        margin-right: auto;
+      }
+
+      .action-secundary {
+        border: none;
+        padding: 0px;
+        background-color: transparent;
+        color: white;
+        cursor: pointer;
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+      }
+
+      .action-secundary:hover {
+        opacity: 1;
+      }
+
+      .dialog .actions-col {
+        flex-direction: column;
+        align-items: start;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <img src="./public/logo.png" alt="Cap logo" class="logo" />
+      <h1>Cap</h1>
+      <a href="/internal/auth/logout" class="logout"> Logout </a>
+    </nav>
+
+    <div class="title">
+      <h2>Your keys</h2>
+      <button class="new-keys btn">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-plus-icon lucide-plus"
+        >
+          <path d="M5 12h14" />
+          <path d="M12 5v14" />
+        </svg>
+        Create key
+      </button>
+    </div>
+
+    <div class="keys">
+      <p>
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="white"
+        >
+          <style>
+            .ajPY {
+              transform-origin: center;
+              animation: ajPY 0.4s infinite linear;
+            }
+            @keyframes ajPY {
+              100% {
+                transform: rotate(360deg);
+              }
+            }
+          </style>
+          <path
+            d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"
+            opacity=".25"
+          />
+          <path
+            d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+            class="ajPY"
+          />
+        </svg>
+      </p>
+    </div>
+  </body>
+  <script src="/public/index.js?a=1"></script>
+</html>

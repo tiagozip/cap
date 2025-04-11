@@ -5,15 +5,6 @@ export default defineConfig({
   title: "Cap",
   description: "A modern, lightning-quick PoW captcha",
   lastUpdated: true,
-  vue: {
-    template: {
-      compilerOptions: {
-        isCustomElement: (tag) => {
-          return tag.toLowerCase().indexOf("cap-widget") === 0;
-        },
-      },
-    },
-  },
   themeConfig: {
     logo: '/logo.png',
 
@@ -24,15 +15,20 @@ export default defineConfig({
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
-      { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
     sidebar: [
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Alternatives", link: "/guide/alternatives.md" },
-      { text: "Floating mode", link: "/guide/floating.md" },
-      { text: "Invisible mode", link: "/guide/invisible.md" },
+      {
+        text: 'Modes',
+        items: [
+          { text: 'Standalone mode', link: '/guide/standalone.md' },
+          { text: 'Floating mode', link: '/guide/floating.md' },
+          { text: 'Invisible mode', link: '/guide/invisible.md' }
+        ]
+      },
       {
         text: 'Libraries',
         items: [

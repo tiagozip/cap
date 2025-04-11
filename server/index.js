@@ -77,6 +77,18 @@ const { EventEmitter } = require("events");
         return tokensChanged;
       }
 
+      _waitForTokensList() {
+        return new Promise((resolve) => {
+          const l = () => {
+            if (this.config.state.tokensList) {
+              return resolve();
+            }
+            setTimeout(l, 10);
+          };
+          l();
+        });
+      }
+
       async cleanup() {
         if (this._cleanupPromise) return this._cleanupPromise;
 
@@ -136,7 +148,7 @@ const { EventEmitter } = require("events");
         const challengeData = this.config.state.challengesList[token];
         if (!challengeData || challengeData.expires < Date.now()) {
           delete this.config.state.challengesList[token];
-          return { success: false };
+          return { success: false, message: "Challenge expired" };
         }
 
         delete this.config.state.challengesList[token];
@@ -155,7 +167,7 @@ const { EventEmitter } = require("events");
           );
         });
 
-        if (!isValid) return { success: false };
+        if (!isValid) return { success: false, message: "Invalid solution" };
 
         const vertoken = crypto.randomBytes(15).toString("hex");
         const expires = Date.now() + 20 * 60 * 1000;
@@ -179,6 +191,8 @@ const { EventEmitter } = require("events");
         const [id, vertoken] = token.split(":");
         const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
         const key = `${id}:${hash}`;
+
+        await this._waitForTokensList();
 
         if (this.config.state.tokensList[key]) {
           if (conf && conf.keepToken) {
