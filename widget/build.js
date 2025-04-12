@@ -4,6 +4,7 @@ import { minify } from "terser";
 
 const paths = [
   ["./src/src/cap.js", "./src/cap.min.js"],
+  ["./src/src/cap.js", "./src/cap.compat.min.js"],
   ["./src/src/cap-floating.js", "./src/cap-floating.min.js"],
 ];
 
@@ -17,7 +18,9 @@ paths.forEach(async function ([inpath, outpath]) {
         [
           "@babel/preset-env",
           {
-            targets: "last 20 Chrome versions, last 20 Firefox versions, last 10 Safari versions, last 10 Edge versions",
+            targets: outpath.includes(".compat")
+              ? "last 600 Chrome versions, last 600 Firefox versions, last 20 Safari versions, last 20 Edge versions"
+              : "last 20 Chrome versions, last 15 Firefox versions, last 10 Safari versions, last 10 Edge versions",
             loose: true
           },
         ],
