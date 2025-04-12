@@ -33,7 +33,8 @@ export default defineConfig({
         text: 'Libraries',
         items: [
           { text: '@cap.js/server', link: '/guide/server.md' },
-          { text: '@cap.js/widget', link: '/guide/widget.md' }
+          { text: '@cap.js/widget', link: '/guide/widget.md' },
+          { text: '@cap.js/solver', link: '/guide/solver.md' }
         ]
       },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
