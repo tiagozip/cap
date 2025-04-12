@@ -1,16 +1,17 @@
-# Cap Standalone client
+# Standalone server
 
 ## Installation
 
 Cap Standalone is a self-hosted version of Cap's backend that allows you to spin up a server to validate and create challenges so you can use it with languages other than JS.
 
-To install Cap Standalone, you need to have Docker installed on your server. You can find instructions on how to install Docker [here](https://docs.docker.com/get-docker/).
-
-Once you have Docker installed, you can run the following command to pull the image:
+To install Cap Standalone, you need to have [Docker](https://docs.docker.com/get-docker/) installed on your server. Once you have it installed, you can run the following command to pull the image:
 
 ```bash
 docker pull tiago2/cap:latest
 ```
+
+> [!NOTE]
+> Both `x86_64` (amd64) and `arm64` architectures are supported. Docker Engine 20.10 or higher is recommended
 
 Then, to run the server, use the following command:
 
@@ -73,16 +74,8 @@ Example using `curl`:
 ```bash
 curl "https://<instance_url>/<key_id>/siteverify" \
   -X POST \
-  -d "secret=<key_secret>&response=<captcha_token>"
-
-# You can also send JSON:
-curl "https://<instance_url>/<key_id>/siteverify" \
-  -X POST \
   -H "Content-Type: application/json" \
-  -d '{
-        "secret": "<key_secret>",
-        "response": "<captcha_token>"
-      }'
+  -d '{ "secret": "<key_secret>", "response": "<captcha_token>" }'
 ```
 
 Remember to replace:
