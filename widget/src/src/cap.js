@@ -413,17 +413,76 @@
     let hasher;
 
     self.onmessage = async ({ data: { salt, target } }) => {
+      let nonce = 0;
+      const batchSize = 50000;
+      let processed = 0;
+      const encoder = new TextEncoder();
+
+      // Alternative solver in case WASM is not available
+      if (
+        !(
+          typeof WebAssembly === "object" &&
+          typeof WebAssembly.instantiate === "function"
+        )
+      ) {
+        console.log("[cap] WASM not enabled, falling back to crypto.subtle\nThis is significanty slower than the WASM implementation");
+
+        const targetBytes = new Uint8Array(target.length / 2);
+        for (let k = 0; k < targetBytes.length; k++) {
+          targetBytes[k] = parseInt(target.substring(k * 2, k * 2 + 2), 16);
+        }
+        const targetBytesLength = targetBytes.length;
+
+        while (true) {
+          try {
+            for (let i = 0; i < batchSize; i++) {
+              const inputString = salt + nonce;
+              const inputBytes = encoder.encode(inputString);
+
+              const hashBuffer = await crypto.subtle.digest(
+                "SHA-256",
+                inputBytes
+              );
+
+              const hashBytes = new Uint8Array(
+                hashBuffer,
+                0,
+                targetBytesLength
+              );
+
+              let matches = true;
+              for (let k = 0; k < targetBytesLength; k++) {
+                if (hashBytes[k] !== targetBytes[k]) {
+                  matches = false;
+                  break;
+                }
+              }
+
+              if (matches) {
+                self.postMessage({ nonce, found: true });
+                return;
+              }
+
+              nonce++;
+            }
+
+            processed += batchSize;
+          } catch (error) {
+            console.error("[cap] fallback worker error", error);
+            self.postMessage({
+              found: false,
+              error: error.message,
+            });
+            return;
+          }
+        }
+      }
+
       if (!hasher) {
         hasher = await hashwasm.createSHA256();
       }
 
-      let nonce = 0;
-      const batchSize = 50000;
-      const reportInterval = 500000;
-      let processed = 0;
-
       const buffer = new Uint8Array(128);
-      const encoder = new TextEncoder();
 
       while (true) {
         try {
@@ -445,10 +504,6 @@
           }
 
           processed += batchSize;
-          if (processed >= reportInterval) {
-            self.postMessage({ nonce, found: false });
-            processed = 0;
-          }
         } catch (error) {
           self.postMessage({ found: false, error: error.message });
           return;
