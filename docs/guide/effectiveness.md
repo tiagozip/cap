@@ -18,3 +18,15 @@ Cap is fully compliant with GDPR and CCPA. It doesn't use cookies or track you i
 
 - IP addresses are not stored by default
 - Challenges are stored in memory to make sure they are not tampered with (expire after 10 minutes by default), while tokens are stored in a file (hashed tokens only, this is `.data/tokensList.json` by default and expire after 20 minutes)
+
+## Why you might not want to use this
+
+Cap isn't a silver bullet: it won’t block all spam, but it will significantly reduce it. The core principle behind proof-of-work CAPTCHAs is that they are designed to prove effort rather than just verifying a human user.
+
+**Here's an example:**
+
+Imagine I can send 10,000 emails to 10,000 random recipients for $1. If I can earn $10 in return from these emails, it becomes highly profitable. However, if the cost of sending these emails increases from $1 to $100, it is no longer profitable. In fact, I would be losing money. This is where CAPTCHA logic comes into play: by making the cost of spamming increase dramatically, we can reduce its viability.
+
+By applying similar concepts to CAPTCHA, we make it costly for bots to spam, effectively discouraging them from trying.
+
+If you want to read more about proof-of-work, I recommend reading [this whitepaper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality)
