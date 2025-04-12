@@ -13,19 +13,23 @@ Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-
 
 ## Why Cap?
 
-- ⚡️ **250x smaller than hCaptcha**    
+- ⚡️ **250x smaller than hCaptcha**  
   Cap's widget library is extremely small, only 12kb minified and brotli'd.
-- 🔒️ **Private**    
+- 🔒️ **Private**  
    Cap's usage of proof-of-work eliminates the need for any tracking, fingerprinting or data collection.
-- 🌈 **Fully customizable**    
+- 🌈 **Fully customizable**  
    Cap is self-hostable so you can customize both the backend & frontend — or you can just use CSS variables
-- 🤖 **PoW-based**    
+- 🤖 **PoW-based**  
    Cap uses proof-of-work instead of complex puzzles, making it easier for humans and harder for bots
-- 🧩 **Standalone mode**    
+- 🧩 **Standalone mode**  
    Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS.
-- 💨 **Invisible mode**    
+- 💨 **Invisible mode**  
    Cap can run invisibly in the background using a simple JS API.
-- ☁️ **Floating mode**    
+- ☁️ **Floating mode**  
    Floating mode keeps your CAPTCHA hidden until it's needed
-- 🌳 **Fully FOSS**    
+- 🌳 **Fully FOSS**  
    Completely open source under AGPL-3.0, with no premium versions.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=tiagorangel1/cap&type=Date)](https://www.star-history.com/#tiagorangel1/cap&Date)
