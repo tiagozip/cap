@@ -44,4 +44,4 @@ console.log(await solver(CHALLENGES));
 Mainly for M2M interactions, where you want to solve Cap challenges in the server without user interaction.
 
 ### Doesn't this defeat the purpose of Cap?
-Not really. Server-side solving is a core use case of proof-of-work CAPTCHAs like Cap or altcha.
+Not really. Server-side solving is a core use case of proof-of-work CAPTCHAs like Cap or altcha. It’s about proving effort, not necessarily involving a human. [Learn more](./effectiveness.md#why-you-might-not-want-to-use-this)
