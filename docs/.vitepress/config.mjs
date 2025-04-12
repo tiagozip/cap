@@ -36,7 +36,6 @@ export default defineConfig({
           { text: '@cap.js/widget', link: '/guide/widget.md' }
         ]
       },
-      { text: "Vulnerabilities", link: "/guide/vulnerabilities.md" },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
