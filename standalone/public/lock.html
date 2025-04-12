@@ -40,29 +40,52 @@
         margin-bottom: 3px;
         color: #d9dfe5eb;
       }
-      input {
+
+      .password-wrapper {
+        border: 1px solid #e3e4e810;
+        background-color: #e3e4e807;
+        display: flex;
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+
+      .showhide-password {
+        border: none;
+        cursor: pointer;
+        color: white;
+        background-color: transparent;
+        padding: 0;
+        margin-right: 8px;
+      }
+
+      .password {
         font-size: 24px;
         line-height: 1.33333333;
+        background-color: transparent;
+        border: none;
         width: 100%;
         padding: 12px;
-        margin: 0 6px 16px 0;
         height: 40px;
         color: inherit;
         font-weight: 400;
-        border-radius: 6px;
-        border: 1px solid #e3e4e810;
-        background-color: #e3e4e807;
         letter-spacing: -2px;
         margin: 0px;
-        margin-bottom: 8px;
       }
 
-      input:focus {
+      .password.show-password {
+        letter-spacing: 0px;
+        font-size: 14px;
+      }
+
+      .password:focus {
         outline: none;
+      }
+
+      .password-wrapper:has(.password:focus) {
         box-shadow: 0px 0px 0px 2px rgba(255, 255, 255, 0.5);
       }
 
-      button {
+      .submit {
         padding: 6px 10px;
         border-radius: 6px;
         height: 40px;
@@ -79,14 +102,14 @@
         font-size: 14px;
       }
 
-      button:focus {
+      .submit:focus {
         box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
           0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
           0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
         outline: 0;
       }
 
-      button:disabled {
+      .submit:disabled {
         cursor: not-allowed;
         opacity: 0.4;
       }
@@ -109,6 +132,10 @@
         font-size: 14px;
       }
 
+      a:hover {
+        opacity: 1;
+      }
+
       .logo {
         display: flex;
         align-items: center;
@@ -128,42 +155,48 @@
         <img src="./public/logo.png" alt="Cap logo" />
       </div>
       <label for="key">Admin key</label>
-      <input type="password" name="password" placeholder="••••••••••••••" />
-      <cap-widget
-        style="
-          --cap-widget-width: 270px;
-          --cap-color: #ffffff;
-          --cap-background: #1b1b1d;
-          --cap-border-color: #dddddd21;
-          --cap-checkbox-border: 1px solid #aaaaaa7d;
-          --cap-checkbox-background: transparent;
-          --cap-spinner-color: #ffffff;
-          --cap-spinner-background-color: #ffffff5e;
-          margin-bottom: 12px;
-        "
-        data-cap-api-endpoint="/internal/auth/cap/"
-      ></cap-widget>
+      <div class="password-wrapper">
+        <input
+          type="password"
+          name="password"
+          placeholder="••••••••••••••"
+          class="password"
+        />
+        <button title="Show/hide password" class="showhide-password">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-eye-icon lucide-eye"
+          >
+            <path
+              d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
 
-      <button type="submit" disabled>Continue</button>
+      <button type="submit" class="submit">Continue</button>
       <p class="err"></p>
       <p class="credits">
         <a href="https://cap.tiagorangel.com" target="_blank">Powered by Cap</a>
       </p>
     </form>
-    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
   </body>
   <script>
-    let token;
     document.querySelector("input").focus();
 
     document
       .querySelector("form")
       .addEventListener("submit", async function (e) {
         e.preventDefault();
-
-        if (!token) return;
-
-        document.querySelector("cap-widget").reset();
 
         const password = document.querySelector("input[name=password]").value;
 
@@ -176,8 +209,7 @@
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              password,
-              "cap-token": token,
+              password
             }),
           })
         ).json();
@@ -190,15 +222,26 @@
 
         document.querySelector("p.err").style.display = "block";
         document.querySelector("p.err").innerText =
-          "Invalid key or captcha. Please try again.";
+          "Incorrect admin key. Please try again.";
         document.querySelector("input[name=password]").value = "";
       });
 
     document
-      .querySelector("cap-widget")
-      .addEventListener("solve", async function (e) {
-        token = e.detail.token;
-        document.querySelector("button[type=submit]").disabled = false;
+      .querySelector(".showhide-password")
+      .addEventListener("click", () => {
+        const passwordInput = document.querySelector("input[name=password]");
+        const showhideButton = document.querySelector(".showhide-password");
+        passwordInput.classList.toggle("show-password");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          passwordInput.placeholder = "";
+          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
+        } else {
+          passwordInput.type = "password";
+          passwordInput.placeholder = "••••••••••••••";
+          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+        }
       });
   </script>
 </html>

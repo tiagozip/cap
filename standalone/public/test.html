@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Challenge Tester (Visual Input)</title>
+    <style>
+      * {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+          sans-serif;
+      }
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      #inputArea {
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 90%;
+        max-width: 400px;
+      }
+      #inputArea label {
+        font-weight: 500;
+      }
+      #inputArea input {
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #eee;
+      }
+      #inputArea button {
+        padding: 10px 15px;
+        background-color: black;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1em;
+      }
+      #inputArea button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      pre {
+        font-family: monospace;
+        font-size: 14px;
+        max-width: 80vw;
+        max-height: 300px;
+        overflow-y: auto;
+        width: 600px;
+        margin-bottom: 20px;
+        border: 1px solid #eee;
+        background-color: #fdfdfd;
+        padding: 10px;
+      }
+      #chartContainer {
+        width: 90%;
+        max-width: 700px;
+        margin-top: 20px;
+      }
+      h2 {
+        margin-top: 30px;
+        margin-bottom: 10px;
+      }
+
+      cap-widget {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        display: none;
+        z-index: 1000;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div id="inputArea">
+      <label for="keyIdInput">Key ID:</label>
+      <input
+        type="text"
+        id="keyIdInput"
+        placeholder="Enter your Key ID"
+        required
+      />
+
+      <label for="secretKeyInput">Secret Key:</label>
+      <input
+        type="password"
+        id="secretKeyInput"
+        placeholder="Enter your Secret Key"
+        required
+      />
+
+      <button id="startButton">Start</button>
+    </div>
+
+    <pre class="logs">No logs</pre>
+
+    <div id="chartContainer">
+      <canvas id="progressChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+
+    <script>
+      const logsElement = document.querySelector(".logs");
+      const keyIdInput = document.getElementById("keyIdInput");
+      const secretKeyInput = document.getElementById("secretKeyInput");
+      const startButton = document.getElementById("startButton");
+      const ctx = document.querySelector("#progressChart").getContext("2d");
+
+      let progressTimings = {};
+      let chartInstance = null;
+      let cap = null;
+      let startTime = 0;
+
+      const log = (msg) => {
+        logsElement.innerText += `${msg}\n`;
+        logsElement.scrollTop = logsElement.scrollHeight;
+      };
+
+      const clearLogs = () => {
+        logsElement.innerText = "";
+      };
+
+      function renderProgressChart() {
+        const sortedProgressSteps = Object.keys(progressTimings)
+          .map(Number)
+          .sort((a, b) => a - b);
+
+        const labels = sortedProgressSteps.map((p) => `${p}%`);
+        const data = sortedProgressSteps.map((p) => progressTimings[p]);
+
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+
+        chartInstance = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Time to reach step (ms)",
+                data: data,
+                borderColor: "rgb(75, 192, 192)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                fill: true,
+                tension: 0.1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Time elapsed (ms)" },
+              },
+              x: {
+                title: { display: true, text: "Challenge progress (%)" },
+              },
+            },
+            plugins: {
+              legend: { display: true },
+            },
+          },
+        });
+      }
+
+      async function validateToken(keyId, secretKey, token) {
+        log(`Solved successfully, validating token...`);
+
+        const { success } = await (await fetch(`/${keyId}/siteverify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            secret: secretKey,
+            response: token,
+          }),
+        })).json();
+        log(`Token: ${token}`);
+        log(`Token validation response: ${success}`);
+      }
+
+      startButton.addEventListener("click", () => {
+        const KEY_ID = keyIdInput.value.trim();
+        const SECRET_KEY = secretKeyInput.value.trim();
+
+        if (!SECRET_KEY || !KEY_ID) {
+          clearLogs();
+          log("Missing secret key or key ID.");
+          return;
+        }
+
+        clearLogs();
+        progressTimings = {};
+        startTime = Date.now();
+        progressTimings[0] = 0;
+        startButton.disabled = true;
+        log(
+          `Requesting challenge for key ${KEY_ID}...\nSecret key: ${SECRET_KEY.substring(
+            0,
+            5
+          )}...\n\n${"*".repeat(60)}\n\n`
+        );
+
+        if (cap && cap.widget && cap.widget.parentNode) {
+          cap.widget.parentNode.removeChild(cap.widget);
+        }
+        cap = new Cap({
+          apiEndpoint: `/${KEY_ID}/api/`,
+        });
+
+        cap.addEventListener("progress", (e) => {
+          const currentTime = Date.now();
+          const elapsed = currentTime - startTime;
+          const progress = e.detail.progress;
+          log(`Solving... ${progress}% [${elapsed}ms]`);
+          if (progressTimings[progress] === undefined) {
+            progressTimings[progress] = elapsed;
+          }
+        });
+
+        cap.addEventListener("error", (e) => {
+          log(`Error: ${e.detail.error}`);
+          startButton.disabled = false;
+          if (cap.widget) {
+            cap.widget.style.display = "none";
+          }
+        });
+
+        cap.widget.style.display = "block";
+
+        cap
+          .solve()
+          .then(async (token) => {
+            const solveEndTime = Date.now();
+            const totalSolveTime = solveEndTime - startTime;
+            log(`Challenge solved in ${totalSolveTime}ms`);
+            progressTimings[100] = totalSolveTime;
+
+            renderProgressChart();
+
+            await validateToken(KEY_ID, SECRET_KEY, token.token);
+          })
+          .catch((err) => {
+            log(`Error during solve: ${err}`);
+          })
+          .finally(() => {
+            startButton.disabled = false;
+          });
+      });
+    </script>
+  </body>
+</html>
