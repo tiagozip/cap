@@ -2,14 +2,17 @@ import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+  lang: "en-US",
   title: "Cap",
-  description: "A modern, lightning-quick PoW captcha",
+  description:
+    "Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 proof-of-work",
   lastUpdated: true,
+  head: [["link", { rel: "icon", href: "/logo.png" }]],
   themeConfig: {
-    logo: '/logo.png',
+    logo: "/logo.png",
 
     editLink: {
-      pattern: 'https://github.com/tiagorangel1/cap/edit/main/docs/:path'
+      pattern: "https://github.com/tiagorangel1/cap/edit/main/docs/:path",
     },
 
     nav: [
@@ -22,20 +25,20 @@ export default defineConfig({
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Alternatives", link: "/guide/alternatives.md" },
       {
-        text: 'Modes',
+        text: "Modes",
         items: [
-          { text: 'Standalone mode', link: '/guide/standalone.md' },
-          { text: 'Floating mode', link: '/guide/floating.md' },
-          { text: 'Invisible mode', link: '/guide/invisible.md' }
-        ]
+          { text: "Standalone mode", link: "/guide/standalone.md" },
+          { text: "Floating mode", link: "/guide/floating.md" },
+          { text: "Invisible mode", link: "/guide/invisible.md" },
+        ],
       },
       {
-        text: 'Libraries',
+        text: "Libraries",
         items: [
-          { text: '@cap.js/server', link: '/guide/server.md' },
-          { text: '@cap.js/widget', link: '/guide/widget.md' },
-          { text: '@cap.js/solver', link: '/guide/solver.md' }
-        ]
+          { text: "@cap.js/server", link: "/guide/server.md" },
+          { text: "@cap.js/widget", link: "/guide/widget.md" },
+          { text: "@cap.js/solver", link: "/guide/solver.md" },
+        ],
       },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
@@ -58,7 +61,4 @@ export default defineConfig({
       lazyLoading: true,
     },
   },
-  ssr: {
-    noExternal: ["vitepress-plugin-nprogress"],
-  }
 });
