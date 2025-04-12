@@ -1,6 +1,6 @@
-const fs = require("fs").promises;
-const babel = require("@babel/core");
-const { minify } = require("terser");
+import fs from "fs/promises"
+import babel from "@babel/core"
+import { minify } from "terser";
 
 const paths = [
   ["./src/src/cap.js", "./src/cap.min.js"],
@@ -17,9 +17,8 @@ paths.forEach(async function ([inpath, outpath]) {
         [
           "@babel/preset-env",
           {
-            targets:
-              "last 10 Chrome versions, last 10 Firefox versions, last 10 Safari versions, last 10 Edge versions",
-            loose: true,
+            targets: "last 20 Chrome versions, last 20 Firefox versions, last 10 Safari versions, last 10 Edge versions",
+            loose: true
           },
         ],
       ],
