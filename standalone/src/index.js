@@ -1,5 +1,6 @@
 import { Elysia, file, NotFoundError } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
+import { cors } from '@elysiajs/cors'
 import { rateLimit } from "elysia-rate-limit";
 import Cap from "@cap.js/server";
 import crypto from "crypto";
@@ -270,6 +271,7 @@ const internal = new Elysia({ prefix: "/internal" })
   });
 
 const api = new Elysia({ prefix: "/:key" })
+  .use(cors())
   .use(
     rateLimit({
       scoping: "scoped",
