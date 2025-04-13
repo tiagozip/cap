@@ -1,10 +1,10 @@
-<img alt="Cap logo" src="https://cap.tiagorangel.com/logo.png" width="70">
+<img alt="Cap logo" src="https://capjs.js.org/logo.png" width="70">
 
 # cap — modern, lightning-quick PoW captcha
 
 Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.
 
-| [Learn more](https://cap.tiagorangel.com)
+| [Learn more](https://capjs.js.org)
 |----------|
 
 [![npm @cap.js/server](https://img.shields.io/badge/@cap.js/-server-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/server) [![npm @cap.js/widget](https://img.shields.io/badge/@cap.js/-widget-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/widget) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)

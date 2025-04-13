@@ -33,7 +33,7 @@ Then, you can access the dashboard at `http://localhost:3000`, log in, and creat
 
 ### Client-side
 
-First, add the Cap widget to your website by following the [Cap docs](https://cap.tiagorangel.com/).
+First, add the Cap widget to your website by following [this guide](widget.md).
 
 Then, you need to configure the widget to use your self-hosted Cap Standalone server. To do this, set the widget's API endpoint option to:
 
