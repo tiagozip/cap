@@ -3,7 +3,8 @@
   "version": "1.0.6",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.js"
+    "dev": "bun run --watch src/index.js",
+    "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:latest . --push"
   },
   "dependencies": {
     "@cap.js/server": "^1.0.6",

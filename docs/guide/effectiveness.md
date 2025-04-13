@@ -30,3 +30,8 @@ Imagine I can send 10,000 emails to 10,000 random recipients for $1. If I can ea
 By applying similar concepts to CAPTCHA, we make it costly for bots to spam, effectively discouraging them from trying.
 
 If you want to read more about proof-of-work, I recommend reading [this whitepaper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality)
+
+
+## Why proof-of-work?
+
+Every captcha is solvable by bots or by paid humans. The only question is how to make it costly for bots but invisible for users. Proof-of-work is the perfect balance for this problem.

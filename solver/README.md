@@ -1,2 +1,3 @@
 # Server solver for the Cap CAPTCHA
-See [https://cap.tiagorangel.com](https://cap.tiagorangel.com)
+
+See [https://capjs.js.org](https://capjs.js.org)
