@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "Cap"
   text: "A modern, lightning-quick PoW captcha"
-  tagline: "Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 proof-of-work"
+  tagline: "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work"
   image:
     src: /logo.png
     alt: VitePress

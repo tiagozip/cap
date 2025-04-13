@@ -5,7 +5,7 @@ export default defineConfig({
   lang: "en-US",
   title: "Cap",
   description:
-    "Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 proof-of-work",
+    "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work",
   lastUpdated: true,
   head: [["link", { rel: "icon", href: "/logo.png" }]],
   themeConfig: {
