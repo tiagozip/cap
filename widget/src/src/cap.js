@@ -247,7 +247,7 @@
       this.#div.querySelector("a").addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        window.open("#", "_blank");
+        window.open("https://capjs.js.org", "_blank");
       });
 
       this.#div.addEventListener("click", () => {
