@@ -44,5 +44,5 @@ features:
     details: Floating mode keeps your CAPTCHA hidden until it's needed
   - icon: 🌳
     title: Fully FOSS
-    details: Completely open source under AGPL-3.0, with no premium versions.
+    details: Completely open source under the Apache license 2.0 license
 ---

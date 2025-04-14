@@ -11,7 +11,7 @@
     "js",
     "node"
   ],
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "bun run build.js",
     "docs:dev": "cd docs && bun run dev",

@@ -28,7 +28,7 @@ Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-
 - ☁️ **Floating mode**  
    Floating mode keeps your CAPTCHA hidden until it's needed
 - 🌳 **Fully FOSS**  
-   Completely open source under AGPL-3.0, with no premium versions.
+   Completely open source under the Apache license 2.0 license
 
 ## Star History
 
