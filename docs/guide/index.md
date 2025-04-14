@@ -51,10 +51,20 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
-Start by installing it using npm or bun:
+Start by installing it:
 
+::: code-group
+
+```bash [bun]
+bun add @cap.js/server
 ```
+
+```bash [npm]
 npm i @cap.js/server
+```
+
+```bash [pnpm]
+pnpm i @cap.js/server
 ```
 
 > [!NOTE]
