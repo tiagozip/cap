@@ -377,7 +377,6 @@
       });
 
       if (config.apiEndpoint) {
-        console.log(config);
         widget.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
       } else {
         widget.remove();
