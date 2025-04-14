@@ -9,6 +9,15 @@ export default defineConfig({
   lastUpdated: true,
   head: [["link", { rel: "icon", href: "/logo.png" }]],
   themeConfig: {
+    search: {
+      provider: 'algolia',
+      options: {
+        appId: 'B8THEYC8QW',
+        apiKey: 'ebdc4d8bd68e388cbeca09c14b982a85',
+        indexName: 'cap-tiagorangel'
+      }
+    },
+
     logo: "/logo.png",
 
     editLink: {
@@ -46,12 +55,9 @@ export default defineConfig({
     socialLinks: [
       { icon: "github", link: "https://github.com/tiagorangel1/cap" },
     ],
-    search: {
-      provider: "local",
-    },
 
     footer: {
-      message: "Released under the AGPLv3 License.",
+      message: "Released under the Apache 2.0 License.",
       copyright:
         "Copyright © 2025-present <a href='https://tiagorangel.com' target='_blank'>Tiago Rangel</a>",
     },
