@@ -2,6 +2,8 @@ const crypto = require("crypto");
 const fs = require("fs/promises");
 const { EventEmitter } = require("events");
 
+const DEFAULT_TOKENS_STORE = ".data/tokensList.json";
+
 (function (define) {
   define(function (require, exports, module) {
     class Cap extends EventEmitter {
@@ -9,7 +11,7 @@ const { EventEmitter } = require("events");
         super();
         this._cleanupPromise = null;
         this.config = {
-          tokens_store_path: ".data/tokensList.json",
+          tokens_store_path: DEFAULT_TOKENS_STORE,
           state: {
             challengesList: {},
             tokensList: {},
@@ -17,7 +19,7 @@ const { EventEmitter } = require("events");
           ...configObj,
         };
 
-        this._loadTokens().catch(() => {});
+        this._loadTokens().catch(() => { });
 
         process.on("beforeExit", () => this.cleanup());
 
@@ -32,7 +34,10 @@ const { EventEmitter } = require("events");
 
       async _loadTokens() {
         try {
-          await fs.mkdir(".data", { recursive: true });
+          const dirPath = this.config.tokens_store_path.split('/').slice(0, -1).join('/');
+          if (dirPath) {
+            await fs.mkdir(dirPath, { recursive: true });
+          }
 
           try {
             await fs.access(this.config.tokens_store_path);
@@ -217,7 +222,7 @@ const { EventEmitter } = require("events");
 })(
   typeof module === "object" && module.exports && typeof define !== "function"
     ? function (factory) {
-        module.exports = factory(require, exports, module);
-      }
+      module.exports = factory(require, exports, module);
+    }
     : define
 );
