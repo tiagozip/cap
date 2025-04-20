@@ -138,14 +138,15 @@
             })
           ).json();
 
-          if (!resp.success) throw new Error("Invalid solution");
-
           this.dispatchEvent("progress", { progress: 100 });
-          this.dispatchEvent("solve", { token: resp.token });
-          this.#token = resp.token;
+
+          if (!resp.success) throw new Error("Invalid solution");
           if (this.querySelector("input[name='cap-token']")) {
             this.querySelector("input[name='cap-token']").value = resp.token;
           }
+
+          this.dispatchEvent("solve", { token: resp.token });
+          this.#token = resp.token;
 
           if (this.#resetTimer) clearTimeout(this.#resetTimer);
           const expiresIn = new Date(resp.expires).getTime() - Date.now();
@@ -225,8 +226,8 @@
       const maxWorkers = Math.min(navigator.hardwareConcurrency || 8, 16);
       this.#workersCount =
         !isNaN(parsedWorkers) &&
-          parsedWorkers > 0 &&
-          parsedWorkers <= maxWorkers
+        parsedWorkers > 0 &&
+        parsedWorkers <= maxWorkers
           ? parsedWorkers
           : navigator.hardwareConcurrency || 8;
     }
@@ -424,7 +425,9 @@
           typeof WebAssembly.instantiate === "function"
         )
       ) {
-        console.log("[cap] WASM not enabled, falling back to crypto.subtle\nThis is significanty slower than the WASM implementation");
+        console.log(
+          "[cap] WASM not enabled, falling back to crypto.subtle\nThis is significanty slower than the WASM implementation"
+        );
 
         const targetBytes = new Uint8Array(target.length / 2);
         for (let k = 0; k < targetBytes.length; k++) {
