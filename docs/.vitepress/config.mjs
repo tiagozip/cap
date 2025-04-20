@@ -58,6 +58,13 @@ export default defineConfig({
       "meta",
       { name: "twitter:image", content: "https://capjs.js.org/logo.png" },
     ],
+    [
+      "meta",
+      {
+        name: "google-site-verification",
+        content: "_qNXNJhgoxAeT8hv5PctRvPqfwRKOGo-TtjAhFewmYw",
+      },
+    ],
   ],
   themeConfig: {
     search: {
