@@ -46,3 +46,33 @@ features:
     title: Fully FOSS
     details: Completely open source under the Apache license 2.0 license
 ---
+
+## What is Cap?
+
+Cap is a lightweight, open-source CAPTCHA alternative that uses SHA-256-based proof-of-work to verify real users and block bots — no cookies, no trackers.
+
+- ✅ Privacy-friendly
+- ⚡ Fast and lightweight
+- 🔓 Fully open source (Apache 2.0)
+- 🧩 Pluggable widget + solver + backend
+
+It's ideal for:
+
+- Protecting APIs from bots
+- Preventing spam on forms
+- Blocking automated login attempts
+- Securing free-tier abuse
+
+Cap is built with JavaScript, runs on any JS runtime (Bun, Node.js, Deno), and has no dependencies. If you're not using any JS runtime, you can also use the standalone mode with Docker, which relies entirely on a simple REST API to create and validate challenges.
+
+Zero dependencies, developer-friendly, and effective against spam, DDoS, and automation.
+
+## Alternatives
+
+Cap.js is a modern alternative to:
+
+- [reCAPTCHA](https://www.google.com/recaptcha/about/)
+- [hCaptcha](https://www.hcaptcha.com/)
+- [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+
+But unlike them, Cap is **computation-bound, not tracking-bound**.
