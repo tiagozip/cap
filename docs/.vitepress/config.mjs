@@ -22,7 +22,7 @@ export default defineConfig({
       "meta",
       {
         property: "og:title",
-        content: "Cap — Modern, Open-source PoW CAPTCHA for Node and Bun",
+        content: "Cap — Modern, Open-source PoW CAPTCHA for JavaScript",
       },
     ],
     [
@@ -43,7 +43,7 @@ export default defineConfig({
       "meta",
       {
         name: "twitter:title",
-        content: "Cap — Modern, Open-source PoW CAPTCHA for Node and Bun",
+        content: "Cap — Modern, Open-source PoW CAPTCHA for JavaScript",
       },
     ],
     [
