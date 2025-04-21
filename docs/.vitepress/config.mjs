@@ -65,6 +65,23 @@ export default defineConfig({
         content: "_qNXNJhgoxAeT8hv5PctRvPqfwRKOGo-TtjAhFewmYw",
       },
     ],
+    [
+      "script",
+      {
+        type: "application/ld+json",
+      },
+      `
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Cap",
+      "url": "https://capjs.js.org",
+      "description": "Lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work",
+      "applicationCategory": "SecurityApplication",
+      "operatingSystem": "All"
+    }
+    `,
+    ],
   ],
   themeConfig: {
     search: {
