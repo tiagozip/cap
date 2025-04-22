@@ -126,7 +126,7 @@ export default defineConfig({
         ],
       },
       { text: "Benchmark", link: "/guide/benchmark.md" },
-      { text: "Demo", link: "https://cap-starter.glitch.me/" },
+      { text: "Demo", link: "/guide/demo.md" }
     ],
 
     socialLinks: [
