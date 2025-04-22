@@ -7,7 +7,7 @@ cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-
 | [documentation →](https://capjs.js.org) | [demo](https://cap-starter.glitch.me)
 |----------|----------|
 
-[![npm @cap.js/server](https://img.shields.io/badge/@cap.js/-server-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/server) [![npm @cap.js/widget](https://img.shields.io/badge/@cap.js/-widget-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/widget) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)
+[![npm @cap.js/server](https://img.shields.io/badge/@cap.js/-server-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/server) [![npm @cap.js/widget](https://img.shields.io/badge/@cap.js/-widget-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/widget) [![npm @cap.js/solver](https://img.shields.io/badge/@cap.js/-solver-CB0200?logo=npm)](https://www.npmjs.com/package/@cap.js/solver) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)
 
 <img alt="Cap captcha" src="./assets/thumb.png">
 
