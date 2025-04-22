@@ -108,6 +108,7 @@ export default defineConfig({
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Alternatives", link: "/guide/alternatives.md" },
+      { text: "Philosophy", link: "/guide/philosophy.md" },
       {
         text: "Modes",
         items: [
@@ -124,6 +125,7 @@ export default defineConfig({
           { text: "@cap.js/solver", link: "/guide/solver.md" },
         ],
       },
+      { text: "Benchmark", link: "/guide/benchmark.md" },
       { text: "Demo", link: "https://cap-starter.glitch.me/" },
     ],
 
