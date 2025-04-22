@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from "vue";
-import Cap from "@cap.js/widget";
 
 const difficulty = ref(4);
 const challenges = ref(18);
@@ -19,13 +18,16 @@ async function runBenchmark() {
   resultMessage.value = "Running benchmark... 0%";
 
   try {
+    const { default: Cap } = await import("https://unpkg.com/@cap.js/widget");
+
     window.CAP_CUSTOM_FETCH = async (url, options) => {
       if (url === "/api/challenge") {
+        const browserCrypto = window.crypto;
         return new Response(
           JSON.stringify({
             challenge: Array.from({ length: challenges.value }, () => [
               Array.from(
-                crypto.getRandomValues(
+                browserCrypto.getRandomValues(
                   new Uint8Array(Math.ceil(challengeSize.value / 2))
                 )
               )
@@ -34,7 +36,7 @@ async function runBenchmark() {
                 .slice(0, challengeSize.value),
 
               Array.from(
-                crypto.getRandomValues(
+                browserCrypto.getRandomValues(
                   new Uint8Array(Math.ceil(difficulty.value / 2))
                 )
               )
@@ -43,7 +45,7 @@ async function runBenchmark() {
                 .slice(0, difficulty.value),
             ]),
             token: "",
-            expires: (new Date().getTime()) + (6000*100),
+            expires: new Date().getTime() + 6000 * 100,
           }),
           {
             status: 200,
@@ -64,7 +66,7 @@ async function runBenchmark() {
           }
         );
       }
-      return await fetch(...arguments);
+      return await window.fetch(url, options);
     };
 
     const cap = new Cap({
@@ -96,58 +98,66 @@ async function runBenchmark() {
 </script>
 
 <template>
-  <div class="benchmark-form" :style="{ '--progress-percent': progressValue }">
-    <div class="benchmark-field">
-      <label for="difficulty">Challenge difficulty</label>
-      <input
-        type="number"
-        id="difficulty"
-        name="difficulty"
-        min="1"
-        max="10"
-        v-model.number="difficulty"
-      />
+  <ClientOnly>
+    <div
+      class="benchmark-form"
+      :style="{ '--progress-percent': progressValue }"
+    >
+      <div class="benchmark-field">
+        <label for="difficulty">Challenge difficulty</label>
+        <input
+          type="number"
+          id="difficulty"
+          name="difficulty"
+          min="1"
+          max="10"
+          v-model.number="difficulty"
+        />
+      </div>
+      <div class="benchmark-field">
+        <label for="challenges">Number of challenges</label>
+        <input
+          type="number"
+          id="challenges"
+          name="challenges"
+          min="1"
+          max="100"
+          v-model.number="challenges"
+        />
+      </div>
+      <div class="benchmark-field">
+        <label for="challengeSize">Challenge size</label>
+        <input
+          type="number"
+          id="challengeSize"
+          name="challengeSize"
+          min="1"
+          max="120"
+          v-model.number="challengeSize"
+        />
+      </div>
+      <div class="benchmark-field">
+        <label for="workers">Number of workers</label>
+        <input
+          type="number"
+          id="workers"
+          name="workers"
+          min="1"
+          max="28"
+          v-model.number="workers"
+        />
+      </div>
+      <button @click="runBenchmark" :disabled="isRunning">
+        {{ isRunning ? "Running..." : "Run benchmark" }}
+      </button>
+      <div v-if="resultMessage" class="benchmark-result">
+        {{ resultMessage }}
+      </div>
     </div>
-    <div class="benchmark-field">
-      <label for="challenges">Number of challenges</label>
-      <input
-        type="number"
-        id="challenges"
-        name="challenges"
-        min="1"
-        max="100"
-        v-model.number="challenges"
-      />
-    </div>
-    <div class="benchmark-field">
-      <label for="challengeSize">Challenge size</label>
-      <input
-        type="number"
-        id="challengeSize"
-        name="challengeSize"
-        min="1"
-        max="120"
-        v-model.number="challengeSize"
-      />
-    </div>
-    <div class="benchmark-field">
-      <label for="workers">Number of workers</label>
-      <input
-        type="number"
-        id="workers"
-        name="workers"
-        min="1"
-        max="28"
-        v-model.number="workers"
-      />
-    </div>
-    <button @click="runBenchmark" :disabled="isRunning">
-      {{ isRunning ? "Running..." : "Run benchmark" }}
-    </button>
-    <div v-if="resultMessage" class="benchmark-result">
-      {{ resultMessage }}
-    </div>
-  </div>
+    <template #fallback>
+      <div>Loading benchmark tool...</div>
+    </template>
+  </ClientOnly>
 </template>
 
 <style scoped>
