@@ -71,7 +71,7 @@ Cap is a modern alternative to:
 But unlike them, Cap is **computation-bound, not tracking-bound**.
 
 ## License
-Cap is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for more information.
+Cap is licensed under the Apache License 2.0.
 
 ***
 
