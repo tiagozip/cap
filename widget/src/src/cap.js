@@ -123,7 +123,7 @@
           const apiEndpoint = this.getAttribute("data-cap-api-endpoint");
           if (!apiEndpoint) throw new Error("Missing API endpoint");
 
-          const { challenge, target, token } = await (
+          const { challenge, token } = await (
             await fetch(`${apiEndpoint}challenge`, {
               method: "POST",
             })
@@ -253,6 +253,16 @@
 
       this.#div.addEventListener("click", () => {
         if (!this.#div.hasAttribute("disabled")) this.solve();
+      });
+
+      this.#div.addEventListener("keydown", (e) => {
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          !this.#div.hasAttribute("disabled")
+        ) {
+          e.preventDefault();
+          this.solve();
+        }
       });
 
       this.addEventListener("progress", this.boundHandleProgress);
