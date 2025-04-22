@@ -16,9 +16,16 @@ outline: deep
 
 Start by adding importing the Cap widget library from a CDN:
 
-```html
+::: code-group
+
+```html [jsdelivr]
 <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
 ```
+
+```html [unpkg]
+<script src="https://unpkg.com/@cap.js/widget"></script>
+```
+:::
 
 Next, add the `<cap-widget>` component to your HTML.
 

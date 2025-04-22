@@ -3,11 +3,18 @@
 > [!NOTE]  
 > **Requirements:** All modern browsers should be supported, but the build script specifically targets the last 10 versions of Chrome, Firefox, Safari and Edge.
 
-`@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the Captcha solver. It is recommended to use unpkg to install it:
+`@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the Captcha solver. First, add it to your client-side code:
 
-```html
+::: code-group
+
+```html [jsdelivr]
 <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
 ```
+
+```html [unpkg]
+<script src="https://unpkg.com/@cap.js/widget"></script>
+```
+:::
 
 You can now use the `<cap-widget>` component in your HTML.
 
