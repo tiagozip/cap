@@ -221,6 +221,7 @@
     "widget:build": "cd widget && bun run build.js",
     "widget:publish": "cd widget && cd src && sudo npm publish --access public",
     "server:publish": "cd server && sudo npm publish --access public",
+    "solver:publish": "cd solver && sudo npm publish --access public",
     "cli:publish": "cd solver-cli && sudo npm publish --access public"
   }
 }
