@@ -85,19 +85,14 @@ export default defineConfig({
     [
       "script",
       {
-        src: "https://unpkg.com/@cap.js/widget",
+        src: "https://cdn.jsdelivr.net/npm/@cap.js/widget@latest",
         async: true,
       }
     ]
   ],
   themeConfig: {
     search: {
-      provider: "algolia",
-      options: {
-        appId: "B8THEYC8QW",
-        apiKey: "ebdc4d8bd68e388cbeca09c14b982a85",
-        indexName: "cap-tiagorangel",
-      },
+      provider: "local",
     },
 
     logo: "/logo.png",
