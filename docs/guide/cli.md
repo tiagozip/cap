@@ -71,3 +71,5 @@ console.log(command); // bunx @cap.js/cli e455cea65e98b:dceb fb8d25f6abac:93f1 .
 
 > [!NOTE]
 > The code above doesn't validate if the challenges are valid and not potentially malicious. If you're getting the challenge list from an untrusted source, make sure to validate it before giving them to the user.
+
+Here's a simple <a href="https://cap-cli-challenges.glitch.me/" target="_blank">Glitch app</a> that generates and validats challenges for you. You can use it to test the CLI and see how it works.
