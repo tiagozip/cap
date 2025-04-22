@@ -1,6 +1,13 @@
 (function () {
   let workerScript;
 
+  const capFetch = function () {
+    if (window?.CAP_CUSTOM_FETCH) {
+      return window.CAP_CUSTOM_FETCH(...arguments);
+    }
+    return fetch(...arguments);
+  };
+
   const until = (predFn, timeout = 10000) => {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
@@ -124,14 +131,14 @@
           if (!apiEndpoint) throw new Error("Missing API endpoint");
 
           const { challenge, token } = await (
-            await fetch(`${apiEndpoint}challenge`, {
+            await capFetch(`${apiEndpoint}challenge`, {
               method: "POST",
             })
           ).json();
           const solutions = await this.solveChallenges(challenge);
 
           const resp = await (
-            await fetch(`${apiEndpoint}redeem`, {
+            await capFetch(`${apiEndpoint}redeem`, {
               method: "POST",
               body: JSON.stringify({ token, solutions }),
               headers: { "Content-Type": "application/json" },
@@ -527,7 +534,7 @@
   setTimeout(async function () {
     workerScript =
       (await (
-        await fetch(
+        await capFetch(
           "https://cdn.jsdelivr.net/npm/@cap.js/widget/wasm-hashes.min.js"
         )
       ).text()) +
