@@ -5,6 +5,14 @@
   "description": "CLI Solver for the Cap CAPTCHA",
   "type": "module",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagorangel1/cap.git"
+  },
+  "scripts": {
+    "npm:publish": "npm publish --access public"
+  },
+  "author": "Tiago",
   "keywords": [
     "account security",
     "abuse detection",
@@ -222,10 +230,15 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cap.js/solver": "^0.0.3"
+    "@cap.js/solver": "^0.0.3",
+    "kleur": "^4.1.5"
   },
   "license": "Apache-2.0",
   "bin": {
     "cli": "./index.js"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/tiagorangel1/cap/issues"
+  },
+  "homepage": "https://github.com/tiagorangel1/cap#readme"
 }
