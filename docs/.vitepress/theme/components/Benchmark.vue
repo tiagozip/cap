@@ -13,13 +13,13 @@ const progressValue = ref(0);
 async function runBenchmark() {
   if (isRunning.value) return;
 
+  const Cap = window.Cap;
+
   isRunning.value = true;
   progressValue.value = 0;
   resultMessage.value = "Running benchmark... 0%";
 
   try {
-    const { default: Cap } = await import("https://unpkg.com/@cap.js/widget");
-
     window.CAP_CUSTOM_FETCH = async (url, options) => {
       if (url === "/api/challenge") {
         const browserCrypto = window.crypto;
