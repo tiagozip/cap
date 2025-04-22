@@ -32,7 +32,6 @@ There are also some other helpful packages:
 
 It's designed to be a drop-in replacement for existing CAPTCHA solutions, with a focus on performance and UX.
 
-
 Cap is built with JavaScript, runs on any JS runtime (Bun, Node.js, Deno), and has no dependencies. If you're not using any JS runtime, you can also use the standalone mode with Docker, which relies entirely on a simple REST API to create and validate challenges.
 
 ## Why Cap?
@@ -51,16 +50,31 @@ Cap is built with JavaScript, runs on any JS runtime (Bun, Node.js, Deno), and h
    Cap can run invisibly in the background using a simple JS API.
 - **Floating mode**  
    Cap's floating mode keeps your CAPTCHA hidden until it's needed.
-- **Fully FOSS**  
+- **Fully open-source**  
    Completely open source under the Apache license 2.0 license.
+
+It's ideal for:
+
+- Protecting APIs from bots
+- Preventing spam on forms
+- Blocking automated login attempts
+- Securing free-tier abuse
+
+## Alternatives
+
+Cap is a modern alternative to:
+
+- [reCAPTCHA](https://www.google.com/recaptcha/about/)
+- [hCaptcha](https://www.hcaptcha.com/)
+- [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+
+But unlike them, Cap is **computation-bound, not tracking-bound**.
 
 ## License
 Cap is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for more information.
 
-## star history
+***
 
-[![Star History Chart](https://api.star-history.com/svg?repos=tiagorangel1/cap&type=Date)](https://www.star-history.com/#tiagorangel1/cap&Date)
-
----
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)
 
 <a href="https://www.producthunt.com/posts/cap-5?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-cap&#0045;5" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=955605&theme=neutral&period=daily&t=1745311983202" alt="Cap - A&#0032;lightweight&#0044;&#0032;modern&#0032;open&#0045;source&#0032;captcha | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
