@@ -5,19 +5,19 @@ const difficulty = ref(4);
 const challenges = ref(18);
 const challengeSize = ref(32);
 const workers = ref(8);
+const benchmarks = ref(1);
 
 const isRunning = ref(false);
 const resultMessage = ref("");
 const progressValue = ref(0);
 
-async function runBenchmark() {
-  if (isRunning.value) return;
+const doBenchmark = async (i, total) => {
+  if (i < 1 || i > total) {
+    console.error("Invalid benchmark index 'i'");
+    return;
+  }
 
   const Cap = window.Cap;
-
-  isRunning.value = true;
-  progressValue.value = 0;
-  resultMessage.value = "Running benchmark... 0%";
 
   try {
     window.CAP_CUSTOM_FETCH = async (url, options) => {
@@ -76,8 +76,16 @@ async function runBenchmark() {
 
     cap.addEventListener("progress", (event) => {
       const { progress } = event.detail;
-      progressValue.value = progress;
-      resultMessage.value = `Running benchmark... ${progress.toFixed(2)}%`;
+
+      const completedRunsProgress = ((i - 1) / total) * 100;
+      const currentRunContribution = progress / total;
+      const overallProgress = completedRunsProgress + currentRunContribution;
+
+      progressValue.value = Math.min(100, Math.max(0, overallProgress));
+
+      resultMessage.value = `Running benchmark ${i}/${total}... ${progress.toFixed(
+        2
+      )}% (Overall: ${overallProgress.toFixed(2)}%)`;
     });
 
     const start = performance.now();
@@ -85,13 +93,44 @@ async function runBenchmark() {
     const end = performance.now();
     const time = end - start;
 
-    progressValue.value = 100;
-    resultMessage.value = `Completed in ${time.toFixed(2)} ms.`;
+    progressValue.value = (i / total) * 100;
+
+    resultMessage.value = `Benchmark ${i}/${total} completed in ${Math.round(
+      time
+    )} ms.`;
+    return time;
   } catch (error) {
-    console.error("Benchmark failed:", error);
-    resultMessage.value = `Error: ${error.message}`;
-    progressValue.value = 0;
+    console.error(`Benchmark ${i}/${total} failed:`, error);
+    resultMessage.value = `Error during benchmark ${i}/${total}: ${error.message}`;
+    progressValue.value = ((i - 1) / total) * 100;
+  }
+};
+
+async function runBenchmark() {
+  if (isRunning.value) return;
+
+  isRunning.value = true;
+  progressValue.value = 0;
+  resultMessage.value = "Running benchmarks... 0%";
+
+  try {
+    const total = benchmarks.value;
+    const times = [];
+    for (let i = 1; i <= total; i++) {
+      const time = await doBenchmark(i, total);
+      if (time) {
+        times.push(time);
+      }
+    }
+    const totalTime = times.reduce((acc, time) => acc + time, 0);
+    const averageTime = totalTime / times.length;
+
+    resultMessage.value = `Average benchmark time: ${Math.round(
+      averageTime
+    )} ms over ${total} runs.`;
+  } catch {
   } finally {
+    progressValue.value = 100;
     isRunning.value = false;
   }
 }
@@ -145,6 +184,17 @@ async function runBenchmark() {
           min="1"
           max="28"
           v-model.number="workers"
+        />
+      </div>
+      <div class="benchmark-field">
+        <label for="benchmarks">Number of benchmarks</label>
+        <input
+          type="number"
+          id="benchmarks"
+          name="benchmarks"
+          min="1"
+          max="100"
+          v-model.number="benchmarks"
         />
       </div>
       <button @click="runBenchmark" :disabled="isRunning">
