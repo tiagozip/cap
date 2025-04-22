@@ -15,7 +15,7 @@ hero:
       link: /guide
     - theme: alt
       text: Demo
-      link: https://cap-starter.glitch.me/
+      link: /guide/demo.md
     - theme: alt
       text: GitHub
       link: https://github.com/tiagorangel1/cap
