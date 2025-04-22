@@ -1,7 +1,8 @@
 // https://vitepress.dev/guide/custom-theme
-import { h } from 'vue'
-import DefaultTheme from 'vitepress/theme'
-import './style.css'
+import Benchmark from "./components/Benchmark.vue";
+import { h } from "vue";
+import DefaultTheme from "vitepress/theme";
+import "./style.css";
 
 /** @type {import('vitepress').Theme} */
 export default {
@@ -9,6 +10,9 @@ export default {
   Layout: () => {
     return h(DefaultTheme.Layout, null, {
       // https://vitepress.dev/guide/extending-default-theme#layout-slots
-    })
-  }
-}
+    });
+  },
+  enhanceApp({ app }) {
+    app.component("Benchmark", Benchmark);
+  },
+};
