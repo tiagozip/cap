@@ -82,6 +82,13 @@ export default defineConfig({
     }
     `,
     ],
+    [
+      "script",
+      {
+        src: "https://unpkg.com/@cap.js/widget",
+        async: true,
+      }
+    ]
   ],
   themeConfig: {
     search: {
