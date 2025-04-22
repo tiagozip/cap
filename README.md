@@ -16,6 +16,7 @@
 ### [Read the docs →](https://capjs.js.org)
 
 ## What is Cap?
+
 Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work. It's fast, private, and extremely simple to integrate. <a href="https://capjs.js.org/guide/effectiveness.html">Learn more about proof-of-work here.</a>
 
 Cap is built into 2 main parts:
@@ -27,6 +28,8 @@ Cap is built into 2 main parts:
 There are also some other helpful packages:
 
 - **[@cap.js/solver](https://capjs.js.org/guide/solver.html)**: Server-side solver for the CAPTCHA in case you want to use machine-to-machine.
+
+- **[@cap.js/cli](https://capjs.js.org/guide/cli.html)**: Command-line interface for solving CAPTCHAs made with Cap. It's mainly designed for testing and when you need to solve these CAPTCHAs in a browser without JavaScript support.
 
 - **[Standalone mode](https://capjs.js.org/guide/standalone.html)**: Docker image that helps you use Cap with any language or framework. It runs a simple REST API that can be used to create and validate challenges and an interactive UI to manage your keys.
 
@@ -71,9 +74,10 @@ Cap is a modern alternative to:
 But unlike them, Cap is **computation-bound, not tracking-bound**.
 
 ## License
+
 Cap is licensed under the Apache License 2.0.
 
-***
+---
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)
 
