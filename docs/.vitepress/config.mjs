@@ -125,6 +125,7 @@ export default defineConfig({
           { text: "@cap.js/server", link: "/guide/server.md" },
           { text: "@cap.js/widget", link: "/guide/widget.md" },
           { text: "@cap.js/solver", link: "/guide/solver.md" },
+          { text: "@cap.js/cli", link: "/guide/cli.md" },
         ],
       },
       { text: "Benchmark", link: "/guide/benchmark.md" },
