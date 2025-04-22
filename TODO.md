@@ -1,2 +1,3 @@
-* Refactor code
-* Add support for other languages (i18n)
+- Refactor code
+- Add support for changing labels (i18n)
+- [WebGPU support](https://github.com/dezmou/SHA256-WebGPU/blob/master/sha256.js) (maybe?)
