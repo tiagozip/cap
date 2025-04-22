@@ -2,6 +2,7 @@
   "version": "0.0.1",
   "name": "@cap.js/cli",
   "module": "index.js",
+  "description": "CLI Solver for the Cap CAPTCHA",
   "type": "module",
   "private": false,
   "keywords": [
