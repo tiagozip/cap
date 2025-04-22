@@ -10,19 +10,22 @@
 @cap.js/cli cli solver for cap challenges
 
 Usage:
-  $ bunx @cap.js/cli <challenges>
+  $ bunx '@cap.js/cli' <challenges>
 
 Options:
   <challenges>  The challenges to solve in
                 format `salt:target`
 ```
 
+> [!NOTE]
+> We recommend using `bunx '@cap.js/cli'` instead of `bunx @cap.js/cli` to avoid issues with the `@` symbol in the package name in some shells.
+
 ## Usage
 
 To use `cli`, you need to pass the challenges to solve in the format `salt:target`, separated by a space. For example:
 
 ```bash
-❯ bunx @cap.js/cli e455cea65e98b:dceb fb8d25f6abac:93f1 ...
+❯ bunx '@cap.js/cli' e455cea65e98b:dceb fb8d25f6abac:93f1 ...
 ```
 
 ```
@@ -64,9 +67,9 @@ const response = {
 };
 
 const challenges = response.challenge.map((c) => c.join(":")).join(" ");
-const command = `bunx @cap.js/cli ${challenges}`;
+const command = `bunx '@cap.js/cli' ${challenges}`;
 
-console.log(command); // bunx @cap.js/cli e455cea65e98b:dceb fb8d25f6abac:93f1 ...
+console.log(command); // bunx '@cap.js/cli' e455cea65e98b:dceb fb8d25f6abac:93f1 ...
 ```
 
 > [!NOTE]
