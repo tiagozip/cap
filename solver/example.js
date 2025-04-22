@@ -21,4 +21,15 @@ const CHALLENGES = [
   ["0c21ade6e63a4e37b13cb8b087f31863", "65c9"],
 ];
 
-console.log(await solver(CHALLENGES));
+const solutions = await solver(CHALLENGES, {
+  onProgress: (status) => {
+    process.stdout.moveCursor(0, -1);
+    process.stdout.clearScreenDown();
+    console.log(`Progress: ${status.progress}%`);
+  },
+});
+
+process.stdout.moveCursor(0, -1);
+process.stdout.clearScreenDown();
+
+console.log("Solutions:", solutions);
