@@ -43,7 +43,7 @@ async function runBenchmark() {
                 .slice(0, difficulty.value),
             ]),
             token: "",
-            expires: 1745328572815,
+            expires: (new Date().getTime()) + (6000*100),
           }),
           {
             status: 200,
