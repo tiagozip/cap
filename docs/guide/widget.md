@@ -59,3 +59,13 @@ The following custom events are supported:
 - `error`: Triggered when an error occurs.
 - `reset`: Triggered when the widget is reset.
 - `progress`: Triggered when the there's a progress update while in verification.
+
+## Custom fetch
+You can override the default fetch implementation by setting `window.CAP_CUSTOM_FETCH` to a custom function. This function will receive the URL and options as arguments and should return a promise that resolves to the response.
+
+```js
+window.CAP_CUSTOM_FETCH = function (url, options) {
+  // Custom fetch implementation
+  return fetch(url, options);
+};
+```
