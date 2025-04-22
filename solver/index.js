@@ -72,6 +72,15 @@ export default function solver(challenges, config) {
           challengesProcessed++;
           activeWorkers--;
 
+          if (config?.onProgress) {
+            config.onProgress({
+              progress: Math.floor((challengesProcessed / totalChallenges) * 100),
+              currentChallenge: currentChallengeIndex,
+              challengesProcessed,
+              result,
+            });
+          }
+
           if (challengesProcessed === totalChallenges) {
             resolve(results);
           } else {
