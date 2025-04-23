@@ -18,7 +18,7 @@ const CHALLENGES = [
   ["308758072931bb3b254a7b1ed351d04a", "3e49"],
   ["724f89bb167db4b881e1dc7b0949ac8f", "b82e"],
   ["8b79506e4630de15be225c18623eff65", "f0e5"],
-  ["0c21ade6e63a4e37b13cb8b087f31863", "65c9e"],
+  ["0c21ade6e63a4e37b13cb8b087f31863", "65c9"],
 ];
 
 const timeStart = new Date().getTime();
