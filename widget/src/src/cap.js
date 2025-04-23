@@ -426,7 +426,9 @@
   document.adoptedStyleSheets.push(sheet);
 
   // MARK: Solver worker
+  // TODO: Switch to using Rust WASM solver
   const workerFunct = function () {
+    // MARK: TODO: Switch to using Rust WASM solver
     let hasher;
 
     self.onmessage = async ({ data: { salt, target } }) => {
@@ -497,6 +499,7 @@
         }
       }
 
+      // MARK: TODO: Switch to using Rust WASM solver
       if (!hasher) {
         hasher = await hashwasm.createSHA256();
       }
@@ -531,6 +534,7 @@
     };
   };
 
+  // MARK: TODO: Switch to using Rust WASM solver
   setTimeout(async function () {
     workerScript =
       (await (

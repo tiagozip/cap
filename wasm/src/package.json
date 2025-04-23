@@ -1,13 +1,8 @@
 {
   "name": "@cap.js/wasm",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "WASM for Cap's solver",
-  "main": "index.js",
-  "files": [
-    "node/",
-    "browser/",
-    "README.md"
-  ],
+  "main": "./node/cap_wasm.js",
   "keywords": [
     "account security",
     "abuse detection",

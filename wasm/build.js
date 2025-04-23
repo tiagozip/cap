@@ -27,4 +27,12 @@ execSync(
   { stdio: "inherit" }
 );
 
+console.log(`\n  Removing .gitignore...`);
+
+[browserOutDir, nodeOutDir].forEach((dir) => {
+  try {
+    fs.rmSync(path.join(dir, ".gitignore"));
+  } catch {}
+});
+
 console.log(`\n🎉 All builds finished successfully!`);
