@@ -1,6 +1,8 @@
-import solver from "./index.js";
+import { performance } from "perf_hooks";
 
-const CHALLENGES = [
+import { solve_pow } from "../src/node/cap_wasm.js";
+
+const challenges = [
   ["e455cea65e98bc3c36287f43769da211", "dceb"],
   ["fb8d25f6abac5aa9b6360051f37e010b", "93f1"],
   ["91ef47db578fbeb2565d3f9c82bb7960", "3698"],
@@ -18,20 +20,23 @@ const CHALLENGES = [
   ["308758072931bb3b254a7b1ed351d04a", "3e49"],
   ["724f89bb167db4b881e1dc7b0949ac8f", "b82e"],
   ["8b79506e4630de15be225c18623eff65", "f0e5"],
-  ["0c21ade6e63a4e37b13cb8b087f31863", "65c9e"],
+  ["0c21ade6e63a4e37b13cb8b087f31863", "65c9"],
 ];
 
-const timeStart = new Date().getTime();
-const solutions = await solver(CHALLENGES, {
-  onProgress: (status) => {
-    process.stdout.moveCursor(0, -1);
-    process.stdout.clearScreenDown();
-    console.log(`Progress: ${status.progress}%`);
-  },
-});
+async function runSolverTest() {
+  const startTime = performance.now();
 
-process.stdout.moveCursor(0, -1);
-process.stdout.clearScreenDown();
+  for (let i = 0; i < challenges.length; i++) {
+    const [salt, target] = challenges[i];
+    const nonce = solve_pow(salt, target);
 
-console.log("Solutions:", solutions);
-console.log("Time taken:", ((new Date().getTime()) - timeStart).toFixed(2), "ms");
+    console.log(`[${i + 1}/${challenges.length}] ${salt}:${target}:${nonce}`);
+  }
+
+  const endTime = performance.now();
+  const totalTime = (endTime - startTime) / 1000;
+
+  console.log(`Solved challenges in ${totalTime.toFixed(3)}s`);
+}
+
+runSolverTest();
