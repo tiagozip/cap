@@ -90,7 +90,8 @@
           ? parseInt(workers, 10)
           : navigator.hardwareConcurrency || 8
       );
-      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName =
+        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
     }
 
@@ -127,7 +128,8 @@
           this.dispatchEvent("progress", { progress: 100 });
 
           if (!resp.success) throw new Error("Invalid solution");
-          const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+          const fieldName =
+            this.getAttribute("data-cap-hidden-field-name") || "cap-token";
           if (this.querySelector(`input[name='${fieldName}']`)) {
             this.querySelector(`input[name='${fieldName}']`).value = resp.token;
           }
@@ -324,7 +326,8 @@
       }
       this.dispatchEvent("reset");
       this.token = null;
-      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName =
+        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       if (this.querySelector(`input[name='${fieldName}']`)) {
         this.querySelector(`input[name='${fieldName}']`).value = "";
       }
@@ -407,8 +410,6 @@
   document.adoptedStyleSheets.push(sheet);
 
   const workerFunct = function () {
-    let initPromise, solve_pow_function;
-
     if (
       typeof WebAssembly !== "object" ||
       typeof WebAssembly?.instantiate !== "function"
@@ -477,6 +478,8 @@
       );
     }
 
+    let initPromise, solve_pow_function;
+
     initPromise = import(
       "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
     )
@@ -493,8 +496,15 @@
       });
 
     self.onmessage = async ({ data: { salt, target } }) => {
+      const until = (predFn) => {
+        const poll = (done) =>
+          predFn() ? done() : setTimeout(() => poll(done), 500);
+        return new Promise(poll);
+      };
+
       try {
         await initPromise;
+        await until(() => !!solve_pow_function);
 
         const startTime = performance.now();
         const nonce = solve_pow_function(salt, target);
