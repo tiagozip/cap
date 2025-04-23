@@ -21,7 +21,14 @@
     #eventHandlers;
 
     static get observedAttributes() {
-      return ["onsolve", "onprogress", "onreset", "onerror", "workers", "hiddenFieldName"];
+      return [
+        "onsolve",
+        "onprogress",
+        "onreset",
+        "onerror",
+        "workers",
+        "[cap]",
+      ];
     }
 
     constructor() {
@@ -83,7 +90,8 @@
           ? parseInt(workers, 10)
           : navigator.hardwareConcurrency || 8
       );
-      this.#host.innerHTML = `<input type="hidden" name="cap-token">`;
+      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
     }
 
     async solve() {
@@ -119,8 +127,9 @@
           this.dispatchEvent("progress", { progress: 100 });
 
           if (!resp.success) throw new Error("Invalid solution");
-          if (this.querySelector("input[name='cap-token']")) {
-            this.querySelector("input[name='cap-token']").value = resp.token;
+          const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+          if (this.querySelector(`input[name='${fieldName}']`)) {
+            this.querySelector(`input[name='${fieldName}']`).value = resp.token;
           }
 
           this.dispatchEvent("solve", { token: resp.token });
@@ -315,8 +324,9 @@
       }
       this.dispatchEvent("reset");
       this.token = null;
-      if (this.querySelector("input[name='cap-token']")) {
-        this.querySelector("input[name='cap-token']").value = "";
+      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      if (this.querySelector(`input[name='${fieldName}']`)) {
+        this.querySelector(`input[name='${fieldName}']`).value = "";
       }
     }
 
@@ -496,13 +506,11 @@
           durationMs: (endTime - startTime).toFixed(2),
         });
       } catch (error) {
-        if (!initError) {
-          console.error("[cap] solver error", error);
-          self.postMessage({
-            found: false,
-            error: error.message || String(error),
-          });
-        }
+        console.error("[cap] solver error", error);
+        self.postMessage({
+          found: false,
+          error: error.message || String(error),
+        });
       }
     };
 
