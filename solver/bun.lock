@@ -1,0 +1,14 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "@cap.js/solver",
+      "dependencies": {
+        "@cap.js/wasm": "^0.0.3",
+      },
+    },
+  },
+  "packages": {
+    "@cap.js/wasm": ["@cap.js/wasm@0.0.3", "", {}, "sha512-1HqjjRjHSD+2pnNj5yziCb9LfrVDsPWGV+Mr6epRag0o3nAhgEGC+AopQV01BV61BVjEQbhgyjNJBV+1Gc/SGw=="],
+  }
+}
