@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container mt-4">
+      <button id="solveButton" class="btn btn-primary mb-3">
+        Solve challenges
+      </button>
+      <div id="progress" class="mb-3">Status: Idle</div>
+
+      <h2>Results:</h2>
+      <ul
+        id="results"
+        class="list-group border rounded overflow-auto mb-4"
+        style="min-height: 200px; max-height: 500px"
+      ></ul>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      const solveButton = document.getElementById("solveButton");
+      const progressDiv = document.getElementById("progress");
+      const resultsDiv = document.getElementById("results");
+
+      const challenges = [
+        ["083655eebec28dd11449f082b026e856", "4b00"],
+        ["bd2e454fbe4efaad38c44ecd72cc4a7b", "f3ef"],
+        ["739d2c3ae32e9d726b27231394a2db89", "bcfe"],
+        ["724e8cf75e11586f881f4c5840204378", "3d20"],
+        ["32b76ba7ee19b3db3f6e7de21124f3b0", "fba4"],
+        ["59337d81ae468b50e3b45f19f96b816d", "a27a"],
+        ["2b3194fd3f26be5671945578e32eff39", "4f3c"],
+        ["a6050041bff37f9a31653dd0e8b884a9", "4520"],
+        ["471162e18f09d41e3281b188edefd8de", "7861"],
+        ["3f6d41cdc04e2d0e7784c1a839133df0", "26b5"],
+        ["a4bb413d6e1c2e992a66cb56bd341a08", "cd05"],
+        ["405910a8488466b7fe6067eb92a59232", "f693"],
+        ["1c7d565e1b65df2bf8b26bcf9a6cfbbd", "a75b"],
+        ["93b6cd8025737d92a0b60266dcf5c612", "c0d2"],
+        ["0a799a1d82fd10979661eff665599cc2", "4997"],
+        ["7f0c392563b1694c8066af2f397b8b82", "0d13"],
+        ["b4c7ba684cb9b0c64da82560c3e6b4bc", "5de6"],
+        ["2dd07a35171ed76878746f386d6d6df3", "4bea"],
+      ];
+      const numWorkers = navigator.hardwareConcurrency || 8;
+
+      const workerCodeTemplate = (() => {
+        const baseURL = "${baseURL}";
+        const relativeWasmWrapperPath = "../src/browser/cap_wasm.js";
+
+        let solve_pow_function = null;
+        let initError = null;
+        let initPromise = null;
+
+        const absoluteWasmWrapperUrl = new URL(relativeWasmWrapperPath, baseURL)
+          .href;
+
+        initPromise = import(absoluteWasmWrapperUrl)
+          .then((wasmModule) => {
+            return wasmModule
+              .default()
+              .then((instance) => {
+                solve_pow_function = (
+                  instance && instance.exports ? instance.exports : wasmModule
+                ).solve_pow;
+              });
+          })
+          .catch((error) => {
+            console.error("[worker] setup failed", error);
+            self.postMessage({
+              error: `Worker setup failed: ${error.message || error}`,
+            });
+          });
+
+        self.onmessage = async (event) => {
+          const { salt, target, challengeIndex } = event.data;
+
+          try {
+            if (initPromise) {
+              await initPromise;
+            }
+
+            const startTime = performance.now();
+            const nonce = solve_pow_function(salt, target);
+            const endTime = performance.now();
+            const duration = (endTime - startTime).toFixed(2);
+
+            self.postMessage({
+              challengeIndex: challengeIndex,
+              salt: salt,
+              target: target,
+              nonce: Number(nonce),
+              durationMs: duration,
+            });
+          } catch (error) {
+            console.error(`[worker] (job #${challengeIndex})`, error);
+            self.postMessage({
+              challengeIndex: challengeIndex,
+              salt: salt,
+              target: target,
+              error: `Execution failed: ${error.message || error}`,
+            });
+          }
+        };
+
+        self.onerror = (error) => {
+          self.postMessage({
+            error: `Error: ${error.message || error}`,
+          });
+        };
+      })
+        .toString()
+        .replace("() => {", "")
+        .slice(0, -1);
+
+      let workerPool = [];
+      let workerBlobUrl = null;
+      let nextChallengeIndex = 0;
+      let challengesProcessed = 0;
+      let allResults = [];
+      let startTime = 0;
+
+      function updateProgress() {
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        progressDiv.textContent = `Status: Processing... ${challengesProcessed}/${challenges.length} challenges complete. Elapsed: ${elapsed}s`;
+        progressDiv.classList.remove("text-danger", "fw-bold");
+      }
+
+      function displayResult(data) {
+        const item = document.createElement("li");
+        item.classList.add("list-group-item");
+
+        if (data.error) {
+          item.classList.add("list-group-item-danger");
+          item.innerHTML = `<strong>Challenge #${
+            data.challengeIndex === -1 ? "??" : data.challengeIndex + 1
+          } errored</strong> ${
+            data.salt ? `${data.salt}:${data.target}` : ""
+          }<br><pre class="bg-secondary bg-opacity-10 p-2 rounded mt-2 mb-0">${
+            data.error
+          }</pre>`;
+        } else {
+          item.classList.add("list-group-item-success");
+          item.innerHTML = `<strong>Challenge #${
+            data.challengeIndex + 1
+          } solved</strong> with nonce <span class="text-success fw-bold">${
+            data.nonce
+          }</span><br><small>${data.salt}:${data.target}<br>Took ${
+            data.durationMs
+          } ms</small>`;
+        }
+
+        resultsDiv.appendChild(item);
+        resultsDiv.scrollTop = resultsDiv.scrollHeight;
+      }
+
+      function cleanupWorkers() {
+        workerPool.forEach((worker) => worker.terminate());
+        workerPool = [];
+        if (workerBlobUrl) {
+          URL.revokeObjectURL(workerBlobUrl);
+          workerBlobUrl = null;
+        }
+      }
+
+      function startNextTask(worker) {
+        if (nextChallengeIndex < challenges.length) {
+          const currentIndex = nextChallengeIndex;
+          nextChallengeIndex++;
+
+          console.log(
+            `Assigning challenge index ${currentIndex} (Task ${
+              currentIndex + 1
+            }/${challenges.length}) to a worker.`
+          );
+
+          const challengeData = challenges[currentIndex];
+
+          const [salt, target] = challengeData;
+          worker.postMessage({ challengeIndex: currentIndex, salt, target });
+        }
+      }
+
+      function resetUI() {
+        resultsDiv.innerHTML = "";
+        progressDiv.textContent = "Status: Idle";
+        progressDiv.classList.remove("text-danger", "fw-bold");
+        solveButton.disabled = false;
+        solveButton.textContent = "Solve challenges";
+      }
+
+      solveButton.addEventListener("click", () => {
+        if (workerPool.length > 0) {
+          return;
+        }
+
+        resultsDiv.innerHTML = "";
+        challengesProcessed = 0;
+        nextChallengeIndex = 0;
+        allResults = new Array(challenges.length);
+
+        progressDiv.textContent = `Status: Initializing ${numWorkers} workers...`;
+        progressDiv.classList.remove("text-danger", "fw-bold");
+        solveButton.disabled = true;
+        solveButton.textContent = "Solving...";
+        startTime = performance.now();
+
+        try {
+          let baseURL;
+          const currentPath = window.location.pathname;
+          const directoryPath = currentPath.substring(
+            0,
+            currentPath.lastIndexOf("/") + 1
+          );
+          baseURL = window.location.origin + directoryPath;
+          if (!baseURL.endsWith("/")) {
+            baseURL += "/";
+          }
+
+          const finalWorkerCode = workerCodeTemplate.replace(
+            /\$\{baseURL\}/g,
+            baseURL
+          );
+
+          const blob = new Blob([finalWorkerCode], {
+            type: "application/javascript",
+          });
+          workerBlobUrl = URL.createObjectURL(blob);
+
+          for (let i = 0; i < numWorkers; i++) {
+            const worker = new Worker(workerBlobUrl, { type: "module" });
+
+            worker.onmessage = (event) => {
+              if (
+                event.data &&
+                typeof event.data.challengeIndex !== "undefined"
+              ) {
+                challengesProcessed++;
+                allResults[event.data.challengeIndex] = event.data;
+                displayResult(event.data);
+                updateProgress();
+
+                if (challengesProcessed === challenges.length) {
+                  const totalTime = (
+                    (performance.now() - startTime) /
+                    1000
+                  ).toFixed(2);
+                  progressDiv.textContent = `Status: All ${challenges.length} challenges processed in ${totalTime} seconds.`;
+                  progressDiv.classList.remove("text-danger", "fw-bold");
+                  cleanupWorkers();
+                  solveButton.disabled = false;
+                  solveButton.textContent = "Solve challenges";
+                } else {
+                  startNextTask(worker);
+                }
+
+                return;
+              }
+
+              console.error(
+                `Main: Initialization/Setup error from Worker ${i + 1}:`,
+                event.data.error
+              );
+              displayResult({
+                challengeIndex: -1,
+                error: `Worker ${i + 1} setup failed: ${event.data.error}`,
+              });
+              progressDiv.textContent = `Status: Worker error`;
+              progressDiv.classList.add("text-danger", "fw-bold");
+              cleanupWorkers();
+              solveButton.disabled = false;
+              solveButton.textContent = "Solve challenges";
+            };
+
+            worker.onerror = (error) => {
+              console.error(
+                `Main: Error reported from Worker ${i + 1}:`,
+                error
+              );
+              displayResult({
+                challengeIndex: -1,
+                error: `Worker ${i + 1} ${error.message || "Unknown error"}`,
+              });
+              progressDiv.textContent = `Status: Error in Worker ${
+                i + 1
+              }. Stopping.`;
+              progressDiv.classList.add("text-danger", "fw-bold");
+              cleanupWorkers();
+              solveButton.disabled = false;
+              solveButton.textContent = "Solve challenges";
+            };
+
+            workerPool.push(worker);
+          }
+
+          workerPool.forEach(startNextTask);
+          updateProgress();
+        } catch (error) {
+          progressDiv.textContent = `Status: Failed to create workers: ${error.message}`;
+          progressDiv.classList.add("text-danger", "fw-bold");
+          solveButton.disabled = false;
+          solveButton.textContent = "Solve challenges";
+          cleanupWorkers();
+        }
+      });
+    </script>
+  </body>
+</html>

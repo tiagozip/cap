@@ -33,6 +33,8 @@ There are also some other helpful packages:
 
 - **[Standalone mode](https://capjs.js.org/guide/standalone.html)**: Docker image that helps you use Cap with any language or framework. It runs a simple REST API that can be used to create and validate challenges and an interactive UI to manage your keys.
 
+- **@cap.js/wasm**: Experimental WASM solvers built using Rust.
+
 It's designed to be a drop-in replacement for existing CAPTCHA solutions, with a focus on performance and UX.
 
 Cap is built with JavaScript, runs on any JS runtime (Bun, Node.js, Deno), and has no dependencies. If you're not using any JS runtime, you can also use the standalone mode with Docker, which relies entirely on a simple REST API to create and validate challenges.

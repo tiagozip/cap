@@ -91,3 +91,7 @@ docs/.vitepress/dist
 .vscode
 .data
 node_modules
+debug/
+target/
+**/*.rs.bk
+*.pdb
