@@ -8,30 +8,12 @@
     return fetch(...arguments);
   };
 
-  const until = (predFn, timeout = 10000) => {
-    return new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error("Initialize timeout"));
-      }, timeout);
-
-      const poll = () => {
-        if (predFn()) {
-          clearTimeout(timeoutId);
-          resolve();
-        } else {
-          setTimeout(poll, 500);
-        }
-      };
-      poll();
-    });
-  };
-
   // MARK: Widget
   class CapWidget extends HTMLElement {
     #workerUrl = "";
     #resetTimer = null;
     #workersCount = navigator.hardwareConcurrency || 8;
-    #token = null;
+    token = null;
     #shadow;
     #div;
     #host;
@@ -57,25 +39,15 @@
       this.boundHandleReset = this.handleReset.bind(this);
     }
 
-    async initialize() {
-      if (this.#workerUrl) {
-        URL.revokeObjectURL(this.#workerUrl);
-      }
-
-      try {
-        await until(() => !!workerScript);
-        this.#workerUrl = URL.createObjectURL(
-          new Blob([workerScript], {
-            type: "application/javascript",
-          })
-        );
-      } catch (err) {
-        this.error("Failed to initialize worker");
-        throw err;
-      }
+    initialize() {
+      this.#workerUrl = URL.createObjectURL(
+        new Blob([workerScript], {
+          type: "application/javascript",
+        })
+      );
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback(name, _, value) {
       if (name.startsWith("on")) {
         const eventName = name.slice(2);
         const oldHandler = this.#eventHandlers.get(name);
@@ -83,7 +55,7 @@
           this.removeEventListener(eventName, oldHandler);
         }
 
-        if (newValue) {
+        if (value) {
           const handler = (event) => {
             const callback = this.getAttribute(name);
             if (typeof window[callback] === "function") {
@@ -123,7 +95,6 @@
         this.#solving = true;
         this.updateUI("verifying", "Verifying...", true);
 
-        await until(() => !!this.#workerUrl);
         this.dispatchEvent("progress", { progress: 0 });
 
         try {
@@ -153,7 +124,7 @@
           }
 
           this.dispatchEvent("solve", { token: resp.token });
-          this.#token = resp.token;
+          this.token = resp.token;
 
           if (this.#resetTimer) clearTimeout(this.#resetTimer);
           const expiresIn = new Date(resp.expires).getTime() - Date.now();
@@ -163,7 +134,7 @@
             this.error("Invalid expiration time");
           }
 
-          return { success: true, token: this.#token };
+          return { success: true, token: this.token };
         } catch (err) {
           this.error(err.message);
           throw err;
@@ -324,7 +295,7 @@
     }
 
     error(message = "Unknown error") {
-      console.error("[Cap] Error:", message);
+      console.error("[cap] Error:", message);
       this.dispatchEvent("error", { isCap: true, message });
     }
 
@@ -343,14 +314,14 @@
         this.#resetTimer = null;
       }
       this.dispatchEvent("reset");
-      this.#token = null;
+      this.token = null;
       if (this.querySelector("input[name='cap-token']")) {
         this.querySelector("input[name='cap-token']").value = "";
       }
     }
 
     get token() {
-      return this.#token;
+      return this.token;
     }
 
     disconnectedCallback() {
@@ -425,28 +396,20 @@
   );
   document.adoptedStyleSheets.push(sheet);
 
-  // MARK: Solver worker
-  // TODO: Switch to using Rust WASM solver
   const workerFunct = function () {
-    // MARK: TODO: Switch to using Rust WASM solver
-    let hasher;
+    let initPromise, solve_pow_function;
 
-    self.onmessage = async ({ data: { salt, target } }) => {
-      let nonce = 0;
-      const batchSize = 50000;
-      let processed = 0;
-      const encoder = new TextEncoder();
+    if (
+      typeof WebAssembly !== "object" ||
+      typeof WebAssembly?.instantiate !== "function"
+    ) {
+      self.onmessage = async ({ data: { salt, target } }) => {
+        // Fallback solver in case WASM is not available
 
-      // Alternative solver in case WASM is not available
-      if (
-        !(
-          typeof WebAssembly === "object" &&
-          typeof WebAssembly.instantiate === "function"
-        )
-      ) {
-        console.log(
-          "[cap] WASM not enabled, falling back to crypto.subtle\nThis is significanty slower than the WASM implementation"
-        );
+        let nonce = 0;
+        const batchSize = 50000;
+        let processed = 0;
+        const encoder = new TextEncoder();
 
         const targetBytes = new Uint8Array(target.length / 2);
         for (let k = 0; k < targetBytes.length; k++) {
@@ -497,56 +460,64 @@
             return;
           }
         }
-      }
+      };
 
-      // MARK: TODO: Switch to using Rust WASM solver
-      if (!hasher) {
-        hasher = await hashwasm.createSHA256();
-      }
+      return console.warn(
+        "[cap] WebAssembly is not supported, falling back to alternative solver."
+      );
+    }
 
-      const buffer = new Uint8Array(128);
+    initPromise = import(
+      "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
+    )
+      .then((wasmModule) => {
+        return wasmModule.default().then((instance) => {
+          solve_pow_function = (
+            instance && instance.exports ? instance.exports : wasmModule
+          ).solve_pow;
+        });
+      })
+      .catch((e) => {
+        useFallback = true;
+        console.error("[cap] using fallback solver due to error:", e);
+      });
 
-      while (true) {
-        try {
-          for (let i = 0; i < batchSize; i++) {
-            const input = salt + nonce.toString();
-            const inputBytes = encoder.encode(input);
-            buffer.set(inputBytes);
+    self.onmessage = async ({ data: { salt, target } }) => {
+      try {
+        await initPromise;
 
-            hasher.init();
-            hasher.update(buffer.subarray(0, inputBytes.length));
-            const hash = hasher.digest("hex");
+        const startTime = performance.now();
+        const nonce = solve_pow_function(salt, target);
+        const endTime = performance.now();
 
-            if (hash.startsWith(target)) {
-              self.postMessage({ nonce, found: true });
-              return;
-            }
-
-            nonce++;
-          }
-
-          processed += batchSize;
-        } catch (error) {
-          self.postMessage({ found: false, error: error.message });
-          return;
+        self.postMessage({
+          nonce: Number(nonce),
+          found: true,
+          durationMs: (endTime - startTime).toFixed(2),
+        });
+      } catch (error) {
+        if (!initError) {
+          console.error("[cap] solver error", error);
+          self.postMessage({
+            found: false,
+            error: error.message || String(error),
+          });
         }
       }
     };
+
+    self.onerror = (error) => {
+      self.postMessage({
+        found: false,
+        error: `Worker error: ${error.message || error}`,
+      });
+    };
   };
 
-  // MARK: TODO: Switch to using Rust WASM solver
-  setTimeout(async function () {
-    workerScript =
-      (await (
-        await capFetch(
-          "https://cdn.jsdelivr.net/npm/@cap.js/widget/wasm-hashes.min.js"
-        )
-      ).text()) +
-      workerFunct
-        .toString()
-        .replace(/^function\s*\([^\)]*\)\s*{|\}$/g, "")
-        .trim();
-  }, 1);
+  workerScript = `(() => {${workerFunct
+    .toString()
+    .replace(/^function\s*\([^\)]*\)\s*{|\}$/g, "")
+    .trim()}})()`;
 
   window.Cap = Cap;
 

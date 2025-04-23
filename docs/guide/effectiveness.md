@@ -1,37 +1,47 @@
 # Effectiveness
 
-Cap is designed to reduce spam and abuse on websites and web apps. While it won't block all spam, it's highly effective at keeping most bots away.
+Cap reduces spam and abuse on websites and web apps. While it won't block _all_ spam (no CAPTCHA is a silver bullet), it significantly reduces it by making automated abuse costly. The core principle behind proof-of-work CAPTCHAs like Cap is **proving effort** rather than just verifying if you're human through interaction analysis or complex puzzles.
 
-## How PoW works
+When you verify yourself, Cap performs these steps:
 
-Cap uses a Proof-of-Work (PoW) system, similar to Friendly Captcha and Altcha. Instead of simply verifying if you're human by analysing your mouse movement and interaction with the website, Cap creates a computational task that bots find hard to solve.
+1. **Requests Challenges:** Asks the server for multiple unique challenges. Each includes a salt and a target difficulty. (Using multiple challenges helps adjust difficulty and track progress.)
+2. **Solves Computationally:** Uses Web Workers and WebAssembly (WASM) on your device to rapidly test nonce values, combining them with the challenge salt. In case 
+3. **Finds Solutions:** Continues until it finds solutions whose cryptographic hashes meet the target difficulty specified in the challenges.
+4. **Validates:** Sends the successful nonce solutions back to the server for validation.
+5. **Issues Token:** If validation succeeds, the server issues a short-lived token that proves the work was done, granting access.
 
-When you verify yourself, Cap asks the server for multiple challenges (we use multiple challenges in order to help adjust difficulty levels and track progress more accurately), which include a unique salt and target. The server generates these challenges and sends them to the Cap widget. Using Web Workers and WASM, Cap tries to find a challenge with a hash starting with a specific string for each challenge by combining the salt with a random string.
+This computational work makes spam expensive for attackers but remains quick (typically milliseconds) and unintrusive for legitimate users.
 
-Once solved, the widget sends the results back to the server for validation. If successful, the server gives a token that can be used to prove you're human. This extra complexity makes it much harder for simple bots to bypass.
+**Example: The Economics of Spam**
+Imagine sending 10,000 spam messages costs $1, potentially earning $10 – a profitable venture. If Cap increases the computational cost so that sending those messages now costs $100, the spammer loses $90. This eliminates the financial incentive.
 
-## Privacy
+## Privacy & Security
 
-Cap is fully compliant with GDPR and CCPA. It doesn't use cookies or track you in intrusive ways. We never sell your data, and we don't even collect personal information. No ads, no tracking. Period.
+Cap prioritizes user privacy and is designed to be GDPR and CCPA compliant.
 
-## Security
+- **No Tracking:** It doesn't use cookies or employ intrusive tracking methods.
+- **No Data Selling:** We never sell user data.
+- **Minimal Data:** We don't collect personal information beyond what's essential for the PoW process itself. No ads, no tracking, no telemetry. Period.
+- **IP Addresses:** Not stored by default.
+- **Challenge Storage:** Challenges exist only in memory on the server to prevent tampering and expire quickly (10 minutes by default).
+- **Token Storage:** Only _hashed_ tokens are stored persistently (in `.data/tokensList.json` by default) to validate user sessions, and they also expire (20 minutes by default).
 
-- IP addresses are not stored by default
-- Challenges are stored in memory to make sure they are not tampered with (expire after 10 minutes by default), while tokens are stored in a file (hashed tokens only, this is `.data/tokensList.json` by default and expire after 20 minutes)
+## Why Proof-of-Work?
 
-## Why you might not want to use this
+Every CAPTCHA can eventually be solved, whether by sophisticated bots or humans paid via CAPTCHA farms. The crucial difference lies in the _cost_ imposed on attackers.
 
-Cap isn't a silver bullet: it won’t block all spam, but it will significantly reduce it. The core principle behind proof-of-work CAPTCHAs is that they are designed to prove effort rather than just verifying a human user.
+The goal is to make automated abuse prohibitively expensive while keeping the experience fast and virtually invisible for real users. Proof-of-work strikes an effective balance, deterring abuse by requiring computational effort rather than relying solely on human verification methods that bots continuously learn to mimic.
 
-**Here's an example:**
+For a deeper dive into the technical aspects, you might find [this research paper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality) insightful.
 
-Imagine I can send 10,000 emails to 10,000 random recipients for $1. If I can earn $10 in return from these emails, it becomes highly profitable. However, if the cost of sending these emails increases from $1 to $100, it is no longer profitable. In fact, I would be losing money. This is where CAPTCHA logic comes into play: by making the cost of spamming increase dramatically, we can reduce its viability.
+---
 
-By applying similar concepts to CAPTCHA, we make it costly for bots to spam, effectively discouraging them from trying.
+**Key improvements in this merged version:**
 
-If you want to read more about proof-of-work, I recommend reading [this whitepaper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality)
-
-
-## Why proof-of-work?
-
-Every captcha is solvable by bots or by paid humans. The only question is how to make it costly for bots but invisible for users. Proof-of-work is the perfect balance for this problem.
+- **Stronger Opening:** Clearly states the goal and the "not a silver bullet" caveat upfront.
+- **Integrated PoW:** Uses the clear, numbered list from V2.
+- **Enhanced PoW Details:** Incorporates V1's useful details about salt, target, multiple challenges, and how nonces/hashes work, but phrased concisely.
+- **Clearer Economics Example:** Directly ties the cost increase to Cap.
+- **Combined Privacy & Security:** Merges these related concepts logically using clear bullet points, incorporating the specifics from both versions (memory storage, hashing, defaults).
+- **Refined "Why PoW?":** Uses strong phrasing ("prohibitively expensive," "virtually invisible," "strikes an effective balance") combining good points from both versions.
+- **Better Flow:** Information progresses logically from effectiveness to privacy/security and the underlying rationale.

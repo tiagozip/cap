@@ -87,8 +87,8 @@ export default defineConfig({
       {
         src: "https://cdn.jsdelivr.net/npm/@cap.js/widget@latest",
         async: true,
-      }
-    ]
+      },
+    ],
   ],
   themeConfig: {
     search: {
@@ -108,7 +108,6 @@ export default defineConfig({
 
     sidebar: [
       { text: "Quickstart", link: "/guide/index.md" },
-      { text: "Effectiveness", link: "/guide/effectiveness.md" },
       { text: "Alternatives", link: "/guide/alternatives.md" },
       { text: "Philosophy", link: "/guide/philosophy.md" },
       {
@@ -128,8 +127,15 @@ export default defineConfig({
           { text: "@cap.js/cli", link: "/guide/cli.md" },
         ],
       },
+      {
+        text: "Proof-of-work",
+        items: [
+          { text: "Effectiveness", link: "/guide/effectiveness.md" },
+          { text: "How does it work", link: "/guide/workings.md" },
+        ],
+      },
       { text: "Benchmark", link: "/guide/benchmark.md" },
-      { text: "Demo", link: "/guide/demo.md" }
+      { text: "Demo", link: "/guide/demo.md" },
     ],
 
     socialLinks: [

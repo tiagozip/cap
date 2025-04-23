@@ -60,6 +60,9 @@
 
       const workerCodeTemplate = (() => {
         const baseURL = "${baseURL}";
+
+        // const relativeWasmWrapperPath = "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js";
+
         const relativeWasmWrapperPath = "../src/browser/cap_wasm.js";
 
         let solve_pow_function = null;
@@ -71,13 +74,11 @@
 
         initPromise = import(absoluteWasmWrapperUrl)
           .then((wasmModule) => {
-            return wasmModule
-              .default()
-              .then((instance) => {
-                solve_pow_function = (
-                  instance && instance.exports ? instance.exports : wasmModule
-                ).solve_pow;
-              });
+            return wasmModule.default().then((instance) => {
+              solve_pow_function = (
+                instance && instance.exports ? instance.exports : wasmModule
+              ).solve_pow;
+            });
           })
           .catch((error) => {
             console.error("[worker] setup failed", error);

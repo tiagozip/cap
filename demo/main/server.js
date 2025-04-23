@@ -15,18 +15,22 @@ fastify.get("/", (req, res) => {
 
 fastify.get("/cap.js", (req, res) => {
   res.header("Content-Type", "application/javascript");
-  res.send(fs.createReadStream(path.join(__dirname, "../../widget/src/src/cap.js")));
+  res.send(
+    fs.createReadStream(path.join(__dirname, "../../widget/src/src/cap.js"))
+  );
 });
 
 fastify.get("/cap-floating.js", (req, res) => {
   res.header("Content-Type", "application/javascript");
-  res.send(fs.createReadStream(path.join(__dirname, "../../widget/src/src/cap-floating.js")));
+  res.send(
+    fs.createReadStream(
+      path.join(__dirname, "../../widget/src/src/cap-floating.js")
+    )
+  );
 });
 
 fastify.post("/api/challenge", (req, res) => {
-  res.send(
-    cap.createChallenge()
-  );
+  res.send(cap.createChallenge());
 });
 
 fastify.post("/api/redeem", async (req, res) => {
