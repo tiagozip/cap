@@ -21,7 +21,7 @@
     #eventHandlers;
 
     static get observedAttributes() {
-      return ["onsolve", "onprogress", "onreset", "onerror", "workers"];
+      return ["onsolve", "onprogress", "onreset", "onerror", "workers", "hiddenFieldName"];
     }
 
     constructor() {
