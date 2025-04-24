@@ -7,6 +7,18 @@ export default defineConfig({
   description:
     "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work",
   lastUpdated: true,
+  transformPageData(pageData) {
+    pageData.frontmatter.head ??= [];
+    pageData.frontmatter.head.push([
+      "link",
+      {
+        rel: "canonical",
+        href: `https://capjs.js.org/${pageData.relativePath}`
+          .replace(/index\.md$/, "")
+          .replace(/\.md$/, ".html"),
+      },
+    ]);
+  },
   head: [
     ["link", { rel: "icon", href: "/logo.png" }],
     [
