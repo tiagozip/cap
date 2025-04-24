@@ -116,10 +116,10 @@ createKeyBtn.addEventListener("click", async () => {
           <p>Make sure to copy your secret key — it's required to validate tokens and you won't be able to see it again.</p>
           <div class="key-creation-form">
         <label for="public-key">Key ID</label>
-        <input type="text" id="public-key" value="${publicKey}" readonly style="opacity: 1"/>
+        <input type="text" id="public-key" value="${publicKey}" readonly style="opacity: 1;user-select: all;"/>
       </div><div class="key-creation-form">
         <label for="private-key">Secret key</label>
-        <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1"/>
+        <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1;user-select: all;"/>
       </div>
         </div>
       `;
@@ -314,10 +314,10 @@ const reloadKeysList = async () => {
           <p>Make sure to copy your new secret key — it's required to validate tokens and you won't be able to see it again.</p>
           <div class="key-creation-form">
         <label for="public-key">Key ID</label>
-        <input type="text" id="public-key" value="${key.publicKey}" readonly style="opacity: 1"/>
+        <input type="text" id="public-key" value="${key.publicKey}" readonly style="opacity: 1;user-select: all;"/>
       </div><div class="key-creation-form">
         <label for="private-key">Secret key</label>
-        <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1"/>
+        <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1;user-select: all;"/>
       </div>
         </div>
       `;

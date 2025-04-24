@@ -93,7 +93,7 @@ const auth = new Elysia({
     rateLimit({
       scoping: "scoped",
       count: 10,
-      duration: "15s",
+      duration: 15000,
     })
   )
   .post("/", async ({ body, cookie, set }) => {

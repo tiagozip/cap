@@ -1,12 +1,13 @@
 {
   "name": "@cap.js/server",
-  "version": "1.0.8",
-  "author": "Tiago Rangel",
+  "version": "1.0.9",
+  "author": "Tiago",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tiagorangel1/cap.git"
   },
   "main": "index.js",
+  "types": "index.d.ts",
   "bugs": {
     "url": "https://github.com/tiagorangel1/cap/issues"
   },
@@ -227,5 +228,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "npm:publish": "sudo npm publish --access public"
   },
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "@types/node": "^22.14.1",
+    "typescript": "^5.8.3"
+  }
 }
