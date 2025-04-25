@@ -2,7 +2,7 @@
 import { ref } from "vue";
 
 const difficulty = ref(4);
-const challenges = ref(18);
+const challenges = ref(50);
 const challengeSize = ref(32);
 const workers = ref(8);
 const benchmarks = ref(1);

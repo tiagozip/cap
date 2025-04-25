@@ -7,7 +7,7 @@ onMounted(() => {
       const browserCrypto = window.crypto;
       return new Response(
         JSON.stringify({
-          challenge: Array.from({ length: 18 }, () => [
+          challenge: Array.from({ length: 50 }, () => [
             Array.from(
               browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2)))
             )
