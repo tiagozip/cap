@@ -27,7 +27,7 @@
 
 /**
  * @typedef {Object} ChallengeConfig
- * @property {number} [challengeCount=18] - Number of challenges to generate
+ * @property {number} [challengeCount=50] - Number of challenges to generate
  * @property {number} [challengeSize=32] - Size of each challenge in bytes
  * @property {number} [challengeDifficulty=4] - Difficulty level of the challenge
  * @property {number} [expiresMs=600000] - Time in milliseconds until the challenge expires
@@ -110,7 +110,7 @@ class Cap extends EventEmitter {
 
     /** @type {Array<ChallengeTuple>} */
     const challenges = Array.from(
-      { length: (conf && conf.challengeCount) || 18 },
+      { length: (conf && conf.challengeCount) || 50 },
       () =>
         /** @type {ChallengeTuple} */ ([
           crypto
