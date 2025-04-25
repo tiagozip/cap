@@ -1,13 +1,13 @@
 {
   "name": "app",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.js",
     "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:latest . --push"
   },
   "dependencies": {
-    "@cap.js/server": "^1.0.6",
+    "@cap.js/server": "^1.0.10",
     "@elysiajs/cors": "^1.2.0",
     "@elysiajs/static": "^1.2.0",
     "elysia": "^1.2.25",
