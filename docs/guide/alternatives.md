@@ -1,31 +1,49 @@
 # Alternatives to Cap
 
-## Cloudflare Turnstile
+## Summary
 
-Cloudflare Turnstile is a great alternative to Cap, but unfortunately it is known for having an extremely high error rate, especially for users using private browsers such as Brave or Librewolf. Also, unlike Turnstile, Cap is open-source.
+| CAPTCHA              | Open-source | Cost     | Private | Hard for bots | Easy for humans | Small error rate | Customizable | Easy to integrate |
+| :------------------- | :---------- | :------- | :------ | :------------ | :-------------- | :--------------- | :----------- | :---------------- |
+| **Cap**              | ✅          | Free     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
+| Cloudflare Turnstile | ❌          | Free     | 🟨       | ✅            | ✅               | ❌               | ❌            | ✅                |
+| reCAPTCHA            | ❌          | Freemium | ❌       | ❌            | ❌               | 🟨               | ❌            | 🟨                |
+| hCAPTCHA             | ❌          | Freemium | 🟨       | ✅            | ❌               | 🟨               | ❌            | 🟨                |
+| Altcha               | ✅          | Free     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
+| FriendlyCaptcha      | ❌          | Paid     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
+| MTCaptcha            | ❌          | Freemium | 🟨       | ❌            | ❌               | 🟨               | ❌            | 🟨                |
+| GeeTest              | ❌          | Paid     | ❌       | 🟨 (depends)  | 🟨 (depends)     | 🟨               | ❌            | 🟨                |
+| Arkose Labs          | ❌          | Paid     | ❌       | ❌ (audio captcha is weak) | ❌ (worst)       | ❌               | 🟨            | ❌                |
 
-## reCAPTCHA
-Not only is Cap significantly smaller and faster than RECAPTCHA, it's open-source, fully free and is significantly more private than RECAPTCHA. Cap doesn't require you to check traffic signs or solve puzzles, and it doesn't track users or collect data.
+## All alternatives
 
-Also, reCAPTCHA's audio challenge can be solved by bots like Gemini 2.0 quite easily.
+### Cloudflare Turnstile
 
-## hCAPTCHA
-hCAPTCHA is also a pretty great alternative to Cap, and I recommend it if you don't want to use PoW, altough Cap's bundle 250x+ smaller than hCAPTCHA, is open-source and doesn't require you checking traffic signs.
+Cloudflare Turnstile is a great alternative to Cap, but unfortunately it is known for having an extremely high error rate and relies a lot on fingerprinting, especially for users using private browsers such as Brave or Librewolf. Also, unlike Turnstile, Cap is open-source and self-hosted.
 
-## Altcha
-Cap is slightly smaller than altcha and easier to integrate, but if you don't care about that and want a more mature solution I would highly recommend checking it out.
+### reCAPTCHA
 
-## FriendlyCaptcha
+Not only is Cap significantly smaller and faster than reCAPTCHA, it's open-source, fully free and is significantly more private. Cap doesn't require you to check traffic signs or solve puzzles, and it doesn't track users or collect data. reCAPTCHA is also highly inefficient due to its challenges being easily solved by multi-modal LLMs like Gemini 2.5
 
-Unlike FriendlyCaptcha, Cap is free & open-source (FriendlyCaptcha is €39/month for 5,000 requests and 5 domains) and has a smaller bundle size.
+### hCAPTCHA
 
-## MTCaptcha
-Cap is more lightweight, doesn't rely on users solving an image puzzle that LLMs and OCR can easily solve, is open-source, more private and doesn't depend on third-party servers for verification.
+Pretty much the same as reCAPTCHA, altough hCAPTCHA is significantly more secure. Personally it's the best alternatie to Cap, even though the widget's size alone is significantly bigger than Cap.
 
-## GeeTest
+### Altcha
 
-Cap doesn't require an account or API keys, has no usage limits, and is completely open-source with a simpler integration process. It also doesn't rely on slow and complex puzzles that can usually be solved by LLMs.
+Cap is slightly smaller than altcha and easier to integrate, but if you don't care about that and want a more popular solution I would highly recommend checking it out.
 
-## Arkose Labs
+### FriendlyCaptcha
 
-let's not get over how ridiculous funcaptcha is lmao like what even are those challenges
+Unlike FriendlyCaptcha, Cap is free and open-source (FriendlyCaptcha is €39/month for 5,000 requests and 5 domains) and has a smaller bundle size.
+
+### MTCaptcha
+
+Cap is more lightweight, doesn't rely on users solving an image puzzle that LLMs and OCR can easily solve and is open-source and self-hostable.
+
+### GeeTest
+
+Cap is free, self-hosted and open-source, while GeeTest is a paid service. Cap is also more private and doesn't rely on tracking users or collecting data. GeeTest is also **china-based**, which means that it has to hand over data to the CCP if they request so. Note that GeeTest partially uses md5 PoW too.
+
+### Arkose Labs
+
+Even while being extremely hard, slow and annoying for humans to solve, Arkose's FunCAPTCHA can be easily solved by LLMs due to their audio CAPTCHA. It's also closed-source and paid.
