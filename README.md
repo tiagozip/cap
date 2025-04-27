@@ -84,3 +84,5 @@ Cap is licensed under the Apache License 2.0.
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920)
 
 <a href="https://www.producthunt.com/posts/cap-5?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-cap&#0045;5" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=955605&theme=neutral&period=daily&t=1745311983202" alt="Cap - A&#0032;lightweight&#0044;&#0032;modern&#0032;open&#0045;source&#0032;captcha | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+
+### Need help? [Ask Devin →](https://deepwiki.com/tiagorangel1/cap)
