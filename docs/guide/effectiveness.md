@@ -30,6 +30,6 @@ Cap prioritizes user privacy and is designed to be GDPR and CCPA compliant.
 
 Every CAPTCHA can eventually be solved, whether by sophisticated bots or humans paid via CAPTCHA farms. The crucial difference lies in the _cost_ imposed on attackers.
 
-The goal is to make automated abuse prohibitively expensive while keeping the experience fast and virtually invisible for real users. Proof-of-work strikes an effective balance, deterring abuse by requiring computational effort rather than relying solely on human verification methods that bots continuously learn to mimic.
+The goal is to make automated abuse expensive while keeping the experience fast and virtually invisible for real users. Proof-of-work is a perfect balance, stopping abuse by requiring computational effort rather than relying solely on human verification methods that bots continuously learn to mimic.
 
 For a deeper dive into the technical aspects, you might find [this research paper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality) useful.
