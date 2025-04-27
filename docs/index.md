@@ -105,7 +105,9 @@ Cap is a modern alternative to:
 - [hCaptcha](https://www.hcaptcha.com/)
 - [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
 
-But unlike them, Cap is **computation-bound, not tracking-bound**.
+But unlike them, Cap is [**computation-bound, not tracking-bound**](./guide/workings.md).
+
+[Read more about alternatives](./guide/alternatives.md)
 
 ## License
 
