@@ -3,6 +3,47 @@
 > [!NOTE]
 > This is a more technical explanation of how Cap works. If you're looking for a more general overview, check out the [Effectiveness](./effectiveness.md) page.
 
+```mermaid
+sequenceDiagram
+    participant User
+    participant W as Widget
+    participant WW as WASM Solver
+    participant S as Server
+
+    User->>W: Interaction
+    W->>S: Request challenge
+    activate S
+    S->>S: Generate challenge
+    S-->>W: Return challenge
+    deactivate S
+
+    W->>WW: Distribute work
+
+    Note over WW: for each challenge
+    activate WW
+    WW->>WW: Solve SHA-256 PoW
+    WW-->>W: Return solutions
+    deactivate WW
+
+    W->>S: Submit solutions
+    activate S
+    S->>S: Verify solutions
+    S-->>W: Return token
+    deactivate S
+
+    W-->>User: Send token
+
+    Note over User,S: Later requests
+
+    # Assuming user interaction triggers the widget for later requests
+    # User->>W: (Initiate later request)
+    W->>S: Send token with request
+    activate S
+    S->>S: Validate token
+    Note over S: Success!
+    deactivate S
+```
+
 #### Initialization
 
 1. When Cap is initialized, it automatically registers a custom element for the widget in the browser's DOM.
