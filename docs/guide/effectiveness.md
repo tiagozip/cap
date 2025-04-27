@@ -32,16 +32,4 @@ Every CAPTCHA can eventually be solved, whether by sophisticated bots or humans 
 
 The goal is to make automated abuse prohibitively expensive while keeping the experience fast and virtually invisible for real users. Proof-of-work strikes an effective balance, deterring abuse by requiring computational effort rather than relying solely on human verification methods that bots continuously learn to mimic.
 
-For a deeper dive into the technical aspects, you might find [this research paper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality) insightful.
-
----
-
-**Key improvements in this merged version:**
-
-- **Stronger Opening:** Clearly states the goal and the "not a silver bullet" caveat upfront.
-- **Integrated PoW:** Uses the clear, numbered list from V2.
-- **Enhanced PoW Details:** Incorporates V1's useful details about salt, target, multiple challenges, and how nonces/hashes work, but phrased concisely.
-- **Clearer Economics Example:** Directly ties the cost increase to Cap.
-- **Combined Privacy & Security:** Merges these related concepts logically using clear bullet points, incorporating the specifics from both versions (memory storage, hashing, defaults).
-- **Refined "Why PoW?":** Uses strong phrasing ("prohibitively expensive," "virtually invisible," "strikes an effective balance") combining good points from both versions.
-- **Better Flow:** Information progresses logically from effectiveness to privacy/security and the underlying rationale.
+For a deeper dive into the technical aspects, you might find [this research paper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality) useful.

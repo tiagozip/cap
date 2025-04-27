@@ -1,7 +1,8 @@
+import { withMermaid } from "vitepress-plugin-mermaid";
 import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default withMermaid({
   lang: "en-US",
   title: "Cap",
   description:

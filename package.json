@@ -224,5 +224,9 @@
     "solver:publish": "cd solver && sudo npm publish --access public",
     "cli:publish": "cd solver-cli && sudo npm publish --access public",
     "wasm:publish": "cd solver-cli && sudo npm publish --access public"
+  },
+  "devDependencies": {
+    "mermaid": "^11.6.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
   }
 }
