@@ -6,6 +6,8 @@
     "preview": "vitepress preview"
   },
   "devDependencies": {
+    "mermaid": "^11.6.0",
+    "vitepress-plugin-mermaid": "^2.0.17",
     "vue": "^3.5.13"
   },
   "dependencies": {
