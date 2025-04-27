@@ -4,7 +4,7 @@
     "": {
       "name": "@cap.js/cli",
       "dependencies": {
-        "@cap.js/solver": "latest",
+        "@cap.js/solver": "0.0.3",
         "kleur": "^4.1.5",
       },
       "devDependencies": {
@@ -16,9 +16,7 @@
     },
   },
   "packages": {
-    "@cap.js/solver": ["@cap.js/solver@0.1.0", "", { "dependencies": { "@cap.js/wasm": "^0.0.3" } }, "sha512-ukrkRhiMHt6Infcu/goFNw88iNYwVsRSkFmkZytwe3+JsxHCALPLsbAFwDWSpkmWa9bHJC3/CImPRfnvXVmRzA=="],
-
-    "@cap.js/wasm": ["@cap.js/wasm@0.0.3", "", {}, "sha512-1HqjjRjHSD+2pnNj5yziCb9LfrVDsPWGV+Mr6epRag0o3nAhgEGC+AopQV01BV61BVjEQbhgyjNJBV+1Gc/SGw=="],
+    "@cap.js/solver": ["@cap.js/solver@0.0.3", "", {}, "sha512-J/Vso8LllJGBmVuj68mXalSsOg8a+Ry0/lnOYu63srk37UFlbQVWdcm63hARnEdOduR33DWS0Ot/yGHPliJhqw=="],
 
     "@types/bun": ["@types/bun@1.2.10", "", { "dependencies": { "bun-types": "1.2.10" } }, "sha512-eilv6WFM3M0c9ztJt7/g80BDusK98z/FrFwseZgT4bXCq2vPhXD4z8R3oddmAn+R/Nmz9vBn4kweJKmGTZj+lg=="],
 
