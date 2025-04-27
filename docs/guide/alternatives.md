@@ -11,8 +11,8 @@
 | Altcha               | ✅          | Free     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
 | FriendlyCaptcha      | ❌          | Paid     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
 | MTCaptcha            | ❌          | Freemium | 🟨       | ❌            | ❌               | 🟨               | ❌            | 🟨                |
-| GeeTest              | ❌          | Paid     | ❌       | 🟨 (depends)  | 🟨 (depends)     | 🟨               | ❌            | 🟨                |
-| Arkose Labs          | ❌          | Paid     | ❌ **(china-based ⚠️)**  | ❌ (audio captcha is weak) | ❌ (worst)       | ❌               | 🟨            | ❌                |
+| GeeTest              | ❌          | Paid     | ❌ **(china-based ⚠️)** | 🟨 (depends)  | 🟨 (depends)     | 🟨               | ❌            | 🟨                |
+| Arkose Labs          | ❌          | Paid     | ❌       | ❌ (audio captcha is weak) | ❌ (worst)       | ❌               | 🟨            | ❌                |
 
 ## All alternatives
 
