@@ -146,6 +146,7 @@ export default defineConfig({
           { text: "How does it work", link: "/guide/workings.md" },
         ],
       },
+      { text: "Ask Devin", link: "https://deepwiki.com/tiagorangel1/cap" },
       { text: "Benchmark", link: "/guide/benchmark.md" },
       { text: "Demo", link: "/guide/demo.md" },
     ],
