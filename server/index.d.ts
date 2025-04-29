@@ -146,4 +146,8 @@ type CapConfig = {
      * - State configuration
      */
     state: ChallengeState;
+    /**
+     * - Whether to disable the state file
+     */
+    noFSState: boolean;
 };
