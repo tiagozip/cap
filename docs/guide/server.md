@@ -19,14 +19,15 @@ pnpm i @cap.js/server
 :::
 
 > [!NOTE]
-> It is recommended to use at least Node.js 14 or Bun v1.0.0. You might experience multiple issues on older versions of these runtimes.    
+> It is recommended to use at least Node.js 14 or Bun v1.0.0. You might experience multiple issues on older versions of these runtimes.  
 > If you're using Glitch, make sure to set your Node version to 14 in your `engines` field in `package.json`
 
 ## Example code
 
 ::: code-group
+
 ```js [Elysia]
-import { Elysia } from 'elysia';
+import { Elysia } from "elysia";
 import Cap from "@cap.js/server";
 
 const cap = new Cap({
@@ -49,7 +50,7 @@ new Elysia()
     return await cap.redeemChallenge({ token, solutions });
   })
   .listen(3000);
-  
+
 console.log(`🦊 Elysia is running at http://localhost:3000`);
 ```
 
@@ -63,9 +64,7 @@ const cap = new Cap({
 });
 
 fastify.post("/api/challenge", (req, res) => {
-  res.send(
-    cap.createChallenge()
-  );
+  res.send(cap.createChallenge());
 });
 
 fastify.post("/api/redeem", async (req, res) => {
@@ -123,14 +122,14 @@ const app = express();
 app.use(express.json());
 
 const cap = new Cap({
-  tokens_store_path: '.data/tokensList.json'
+  tokens_store_path: ".data/tokensList.json",
 });
 
-app.post('/api/challenge', (req, res) => {
+app.post("/api/challenge", (req, res) => {
   res.json(cap.createChallenge());
 });
 
-app.post('/api/redeem', async (req, res) => {
+app.post("/api/redeem", async (req, res) => {
   const { token, solutions } = req.body;
   if (!token || !solutions) {
     return res.status(400).json({ success: false });
@@ -139,12 +138,14 @@ app.post('/api/redeem', async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('Listening on port 3000');
-})
+  console.log("Listening on port 3000");
+});
 ```
+
 :::
 
 Then, you can verify the CAPTCHA tokens on your server by calling the `await cap.validateToken("<token>")` method. Example:
+
 ```js
 const { success } = await cap.validateToken("9363220f..."); // [!code highlight]
 
@@ -160,16 +161,19 @@ if (success) {
 The following methods are supported:
 
 #### `new Cap({ ... })`
+
 Creates a new Cap instance.
 
 **Arguments**
+
 ```json
 {
-  tokens_store_path: ".data/tokensList.json",
-  state: {
-    challengesList: {},
-    tokensList: {},
-  },
+  "tokens_store_path": ".data/tokensList.json",
+  "noFSState": false,
+  "state": {
+    "challengesList": {},
+    "tokensList": {}
+  }
 }
 ```
 
@@ -177,18 +181,24 @@ Creates a new Cap instance.
 > You can always access or set the options of the `Cap` class by accessing or modifying the `cap.config` object.
 
 #### `cap.createChallenge({ ... })`
+
 **Arguments**
+
 ```json
 {
-  challengeCount: 18,
-  challengeSize: 32,
-  challengeDifficulty: 4,
-  expiresMs: 600000
+  "challengeCount": 18,
+  "challengeSize": 32,
+  "challengeDifficulty": 4,
+  "expiresMs": 600000
 }
 ```
+
 **Response:** `{ challenge, expires }`
 
+> if `noFSState` is set to `true`, the state will be stored in memory only. You can use this together with setting `config.state` to use a custom db such as redis for storing tokens. Added by [#16](https://github.com/tiagorangel1/cap/pull/16)
+
 #### `cap.redeemChallenge({ ... })`
+
 ```json
 {
   token,
@@ -199,10 +209,13 @@ Creates a new Cap instance.
 **Response:** `{ success, token }`
 
 #### `await cap.validateToken("...", { ... })`
+
 **Arguments:**
+
 ```json
 {
-  keepToken: false
+  "keepToken": false
 }
 ```
+
 **Response:** `{ success }`
