@@ -49,6 +49,7 @@
  * @typedef {Object} CapConfig
  * @property {string} tokens_store_path - Path to store the tokens file
  * @property {ChallengeState} state - State configuration
+ * @property {boolean} noFSState - Whether to disable the state file
  */
 
 /** @type {typeof import('node:crypto')} */
@@ -80,6 +81,7 @@ class Cap extends EventEmitter {
     /** @type {Required<CapConfig>} */
     this.config = {
       tokens_store_path: DEFAULT_TOKENS_STORE,
+      noFSState: false,
       state: {
         challengesList: {},
         tokensList: {},
@@ -87,7 +89,9 @@ class Cap extends EventEmitter {
       ...configObj,
     };
 
-    this._loadTokens().catch(() => {});
+    if (!this.config.noFSState) {
+        this._loadTokens().catch(() => {});
+    }
 
     process.on("beforeExit", () => this.cleanup());
 
@@ -177,13 +181,15 @@ class Cap extends EventEmitter {
     const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
     const id = crypto.randomBytes(8).toString("hex");
 
-    this.config.state.tokensList[`${id}:${hash}`] = expires;
+    if(this?.config?.state?.tokensList) this.config.state.tokensList[`${id}:${hash}`] = expires;
 
-    await fs.writeFile(
-      this.config.tokens_store_path,
-      JSON.stringify(this.config.state.tokensList),
-      "utf8"
-    );
+    if(!this.config.noFSState) {
+        await fs.writeFile(
+        this.config.tokens_store_path,
+        JSON.stringify(this.config.state.tokensList),
+        "utf8"
+        );
+    }
 
     return { success: true, token: `${id}:${vertoken}`, expires };
   }
@@ -204,7 +210,7 @@ class Cap extends EventEmitter {
     await this._waitForTokensList();
 
     if (this.config.state.tokensList[key]) {
-      if (conf && conf.keepToken) {
+      if (conf && conf.keepToken && !this.config.noFSState) {
         delete this.config.state.tokensList[key];
 
         await fs.writeFile(
