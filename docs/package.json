@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@cap.js/widget": "^0.0.22",
-    "vitepress": "^1.6.3"
+    "vitepress": "^1.6.3",
+    "vitepress-plugin-llms": "^1.1.1"
   }
 }
