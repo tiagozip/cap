@@ -1,5 +1,6 @@
 import { withMermaid } from "vitepress-plugin-mermaid";
-import { defineConfig } from "vitepress";
+import llmstxt from "vitepress-plugin-llms";
+// import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
@@ -8,6 +9,9 @@ export default withMermaid({
   description:
     "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work",
   lastUpdated: true,
+  vite: {
+    plugins: [llmstxt()],
+  },
   transformPageData(pageData) {
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push([
