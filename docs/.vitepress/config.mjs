@@ -125,6 +125,7 @@ export default withMermaid({
     },
 
     logo: "/logo.png",
+    siteTitle: "Cap",
 
     editLink: {
       pattern: "https://github.com/tiagorangel1/cap/edit/main/docs/:path",
