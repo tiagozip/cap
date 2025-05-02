@@ -1,6 +1,6 @@
 # Effectiveness
 
-Cap reduces spam and abuse on websites and web apps. While it won't block _all_ spam (no CAPTCHA is a silver bullet), it significantly reduces it by making automated abuse expensive. The core principle behind proof-of-work CAPTCHAs like Cap is **proving effort** rather than just verifying if you're human through fingerprinting or complex puzzles.
+Cap significantly reduces spam and abuse on websites and web apps. It won't stop _everything_ (no CAPTCHA is foolproof), however, it minimizes the potential for abuse by making it expensive. The main principle behind implementing a proof-of-work CAPTCHA like Cap includes **proving effort** instead of basic fingerprinting or solving puzzles to verify whether someone is human.
 
 ## Privacy & security
 
