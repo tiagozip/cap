@@ -5,7 +5,7 @@ import llmstxt from "vitepress-plugin-llms";
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
   lang: "en-US",
-  title: "Cap",
+  title: "Cap — Modern, lightning-quick PoW captcha",
   description:
     "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work",
   lastUpdated: true,
