@@ -121,7 +121,12 @@ export default withMermaid({
   ],
   themeConfig: {
     search: {
-      provider: "local",
+      provider: "algolia",
+      options: {
+        appId: "B8THEYC8QW",
+        apiKey: "ebdc4d8bd68e388cbeca09c14b982a85",
+        indexName: "cap-tiagorangel",
+      },
     },
 
     logo: "/logo.png",
@@ -171,6 +176,7 @@ export default withMermaid({
 
     socialLinks: [
       { icon: "github", link: "https://github.com/tiagorangel1/cap" },
+      { icon: "twitter", link: "https://x.com/0xtiago_" },
     ],
 
     footer: {
