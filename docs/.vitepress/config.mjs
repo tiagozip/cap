@@ -87,29 +87,27 @@ export default withMermaid({
       {
         type: "application/ld+json",
       },
-      `
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Cap",
-      "url": "https://capjs.js.org",
-      "description": "Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 proof-of-work",
-      "applicationCategory": "SecurityApplication",
-      "operatingSystem": "All",
-      "image": "https://capjs.js.org/logo.png",
-      "author": {
-        "@type": "Person",
-        "name": "Tiago Rangel",
-        "url": "https://tiagorangel.com"
-      },
-      "license": "https://github.com/tiagorangel1/cap/blob/main/LICENSE",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-    }
-    `,
+      `{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Cap",
+  "url": "https://capjs.js.org",
+  "description": "Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 proof-of-work",
+  "applicationCategory": "SecurityApplication",
+  "operatingSystem": "All",
+  "image": "https://capjs.js.org/logo.png",
+  "author": {
+    "@type": "Person",
+    "name": "Tiago Rangel",
+    "url": "https://tiagorangel.com"
+  },
+  "license": "https://github.com/tiagorangel1/cap/blob/main/LICENSE",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+}`,
     ],
     [
       "script",
