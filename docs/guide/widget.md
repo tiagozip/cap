@@ -44,15 +44,6 @@ widget.addEventListener("solve", function (e) {
 
 Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data. for this, it'll create a hidden field with name set to its `data-cap-hidden-field-name` attribute or `cap-token`).
 
-## Compatibility version
-
-Use this script instead if you want compatibility with more browsers but a slightly bigger code size:
-
-```html
-<script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=default,fetch,CustomEvent,TextEncoder,Element,CustomElements,ShadowDOM&flags=gated"></script>
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget/cap.compat.min.js"></script>
-```
-
 ## Supported events
 
 The following custom events are supported:
@@ -70,7 +61,7 @@ You can change the text on each label of the widget by setting the `data-cap-i18
 <cap-widget
   id="cap"
   data-cap-api-endpoint="<your cap api endpoint>"
-  
+
   data-cap-i18n-verifying-label="Verifying..."
   data-cap-i18n-initial-state="I'm a human"
   data-cap-i18n-solved-label="I'm a human"
