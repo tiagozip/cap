@@ -14,23 +14,18 @@
 ```html [unpkg]
 <script src="https://unpkg.com/@cap.js/widget"></script>
 ```
+
 :::
 
 You can now use the `<cap-widget>` component in your HTML.
 
 ```html
-<cap-widget
-  id="cap"
-  data-cap-api-endpoint="<your cap api endpoint>"
-></cap-widget>
+<cap-widget id="cap" data-cap-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-> [!NOTE]
-> You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute.
-> In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+> [!NOTE] You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
 
-> [!TIP]
-> The following attributes are supported:
+> [!TIP] The following attributes are supported:
 >
 > - `data-cap-api-endpoint`: API endpoint (required)
 > - `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
@@ -67,7 +62,24 @@ The following custom events are supported:
 - `reset`: Triggered when the widget is reset.
 - `progress`: Triggered when the there's a progress update while in verification.
 
+## i18n
+
+You can change the text on each label of the widget by setting the `data-cap-i18n-*` attribute, like this:
+
+```html
+<cap-widget
+  id="cap"
+  data-cap-api-endpoint="<your cap api endpoint>"
+  
+  data-cap-i18n-verifying-label="Verifying..."
+  data-cap-i18n-initial-state="I'm a human"
+  data-cap-i18n-solved-label="I'm a human"
+  data-cap-i18n-error-label="Error"
+></cap-widget>
+```
+
 ## Custom fetch
+
 You can override the default fetch implementation by setting `window.CAP_CUSTOM_FETCH` to a custom function. This function will receive the URL and options as arguments and should return a promise that resolves to the response.
 
 ```js

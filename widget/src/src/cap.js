@@ -20,6 +20,10 @@
     #solving = false;
     #eventHandlers;
 
+    getI18nText(key, defaultValue) {
+      return this.getAttribute(`data-cap-i18n-${key}`) || defaultValue;
+    }
+
     static get observedAttributes() {
       return [
         "onsolve",
@@ -102,7 +106,7 @@
 
       try {
         this.#solving = true;
-        this.updateUI("verifying", "Verifying...", true);
+        this.updateUI("verifying", this.getI18nText("verifying-label", "Verifying..."), true);
 
         this.dispatchEvent("progress", { progress: 0 });
 
@@ -226,7 +230,7 @@
       this.#div.setAttribute("role", "button");
       this.#div.setAttribute("tabindex", "0");
       this.#div.setAttribute("disabled", "true");
-      this.#div.innerHTML = `<div class="checkbox"></div><p>I'm a human</p><a href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener"><span>Secured by&nbsp;</span>Cap</a>`;
+      this.#div.innerHTML = `<div class="checkbox"></div><p>${this.getI18nText("initial-state", "I'm a human")}</p><a href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener"><span>Secured by&nbsp;</span>Cap</a>`;
       this.#shadow.innerHTML = `<style>.captcha{background-color:var(--cap-background);border:1px solid var(--cap-border-color);border-radius:var(--cap-border-radius);width:var(--cap-widget-width);display:flex;align-items:center;padding:var(--cap-widget-padding);gap:var(--cap-gap);cursor:pointer;transition:filter var(--cap-transition-duration),transform var(--cap-transition-duration);position:relative;-webkit-tap-highlight-color:rgba(255,255,255,0);overflow:hidden;color:var(--cap-color)}.captcha:hover{filter:var(--cap-hover-filter)}.captcha:not([disabled]):active{transform:scale(var(--cap-active-scale))}.checkbox{width:var(--cap-checkbox-size);height:var(--cap-checkbox-size);border:var(--cap-checkbox-border);border-radius:var(--cap-checkbox-border-radius);background-color:var(--cap-checkbox-background);transition:opacity var(--cap-transition-duration);margin-top:var(--cap-checkbox-margin);margin-bottom:var(--cap-checkbox-margin)}.captcha *{font-family:var(--cap-font)}.captcha p{margin:0;font-weight:500;font-size:15px;user-select:none;transition:opacity var(--cap-transition-duration)}.captcha[data-state=verifying] .checkbox{background: none;display:flex;align-items:center;justify-content:center;transform: scale(1.1);border: none;border-radius: 50%;background: conic-gradient(var(--cap-spinner-color) 0%, var(--cap-spinner-color) var(--progress, 0%), var(--cap-spinner-background-color) var(--progress, 0%), var(--cap-spinner-background-color) 100%);position: relative;}.captcha[data-state=verifying] .checkbox::after {content: "";background-color: var(--cap-background);width: calc(100% - var(--cap-spinner-thickness));height: calc(100% - var(--cap-spinner-thickness));border-radius: 50%;margin:calc(var(--cap-spinner-thickness) / 2)}.captcha[data-state=done] .checkbox{border:1px solid transparent;background-image:var(--cap-checkmark);background-size:cover}.captcha[data-state=error] .checkbox{border:1px solid transparent;background-image:var(--cap-error-cross);background-size:cover}.captcha[disabled]{
       cursor:not-allowed}.captcha[disabled][data-state=verifying]{cursor:progress}.captcha[disabled][data-state=done]{cursor:default}.captcha .credits{position:absolute;bottom:10px;right:10px;font-size:var(--cap-credits-font-size);color:var(--cap-color);opacity:var(--cap-opacity-hover)}.captcha .credits span{display:none;text-decoration:underline}.captcha .credits:hover span{display:inline-block}</style>`;
 
@@ -276,23 +280,26 @@
         this.#div
           .querySelector(".checkbox")
           .style.setProperty("--progress", `${event.detail.progress}%`);
-        progressElement.innerText = `Verifying... ${event.detail.progress}%`;
+        progressElement.innerText = `${this.getI18nText(
+          "verifying-label",
+          "Verifying..."
+        )} ${event.detail.progress}%`;
       }
       this.executeAttributeCode("onprogress", event);
     }
 
     handleSolve(event) {
-      this.updateUI("done", "You're a human", true);
+      this.updateUI("done", this.getI18nText("solved-label", "You're a human"), true);
       this.executeAttributeCode("onsolve", event);
     }
 
     handleError(event) {
-      this.updateUI("error", "Error. Try again.");
+      this.updateUI("error", this.getI18nText("error-label", "Error. Try again."));
       this.executeAttributeCode("onerror", event);
     }
 
     handleReset(event) {
-      this.updateUI("", "I'm a human");
+      this.updateUI("", this.getI18nText("initial-state", "I'm a human"));
       this.executeAttributeCode("onreset", event);
     }
 
