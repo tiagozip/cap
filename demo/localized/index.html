@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cap demo</title>
+
+    <style>
+      body {
+        padding: 0px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0px;
+        flex-direction: column;
+      }
+
+      button {
+        margin-top: 10px;
+        font-family: system, -apple-system, "BlinkMacSystemFont",
+          ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI",
+          "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
+        background-color: rgba(20, 20, 25);
+        border: 1px solid rgba(60, 60, 70);
+        border-radius: 12px;
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 12px 16px;
+        text-align: center;
+        transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
+        width: fit-content;
+      }
+
+      button:focus {
+        outline: 0;
+      }
+
+      button:hover {
+        background-color: rgba(40, 40, 40);
+        border: 1px solid rgba(100, 100, 120);
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+      .source {
+        color: black;
+        font-family: system, -apple-system, "BlinkMacSystemFont",
+          ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI",
+          "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <cap-widget
+      id="cap"
+      onsolve="console.log(`Token: ${event.detail.token}`)"
+      data-cap-api-endpoint="/api/"
+      data-cap-hidden-field-name="test-endpoint"
+      data-cap-i18n-verifying-label="Verificando..."
+      data-cap-i18n-initial-state="Eu sou um humano"
+      data-cap-i18n-solved-label="É um humano"
+      data-cap-i18n-error-label="Erro!"
+    ></cap-widget>
+
+    <cap-widget
+      id="floating"
+      onsolve="console.log(`Token: ${event.detail.token}`)"
+      data-cap-api-endpoint="/api/"
+    ></cap-widget>
+
+    <button data-cap-floating="#floating" data-cap-floating-position="bottom">
+      Trigger floating mode
+    </button>
+
+    <a
+      href="https://github.com/tiagorangel1/cap/tree/main/demo"
+      target="_blank"
+      class="source"
+      >Source code</a
+    >
+  </body>
+
+  <!--
+  <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js"></script>
+  -->
+
+  <script src="/cap.js"></script>
+  <script src="/cap-floating.js"></script>
+</html>
