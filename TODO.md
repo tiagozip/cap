@@ -1,2 +1,0 @@
-- Refactor code
-- Add support for changing labels (i18n)
