@@ -488,7 +488,7 @@
     let initPromise, solve_pow_function;
 
     initPromise = import(
-      "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
+      CAP_CUSTOM_WASM_URL || "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
     )
       .then((wasmModule) => {
         return wasmModule.default().then((instance) => {

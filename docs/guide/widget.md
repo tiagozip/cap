@@ -23,7 +23,7 @@ You can now use the `<cap-widget>` component in your HTML.
 <cap-widget id="cap" data-cap-api-endpoint="<your cap api endpoint>"></cap-widget>
 ```
 
-> [!NOTE] You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+> [!NOTE] You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/your endpoint/...', ...)`.
 
 > [!TIP] The following attributes are supported:
 >
@@ -79,3 +79,7 @@ window.CAP_CUSTOM_FETCH = function (url, options) {
   return fetch(url, options);
 };
 ```
+
+## Custom WASM URL
+
+You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js`
