@@ -85,6 +85,14 @@ export default withMermaid({
     [
       "script",
       {
+        defer: true,
+        "data-domain": "capjs.js.org",
+        src: "https://plsb.tiagorangel.com/js/script.hash.outbound-links.pageview-props.tagged-events.js",
+      },
+    ],
+    [
+      "script",
+      {
         type: "application/ld+json",
       },
       `{
