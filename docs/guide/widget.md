@@ -15,6 +15,10 @@
 <script src="https://unpkg.com/@cap.js/widget"></script>
 ```
 
+```html [standalone server]
+<script src="https://<server url>/assets/widget.js"></script>
+```
+
 :::
 
 You can now use the `<cap-widget>` component in your HTML.
