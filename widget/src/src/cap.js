@@ -463,30 +463,27 @@
       );
     }
 
-    let initPromise, solve_pow_function;
+    let wasmCacheUrl, solve_pow_function;
 
-    initPromise = import("https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js")
-      .then((wasmModule) => {
-        return wasmModule.default().then((instance) => {
-          solve_pow_function = (instance && instance.exports ? instance.exports : wasmModule)
-            .solve_pow;
-        });
-      })
-      .catch((e) => {
-        useFallback = true;
-        console.error("[cap] using fallback solver due to error:", e);
-      });
+    self.onmessage = async ({ data: { salt, target, wasmUrl } }) => {
+      console.log("[cap] worker message", { salt, target, wasmUrl });
 
-    self.onmessage = async ({ data: { salt, target } }) => {
-      const until = (predFn) => {
-        const poll = (done) => (predFn() ? done() : setTimeout(() => poll(done), 500));
-        return new Promise(poll);
-      };
+      if (wasmCacheUrl !== wasmUrl) {
+        wasmCacheUrl = wasmUrl;
+        await import(wasmUrl)
+          .then((wasmModule) => {
+            return wasmModule.default().then((instance) => {
+              solve_pow_function = (instance && instance.exports ? instance.exports : wasmModule)
+                .solve_pow;
+            });
+          })
+          .catch((e) => {
+            useFallback = true;
+            console.error("[cap] using fallback solver due to error:", e);
+          });
+      }
 
       try {
-        await initPromise;
-        await until(() => !!solve_pow_function);
-
         const startTime = performance.now();
         const nonce = solve_pow_function(salt, target);
         const endTime = performance.now();
