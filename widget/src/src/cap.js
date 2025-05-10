@@ -25,14 +25,7 @@
     }
 
     static get observedAttributes() {
-      return [
-        "onsolve",
-        "onprogress",
-        "onreset",
-        "onerror",
-        "workers",
-        "[cap]",
-      ];
+      return ["onsolve", "onprogress", "onreset", "onerror", "workers", "[cap]"];
     }
 
     constructor() {
@@ -90,12 +83,9 @@
 
       const workers = this.getAttribute("data-cap-worker-count");
       this.setWorkersCount(
-        parseInt(workers)
-          ? parseInt(workers, 10)
-          : navigator.hardwareConcurrency || 8
+        parseInt(workers) ? parseInt(workers, 10) : navigator.hardwareConcurrency || 8
       );
-      const fieldName =
-        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
     }
 
@@ -132,8 +122,7 @@
           this.dispatchEvent("progress", { progress: 100 });
 
           if (!resp.success) throw new Error("Invalid solution");
-          const fieldName =
-            this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+          const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
           if (this.querySelector(`input[name='${fieldName}']`)) {
             this.querySelector(`input[name='${fieldName}']`).value = resp.token;
           }
@@ -192,16 +181,19 @@
             reject(err);
           };
 
-          worker.postMessage({ salt, target });
+          worker.postMessage({
+            salt,
+            target,
+            wasmUrl:
+              window.CAP_CUSTOM_WASM_URL ||
+              "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js",
+          });
         });
 
       const results = [];
       try {
         for (let i = 0; i < challenge.length; i += this.#workersCount) {
-          const chunk = challenge.slice(
-            i,
-            Math.min(i + this.#workersCount, challenge.length)
-          );
+          const chunk = challenge.slice(i, Math.min(i + this.#workersCount, challenge.length));
           const chunkResults = await Promise.all(
             chunk.map((c, idx) => solveSingleChallenge(c, idx))
           );
@@ -218,9 +210,7 @@
       const parsedWorkers = parseInt(workers, 10);
       const maxWorkers = Math.min(navigator.hardwareConcurrency || 8, 16);
       this.#workersCount =
-        !isNaN(parsedWorkers) &&
-        parsedWorkers > 0 &&
-        parsedWorkers <= maxWorkers
+        !isNaN(parsedWorkers) && parsedWorkers > 0 && parsedWorkers <= maxWorkers
           ? parsedWorkers
           : navigator.hardwareConcurrency || 8;
     }
@@ -230,7 +220,10 @@
       this.#div.setAttribute("role", "button");
       this.#div.setAttribute("tabindex", "0");
       this.#div.setAttribute("disabled", "true");
-      this.#div.innerHTML = `<div class="checkbox"></div><p>${this.getI18nText("initial-state", "I'm a human")}</p><a href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener"><span>Secured by&nbsp;</span>Cap</a>`;
+      this.#div.innerHTML = `<div class="checkbox"></div><p>${this.getI18nText(
+        "initial-state",
+        "I'm a human"
+      )}</p><a href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener"><span>Secured by&nbsp;</span>Cap</a>`;
       this.#shadow.innerHTML = `<style>.captcha{background-color:var(--cap-background);border:1px solid var(--cap-border-color);border-radius:var(--cap-border-radius);width:var(--cap-widget-width);display:flex;align-items:center;padding:var(--cap-widget-padding);gap:var(--cap-gap);cursor:pointer;transition:filter var(--cap-transition-duration),transform var(--cap-transition-duration);position:relative;-webkit-tap-highlight-color:rgba(255,255,255,0);overflow:hidden;color:var(--cap-color)}.captcha:hover{filter:var(--cap-hover-filter)}.captcha:not([disabled]):active{transform:scale(var(--cap-active-scale))}.checkbox{width:var(--cap-checkbox-size);height:var(--cap-checkbox-size);border:var(--cap-checkbox-border);border-radius:var(--cap-checkbox-border-radius);background-color:var(--cap-checkbox-background);transition:opacity var(--cap-transition-duration);margin-top:var(--cap-checkbox-margin);margin-bottom:var(--cap-checkbox-margin)}.captcha *{font-family:var(--cap-font)}.captcha p{margin:0;font-weight:500;font-size:15px;user-select:none;transition:opacity var(--cap-transition-duration)}.captcha[data-state=verifying] .checkbox{background: none;display:flex;align-items:center;justify-content:center;transform: scale(1.1);border: none;border-radius: 50%;background: conic-gradient(var(--cap-spinner-color) 0%, var(--cap-spinner-color) var(--progress, 0%), var(--cap-spinner-background-color) var(--progress, 0%), var(--cap-spinner-background-color) 100%);position: relative;}.captcha[data-state=verifying] .checkbox::after {content: "";background-color: var(--cap-background);width: calc(100% - var(--cap-spinner-thickness));height: calc(100% - var(--cap-spinner-thickness));border-radius: 50%;margin:calc(var(--cap-spinner-thickness) / 2)}.captcha[data-state=done] .checkbox{border:1px solid transparent;background-image:var(--cap-checkmark);background-size:cover}.captcha[data-state=error] .checkbox{border:1px solid transparent;background-image:var(--cap-error-cross);background-size:cover}.captcha[disabled]{
       cursor:not-allowed}.captcha[disabled][data-state=verifying]{cursor:progress}.captcha[disabled][data-state=done]{cursor:default}.captcha .credits{position:absolute;bottom:10px;right:10px;font-size:var(--cap-credits-font-size);color:var(--cap-color);opacity:var(--cap-opacity-hover)}.captcha .credits span{display:none;text-decoration:underline}.captcha .credits:hover span{display:inline-block}</style>`;
 
@@ -249,10 +242,7 @@
       });
 
       this.#div.addEventListener("keydown", (e) => {
-        if (
-          (e.key === "Enter" || e.key === " ") &&
-          !this.#div.hasAttribute("disabled")
-        ) {
+        if ((e.key === "Enter" || e.key === " ") && !this.#div.hasAttribute("disabled")) {
           e.preventDefault();
           this.solve();
         }
@@ -280,10 +270,9 @@
         this.#div
           .querySelector(".checkbox")
           .style.setProperty("--progress", `${event.detail.progress}%`);
-        progressElement.innerText = `${this.getI18nText(
-          "verifying-label",
-          "Verifying..."
-        )} ${event.detail.progress}%`;
+        progressElement.innerText = `${this.getI18nText("verifying-label", "Verifying...")} ${
+          event.detail.progress
+        }%`;
       }
       this.executeAttributeCode("onprogress", event);
     }
@@ -333,8 +322,7 @@
       }
       this.dispatchEvent("reset");
       this.token = null;
-      const fieldName =
-        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       if (this.querySelector(`input[name='${fieldName}']`)) {
         this.querySelector(`input[name='${fieldName}']`).value = "";
       }
@@ -417,10 +405,7 @@
   document.adoptedStyleSheets.push(sheet);
 
   const workerFunct = function () {
-    if (
-      typeof WebAssembly !== "object" ||
-      typeof WebAssembly?.instantiate !== "function"
-    ) {
+    if (typeof WebAssembly !== "object" || typeof WebAssembly?.instantiate !== "function") {
       self.onmessage = async ({ data: { salt, target } }) => {
         // Fallback solver in case WASM is not available
 
@@ -441,16 +426,9 @@
               const inputString = salt + nonce;
               const inputBytes = encoder.encode(inputString);
 
-              const hashBuffer = await crypto.subtle.digest(
-                "SHA-256",
-                inputBytes
-              );
+              const hashBuffer = await crypto.subtle.digest("SHA-256", inputBytes);
 
-              const hashBytes = new Uint8Array(
-                hashBuffer,
-                0,
-                targetBytesLength
-              );
+              const hashBytes = new Uint8Array(hashBuffer, 0, targetBytesLength);
 
               let matches = true;
               for (let k = 0; k < targetBytesLength; k++) {
@@ -487,14 +465,11 @@
 
     let initPromise, solve_pow_function;
 
-    initPromise = import(
-      window.CAP_CUSTOM_WASM_URL || "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
-    )
+    initPromise = import("https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js")
       .then((wasmModule) => {
         return wasmModule.default().then((instance) => {
-          solve_pow_function = (
-            instance && instance.exports ? instance.exports : wasmModule
-          ).solve_pow;
+          solve_pow_function = (instance && instance.exports ? instance.exports : wasmModule)
+            .solve_pow;
         });
       })
       .catch((e) => {
@@ -504,8 +479,7 @@
 
     self.onmessage = async ({ data: { salt, target } }) => {
       const until = (predFn) => {
-        const poll = (done) =>
-          predFn() ? done() : setTimeout(() => poll(done), 500);
+        const poll = (done) => (predFn() ? done() : setTimeout(() => poll(done), 500));
         return new Promise(poll);
       };
 
@@ -549,9 +523,7 @@
   if (!customElements.get("cap-widget")) {
     customElements.define("cap-widget", CapWidget);
   } else {
-    console.warn(
-      "The cap-widget element has already been defined. Skipping re-defining it."
-    );
+    console.warn("The cap-widget element has already been defined. Skipping re-defining it.");
   }
 
   if (typeof exports === "object" && typeof module !== "undefined") {
