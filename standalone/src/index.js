@@ -1,6 +1,6 @@
 import { Elysia, file, NotFoundError } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-import { cors } from '@elysiajs/cors'
+import { cors } from "@elysiajs/cors";
 import { rateLimit } from "elysia-rate-limit";
 import Cap from "@cap.js/server";
 import crypto from "crypto";
@@ -44,6 +44,47 @@ if (ADMIN_KEY.length < 20) {
 let keys = [];
 const capInstances = new Map();
 
+const updateCache = async () => {
+  let cacheConfig = {};
+
+  try {
+    cacheConfig = JSON.parse(await fs.readFile(path.join(dataDir, "assets-cache.json"), "utf-8"));
+  } catch {}
+
+  const lastUpdate = cacheConfig["lastUpdate"] || 0;
+  const currentTime = Date.now();
+  const updateInterval = 1000 * 60 * 60 * 24; // 1 day
+
+  if (!(currentTime - lastUpdate > updateInterval)) return;
+
+  try {
+    const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = await Promise.all([
+      fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget@latest").then((r) => r.text()),
+      fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js").then((r) =>
+        r.text()
+      ),
+      fetch("https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm_bg.wasm").then((r) =>
+        r.arrayBuffer()
+      ),
+      fetch("https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js").then((r) =>
+        r.text()
+      ),
+    ]);
+
+    cacheConfig["lastUpdate"] = currentTime;
+    await fs.writeFile(path.join(dataDir, "assets-cache.json"), JSON.stringify(cacheConfig));
+
+    await fs.writeFile(path.join(dataDir, "assets-widget.js"), widgetSource);
+    await fs.writeFile(path.join(dataDir, "assets-floating.js"), floatingSource);
+    await fs.writeFile(path.join(dataDir, "assets-cap_wasm_bg.wasm"), Buffer.from(wasmSource));
+    await fs.writeFile(path.join(dataDir, "assets-cap_wasm.js"), wasmLoaderSource);
+
+    console.log("[asset server] updated assets cache");
+  } catch (e) {
+    console.error("[asset server] error updating assets cache, trying to load them might fail:", e);
+  }
+};
+
 const init = async () => {
   try {
     await fs.mkdir(dataDir, { recursive: true });
@@ -65,6 +106,8 @@ const init = async () => {
     keys = [];
     capInstances.clear();
   }
+
+  await updateCache();
 };
 
 const saveKeys = async () => {
@@ -182,14 +225,7 @@ const internal = new Elysia({ prefix: "/internal" })
   .post(
     "/editKey",
     async ({
-      body: {
-        publicKey,
-        keyName,
-        challengesCount,
-        challengeSize,
-        challengeDifficulty,
-        expiresMs,
-      },
+      body: { publicKey, keyName, challengesCount, challengeSize, challengeDifficulty, expiresMs },
       set,
     }) => {
       const keyIndex = keys.findIndex((key) => key.publicKey === publicKey);
@@ -240,10 +276,7 @@ const internal = new Elysia({ prefix: "/internal" })
       await fs.unlink(tokenFilePath);
     } catch (error) {
       if (error.code !== "ENOENT") {
-        console.warn(
-          `Could not delete token file ${tokenFilePath}:`,
-          error.message
-        );
+        console.warn(`Could not delete token file ${tokenFilePath}:`, error.message);
       }
     }
 
@@ -320,15 +353,33 @@ const api = new Elysia({ prefix: "/:key" })
     return await capInstance.validateToken(response);
   });
 
+const assetsServer = new Elysia({ prefix: "/assets" })
+  .get("/widget.js", ({ set }) => {
+    set.headers["Content-Type"] = "text/javascript";
+    return file(path.join(dataDir, "assets-widget.js"));
+  })
+  .get("/floating.js", ({ set }) => {
+    set.headers["Content-Type"] = "text/javascript";
+    return file(path.join(dataDir, "assets-floating.js"));
+  })
+  .get("/cap_wasm_bg.wasm", ({ set }) => {
+    set.headers["Content-Type"] = "application/wasm";
+    return file(path.join(dataDir, "assets-cap_wasm_bg.wasm"));
+  })
+  .get("/cap_wasm.js", ({ set }) => {
+    set.headers["Content-Type"] = "text/javascript";
+    return file(path.join(dataDir, "assets-cap_wasm.js"));
+  });
+
 new Elysia()
   .use(staticPlugin())
   .use(auth)
   .use(internal)
   .use(api)
+  .use(assetsServer)
   .get("/", async ({ cookie }) => {
     const authCookie = cookie["cap-admin-key"]?.value;
-    const isAuthed =
-      authCookie && (await Bun.password.verify(ADMIN_KEY, authCookie));
+    const isAuthed = authCookie && (await Bun.password.verify(ADMIN_KEY, authCookie));
 
     return file(isAuthed ? "./public/index.html" : "./public/lock.html");
   })

@@ -466,8 +466,6 @@
     let wasmCacheUrl, solve_pow_function;
 
     self.onmessage = async ({ data: { salt, target, wasmUrl } }) => {
-      console.log("[cap] worker message", { salt, target, wasmUrl });
-
       if (wasmCacheUrl !== wasmUrl) {
         wasmCacheUrl = wasmUrl;
         await import(wasmUrl)
