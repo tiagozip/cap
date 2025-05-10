@@ -10,8 +10,7 @@ To install Cap Standalone, you need to have [Docker](https://docs.docker.com/get
 docker pull tiago2/cap:latest
 ```
 
-> [!NOTE]
-> Both `x86_64` (amd64) and `arm64` architectures are supported. Docker Engine 20.10 or higher is recommended
+> [!NOTE] Both `x86_64` (amd64) and `arm64` architectures are supported. Docker Engine 20.10 or higher is recommended
 
 Then, to run the server, use the following command:
 
@@ -49,9 +48,7 @@ Make sure to replace:
 Example:
 
 ```html
-<cap-widget
-  data-cap-api-endpoint="https://cap.example.com/d9256640cb53/api/"
-></cap-widget>
+<cap-widget data-cap-api-endpoint="https://cap.example.com/d9256640cb53/api/"></cap-widget>
 ```
 
 ### Server-side
@@ -94,3 +91,32 @@ The response should look like this:
 ```
 
 If `success` is true, you can proceed with your app logic.
+
+### Client-side library storage
+
+By default, Cap Standalone updates and stores multiple files for Cap's client-side `cap.js/widget` library. This helps Cap be truly self-hosted and not depend on any external resources.
+
+These files are stored in the `.data` folder and exposed in the following paths:
+
+- /assets/widget.js
+- /assets/floating.js
+- /assets/cap_wasm_bg.wasm
+- /assets/cap_wasm.js
+
+You can use these in your app by setting the widget's script source to the appropriate path, like this:
+
+```html
+<script src="https://<server url>/assets/widget.js"></script>
+```
+
+For the floating mode, use:
+
+```html
+<script src="https://<server url>/assets/floating.js"></script>
+```
+
+And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm_bg.wasm` file, like this:
+
+```js
+window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
+```

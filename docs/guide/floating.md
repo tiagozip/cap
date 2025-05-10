@@ -21,6 +21,13 @@ You'll also need to import both the Cap library and the floating mode script fro
 <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js"></script> <!-- [!code ++] -->
 ```
 
+Or from the standalone server:
+
+```html
+<script src="https://<server url>/assets/widget.js"></script>
+<script src="https://<server url>/assets/floating.js"></script> <!-- [!code ++] -->
+```
+
 The following attributes are supported:
 
 - `data-cap-floating`: The CSS selector of the `cap-widget` element you want to use.
