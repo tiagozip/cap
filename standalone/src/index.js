@@ -334,4 +334,5 @@ new Elysia()
   })
   .listen(3000);
 
+console.log(`Cap standalone running on http://localhost:3000`);
 init();

@@ -8,8 +8,8 @@
     <style>
       * {
         box-sizing: border-box;
-        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-          Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen-Sans, Ubuntu,
+          Cantarell, Helvetica Neue, sans-serif;
       }
       body {
         text-align: center;
@@ -104,8 +104,7 @@
 
       .submit:focus {
         box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
-          0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
-          0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
+          0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
         outline: 0;
       }
 
@@ -156,12 +155,7 @@
       </div>
       <label for="key">Admin key</label>
       <div class="password-wrapper">
-        <input
-          type="password"
-          name="password"
-          placeholder="••••••••••••••"
-          class="password"
-        />
+        <input type="password" name="password" placeholder="••••••••••••••" class="password" />
         <button title="Show/hide password" class="showhide-password" type="button">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -193,55 +187,51 @@
   <script>
     document.querySelector("input").focus();
 
-    document
-      .querySelector("form")
-      .addEventListener("submit", async function (e) {
-        e.preventDefault();
+    document.querySelector("form").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-        const password = document.querySelector("input[name=password]").value;
+      const password = document.querySelector("input[name=password]").value;
 
-        document.querySelector("button[type=submit]").disabled = true;
+      document.querySelector("button[type=submit]").disabled = true;
 
-        const { success } = await (
-          await fetch("/internal/auth", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              password,
-            }),
-          })
-        ).json();
+      const { success } = await (
+        await fetch("/internal/auth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            password,
+          }),
+        })
+      ).json();
 
-        if (success) {
-          document.querySelector("p.err").style.display = "none";
-          window.location.href = "/";
-          return;
-        }
+      if (success) {
+        document.querySelector("p.err").style.display = "none";
+        window.location.href = "/";
+        return;
+      }
 
-        document.querySelector("p.err").style.display = "block";
-        document.querySelector("p.err").innerText =
-          "Incorrect admin key. Please try again.";
-        document.querySelector("input[name=password]").value = "";
-      });
+      document.querySelector("button[type=submit]").disabled = false;
+      document.querySelector("p.err").style.display = "block";
+      document.querySelector("p.err").innerText = "Incorrect admin key. Please try again.";
+      document.querySelector("input[name=password]").value = "";
+    });
 
-    document
-      .querySelector(".showhide-password")
-      .addEventListener("click", () => {
-        const passwordInput = document.querySelector("input[name=password]");
-        const showhideButton = document.querySelector(".showhide-password");
-        passwordInput.classList.toggle("show-password");
+    document.querySelector(".showhide-password").addEventListener("click", () => {
+      const passwordInput = document.querySelector("input[name=password]");
+      const showhideButton = document.querySelector(".showhide-password");
+      passwordInput.classList.toggle("show-password");
 
-        if (passwordInput.type === "password") {
-          passwordInput.type = "text";
-          passwordInput.placeholder = "";
-          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
-        } else {
-          passwordInput.type = "password";
-          passwordInput.placeholder = "••••••••••••••";
-          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
-        }
-      });
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        passwordInput.placeholder = "";
+        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
+      } else {
+        passwordInput.type = "password";
+        passwordInput.placeholder = "••••••••••••••";
+        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+      }
+    });
   </script>
 </html>
