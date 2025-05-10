@@ -1,14 +1,22 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+about: Open a bug report
+title: "[BUG]"
+labels: bug
+assignees: tiagorangel1
 
 ---
 
 **Describe the bug**
 A clear and concise description of what the bug is.
+
+**Affects:**
+- [] Standalone mode
+- [] Widget
+- [] Server
+- [] WASM
+- [] Solver
+- [] Solver CLI
 
 **To Reproduce**
 Steps to reproduce the behavior:
