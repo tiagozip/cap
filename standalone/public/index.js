@@ -37,8 +37,7 @@ createKeyBtn.addEventListener("click", async () => {
       <div class="actions">
         <button class="create-key btn" disabled>Create key</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
   document.body.appendChild(modal);
 
@@ -108,21 +107,21 @@ createKeyBtn.addEventListener("click", async () => {
     const newModal = document.createElement("div");
     newModal.classList.add("dialog-wrapper");
     newModal.innerHTML = `
-        <div class="dialog key-creation-dialog">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-button"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  <div class="dialog key-creation-dialog">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-button"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    <h2>Key details</h2>
+    <p>Make sure to copy your secret key — it's required to validate tokens and you won't be able to see it again.</p>
     
-          <h2>Key details</h2>
-
-          <p>Make sure to copy your secret key — it's required to validate tokens and you won't be able to see it again.</p>
-          <div class="key-creation-form">
-        <label for="public-key">Key ID</label>
-        <input type="text" id="public-key" value="${publicKey}" readonly style="opacity: 1;user-select: all;"/>
-      </div><div class="key-creation-form">
-        <label for="private-key">Secret key</label>
-        <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1;user-select: all;"/>
-      </div>
-        </div>
-      `;
+    <div class="key-creation-form">
+      <label for="public-key">Key ID</label>
+      <input type="text" id="public-key" value="${publicKey}" readonly style="opacity: 1;user-select: all;"/>
+    </div>
+    
+    <div class="key-creation-form">
+      <label for="private-key">Secret key</label>
+      <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1;user-select: all;"/>
+    </div>
+  </div>`;
 
     document.body.appendChild(newModal);
 
@@ -201,8 +200,7 @@ const reloadKeysList = async () => {
               <button class="delete-key action-secundary"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash2-icon lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg> Delete key</button>
               <button class="create-key btn">Save changes</button>
             </div>
-          </div>
-        `;
+          </div>`;
 
       document.body.appendChild(modal);
 
@@ -220,8 +218,7 @@ const reloadKeysList = async () => {
             <div class="actions">
               <button class="confirm-delete btn">Delete</button>
             </div>
-          </div>
-        `;
+          </div>`;
 
         document.body.appendChild(newModal);
 
@@ -270,8 +267,7 @@ const reloadKeysList = async () => {
             <div class="actions">
               <button class="confirm-rotate btn">Rotate</button>
             </div>
-          </div>
-        `;
+          </div>`;
 
         document.body.appendChild(newModal);
 
@@ -306,21 +302,22 @@ const reloadKeysList = async () => {
           const successModal = document.createElement("div");
           successModal.classList.add("dialog-wrapper");
           successModal.innerHTML = `
-        <div class="dialog key-creation-dialog">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-button"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-    
-          <h2>Secret key rotated</h2>
+  <div class="dialog key-creation-dialog">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-button"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> 
+    <h2>Secret key rotated</h2>
 
-          <p>Make sure to copy your new secret key — it's required to validate tokens and you won't be able to see it again.</p>
-          <div class="key-creation-form">
-        <label for="public-key">Key ID</label>
-        <input type="text" id="public-key" value="${key.publicKey}" readonly style="opacity: 1;user-select: all;"/>
-      </div><div class="key-creation-form">
-        <label for="private-key">Secret key</label>
-        <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1;user-select: all;"/>
+    <p>Make sure to copy your new secret key — it's required to validate tokens and you won't be able to see it again.</p>
+    
+    <div class="key-creation-form">
+      <label for="public-key">Key ID</label>
+      <input type="text" id="public-key" value="${key.publicKey}" readonly style="opacity: 1;user-select: all;"/>
+    </div>
+    
+    <div class="key-creation-form">
+      <label for="private-key">Secret key</label>
+      <input type="text" id="private-key" value="${privateKey}" readonly style="opacity: 1;user-select: all;"/>
       </div>
-        </div>
-      `;
+    </div>`;
 
           document.body.appendChild(successModal);
 
