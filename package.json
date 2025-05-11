@@ -9,8 +9,7 @@
     "docs:build": "cd docs && bun run build",
     "docs:preview": "cd docs && bun run preview",
     "widget:build": "cd widget && bun run build.js",
-    "widget:publish": "cd widget && cd src && sudo npm publish --access public",
-    "server:publish": "cd server && sudo npm publish --access public",
+    "server:publish": "cd server && bunx tsc && sudo npm publish --access public",
     "solver:publish": "cd solver && sudo npm publish --access public",
     "cli:publish": "cd solver-cli && sudo npm publish --access public",
     "wasm:publish": "cd solver-cli && sudo npm publish --access public"

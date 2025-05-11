@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      window.CAP_CUSTOM_FETCH = async (url, options) => {
+        if (url === "/api/challenge") {
+          const browserCrypto = window.crypto;
+
+          return new Response(
+            JSON.stringify({
+              challenge: Array.from({ length: 5 }, () => [
+                Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2))))
+                  .map((byte) => byte.toString(16).padStart(2, "0"))
+                  .join("")
+                  .slice(0, 32),
+
+                Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(2 / 2))))
+                  .map((byte) => byte.toString(16).padStart(2, "0"))
+                  .join("")
+                  .slice(0, 4),
+              ]),
+              token: "",
+              expires: new Date().getTime() + 6000 * 100,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+        if (url === "/api/redeem") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              token: "ok",
+              expires: new Date().getTime() + 1000 * 60,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+        return await window.fetch(url, options);
+      };
+    </script>
+  </head>
+  <body>
+    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+    <cap-widget data-cap-api-endpoint="/api/"></cap-widget>
+
+    <script>
+      const widget = document.querySelector("cap-widget");
+
+      widget.solve();
+
+      widget.addEventListener("solve", function (e) {
+        fetch(e.detail.token === "ok" ? "/solved" : "/failed");
+      });
+    </script>
+  </body>
+</html>
