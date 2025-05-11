@@ -5,19 +5,20 @@ onMounted(() => {
   window.CAP_CUSTOM_FETCH = async (url, options) => {
     if (url === "/api/challenge") {
       const browserCrypto = window.crypto;
+
+      try {
+        plausible("demo");
+      } catch {}
+
       return new Response(
         JSON.stringify({
           challenge: Array.from({ length: 50 }, () => [
-            Array.from(
-              browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2)))
-            )
+            Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2))))
               .map((byte) => byte.toString(16).padStart(2, "0"))
               .join("")
               .slice(0, 32),
 
-            Array.from(
-              browserCrypto.getRandomValues(new Uint8Array(Math.ceil(4 / 2)))
-            )
+            Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(4 / 2))))
               .map((byte) => byte.toString(16).padStart(2, "0"))
               .join("")
               .slice(0, 4),
