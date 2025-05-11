@@ -20,6 +20,12 @@ const doBenchmark = async (i, total) => {
   const Cap = window.Cap;
 
   try {
+    plausible("benchmark", {
+      props: { difficulty, challenges, challengeSize, workers, benchmarks },
+    });
+  } catch {}
+
+  try {
     window.CAP_CUSTOM_FETCH = async (url, options) => {
       if (url === "/api/challenge") {
         const browserCrypto = window.crypto;
@@ -27,18 +33,14 @@ const doBenchmark = async (i, total) => {
           JSON.stringify({
             challenge: Array.from({ length: challenges.value }, () => [
               Array.from(
-                browserCrypto.getRandomValues(
-                  new Uint8Array(Math.ceil(challengeSize.value / 2))
-                )
+                browserCrypto.getRandomValues(new Uint8Array(Math.ceil(challengeSize.value / 2)))
               )
                 .map((byte) => byte.toString(16).padStart(2, "0"))
                 .join("")
                 .slice(0, challengeSize.value),
 
               Array.from(
-                browserCrypto.getRandomValues(
-                  new Uint8Array(Math.ceil(difficulty.value / 2))
-                )
+                browserCrypto.getRandomValues(new Uint8Array(Math.ceil(difficulty.value / 2)))
               )
                 .map((byte) => byte.toString(16).padStart(2, "0"))
                 .join("")
@@ -95,9 +97,7 @@ const doBenchmark = async (i, total) => {
 
     progressValue.value = (i / total) * 100;
 
-    resultMessage.value = `Benchmark ${i}/${total} completed in ${Math.round(
-      time
-    )} ms.`;
+    resultMessage.value = `Benchmark ${i}/${total} completed in ${Math.round(time)} ms.`;
     return time;
   } catch (error) {
     console.error(`Benchmark ${i}/${total} failed:`, error);
@@ -138,10 +138,7 @@ async function runBenchmark() {
 
 <template>
   <ClientOnly>
-    <div
-      class="benchmark-form"
-      :style="{ '--progress-percent': progressValue }"
-    >
+    <div class="benchmark-form" :style="{ '--progress-percent': progressValue }">
       <div class="benchmark-field">
         <label for="difficulty">Challenge difficulty</label>
         <input
@@ -221,12 +218,8 @@ async function runBenchmark() {
   background-color: var(--vp-c-bg-soft);
 
   border: 1px solid transparent;
-  background: linear-gradient(var(--vp-c-bg-soft), var(--vp-c-bg-soft))
-      padding-box,
-    conic-gradient(
-        var(--vp-c-brand-1) calc(var(--progress-percent, 0) * 1%),
-        var(--vp-c-divider) 0
-      )
+  background: linear-gradient(var(--vp-c-bg-soft), var(--vp-c-bg-soft)) padding-box,
+    conic-gradient(var(--vp-c-brand-1) calc(var(--progress-percent, 0) * 1%), var(--vp-c-divider) 0)
       border-box;
 
   transition: background 0.2s ease;
