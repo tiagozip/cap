@@ -51,6 +51,13 @@ const server = Bun.serve({
     "/": () => {
       return new Response(Bun.file("./test.html"));
     },
+    "/widget.js": () => {
+      return new Response(Bun.file("./src/cap.min.js"), {
+        headers: {
+          "Content-Type": "application/javascript",
+        },
+      });
+    },
     "/failed": () => {
       console.error("test failed, quitting");
       process.exit(1);
