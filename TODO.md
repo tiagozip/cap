@@ -1,1 +1,1 @@
-- Better testing before builds
+- document standalone mode key management API
