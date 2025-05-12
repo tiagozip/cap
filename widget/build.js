@@ -77,7 +77,7 @@ const server = Bun.serve({
         });
       }
 
-      process.exit(0)
+      process.exit(0);
     },
   },
 });
