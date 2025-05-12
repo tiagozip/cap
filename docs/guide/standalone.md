@@ -15,10 +15,11 @@ docker pull tiago2/cap:latest
 Then, to run the server, use the following command:
 
 ```bash
-docker run \
+docker run -d \
   -p 3000:3000 \
-  -v $(pwd)/cap-standalone:/usr/src/app/.data \
+  -v cap-data:/usr/src/app/.data \
   -e ADMIN_KEY=your_secret_key \
+  --name cap-standalone \
   tiago2/cap:latest
 ```
 
