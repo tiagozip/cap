@@ -20,12 +20,6 @@ const doBenchmark = async (i, total) => {
   const Cap = window.Cap;
 
   try {
-    plausible("benchmark", {
-      props: { difficulty, challenges, challengeSize, workers, benchmarks },
-    });
-  } catch {}
-
-  try {
     window.CAP_CUSTOM_FETCH = async (url, options) => {
       if (url === "/api/challenge") {
         const browserCrypto = window.crypto;
@@ -128,6 +122,14 @@ async function runBenchmark() {
     resultMessage.value = `Average benchmark time: ${Math.round(
       averageTime
     )} ms over ${total} runs.`;
+
+    try {
+      plausible("benchmark", {
+        props: { difficulty, challenges, challengeSize, workers, benchmarks, averageTime },
+      });
+    } catch (e) {
+      console.log("[plausible] error on benchmark log", e);
+    }
   } catch {
   } finally {
     progressValue.value = 100;
