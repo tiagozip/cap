@@ -125,7 +125,14 @@ async function runBenchmark() {
 
     try {
       plausible("benchmark", {
-        props: { difficulty, challenges, challengeSize, workers, benchmarks, averageTime },
+        props: {
+          difficulty: difficulty.value,
+          challenges: challenges.value,
+          challengeSize: challengeSize.value,
+          workers: workers.value,
+          benchmarks: benchmarks.value,
+          averageTime,
+        },
       });
     } catch (e) {
       console.log("[plausible] error on benchmark log", e);
