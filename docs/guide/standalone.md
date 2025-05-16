@@ -29,6 +29,10 @@ Make sure to replace `your_secret_key` with a strong secret key, as anyone with 
 
 Then, you can access the dashboard at `http://localhost:3000`, log in, and create a key. The key ID and secret will be used to configure the widget and verify the token on your server. You'll also need to make the server publicly accessible from the internet, as the widget needs to be able to reach it.
 
+### CORS
+
+You can change the default CORS settings for redeeming tokens and generating challenges by setting the `CORS_ORIGIN` environment variable when running the server. This defaults to `*`, which allows all origins. This will directly assign to Access-Control-Allow-Origin header.
+
 ## Usage
 
 ### Client-side
