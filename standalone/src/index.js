@@ -48,7 +48,9 @@ const updateCache = async () => {
   let cacheConfig = {};
 
   try {
-    cacheConfig = JSON.parse(await fs.readFile(path.join(dataDir, "assets-cache.json"), "utf-8"));
+    cacheConfig = JSON.parse(
+      await fs.readFile(path.join(dataDir, "assets-cache.json"), "utf-8")
+    );
   } catch {}
 
   const lastUpdate = cacheConfig["lastUpdate"] || 0;
@@ -58,30 +60,48 @@ const updateCache = async () => {
   if (!(currentTime - lastUpdate > updateInterval)) return;
 
   try {
-    const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = await Promise.all([
-      fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget@latest").then((r) => r.text()),
-      fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js").then((r) =>
-        r.text()
-      ),
-      fetch("https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm_bg.wasm").then((r) =>
-        r.arrayBuffer()
-      ),
-      fetch("https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js").then((r) =>
-        r.text()
-      ),
-    ]);
+    const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] =
+      await Promise.all([
+        fetch("https://cdn.jsdelivr.net/npm/@cap.js/widget@latest").then((r) =>
+          r.text()
+        ),
+        fetch(
+          "https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js"
+        ).then((r) => r.text()),
+        fetch(
+          "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm_bg.wasm"
+        ).then((r) => r.arrayBuffer()),
+        fetch(
+          "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
+        ).then((r) => r.text()),
+      ]);
 
     cacheConfig["lastUpdate"] = currentTime;
-    await fs.writeFile(path.join(dataDir, "assets-cache.json"), JSON.stringify(cacheConfig));
+    await fs.writeFile(
+      path.join(dataDir, "assets-cache.json"),
+      JSON.stringify(cacheConfig)
+    );
 
     await fs.writeFile(path.join(dataDir, "assets-widget.js"), widgetSource);
-    await fs.writeFile(path.join(dataDir, "assets-floating.js"), floatingSource);
-    await fs.writeFile(path.join(dataDir, "assets-cap_wasm_bg.wasm"), Buffer.from(wasmSource));
-    await fs.writeFile(path.join(dataDir, "assets-cap_wasm.js"), wasmLoaderSource);
+    await fs.writeFile(
+      path.join(dataDir, "assets-floating.js"),
+      floatingSource
+    );
+    await fs.writeFile(
+      path.join(dataDir, "assets-cap_wasm_bg.wasm"),
+      Buffer.from(wasmSource)
+    );
+    await fs.writeFile(
+      path.join(dataDir, "assets-cap_wasm.js"),
+      wasmLoaderSource
+    );
 
     console.log("[asset server] updated assets cache");
   } catch (e) {
-    console.error("[asset server] error updating assets cache, trying to load them might fail:", e);
+    console.error(
+      "[asset server] error updating assets cache, trying to load them might fail:",
+      e
+    );
   }
 };
 
@@ -225,7 +245,14 @@ const internal = new Elysia({ prefix: "/internal" })
   .post(
     "/editKey",
     async ({
-      body: { publicKey, keyName, challengesCount, challengeSize, challengeDifficulty, expiresMs },
+      body: {
+        publicKey,
+        keyName,
+        challengesCount,
+        challengeSize,
+        challengeDifficulty,
+        expiresMs,
+      },
       set,
     }) => {
       const keyIndex = keys.findIndex((key) => key.publicKey === publicKey);
@@ -276,7 +303,10 @@ const internal = new Elysia({ prefix: "/internal" })
       await fs.unlink(tokenFilePath);
     } catch (error) {
       if (error.code !== "ENOENT") {
-        console.warn(`Could not delete token file ${tokenFilePath}:`, error.message);
+        console.warn(
+          `Could not delete token file ${tokenFilePath}:`,
+          error.message
+        );
       }
     }
 
@@ -304,7 +334,11 @@ const internal = new Elysia({ prefix: "/internal" })
   });
 
 const api = new Elysia({ prefix: "/:key" })
-  .use(cors())
+  .use(
+    cors({
+      origin: process.env.CORS_ORIGIN || true,
+    })
+  )
   .use(
     rateLimit({
       scoping: "scoped",
@@ -379,7 +413,8 @@ new Elysia()
   .use(assetsServer)
   .get("/", async ({ cookie }) => {
     const authCookie = cookie["cap-admin-key"]?.value;
-    const isAuthed = authCookie && (await Bun.password.verify(ADMIN_KEY, authCookie));
+    const isAuthed =
+      authCookie && (await Bun.password.verify(ADMIN_KEY, authCookie));
 
     return file(isAuthed ? "./public/index.html" : "./public/lock.html");
   })
