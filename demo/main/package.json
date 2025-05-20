@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@cap.js/server": "^1.0.10",
-    "fastify": "^5.3.2"
+    "@cap.js/server": "^1.0.12",
+    "fastify": "^5.3.3"
   }
 }
