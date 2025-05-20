@@ -384,7 +384,9 @@ const api = new Elysia({ prefix: "/:key" })
       return { success: false, message: "Invalid secret" };
     }
 
-    return await capInstance.validateToken(response);
+    return await capInstance.validateToken(response, {
+      keepToken: false
+    });
   });
 
 const assetsServer = new Elysia({ prefix: "/assets" })
