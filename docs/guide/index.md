@@ -218,3 +218,8 @@ await cap.validateToken("..."); // returns { success: Boolean }
 ```
 
 Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.
+
+
+## LLMs
+
+You can use this documentaton's [llms.txt](/llms.txt) or [llms-full.txt](/llms-full.txt) (~8k tokens) to give to LLMs. Note that Cap is **not "vibe-coded"**
