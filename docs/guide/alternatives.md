@@ -2,17 +2,17 @@
 
 ## Summary
 
-| CAPTCHA              | Open-source | Cost     | Private | Hard for bots | Easy for humans | Small error rate | Customizable | Easy to integrate |
-| :------------------- | :---------- | :------- | :------ | :------------ | :-------------- | :--------------- | :----------- | :---------------- |
-| **Cap**              | ✅          | Free     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
-| Cloudflare Turnstile | ❌          | Free     | 🟨       | ✅            | ✅               | ❌               | ❌            | ✅                |
-| reCAPTCHA            | ❌          | Freemium | ❌       | ❌            | ❌               | 🟨               | ❌            | 🟨                |
-| hCAPTCHA             | ❌          | Freemium | 🟨       | ✅            | ❌               | 🟨               | ❌            | 🟨                |
-| Altcha               | ✅          | Free     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
-| FriendlyCaptcha      | ❌          | Paid     | ✅       | 🟨 (PoW)      | ✅               | ✅               | ✅            | 🟨                |
-| MTCaptcha            | ❌          | Freemium | 🟨       | ❌            | ❌               | 🟨               | ❌            | 🟨                |
-| GeeTest              | ❌          | Paid     | ❌ **(china-based ⚠️)** | 🟨 (depends)  | 🟨 (depends)     | 🟨               | ❌            | 🟨                |
-| Arkose Labs          | ❌          | Paid     | ❌       | ❌ (audio captcha is weak) | ❌ (worst)       | ❌               | 🟨            | ❌                |
+| CAPTCHA | Open-source | Cost | Private | Hard for bots | Easy for humans | Small error rate | Customizable | Easy to integrate |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| **Cap** | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 |
+| Cloudflare Turnstile | ❌ | Free | 🟨 | ✅ | ✅ | ❌ | ❌ | ✅ |
+| reCAPTCHA | ❌ | Freemium | ❌ | ❌ | ❌ | 🟨 | ❌ | ✅ |
+| hCAPTCHA | ❌ | Freemium | 🟨 | ✅ | ❌ | 🟨 | ❌ | ✅ |
+| Altcha | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 |
+| FriendlyCaptcha | ❌ | Paid | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 |
+| MTCaptcha | ❌ | Freemium | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 |
+| GeeTest **(china-based ⚠️)** | ❌ | Paid | ❌ | 🟨 (depends) | 🟨 (depends) | 🟨 | ❌ | 🟨 |
+| Arkose Labs | ❌ | Paid | ❌ | ❌ (audio captcha is weak) | ❌ (worst) | ❌ | 🟨 | ❌ |
 
 ## All alternatives
 
@@ -42,7 +42,7 @@ Cap is more lightweight, doesn't rely on users solving an image puzzle that LLMs
 
 ### GeeTest
 
-Cap is free, self-hosted and open-source, while GeeTest is a paid service. Cap is also more private and doesn't rely on tracking users or collecting data. GeeTest is also **china-based**, which means that it has to hand over data to the CCP if they request so. Note that GeeTest partially uses md5 PoW too.
+Cap is free, self-hosted and open-source, while GeeTest is a paid service. Cap is also more private and doesn't rely on tracking users or collecting data. **GeeTest is also china-based, which means that it has to hand over data to the chinese government if they request so.** Note that GeeTest partially uses MD5 PoW too.
 
 ### Arkose Labs
 
