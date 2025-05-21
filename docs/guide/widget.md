@@ -21,10 +21,17 @@
 
 :::
 
+::: warning  
+We're using the latest version of the library here for keeping stuff simple, but you should optimally pin a specific version to avoid breaking changes in the future.  
+:::
+
 You can now use the `<cap-widget>` component in your HTML.
 
 ```html
-<cap-widget id="cap" data-cap-api-endpoint="<your cap api endpoint>"></cap-widget>
+<cap-widget
+  id="cap"
+  data-cap-api-endpoint="<your cap api endpoint>"
+></cap-widget>
 ```
 
 > [!NOTE] You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/your endpoint/...', ...)`.
@@ -65,7 +72,6 @@ You can change the text on each label of the widget by setting the `data-cap-i18
 <cap-widget
   id="cap"
   data-cap-api-endpoint="<your cap api endpoint>"
-
   data-cap-i18n-verifying-label="Verifying..."
   data-cap-i18n-initial-state="I'm a human"
   data-cap-i18n-solved-label="I'm a human"
