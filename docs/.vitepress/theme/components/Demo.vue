@@ -37,7 +37,7 @@ onMounted(() => {
         JSON.stringify({
           success: true,
           token: "",
-          expires: new Date().getTime() + 1000 * 60,
+          expires: new Date().getTime() + 3600000,
         }),
         {
           status: 200,
