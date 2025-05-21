@@ -25,6 +25,11 @@ Start by adding importing the Cap widget library from a CDN:
 ```html [unpkg]
 <script src="https://unpkg.com/@cap.js/widget"></script>
 ```
+
+:::
+
+::: warning  
+We're using the latest version of the library here for keeping stuff simple, but you should optimally pin a specific version to avoid breaking changes in the future.  
 :::
 
 Next, add the `<cap-widget>` component to your HTML.
@@ -36,9 +41,9 @@ Next, add the `<cap-widget>` component to your HTML.
 ></cap-widget>
 ```
 
-> [!NOTE]
-> You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute.
-> In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.
+::: info  
+You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.  
+:::
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
@@ -76,8 +81,11 @@ pnpm i @cap.js/server
 
 :::
 
-> [!NOTE]
-> It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.
+::: tip  
+It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.  
+
+Additionally, always assume that Cap might fail to protect you. **Always** add extra security measures such as ratelimits. It's also important to keep in mind that Cap doesn't stop potential vulnerabilities in your app.  
+:::
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
 
