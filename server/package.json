@@ -11,7 +11,7 @@
   "bugs": {
     "url": "https://github.com/tiagorangel1/cap/issues"
   },
-  "description": "Server-side challenge generator and verified for Cap. Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "description": "Server-side challenge generator and verifier for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "homepage": "https://github.com/tiagorangel1/cap#readme",
   "keywords": [
     "account security",
