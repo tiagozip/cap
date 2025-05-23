@@ -25,7 +25,14 @@
     }
 
     static get observedAttributes() {
-      return ["onsolve", "onprogress", "onreset", "onerror", "workers", "[cap]"];
+      return [
+        "onsolve",
+        "onprogress",
+        "onreset",
+        "onerror",
+        "workers",
+        "[cap]",
+      ];
     }
 
     constructor() {
@@ -82,10 +89,10 @@
       this.#div.removeAttribute("disabled");
 
       const workers = this.getAttribute("data-cap-worker-count");
-      this.setWorkersCount(
-        parseInt(workers) ? parseInt(workers, 10) : navigator.hardwareConcurrency || 8
-      );
-      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const parsedWorkers = workers ? parseInt(workers, 10) : null;
+      this.setWorkersCount(parsedWorkers || navigator.hardwareConcurrency || 8);
+      const fieldName =
+        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
     }
 
@@ -96,7 +103,11 @@
 
       try {
         this.#solving = true;
-        this.updateUI("verifying", this.getI18nText("verifying-label", "Verifying..."), true);
+        this.updateUI(
+          "verifying",
+          this.getI18nText("verifying-label", "Verifying..."),
+          true
+        );
 
         this.dispatchEvent("progress", { progress: 0 });
 
@@ -122,7 +133,8 @@
           this.dispatchEvent("progress", { progress: 100 });
 
           if (!resp.success) throw new Error("Invalid solution");
-          const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+          const fieldName =
+            this.getAttribute("data-cap-hidden-field-name") || "cap-token";
           if (this.querySelector(`input[name='${fieldName}']`)) {
             this.querySelector(`input[name='${fieldName}']`).value = resp.token;
           }
@@ -154,14 +166,33 @@
 
       const workers = Array(this.#workersCount)
         .fill(null)
-        .map(() => new Worker(this.#workerUrl));
+        .map(() => {
+          try {
+            return new Worker(this.#workerUrl);
+          } catch (error) {
+            console.error("[cap] Failed to create worker:", error);
+            throw new Error("Worker creation failed");
+          }
+        });
 
       const solveSingleChallenge = ([salt, target], workerId) =>
         new Promise((resolve, reject) => {
           const worker = workers[workerId];
+          if (!worker) {
+            reject(new Error("Worker not available"));
+            return;
+          }
+
           const timeout = setTimeout(() => {
-            worker.terminate();
-            workers[workerId] = new Worker(this.#workerUrl);
+            try {
+              worker.terminate();
+              workers[workerId] = new Worker(this.#workerUrl);
+            } catch (error) {
+              console.error(
+                "[cap] Error terminating/recreating worker:",
+                error
+              );
+            }
             reject(new Error("Worker timeout"));
           }, 30000);
 
@@ -177,30 +208,48 @@
 
           worker.onerror = (err) => {
             clearTimeout(timeout);
-            this.error(`Error in worker: ${err}`);
+            this.error(`Error in worker: ${err.message || err}`);
             reject(err);
           };
 
-          worker.postMessage({
-            salt,
-            target,
-            wasmUrl:
-              window.CAP_CUSTOM_WASM_URL ||
-              "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js",
-          });
+          try {
+            worker.postMessage({
+              salt,
+              target,
+              wasmUrl:
+                window.CAP_CUSTOM_WASM_URL ||
+                "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js",
+            });
+          } catch (error) {
+            clearTimeout(timeout);
+            reject(
+              new Error(`Failed to send message to worker: ${error.message}`)
+            );
+          }
         });
 
       const results = [];
       try {
         for (let i = 0; i < challenge.length; i += this.#workersCount) {
-          const chunk = challenge.slice(i, Math.min(i + this.#workersCount, challenge.length));
+          const chunk = challenge.slice(
+            i,
+            Math.min(i + this.#workersCount, challenge.length)
+          );
           const chunkResults = await Promise.all(
             chunk.map((c, idx) => solveSingleChallenge(c, idx))
           );
           results.push(...chunkResults);
         }
       } finally {
-        workers.forEach((w) => w.terminate());
+        workers.forEach((w) => {
+          if (w) {
+            try {
+              w.terminate();
+            } catch (error) {
+              console.error("[cap] Error terminating worker:", error);
+            }
+          }
+        });
       }
 
       return results;
@@ -210,7 +259,9 @@
       const parsedWorkers = parseInt(workers, 10);
       const maxWorkers = Math.min(navigator.hardwareConcurrency || 8, 16);
       this.#workersCount =
-        !isNaN(parsedWorkers) && parsedWorkers > 0 && parsedWorkers <= maxWorkers
+        !isNaN(parsedWorkers) &&
+        parsedWorkers > 0 &&
+        parsedWorkers <= maxWorkers
           ? parsedWorkers
           : navigator.hardwareConcurrency || 8;
     }
@@ -231,6 +282,8 @@
     }
 
     addEventListeners() {
+      if (!this.#div) return;
+
       this.#div.querySelector("a").addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -242,7 +295,10 @@
       });
 
       this.#div.addEventListener("keydown", (e) => {
-        if ((e.key === "Enter" || e.key === " ") && !this.#div.hasAttribute("disabled")) {
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          !this.#div.hasAttribute("disabled")
+        ) {
           e.preventDefault();
           this.solve();
         }
@@ -255,8 +311,12 @@
     }
 
     updateUI(state, text, disabled = false) {
+      if (!this.#div) return;
+
       this.#div.setAttribute("data-state", state);
+
       this.#div.querySelector("p").innerText = text;
+
       if (disabled) {
         this.#div.setAttribute("disabled", "true");
       } else {
@@ -265,25 +325,38 @@
     }
 
     handleProgress(event) {
+      if (!this.#div) return;
+
       const progressElement = this.#div.querySelector("p");
-      if (progressElement) {
-        this.#div
-          .querySelector(".checkbox")
-          .style.setProperty("--progress", `${event.detail.progress}%`);
-        progressElement.innerText = `${this.getI18nText("verifying-label", "Verifying...")} ${
-          event.detail.progress
-        }%`;
+      const checkboxElement = this.#div.querySelector(".checkbox");
+
+      if (progressElement && checkboxElement) {
+        checkboxElement.style.setProperty(
+          "--progress",
+          `${event.detail.progress}%`
+        );
+        progressElement.innerText = `${this.getI18nText(
+          "verifying-label",
+          "Verifying..."
+        )} ${event.detail.progress}%`;
       }
       this.executeAttributeCode("onprogress", event);
     }
 
     handleSolve(event) {
-      this.updateUI("done", this.getI18nText("solved-label", "You're a human"), true);
+      this.updateUI(
+        "done",
+        this.getI18nText("solved-label", "You're a human"),
+        true
+      );
       this.executeAttributeCode("onsolve", event);
     }
 
     handleError(event) {
-      this.updateUI("error", this.getI18nText("error-label", "Error. Try again."));
+      this.updateUI(
+        "error",
+        this.getI18nText("error-label", "Error. Try again.")
+      );
       this.executeAttributeCode("onerror", event);
     }
 
@@ -297,8 +370,13 @@
       if (!code) {
         return;
       }
-      const func = new Function("event", code);
-      func.call(this, event);
+
+      try {
+        const func = new Function("event", code);
+        func.call(this, event);
+      } catch (error) {
+        console.error(`[cap] Error executing ${attributeName}:`, error);
+      }
     }
 
     error(message = "Unknown error") {
@@ -322,13 +400,14 @@
       }
       this.dispatchEvent("reset");
       this.token = null;
-      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName =
+        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       if (this.querySelector(`input[name='${fieldName}']`)) {
         this.querySelector(`input[name='${fieldName}']`).value = "";
       }
     }
 
-    get token() {
+    get tokenValue() {
       return this.token;
     }
 
@@ -386,7 +465,7 @@
       this.addEventListener = this.widget.addEventListener.bind(this.widget);
 
       Object.defineProperty(this, "token", {
-        get: () => widget.getToken(),
+        get: () => widget.token,
         configurable: true,
         enumerable: true,
       });
@@ -405,7 +484,10 @@
   document.adoptedStyleSheets.push(sheet);
 
   const workerFunct = function () {
-    if (typeof WebAssembly !== "object" || typeof WebAssembly?.instantiate !== "function") {
+    if (
+      typeof WebAssembly !== "object" ||
+      typeof WebAssembly?.instantiate !== "function"
+    ) {
       self.onmessage = async ({ data: { salt, target } }) => {
         // Fallback solver in case WASM is not available
 
@@ -426,9 +508,16 @@
               const inputString = salt + nonce;
               const inputBytes = encoder.encode(inputString);
 
-              const hashBuffer = await crypto.subtle.digest("SHA-256", inputBytes);
+              const hashBuffer = await crypto.subtle.digest(
+                "SHA-256",
+                inputBytes
+              );
 
-              const hashBytes = new Uint8Array(hashBuffer, 0, targetBytesLength);
+              const hashBytes = new Uint8Array(
+                hashBuffer,
+                0,
+                targetBytesLength
+              );
 
               let matches = true;
               for (let k = 0; k < targetBytesLength; k++) {
@@ -471,12 +560,12 @@
         await import(wasmUrl)
           .then((wasmModule) => {
             return wasmModule.default().then((instance) => {
-              solve_pow_function = (instance && instance.exports ? instance.exports : wasmModule)
-                .solve_pow;
+              solve_pow_function = (
+                instance && instance.exports ? instance.exports : wasmModule
+              ).solve_pow;
             });
           })
           .catch((e) => {
-            useFallback = true;
             console.error("[cap] using fallback solver due to error:", e);
           });
       }
@@ -518,7 +607,9 @@
   if (!customElements.get("cap-widget")) {
     customElements.define("cap-widget", CapWidget);
   } else {
-    console.warn("The cap-widget element has already been defined. Skipping re-defining it.");
+    console.warn(
+      "The cap-widget element has already been defined. Skipping re-defining it."
+    );
   }
 
   if (typeof exports === "object" && typeof module !== "undefined") {
