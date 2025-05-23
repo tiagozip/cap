@@ -1,7 +1,7 @@
 {
   "name": "@cap.js/solver",
-  "version": "0.1.0",
-  "description": "Server-side solver for Cap's SHA-256 PoW captchas. Cap is a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "version": "0.1.1",
+  "description": "Server-side solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "index.js",
   "scripts": {
     "test": "bun ./example.js",
