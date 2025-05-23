@@ -2,7 +2,7 @@
   "version": "0.0.5",
   "name": "@cap.js/cli",
   "module": "index.js",
-  "description": "CLI server-side solver for the Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "description": "CLI server-side solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "type": "module",
   "private": false,
   "repository": {
