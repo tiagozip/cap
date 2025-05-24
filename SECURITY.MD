@@ -2,21 +2,7 @@
 
 ## Supported Versions
 
-### @cap.js/server
-
-| Version | Supported |
-| ------- | --------- |
-| 1.0.x   | ✅ |
-
-Only the latest version of 1.0.x is supported.
-
-### Standalone mode
-
-| Version | Supported |
-| ------- | --------- |
-| 1.0.x   | ✅ |
-
-Only the latest version of 1.0.x is supported.
+Only the latest version of each package is supported for now. If you're using an older version, please upgrade to the latest one. This does not include `@cap.js/wasm` and `@cap.js/widget`.
 
 ## Reporting a Vulnerability
 
