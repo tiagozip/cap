@@ -69,10 +69,10 @@ const updateCache = async () => {
           "https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js"
         ).then((r) => r.text()),
         fetch(
-          "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm_bg.wasm"
+          "https://cdn.jsdelivr.net/npm/@cap.js/wasm/browser/cap_wasm_bg.wasm"
         ).then((r) => r.arrayBuffer()),
         fetch(
-          "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js"
+          "https://cdn.jsdelivr.net/npm/@cap.js/wasm/browser/cap_wasm.min.js"
         ).then((r) => r.text()),
       ]);
 
