@@ -92,4 +92,4 @@ window.CAP_CUSTOM_FETCH = function (url, options) {
 
 ## Custom WASM URL
 
-You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js`
+You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js`
