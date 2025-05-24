@@ -35,4 +35,25 @@ console.log(`\n  Removing .gitignore...`);
   } catch {}
 });
 
-console.log(`\n🎉 All builds finished successfully!`);
+console.log(`\n🎉 All builds finished successfully!\n`);
+
+const doTest = prompt("test build? (y/N):").toLowerCase() === "y";
+
+if (!doTest) {
+  process.exit(0);
+}
+
+console.log(`\n  test...`);
+execSync(`bun ${path.join("test", "node.js")}`, { stdio: "inherit" });
+
+console.log(`\n  test finished!`);
+
+const doPublish = prompt("publish build? (y/N):").toLowerCase() === "y";
+if (!doPublish) {
+  process.exit(0);
+}
+Bun.spawn({
+  cmd: ["bun", "publish", "--access", "public"],
+  cwd: "./src",
+  stdout: "inherit",
+});
