@@ -90,7 +90,7 @@ class Cap extends EventEmitter {
     };
 
     if (!this.config.noFSState) {
-        this._loadTokens().catch(() => {});
+      this._loadTokens().catch(() => {});
     }
 
     process.on("beforeExit", () => this.cleanup());
@@ -152,6 +152,10 @@ class Cap extends EventEmitter {
    * @returns {Promise<{success: boolean, message?: string, token?: string, expires?: number}>}
    */
   async redeemChallenge({ token, solutions }) {
+    if (!token || !solutions) {
+      return { success: false, message: "Invalid body" };
+    }
+
     this._cleanExpiredTokens();
 
     const challengeData = this.config.state.challengesList[token];
@@ -181,14 +185,15 @@ class Cap extends EventEmitter {
     const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
     const id = crypto.randomBytes(8).toString("hex");
 
-    if(this?.config?.state?.tokensList) this.config.state.tokensList[`${id}:${hash}`] = expires;
+    if (this?.config?.state?.tokensList)
+      this.config.state.tokensList[`${id}:${hash}`] = expires;
 
-    if(!this.config.noFSState) {
-        await fs.writeFile(
+    if (!this.config.noFSState) {
+      await fs.writeFile(
         this.config.tokens_store_path,
         JSON.stringify(this.config.state.tokensList),
         "utf8"
-        );
+      );
     }
 
     return { success: true, token: `${id}:${vertoken}`, expires };
@@ -247,12 +252,12 @@ class Cap extends EventEmitter {
         this.config.state.tokensList = JSON.parse(data) || {};
         this._cleanExpiredTokens();
       } catch {
-        console.log(`[cap] Tokens file not found, creating a new empty one`);
+        console.warn(`[cap] Tokens file not found, creating a new empty one`);
         await fs.writeFile(this.config.tokens_store_path, "{}", "utf-8");
         this.config.state.tokensList = {};
       }
     } catch (error) {
-      console.log(
+      console.warn(
         `[cap] Couldn't load or write tokens file, using empty state`
       );
       this.config.state.tokensList = {};
