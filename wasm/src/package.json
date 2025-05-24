@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/wasm",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "WASM solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "./node/cap_wasm.js",
   "keywords": [
