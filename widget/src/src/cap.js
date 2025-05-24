@@ -218,7 +218,7 @@
               target,
               wasmUrl:
                 window.CAP_CUSTOM_WASM_URL ||
-                "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.3/browser/cap_wasm.min.js",
+                "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js",
             });
           } catch (error) {
             clearTimeout(timeout);
