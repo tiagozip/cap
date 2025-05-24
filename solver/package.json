@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/solver",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Server-side solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "index.js",
   "scripts": {
@@ -105,6 +105,6 @@
   },
   "homepage": "https://github.com/tiagorangel1/cap#readme",
   "dependencies": {
-    "@cap.js/wasm": "^0.0.3"
+    "@cap.js/wasm": "^0.0.4"
   }
 }

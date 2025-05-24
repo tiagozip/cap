@@ -4,11 +4,11 @@
     "": {
       "name": "@cap.js/solver",
       "dependencies": {
-        "@cap.js/wasm": "^0.0.3",
+        "@cap.js/wasm": "^0.0.4",
       },
     },
   },
   "packages": {
-    "@cap.js/wasm": ["@cap.js/wasm@0.0.3", "", {}, "sha512-1HqjjRjHSD+2pnNj5yziCb9LfrVDsPWGV+Mr6epRag0o3nAhgEGC+AopQV01BV61BVjEQbhgyjNJBV+1Gc/SGw=="],
+    "@cap.js/wasm": ["@cap.js/wasm@0.0.4", "", {}, "sha512-x0BGwKzPONYWKZWgBzb97hJ7dVchTPkNjjD9PTAIPgcE8d7y+dXz+KXeODzKv7Qpt6VVNXXx+h+eDkSK7f8JJg=="],
   }
 }
