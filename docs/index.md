@@ -67,6 +67,10 @@ There are also some other helpful packages:
 
 - **@cap.js/wasm**: WASM solvers for Node and Web built with Rust.
 
+We also provide a middleware for a Cloudflare browser check-like experience. Currently, this is only available for Elysia:
+
+- [@cap.js/middleware-elysia](https://capjs.js.org/guide/middleware/elysia.html)
+
 It's designed to be a drop-in replacement for existing CAPTCHA solutions, with a focus on performance and UX.
 
 Cap is built with JavaScript, runs on any JS runtime (Bun, Node.js, Deno), and has no dependencies. If you're not using any JS runtime, you can also use the standalone mode with Docker, which relies entirely on a simple REST API to create and validate challenges.
