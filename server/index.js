@@ -215,9 +215,11 @@ class Cap extends EventEmitter {
     await this._waitForTokensList();
 
     if (this.config.state.tokensList[key]) {
-      if ((conf ? !conf.keepToken : true) && !this.config.noFSState) {
+      if (!(conf && conf.keepToken)) {
         delete this.config.state.tokensList[key];
-
+      }
+      
+      if (!this.config.noFSState) {
         await fs.writeFile(
           this.config.tokens_store_path,
           JSON.stringify(this.config.state.tokensList),
