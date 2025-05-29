@@ -2,17 +2,17 @@
 
 ## Summary
 
-| CAPTCHA | Open-source | Cost | Private | Hard for bots | Easy for humans | Small error rate | Customizable | Easy to integrate |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| **Cap** | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 |
-| Cloudflare Turnstile | ❌ | Free | 🟨 | ✅ | ✅ | ❌ | ❌ | ✅ |
-| reCAPTCHA | ❌ | Freemium | ❌ | ❌ | ❌ | 🟨 | ❌ | ✅ |
-| hCAPTCHA | ❌ | Freemium | 🟨 | ✅ | ❌ | 🟨 | ❌ | ✅ |
-| Altcha | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 |
-| FriendlyCaptcha | ❌ | Paid | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 |
-| MTCaptcha | ❌ | Freemium | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 |
-| GeeTest **(china-based ⚠️)** | ❌ | Paid | ❌ | 🟨 (depends) | 🟨 (depends) | 🟨 | ❌ | 🟨 |
-| Arkose Labs | ❌ | Paid | ❌ | ❌ (audio captcha is weak) | ❌ (worst) | ❌ | 🟨 | ❌ |
+| CAPTCHA | Open-source | Cost | Private | Hard for bots | Easy for humans | Small error rate | Customizable | Easy to integrate | "Middleware" support |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| **Cap** | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 | ✅ |
+| Cloudflare Turnstile | ❌ | Free | 🟨 | ✅ | ✅ | ❌ | ❌ | ✅ | 🟨 |
+| reCAPTCHA | ❌ | Freemium | ❌ | ❌ | ❌ | 🟨 | ❌ | ✅ | ❌ |
+| hCAPTCHA | ❌ | Freemium | 🟨 | ✅ | ❌ | 🟨 | ❌ | ✅ | ❌ |
+| Altcha | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 | 🟨 |
+| FriendlyCaptcha | ❌ | Paid | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 | ❌ |
+| MTCaptcha | ❌ | Freemium | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 | ❌ |
+| GeeTest **(china-based ⚠️)** | ❌ | Paid | ❌ | 🟨 (depends) | 🟨 (depends) | 🟨 | ❌ | 🟨 | ❌ |
+| Arkose Labs | ❌ | Paid | ❌ | ❌ (audio captcha is weak) | ❌ (worst) | ❌ | 🟨 | ❌ | ❌ |
 
 ## All alternatives
 
