@@ -43,15 +43,15 @@
  *   in custom container, badges, etc.
  * -------------------------------------------------------------------------- */
 
- :root {
+:root {
   --vp-c-default-1: var(--vp-c-gray-1);
   --vp-c-default-2: var(--vp-c-gray-2);
   --vp-c-default-3: var(--vp-c-gray-3);
   --vp-c-default-soft: var(--vp-c-gray-soft);
 
-  --vp-c-brand-1: #26B5FA;
-  --vp-c-brand-2: #0688E5;
-  --vp-c-brand-3: #0076D8;
+  --vp-c-brand-1: #26b5fa;
+  --vp-c-brand-2: #0688e5;
+  --vp-c-brand-3: #0076d8;
   --vp-c-brand-soft: var(--vp-c-indigo-soft);
 
   --vp-c-tip-1: var(--vp-c-brand-1);
@@ -86,7 +86,6 @@
   --vp-button-brand-active-bg: var(--vp-c-brand-1);
 }
 
-
 ::selection {
   background-color: #3e63dd;
   color: rgb(255, 255, 255);
@@ -98,7 +97,11 @@
 
 :root {
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: -webkit-linear-gradient(280deg, #38c2fe, #0279db);
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    280deg,
+    #38c2fe,
+    #0279db
+  );
   /*
   --vp-home-hero-name-background: -webkit-linear-gradient(
     120deg,
@@ -106,8 +109,12 @@
     #41d1ff
   );
 */
-  --vp-home-hero-image-background-image: -webkit-linear-gradient(-45deg, #38c2fe52, #0279db33);
-  
+  --vp-home-hero-image-background-image: -webkit-linear-gradient(
+    -45deg,
+    #38c2fe52,
+    #0279db33
+  );
+
   --vp-home-hero-image-filter: blur(44px);
 }
 
@@ -148,4 +155,8 @@
 
 code {
   white-space: pre-wrap !important;
+}
+
+img {
+  border-radius: 8px;
 }

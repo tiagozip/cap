@@ -169,6 +169,13 @@ export default withMermaid({
         ],
       },
       {
+        text: "Middleware",
+        items: [
+          { text: "About", link: "/guide/middleware/index.md" },
+          { text: "Elysia", link: "/guide/middleware/elysia.md" },
+        ],
+      },
+      {
         text: "Proof-of-work",
         items: [
           { text: "Effectiveness", link: "/guide/effectiveness.md" },
