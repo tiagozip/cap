@@ -17,7 +17,7 @@ hero:
       text: Demo
       link: /guide/demo.md
     - theme: alt
-      text: GitHub
+      text: Star on GitHub
       link: https://github.com/tiagorangel1/cap
 
 features:
