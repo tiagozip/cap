@@ -13,5 +13,9 @@
     "solver:publish": "cd solver && bun publish --access public",
     "cli:publish": "cd solver-cli && bun publish --access public",
     "wasm:publish": "cd wasm && bun build.js"
+  },
+  "dependencies": {
+    "@cap.js/server": "^1.0.15",
+    "elysia": "^1.3.3"
   }
 }
