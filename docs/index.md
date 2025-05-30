@@ -23,28 +23,28 @@ hero:
 features:
   - icon: ⚡️
     title: 250x smaller than hCaptcha
-    details: Cap's widget library is extremely small, only 12kb minified and brotli'd.
+    details: Cap's widget library is extremely small, only ~20kb minified (including WASM)
   - icon: 🔒️
     title: Private
-    details: Cap's usage of proof-of-work eliminates the need for any tracking, fingerprinting or data collection.
+    details: Cap's usage of proof-of-work eliminates the need for any tracking, fingerprinting or data collection
   - icon: 🌈
     title: Fully customizable
-    details: Cap is self-hostable so you can customize both the backend & frontend — or you can just use CSS variables
+    details: Cap is self-hostable so you can customize both the backend & frontend (or you can just use CSS variables)
   - icon: 🤖
     title: PoW-based
-    details: Cap uses proof-of-work instead of complex puzzles, making it easier for humans and harder for bots
+    details: Cap uses PoW instead of complex puzzles, making it easier for humans and harder for bots
   - icon: 🧩
     title: Standalone mode
-    details: Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS.
+    details: Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS
   - icon: 💨
     title: Invisible mode
-    details: Cap can run invisibly in the background using a simple JS API.
+    details: Cap can run invisibly in the background using a simple JS API
   - icon: ☁️
     title: Floating mode
     details: Floating mode keeps your CAPTCHA hidden until it's needed
   - icon: 🌳
     title: Fully FOSS
-    details: Completely open source under the Apache license 2.0 license
+    details: Completely open source under the Apache 2.0 license
 ---
 
 ## What is Cap?
