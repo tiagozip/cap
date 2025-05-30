@@ -1,4 +1,4 @@
-# Elysia Middleware
+# Elysia checkpoint
 
 ## Usage
 
@@ -9,7 +9,7 @@ import { capMiddleware } from "@cap.js/elysia-middleware";
 new Elysia()
   .use(
     capMiddleware({
-      token_validity_hours: 32,
+      token_validity_hours: 32, // how long the token is valid for
       tokens_store_path: ".data/tokensList.json",
       token_size: 16, // token size in bytes
       verification_template_path: join(
