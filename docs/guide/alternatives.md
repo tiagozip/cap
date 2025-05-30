@@ -26,7 +26,11 @@ Not only is Cap significantly smaller and faster than reCAPTCHA, it's open-sourc
 
 ### hCAPTCHA
 
-Pretty much the same as reCAPTCHA, altough hCAPTCHA is significantly more secure. Personally it's the best alternatie to Cap, even though the widget's size alone is significantly bigger than Cap.
+Pretty much the same as reCAPTCHA, altough hCAPTCHA is significantly more secure. Personally it's the best alternative to Cap, even though the widget's bundle size alone is significantly bigger.
+
+Fun fact about hCAPTCHA, an attacker can easily solve it for $1.05/1k results while *you* (the site owner) need to pay hCAPTCHA $1/1k solves just for the captcha, even if the content behind the captcha doesn't cost you anything.
+
+Imagine if anyone could drain $100 dollars from your back account just by knowing your name and paying $105 - pretty scary, right?
 
 ### Altcha
 
