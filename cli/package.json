@@ -1,9 +1,19 @@
 {
-  "name": "@cap.js/wasm",
-  "version": "0.0.4",
-  "description": "WASM solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
-  "main": "./node/cap_wasm.js",
-  "keywords":  [
+  "version": "0.0.5",
+  "name": "@cap.js/cli",
+  "module": "index.js",
+  "description": "CLI server-side solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "type": "module",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagorangel1/cap.git"
+  },
+  "scripts": {
+    "npm:publish": "npm publish --access public"
+  },
+  "author": "Tiago",
+  "keywords": [
     "security",
     "detection",
     "prevention",
@@ -41,17 +51,22 @@
     "filtering",
     "turing-test"
   ],
-  "author": "Tiago",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@cap.js/solver": "0.0.3",
+    "kleur": "^4.1.5"
+  },
   "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+  "bin": {
+    "cli": "./index.js"
   },
   "bugs": {
     "url": "https://github.com/tiagorangel1/cap/issues"
-  },
-  "scripts": {
-    "npm:publish": "sudo npm publish --access public"
   },
   "homepage": "https://github.com/tiagorangel1/cap#readme"
 }
