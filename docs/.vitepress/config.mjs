@@ -153,6 +153,7 @@ export default withMermaid({
       { text: "Philosophy", link: "/guide/philosophy.md" },
       {
         text: "Modes",
+        collapsed: false,
         items: [
           { text: "Standalone mode", link: "/guide/standalone.md" },
           { text: "Floating mode", link: "/guide/floating.md" },
@@ -161,6 +162,7 @@ export default withMermaid({
       },
       {
         text: "Libraries",
+        collapsed: false,
         items: [
           { text: "@cap.js/server", link: "/guide/server.md" },
           { text: "@cap.js/widget", link: "/guide/widget.md" },
@@ -170,6 +172,7 @@ export default withMermaid({
       },
       {
         text: "Checkpoints",
+        collapsed: false,
         items: [
           { text: "About", link: "/guide/middleware/index.md" },
           { text: "Elysia", link: "/guide/middleware/elysia.md" },
@@ -178,6 +181,7 @@ export default withMermaid({
       },
       {
         text: "Proof-of-work",
+        collapsed: false,
         items: [
           { text: "Effectiveness", link: "/guide/effectiveness.md" },
           { text: "How does it work", link: "/guide/workings.md" },

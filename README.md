@@ -117,5 +117,3 @@ Cap is licensed under the Apache License 2.0.
     </td>
   </tr>
 </table>
-
-### Need help? [Ask Devin →](https://deepwiki.com/tiagorangel1/cap)
