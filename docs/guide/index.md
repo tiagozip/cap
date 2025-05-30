@@ -92,7 +92,8 @@ pnpm i @cap.js/server
 :::
 
 ::: tip  
-Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md). :::
+Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md).    
+:::
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
 
