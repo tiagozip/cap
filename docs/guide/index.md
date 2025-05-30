@@ -13,6 +13,10 @@ Unlike traditional CAPTCHAs, Cap:
 - Uses proof-of-work instead of intrusive puzzles
 - Is fully accessible and self-hostable
 
+Here, try it yourself:
+
+<Demo />
+
 ## Components
 
 Cap consists mainly of the **widget** (can be used invisibly) and **server** (you can use the Standalone server instead). Alternatively, M2M is also supported and there's also a checkpoint middleware similar to Cloudflare.
@@ -88,8 +92,7 @@ pnpm i @cap.js/server
 :::
 
 ::: tip  
-Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md).
-:::
+Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md). :::
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
 
