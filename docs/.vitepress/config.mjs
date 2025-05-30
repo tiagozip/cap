@@ -169,7 +169,7 @@ export default withMermaid({
         ],
       },
       {
-        text: "Middleware mode",
+        text: "Checkpoints",
         items: [
           { text: "About", link: "/guide/middleware/index.md" },
           { text: "Elysia", link: "/guide/middleware/elysia.md" },

@@ -1,9 +1,11 @@
-# About Middlewares
+# About checkpoints/middlewares
 
-Cap's Middlewares allow you to replicate the experience of Cloudflare's browser check. This helps prevent bots, spam, and automated abuse before users ever reach your protected resource.
+Cap's Checkpoints allow you to replicate Cloudflare's browser check interstitial. This helps prevent all bots, and automated abuse before they ever reach your website, not only submitting forms.
 
-This is currently only available for Elysia, but we plan to support more frameworks in the future.
+They're extremely simple to set up and use, with you only having to add a few lines of code to your server, unlike moving your entire website over to cloudflare.
 
-![Example of Cap's middleware](./demo.png)
+![Example of Cap's checkpoint](./demo.png)
 
-These are extremely simple to integrate and use.
+Note that this is kind of a nuclear solution, as it _will_ also impact good bots such as search engine crawlers.
+
+This is currently only available for Elysia, but we plan to support more frameworks in the future, such as traefik or Hono.
