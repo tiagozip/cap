@@ -18,10 +18,6 @@ pnpm i @cap.js/server
 
 :::
 
-> [!NOTE]
-> It is recommended to use at least Node.js 14 or Bun v1.0.0. You might experience multiple issues on older versions of these runtimes.  
-> If you're using Glitch, make sure to set your Node version to 14 in your `engines` field in `package.json`
-
 ## Example code
 
 ::: code-group
@@ -114,6 +110,34 @@ Bun.serve({
 console.log(`Server running at http://localhost:3000`);
 ```
 
+```js [hono]
+import { Hono } from "hono";
+import Cap from "@cap.js/server";
+
+const app = new Hono();
+const cap = new Cap({
+  tokens_store_path: ".data/tokensList.json",
+});
+
+app.post("/api/challenge", (c) => {
+  return c.json(cap.createChallenge());
+});
+
+app.post("/api/redeem", async (c) => {
+  const { token, solutions } = await c.req.json();
+  if (!token || !solutions) {
+    return c.json({ success: false }, 400);
+  }
+
+  return c.json(await cap.redeemChallenge({ token, solutions }));
+});
+
+export default {
+  port: 3000,
+  fetch: app.fetch,
+};
+```
+
 ```js [Express]
 import express from "express";
 import Cap from "@cap.js/server";
@@ -177,8 +201,7 @@ Creates a new Cap instance.
 }
 ```
 
-> [!TIP]
-> You can always access or set the options of the `Cap` class by accessing or modifying the `cap.config` object.
+You can always access or set the options of the `Cap` class by accessing or modifying the `cap.config` object.
 
 #### `cap.createChallenge({ ... })`
 

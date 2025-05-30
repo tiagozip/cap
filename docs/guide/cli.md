@@ -3,7 +3,7 @@
 `cli` is a simple command-line interface for solving CAPTCHAs made with Cap. It's mainly designed for testing and when you need to solve these CAPTCHAs in a browser without JavaScript support.
 
 ```bash
-❯ bunx @cap.js/cli
+❯ bunx '@cap.js/cli'
 ```
 
 ```
@@ -17,8 +17,7 @@ Options:
                 format `salt:target`
 ```
 
-> [!NOTE]
-> We recommend using `bunx '@cap.js/cli'` instead of `bunx @cap.js/cli` to avoid issues with the `@` symbol in the package name in some shells.
+If you're on Windows, you might need to use `bunx '@cap.js/cli'` (with quotes) instead of `bunx @cap.js/cli` to avoid issues with the `@` symbol.
 
 ## Usage
 
@@ -72,5 +71,6 @@ const command = `bunx '@cap.js/cli' ${challenges}`;
 console.log(command); // bunx '@cap.js/cli' e455cea65e98b:dceb fb8d25f6abac:93f1 ...
 ```
 
-> [!NOTE]
-> The code above doesn't validate if the challenges are valid and not potentially malicious. If you're getting the challenge list from an untrusted source, make sure to validate it before giving them to the user.
+::: warning   
+The code above doesn't validate if the challenges are valid and not potentially malicious. If you're getting the challenge list from an untrusted source, make sure to validate it before giving them to the user.    
+:::
