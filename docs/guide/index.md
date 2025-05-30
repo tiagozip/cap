@@ -92,7 +92,7 @@ pnpm i @cap.js/server
 :::
 
 ::: tip  
-Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md).    
+Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md).  
 :::
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
@@ -185,6 +185,34 @@ Bun.serve({
 });
 
 console.log(`Server running at http://localhost:3000`);
+```
+
+```js [hono]
+import { Hono } from "hono";
+import Cap from "@cap.js/server";
+
+const app = new Hono();
+const cap = new Cap({
+  tokens_store_path: ".data/tokensList.json",
+});
+
+app.post("/api/challenge", (c) => {
+  return c.json(cap.createChallenge());
+});
+
+app.post("/api/redeem", async (c) => {
+  const { token, solutions } = await c.req.json();
+  if (!token || !solutions) {
+    return c.json({ success: false }, 400);
+  }
+
+  return c.json(await cap.redeemChallenge({ token, solutions }));
+});
+
+export default {
+  port: 3000,
+  fetch: app.fetch,
+};
 ```
 
 ```js [express]

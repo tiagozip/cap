@@ -33,7 +33,7 @@ You can now use the `<cap-widget>` component in your HTML.
 <cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
-> [!NOTE].  
+> [!NOTE]  
 > You'll need to start a server with an API exposing the Cap methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.  
 
 > [!TIP] The following attributes are supported:
