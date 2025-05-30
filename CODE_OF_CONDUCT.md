@@ -9,4 +9,4 @@
 - Private harassment is also unacceptable. No matter who you are, if you feel you have been or are being harassed or made uncomfortable by a community member, please contact one of the channel ops or an employee of Oven immediately. Whether you’re a regular contributor or a newcomer, we care about making this community a safe place for you and we’ve got your back.
 - Likewise any spamming, trolling, flaming, baiting or other attention-stealing behavior is not welcome.
 
-This code of conduct is adapted from the [Rust Code of Conduct](https://www.rust-lang.org/policies/code-of-conduct).
+This code of conduct is mostly stolen from the [Bun Code of Conduct](https://github.com/oven-sh/bun/blob/main/CODE_OF_CONDUCT.md).
