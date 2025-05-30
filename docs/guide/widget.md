@@ -17,6 +17,8 @@
 
 ```html [standalone server]
 <script src="https://<server url>/assets/widget.js"></script>
+
+<!-- tip: make sure to set the wasm endpoint too! -->
 ```
 
 :::
@@ -28,13 +30,11 @@ We're using the latest version of the library here for simplicity, but you shoul
 You can now use the `<cap-widget>` component in your HTML.
 
 ```html
-<cap-widget
-  id="cap"
-  data-cap-api-endpoint="<your cap api endpoint>"
-></cap-widget>
+<cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
-> [!NOTE] You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/your endpoint/...', ...)`.
+> [!NOTE].  
+> You'll need to start a server with an API exposing the Cap methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.  
 
 > [!TIP] The following attributes are supported:
 >
@@ -71,7 +71,7 @@ You can change the text on each label of the widget by setting the `data-cap-i18
 ```html
 <cap-widget
   id="cap"
-  data-cap-api-endpoint="<your cap api endpoint>"
+  data-cap-api-endpoint="<your cap endpoint>"
   data-cap-i18n-verifying-label="Verifying..."
   data-cap-i18n-initial-state="I'm a human"
   data-cap-i18n-solved-label="I'm a human"
