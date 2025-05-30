@@ -1,6 +1,6 @@
-# About checkpoints/Middlewares
+# About checkpoints
 
-Cap's Checkpoints allow you to replicate Cloudflare's browser check interstitial. This helps prevent all bots, and automated abuse before they ever reach your website, not only submitting forms.
+Cap's Checkpoints (previously known as middlewares) allow you to replicate Cloudflare's browser check interstitial. This helps prevent bots, LLMs and automated abuse from ever reaching your website.
 
 They're extremely simple to set up and use, with you only having to add a few lines of code to your server, unlike moving your entire website over to cloudflare.
 

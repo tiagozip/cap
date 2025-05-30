@@ -13,7 +13,7 @@ By default, Cap's server library uses the following defaults:
 
 ## Why Proof-of-work?
 
-Every CAPTCHA can eventually be solved, whether by AIs, algorithms or humans paid via CAPTCHA farms — this results in an endless cat and mouse game between attackers and defenders. The crucial difference lies in the _cost_ imposed on attackers.
+Every CAPTCHA can eventually be solved, whether by AIs, algorithms or humans paid via CAPTCHA farms — this results in an endless cat-and-mouse game between attackers and defenders. The crucial difference lies in the _cost_ imposed on attackers.
 
 Cap's goal is to make automated abuse expensive while keeping the experience fast and virtually invisible for real users. PoW is a perfect balance for this issue, stopping abuse by requiring computational effort rather than relying solely on human verification methods that bots continuously learn to mimic.
 
