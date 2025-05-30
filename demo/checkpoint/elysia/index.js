@@ -1,6 +1,6 @@
 import { Elysia, file } from "elysia";
 // import { capMiddleware } from "@cap.js/elysia-middleware";
-import { capMiddleware } from "../plugin/index";
+import { capMiddleware } from "../../../checkpoints/elysia/index";
 
 new Elysia()
   .use(
