@@ -1,9 +1,16 @@
 {
-  "name": "@cap.js/wasm",
-  "version": "0.0.4",
-  "description": "WASM solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
-  "main": "./node/cap_wasm.js",
-  "keywords":  [
+  "name": "@cap.js/checkpoint-hono",
+  "version": "0.0.1",
+  "description": "Hono Cloudflare-like checkpoint for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagorangel1/cap.git"
+  },
+  "keywords": [
     "security",
     "detection",
     "prevention",
@@ -43,15 +50,12 @@
   ],
   "author": "Tiago",
   "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
-  },
   "bugs": {
     "url": "https://github.com/tiagorangel1/cap/issues"
   },
-  "scripts": {
-    "npm:publish": "sudo npm publish --access public"
-  },
-  "homepage": "https://github.com/tiagorangel1/cap#readme"
+  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "dependencies": {
+    "@cap.js/server": "^1.0.15",
+    "hono": "^4.7.10"
+  }
 }
