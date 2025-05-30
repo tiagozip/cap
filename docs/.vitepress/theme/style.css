@@ -160,3 +160,31 @@ code {
 img {
   border-radius: 8px;
 }
+
+.vp-doc [class*="language-"] > span.lang {
+  display: none;
+}
+
+:root {
+  --vp-font-family-mono: mono, ui-monospace, "Menlo", "Monaco", "Consolas",
+    "Liberation Mono", "Courier New", monospace !important;
+}
+
+@font-face {
+  font-family: mono;
+  src: url("/mono-normal.woff2");
+}
+
+@font-face {
+  font-family: mono;
+  font-style: italic;
+  src: url("/mono-italic.woff2");
+}
+
+.vp-code-group .tabs label {
+  line-height: 42px;
+}
+
+.vp-code-group .tabs {
+  padding: 0 8px;
+}

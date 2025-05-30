@@ -35,10 +35,7 @@ We're using the latest version of the library here for simplicity, but you shoul
 Next, add the `<cap-widget>` component to your HTML.
 
 ```html
-<cap-widget
-  id="cap"
-  data-cap-api-endpoint="<your cap api endpoint>"
-></cap-widget>
+<cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
 ::: info  
@@ -91,7 +88,7 @@ Now, you'll need to change your server code to add the routes that Cap needs to 
 
 ::: code-group
 
-```js [Elysia]
+```js [elysia]
 import { Elysia } from "elysia";
 import Cap from "@cap.js/server";
 
@@ -119,7 +116,7 @@ new Elysia()
 console.log(`🦊 Elysia is running at http://localhost:3000`);
 ```
 
-```js [Fastify]
+```js [fastify]
 import Fastify from "fastify";
 import Cap from "@cap.js/server";
 
@@ -146,7 +143,7 @@ fastify.listen({ port: 3000, host: "0.0.0.0" }).then(() => {
 });
 ```
 
-```js [Bun.serve]
+```js [bun.serve]
 import Cap from "@cap.js/server";
 
 const cap = new Cap({
@@ -179,7 +176,7 @@ Bun.serve({
 console.log(`Server running at http://localhost:3000`);
 ```
 
-```js [Express]
+```js [express]
 import express from "express";
 import Cap from "@cap.js/server";
 
@@ -221,4 +218,4 @@ Note that the token will immediately be deleted after this. To prevent this, use
 
 ## LLMs
 
-You can use this documentation's [llms.txt](/llms.txt) or [llms-full.txt](/llms-full.txt) (~8k tokens) to give to LLMs. 
+You can use this documentation's [llms.txt](/llms.txt) or [llms-full.txt](/llms-full.txt) (~8k tokens) to give to LLMs.
