@@ -4,13 +4,20 @@ outline: deep
 
 # Quickstart
 
-[[toc]]
+Cap is a modern, lightweight, open-source CAPTCHA alternative using SHA-256 proof-of-work.
 
-## Requirements
+Unlike traditional CAPTCHAs, Cap:
 
-- **Server-side library:** At least Node 14. Most modern Bun or Deno versions should work too. If you're using Glitch, make sure to set Node 14 or higher in your `engines` field in `package.json`. If you don't use a JavaScript runtime, consider using the [Standalone](standalone.md) server.
+- Is fast and unobtrusive
+- Uses no tracking or cookies
+- Uses proof-of-work instead of intrusive puzzles
+- Is fully accessible and self-hostable
 
-- **Client-side widget:** All modern browsers should be supported
+## Components
+
+Cap consists mainly of the **widget** (can be used invisibly) and **server** (you can use the Standalone server instead). Alternatively, M2M is also supported and there's also a checkpoint middleware similar to Cloudflare.
+
+This guide details how to use the usual setup. You can find guides on using the [Standalone server](./standalone.md), [M2M solver](./solver.md), and [checkpoint middleware](./middleware/index.md) in their respective sections.
 
 ## Client-side
 
@@ -58,7 +65,9 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 ## Server-side
 
-Cap is fully self-hosted, so you'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
+Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's methods running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
+
+At least Node 14 is required. Most modern Bun or Deno versions should work too. If you don't use JavaScript in your server, consider using the [Standalone](standalone.md) server.
 
 Start by installing it:
 
@@ -79,9 +88,7 @@ pnpm i @cap.js/server
 :::
 
 ::: tip  
-It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.
-
-Additionally, always assume that Cap might fail to protect you. **Always** add extra security measures such as ratelimits. It's also important to keep in mind that Cap doesn't stop potential vulnerabilities in your app.  
+Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md).
 :::
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
@@ -206,7 +213,7 @@ app.listen(3000, () => {
 
 :::
 
-### Token Validation
+### Token validation
 
 Once the token is generated and captured, you can use it later to validate the user's identity. You can do this by calling `await cap.validateToken` in your server-side code:
 
@@ -215,7 +222,3 @@ await cap.validateToken("..."); // returns { success: Boolean }
 ```
 
 Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.
-
-## LLMs
-
-You can use this documentation's [llms.txt](/llms.txt) or [llms-full.txt](/llms-full.txt) (~8k tokens) to give to LLMs.
