@@ -7,5 +7,3 @@ They're extremely simple to set up and use, with you only having to add a few li
 ![Example of Cap's checkpoint](./demo.png)
 
 Note that this is kind of a nuclear solution, as it _will_ also impact good bots such as search engine crawlers.
-
-This is currently only available for Elysia, but we plan to support more frameworks in the future, such as traefik or Hono.

@@ -67,9 +67,11 @@ There are also some other helpful packages:
 
 - **@cap.js/wasm**: WASM solvers for Node and Web built with Rust.
 
-We also provide a middleware for a Cloudflare browser check-like experience. Currently, this is only available for Elysia:
+We also provide a middleware for a Cloudflare browser checkpoint-like experience:
 
+- [@cap.js/checkpoint-hono](https://capjs.js.org/guide/middleware/hono.html)
 - [@cap.js/middleware-elysia](https://capjs.js.org/guide/middleware/elysia.html)
+- more coming soon!
 
 It's designed to be a drop-in replacement for existing CAPTCHA solutions, with a focus on performance and UX.
 
