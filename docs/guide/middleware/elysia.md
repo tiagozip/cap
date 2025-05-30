@@ -1,10 +1,16 @@
 # Elysia checkpoint
 
+## Installation
+
+```bash
+bun add @cap.js/middleware-elysia
+```
+
 ## Usage
 
 ```javascript
 import { Elysia, file } from "elysia";
-import { capMiddleware } from "@cap.js/elysia-middleware";
+import { capMiddleware } from "@cap.js/middleware-elysia";
 
 new Elysia()
   .use(
