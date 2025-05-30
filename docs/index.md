@@ -103,6 +103,20 @@ It's ideal for:
 - Blocking automated login attempts
 - Securing free-tier abuse
 
+## Feature comparison
+
+| CAPTCHA | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | Checkpoint support | GDPR/CCPA Compliant | Customizable | Hard for bots | Easy to integrate |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| **Cap** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟨 | ✅ |
+| Cloudflare Turnstile | ❌ | ✅ | 🟨 | 🟨 | ✅ | ❌ | 🟨 | ✅ | ❌ | 🟨 | ✅ |
+| reCAPTCHA | ❌ | 🟨 | ❌ | ✅ | ❌ | 🟨 | ❌ | 🟨 | ❌ | ❌ | ✅ |
+| hCAPTCHA | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 | ❌ | 🟨 | ✅ |
+| Altcha | ✅ | ✅ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | 🟨 | 🟨 |
+| FriendlyCaptcha | ❌ | ❌ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | 🟨 | 🟨 |
+| MTCaptcha | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | ✅ | ❌ | ❌ | 🟨 |
+| GeeTest | ❌ | ❌ | ❌ | 🟨 | 🟨 | 🟨 | ❌ | ✅ | ❌ | 🟨 | 🟨 |
+| Arkose Labs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟨 | ❌ | ❌ |
+
 ## Alternatives
 
 Cap is a modern alternative to:

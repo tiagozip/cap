@@ -1,18 +1,21 @@
 # Alternatives to Cap
 
-## Summary
+| CAPTCHA | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | Checkpoint support | GDPR/CCPA Compliant | Customizable | Hard for bots | Easy to integrate |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| **Cap** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟨 | ✅ |
+| Cloudflare Turnstile | ❌ | ✅ | 🟨 | 🟨 | ✅ | ❌ | 🟨 | ✅ | ❌ | 🟨 | ✅ |
+| reCAPTCHA | ❌ | 🟨 | ❌ | ✅ | ❌ | 🟨 | ❌ | 🟨 | ❌ | ❌ | ✅ |
+| hCAPTCHA | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 | ❌ | 🟨 | ✅ |
+| Altcha | ✅ | ✅ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | 🟨 | 🟨 |
+| FriendlyCaptcha | ❌ | ❌ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | 🟨 | 🟨 |
+| MTCaptcha | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | ✅ | ❌ | ❌ | 🟨 |
+| GeeTest | ❌ | ❌ | ❌ | 🟨 | 🟨 | 🟨 | ❌ | ✅ | ❌ | 🟨 | 🟨 |
+| Arkose Labs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟨 | ❌ | ❌ |
 
-| CAPTCHA | Open-source | Cost | Private | Hard for bots | Easy for humans | Small error rate | Customizable | Easy to integrate | "Middleware" support |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| **Cap** | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 | ✅ |
-| Cloudflare Turnstile | ❌ | Free | 🟨 | ✅ | ✅ | ❌ | ❌ | ✅ | 🟨 |
-| reCAPTCHA | ❌ | Freemium | ❌ | ❌ | ❌ | 🟨 | ❌ | ✅ | ❌ |
-| hCAPTCHA | ❌ | Freemium | 🟨 | ✅ | ❌ | 🟨 | ❌ | ✅ | ❌ |
-| Altcha | ✅ | Free | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 | 🟨 |
-| FriendlyCaptcha | ❌ | Paid | ✅ | 🟨 (PoW) | ✅ | ✅ | ✅ | 🟨 | ❌ |
-| MTCaptcha | ❌ | Freemium | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 | ❌ |
-| GeeTest **(china-based ⚠️)** | ❌ | Paid | ❌ | 🟨 (depends) | 🟨 (depends) | 🟨 | ❌ | 🟨 | ❌ |
-| Arkose Labs | ❌ | Paid | ❌ | ❌ (audio captcha is weak) | ❌ (worst) | ❌ | 🟨 | ❌ | ❌ |
+#### Notes:
+
+- "Hard for bots" does not include solvers like 2captcha or BrightData, as I cannot verify their legitimacy myself.
+- Arkose Labs is considered "Easy for Bots" as their audio CAPTCHA is easy to solve by multi-modal LLMs.
 
 ## All alternatives
 
@@ -28,7 +31,7 @@ Not only is Cap significantly smaller and faster than reCAPTCHA, it's open-sourc
 
 Pretty much the same as reCAPTCHA, although hCAPTCHA is significantly more secure. Personally it's the best alternative to Cap, even though the widget's bundle size alone is significantly bigger.
 
-Fun fact about hCAPTCHA, an attacker can easily solve it for $1.05/1k results while *you* (the site owner) need to pay hCAPTCHA $1/1k solves just for the captcha, even if the content behind the captcha doesn't cost you anything.
+Fun fact about hCAPTCHA, an attacker can easily solve it for $1.05/1k results while _you_ (the site owner) need to pay hCAPTCHA $1/1k solves just for the captcha, even if the content behind the captcha doesn't cost you anything.
 
 Imagine if anyone could drain $100 dollars from your bank account just by knowing your name and paying $105 - pretty scary, right?
 
