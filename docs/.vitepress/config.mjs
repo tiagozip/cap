@@ -193,9 +193,9 @@ export default withMermaid({
     ],
 
     footer: {
-      message: "Released under the Apache 2.0 License.",
+      message: "Built in Europe 🇪🇺<br>Released under the Apache 2.0 License.",
       copyright:
-        "Copyright © 2025-present <a href='https://tiagorangel.com' target='_blank'>Tiago Rangel</a>",
+        "Copyright © 2025-present <a href='https://tiagorangel.com' target='_blank'>Tiago</a>",
     },
   },
   markdown: {
