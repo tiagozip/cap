@@ -173,6 +173,7 @@ export default withMermaid({
         items: [
           { text: "About", link: "/guide/middleware/index.md" },
           { text: "Elysia", link: "/guide/middleware/elysia.md" },
+          { text: "Hono", link: "/guide/middleware/hono.md" },
         ],
       },
       {
