@@ -70,6 +70,7 @@ There are also some other helpful packages:
 We also provide a middleware for a Cloudflare browser checkpoint-like experience:
 
 - [@cap.js/checkpoint-hono](https://capjs.js.org/guide/middleware/hono.html)
+- [@cap.js/checkpoint-express](https://capjs.js.org/guide/middleware/express.html)
 - [@cap.js/middleware-elysia](https://capjs.js.org/guide/middleware/elysia.html)
 - more coming soon!
 

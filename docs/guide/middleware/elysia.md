@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-bun add @cap.js/middleware-elysia
+bun add elysia @cap.js/middleware-elysia
 ```
 
 ## Usage

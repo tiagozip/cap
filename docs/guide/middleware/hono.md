@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-bun add @cap.js/checkpoint-hono
+bun add hono @cap.js/checkpoint-hono
 ```
 
 ## Usage

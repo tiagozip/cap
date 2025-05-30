@@ -1,0 +1,60 @@
+{
+  "name": "@cap.js/checkpoint-express",
+  "version": "0.0.1",
+  "description": "Express Cloudflare-like checkpoint for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagorangel1/cap.git"
+  },
+  "keywords": [
+    "security",
+    "detection",
+    "prevention",
+    "defense",
+    "protection",
+    "anti-abuse",
+    "anti-automation",
+    "anti-bot",
+    "anti-ddos",
+    "anti-dos",
+    "anti-exploitation",
+    "anti-spam",
+    "anti-scraping",
+    "attack-mitigation",
+    "protocol",
+    "client-server",
+    "computational-puzzle",
+    "complexity",
+    "puzzle",
+    "crypto",
+    "cryptographic",
+    "algorithm",
+    "cybersecurity",
+    "ddos",
+    "hashcash",
+    "hcaptcha",
+    "captcha-alternative",
+    "verification",
+    "invisible",
+    "pow",
+    "proof-of-work",
+    "recaptcha",
+    "spam",
+    "bots",
+    "filtering",
+    "turing-test"
+  ],
+  "author": "Tiago",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/tiagorangel1/cap/issues"
+  },
+  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "dependencies": {
+    "@cap.js/server": "^1.0.15"
+  }
+}

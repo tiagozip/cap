@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@cap.js/server": "latest",
+    "elysia": "^1.3.3"
+  }
+}
