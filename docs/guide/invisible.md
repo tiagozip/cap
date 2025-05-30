@@ -35,7 +35,7 @@ Creates a new Cap instance. If a 2nd argument is provided, it will use that elem
 **Arguments**
 ```json
 {
-  apiEndpoint: ..., // api endpoint, similiar to the widget `data-cap-api-endpoint` attribute
+  apiEndpoint: ..., // api endpoint, similar to the widget `data-cap-api-endpoint` attribute
   workers: navigator.hardwareConcurrency || 8 // number of worker threads to use
 }
 ```

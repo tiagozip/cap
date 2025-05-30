@@ -1,6 +1,6 @@
 # Floating mode
 
-Cap can automatically hide the CAPTCHA until a button is pressed. To use this, add the `data-cap-floating` attribute to the Cap widget with the query selector of the `cap-widget` element you want to use.
+Cap can automatically hide the CAPTCHA until a button is pressed. To use this, add the `data-cap-floating` attribute to your trigger with the query selector of the `cap-widget` element you want to use.
 
 ```html
 <cap-widget
