@@ -10,7 +10,7 @@ outline: deep
 
 - **Server-side library:** At least Node 14. Most modern Bun or Deno versions should work too. If you're using Glitch, make sure to set Node 14 or higher in your `engines` field in `package.json`. If you don't use a JavaScript runtime, consider using the [Standalone](standalone.md) server.
 
-- **Client-side widget:** All modern browsers should be supported. A [compatibility version](widget.md#compatibility-version) is available too.
+- **Client-side widget:** All modern browsers should be supported
 
 ## Client-side
 
@@ -29,7 +29,7 @@ Start by adding importing the Cap widget library from a CDN:
 :::
 
 ::: warning  
-We're using the latest version of the library here for keeping stuff simple, but you should optimally pin a specific version to avoid breaking changes in the future.  
+We're using the latest version of the library here for simplicity, but you should optimally pin a specific version to avoid breaking changes in the future.  
 :::
 
 Next, add the `<cap-widget>` component to your HTML.
@@ -82,7 +82,7 @@ pnpm i @cap.js/server
 :::
 
 ::: tip  
-It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.  
+It is recommended to use at least Node.js 14 or Bun 1.0.0. You might experience multiple issues on older versions of these runtimes.
 
 Additionally, always assume that Cap might fail to protect you. **Always** add extra security measures such as ratelimits. It's also important to keep in mind that Cap doesn't stop potential vulnerabilities in your app.  
 :::
@@ -219,7 +219,6 @@ await cap.validateToken("..."); // returns { success: Boolean }
 
 Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.
 
-
 ## LLMs
 
-You can use this documentaton's [llms.txt](/llms.txt) or [llms-full.txt](/llms-full.txt) (~8k tokens) to give to LLMs. Note that Cap is **not vibe-coded**
+You can use this documentation's [llms.txt](/llms.txt) or [llms-full.txt](/llms-full.txt) (~8k tokens) to give to LLMs. Note that Cap is **not vibe-coded**

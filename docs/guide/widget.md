@@ -22,7 +22,7 @@
 :::
 
 ::: warning  
-We're using the latest version of the library here for keeping stuff simple, but you should optimally pin a specific version to avoid breaking changes in the future.  
+We're using the latest version of the library here for simplicity, but you should optimally pin a specific version to avoid breaking changes in the future.  
 :::
 
 You can now use the `<cap-widget>` component in your HTML.
@@ -62,7 +62,7 @@ The following custom events are supported:
 - `solve`: Triggered when the token is generated.
 - `error`: Triggered when an error occurs.
 - `reset`: Triggered when the widget is reset.
-- `progress`: Triggered when the there's a progress update while in verification.
+- `progress`: Triggered when there's a progress update while in verification.
 
 ## i18n
 

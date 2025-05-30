@@ -10,6 +10,6 @@ Cap is designed around a few core ideas:
 - **User-first** — designed to be unintrusive and accessible, with invisible and floating modes.
 - **Self-hostable, not centralized** — you control the infra, tokens, and behavior.
 
-By using proof-of-work instead of user behavior analysis, Cap shifts the burden from identity to computation. That means anyone can prove they’re human — no cookies, no accounts, no friction.
+By using proof-of-work instead of user behavior analysis, Cap shifts the burden from identity to computation. That means anyone can prove they're human — no cookies, no accounts, no friction.
 
-Cap is what a CAPTCHA should’ve been all along: **simple, honest, and yours.**
+Cap is what a CAPTCHA should've been all along: **simple, honest, and yours.**
