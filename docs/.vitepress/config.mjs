@@ -145,6 +145,7 @@ export default withMermaid({
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
+      { text: "Demo", link: "/guide/demo.md" },
     ],
 
     sidebar: [
