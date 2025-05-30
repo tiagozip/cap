@@ -16,3 +16,5 @@
     --cap-spinner-background-color: rgba(255, 255, 255, .1);">
   <Demo custom />
 </div>
+
+You can find demos for a lot of more stuff [inside the demo folder](https://github.com/tiagorangel1/cap/tree/main/demo) on the GitHub repo.
