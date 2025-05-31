@@ -19,4 +19,4 @@ Cap's goal is to make automated abuse expensive while keeping the experience fas
 
 Imagine sending 10,000 spam messages costs $1, potentially earning $10 – a profitable venture. If Cap increases the computational cost so that sending those messages now costs $100, the spammer loses $90. This eliminates the financial incentive.
 
-For a deeper dive into the technical aspects, you might find [this research paper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality) useful.
+For a deeper dive into the technical aspects, you might find [this research paper](https://www.researchgate.net/publication/374638786_Proof-of-Work_CAPTCHA_with_password_cracking_functionality) useful (note that cap doesn't send **any** hashes to any external servers and cap is not used by law enforcement, the whitepaper is more about the technical background).
