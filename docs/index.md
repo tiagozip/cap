@@ -11,19 +11,19 @@ hero:
     alt: VitePress
   actions:
     - theme: brand
-      text: Quickstart & docs
+      text: Get started →
       link: /guide
     - theme: alt
       text: Demo
       link: /guide/demo.md
     - theme: alt
-      text: Star on GitHub
+      text: View on GitHub
       link: https://github.com/tiagorangel1/cap
 
 features:
   - icon: ⚡️
     title: 250x smaller than hCaptcha
-    details: Cap's widget library is extremely small, only ~20kb minified (including WASM)
+    details: Cap's widget library is extremely small, only about ~20kb (including WASM)
   - icon: 🔒️
     title: Private
     details: Cap's usage of proof-of-work eliminates the need for any tracking, fingerprinting or data collection
@@ -37,14 +37,14 @@ features:
     title: Standalone mode
     details: Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS
   - icon: 💨
-    title: Invisible mode
-    details: Cap can run invisibly in the background using a simple JS API
-  - icon: ☁️
-    title: Floating mode
-    details: Floating mode keeps your CAPTCHA hidden until it's needed
+    title: Invisible & floating mode
+    details: Cap can run invisibly in the background, or it can keep your CAPTCHA hidden until it's needed
+  - icon: 🎯
+    title: Checkpoint
+    details: Easily add a privacy-friendly Cloudflare-like interstitial to your website in 2 lines of code
   - icon: 🌳
     title: Fully FOSS
-    details: Completely open source under the Apache 2.0 license
+    details: Completely free & open-source under the Apache 2.0 license
 ---
 
 ## What is Cap?
