@@ -169,6 +169,7 @@ const auth = new Elysia({
       value: await Bun.password.hash(body.password),
       httpOnly: true,
       secure: true,
+      sameSite: "lax",
       path: "/",
       maxAge: 86400 * 7,
     });
