@@ -188,3 +188,11 @@ img {
 .vp-code-group .tabs {
   padding: 0 8px;
 }
+
+.DocSearch-Logo svg * {
+  fill: var(--vp-c-text-2) !important;
+}
+
+.DocSearch-Logo:hover svg * {
+  fill: var(--vp-c-text-1) !important;
+}
