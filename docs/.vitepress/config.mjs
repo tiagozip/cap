@@ -145,7 +145,7 @@ export default withMermaid({
     nav: [
       { text: "Home", link: "/" },
       { text: "Docs", link: "/guide" },
-      { text: "Demo", link: "/guide/demo.md" },
+      { text: "GitHub", link: "https://github.com/tiagorangel1/cap" },
     ],
 
     sidebar: [
