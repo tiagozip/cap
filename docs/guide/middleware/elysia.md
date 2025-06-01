@@ -6,6 +6,9 @@
 bun add elysia @cap.js/middleware-elysia
 ```
 
+> [!NOTE]
+> The template just needs to have a widget or hidden solver pointing at the `/__cap_clearance` URL. The sample template is [here](https://github.com/tiagorangel1/cap/blob/main/checkpoints/elysia/index.html).
+
 ## Usage
 
 ```javascript
