@@ -49,11 +49,11 @@ export interface ChallengeRedeemResponse {
 }
 
 /**
- * CAP.js middleware for Elysia that provides challenge-based bot protection
+ * Cap middleware for Elysia that provides challenge-based bot protection
  *
  * @param userOptions Configuration options for the middleware
- * @returns An Elysia plugin instance configured with CAP.js protection
+ * @returns An Elysia plugin instance configured with Cap protection
  */
 export declare function capMiddleware(
-  userOptions?: CapMiddlewareOptions,
+  userOptions?: CapMiddlewareOptions
 ): Elysia;
