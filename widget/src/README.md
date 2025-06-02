@@ -1,1 +1,3 @@
-# Please see [github.com/tiagorangel1/cap](https://github.com/tiagorangel1/cap)
+# Cap Widget
+
+For docs, see [capjs.js.org](https://capjs.js.org/guide/widget.html)
