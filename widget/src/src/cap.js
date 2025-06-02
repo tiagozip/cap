@@ -30,7 +30,8 @@
         "onprogress",
         "onreset",
         "onerror",
-        "workers",
+        "data-cap-worker-count",
+        "data-cap-i18n-initial-state",
         "[cap]",
       ];
     }
@@ -76,6 +77,17 @@
           this.#eventHandlers.set(name, handler);
           this.addEventListener(eventName, handler);
         }
+      }
+
+      if (name === "data-cap-worker-count") {
+        this.setWorkersCount(parseInt(value));
+      }
+
+      if (name === "data-cap-i18n-initial-state") {
+        this.#div.querySelector("p").innerText = this.getI18nText(
+          "initial-state",
+          "I'm a human"
+        );
       }
     }
 
