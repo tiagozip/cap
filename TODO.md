@@ -1,1 +1,4 @@
-- document standalone mode key management API
+- standalone: v2 with analytics and dashboard
+- standalone: custom versions for asset managem
+- checkpoints: traefik support?
+- general: ability to change challenge algorithm 
