@@ -31,7 +31,7 @@ Then, you can access the dashboard at `http://localhost:3000`, log in, and creat
 
 ### CORS
 
-You can change the default CORS settings for redeeming tokens and generating challenges by setting the `CORS_ORIGIN` environment variable when running the server. This defaults to `*`, which allows all origins. This will directly assign to Access-Control-Allow-Origin header.
+You can change the default CORS settings for redeeming tokens, generating challenges and serving assets by setting the `CORS_ORIGIN` environment variable when running the server. This defaults to `*`, which allows all origins. This will directly assign to Access-Control-Allow-Origin header.
 
 ## Usage
 
@@ -57,6 +57,9 @@ Example:
   data-cap-api-endpoint="https://cap.example.com/d9256640cb53/api/"
 ></cap-widget>
 ```
+
+> [!TIP]   
+> Does generating challenges not work? Make sure your server is publicly accessible and that `CORS_ORIGIN` is set correctly to allow requests from your website's origin.
 
 ### Server-side
 
