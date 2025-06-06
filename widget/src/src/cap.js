@@ -83,7 +83,7 @@
         this.setWorkersCount(parseInt(value));
       }
 
-      if (name === "data-cap-i18n-initial-state") {
+      if (name === "data-cap-i18n-initial-state" && this.#div.querySelector("p")?.innerText) {
         this.#div.querySelector("p").innerText = this.getI18nText(
           "initial-state",
           "I'm a human"
