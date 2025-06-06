@@ -386,11 +386,16 @@ const api = new Elysia({ prefix: "/:key" })
     }
 
     return await capInstance.validateToken(response, {
-      keepToken: false
+      keepToken: false,
     });
   });
 
 const assetsServer = new Elysia({ prefix: "/assets" })
+  .use(
+    cors({
+      origin: process.env.CORS_ORIGIN || true,
+    })
+  )
   .get("/widget.js", ({ set }) => {
     set.headers["Content-Type"] = "text/javascript";
     return file(path.join(dataDir, "assets-widget.js"));
