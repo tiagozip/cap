@@ -17,4 +17,4 @@
   <Demo custom />
 </div>
 
-You can find demos for a lot of more stuff [inside the demo folder](https://github.com/tiagorangel1/cap/tree/main/demo) on the GitHub repo.
+You can find more demos [in the GitHub repo](https://github.com/tiagorangel1/cap/tree/main/demo). Note that this demo is not a full implementation of Cap and uses a placeholder server.
