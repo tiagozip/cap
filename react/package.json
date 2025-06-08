@@ -1,0 +1,12 @@
+{
+  "name": "@cap.js/react",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.tsx",
+  "module": "src/index.tsx",
+  "scripts": {},
+  "peerDependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  }
+}
