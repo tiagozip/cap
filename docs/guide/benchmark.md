@@ -21,3 +21,5 @@ Tested with BrowserStack using the following configuration:
 - **Number of challenges:** 50
 - **Salt/challenge size:** 32
 - **Number of benchmarks:** 50
+
+Note that this benchmark uses a placeholder server and that the actual speed might vary in production depending on network latency.

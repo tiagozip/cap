@@ -151,7 +151,6 @@ export default withMermaid({
     sidebar: [
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Feature comparison", link: "/guide/alternatives.md" },
-      { text: "Philosophy", link: "/guide/philosophy.md" },
       {
         text: "Modes",
         collapsed: false,
@@ -172,8 +171,8 @@ export default withMermaid({
         ],
       },
       {
-        text: "Checkpoints",
-        collapsed: false,
+        text: "Checkpoint",
+        collapsed: true,
         items: [
           { text: "About", link: "/guide/middleware/index.md" },
           { text: "Elysia", link: "/guide/middleware/elysia.md" },
@@ -183,10 +182,11 @@ export default withMermaid({
       },
       {
         text: "Proof-of-work",
-        collapsed: false,
+        collapsed: true,
         items: [
           { text: "Effectiveness", link: "/guide/effectiveness.md" },
           { text: "How does it work", link: "/guide/workings.md" },
+          { text: "Philosophy", link: "/guide/philosophy.md" },
         ],
       },
       { text: "Benchmark", link: "/guide/benchmark.md" },
