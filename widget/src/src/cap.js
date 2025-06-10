@@ -1,6 +1,8 @@
 (function () {
   let workerScript;
 
+  const WASM_VERSION = "0.0.4";
+
   const capFetch = function () {
     if (window?.CAP_CUSTOM_FETCH) {
       return window.CAP_CUSTOM_FETCH(...arguments);
@@ -8,7 +10,20 @@
     return fetch(...arguments);
   };
 
-  // MARK: Widget
+  if (!window.CAP_CUSTOM_WASM_URL) {
+    // preloads the wasm files to save up time on solve
+    [
+      `https://cdn.jsdelivr.net/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
+      `https://cdn.jsdelivr.net/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`,
+    ].forEach((url) => {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = url;
+      link.as = url.endsWith(".wasm") ? "fetch" : "script";
+      document.head.appendChild(link);
+    });
+  }
+
   class CapWidget extends HTMLElement {
     #workerUrl = "";
     #resetTimer = null;
@@ -83,7 +98,10 @@
         this.setWorkersCount(parseInt(value));
       }
 
-      if (name === "data-cap-i18n-initial-state" && this.#div.querySelector("p")?.innerText) {
+      if (
+        name === "data-cap-i18n-initial-state" &&
+        this.#div.querySelector("p")?.innerText
+      ) {
         this.#div.querySelector("p").innerText = this.getI18nText(
           "initial-state",
           "I'm a human"
@@ -224,20 +242,13 @@
             reject(err);
           };
 
-          try {
-            worker.postMessage({
-              salt,
-              target,
-              wasmUrl:
-                window.CAP_CUSTOM_WASM_URL ||
-                "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js",
-            });
-          } catch (error) {
-            clearTimeout(timeout);
-            reject(
-              new Error(`Failed to send message to worker: ${error.message}`)
-            );
-          }
+          worker.postMessage({
+            salt,
+            target,
+            wasmUrl:
+              window.CAP_CUSTOM_WASM_URL ||
+              `https://cdn.jsdelivr.net/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
+          });
         });
 
       const results = [];
@@ -287,8 +298,20 @@
         "initial-state",
         "I'm a human"
       )}</p><a href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener"><span>Secured by&nbsp;</span>Cap</a>`;
-      this.#shadow.innerHTML = `<style>.captcha{background-color:var(--cap-background);border:1px solid var(--cap-border-color);border-radius:var(--cap-border-radius);width:var(--cap-widget-width);display:flex;align-items:center;padding:var(--cap-widget-padding);gap:var(--cap-gap);cursor:pointer;transition:filter var(--cap-transition-duration),transform var(--cap-transition-duration);position:relative;-webkit-tap-highlight-color:rgba(255,255,255,0);overflow:hidden;color:var(--cap-color)}.captcha:hover{filter:var(--cap-hover-filter)}.captcha:not([disabled]):active{transform:scale(var(--cap-active-scale))}.checkbox{width:var(--cap-checkbox-size);height:var(--cap-checkbox-size);border:var(--cap-checkbox-border);border-radius:var(--cap-checkbox-border-radius);background-color:var(--cap-checkbox-background);transition:opacity var(--cap-transition-duration);margin-top:var(--cap-checkbox-margin);margin-bottom:var(--cap-checkbox-margin)}.captcha *{font-family:var(--cap-font)}.captcha p{margin:0;font-weight:500;font-size:15px;user-select:none;transition:opacity var(--cap-transition-duration)}.captcha[data-state=verifying] .checkbox{background: none;display:flex;align-items:center;justify-content:center;transform: scale(1.1);border: none;border-radius: 50%;background: conic-gradient(var(--cap-spinner-color) 0%, var(--cap-spinner-color) var(--progress, 0%), var(--cap-spinner-background-color) var(--progress, 0%), var(--cap-spinner-background-color) 100%);position: relative;}.captcha[data-state=verifying] .checkbox::after {content: "";background-color: var(--cap-background);width: calc(100% - var(--cap-spinner-thickness));height: calc(100% - var(--cap-spinner-thickness));border-radius: 50%;margin:calc(var(--cap-spinner-thickness) / 2)}.captcha[data-state=done] .checkbox{border:1px solid transparent;background-image:var(--cap-checkmark);background-size:cover}.captcha[data-state=error] .checkbox{border:1px solid transparent;background-image:var(--cap-error-cross);background-size:cover}.captcha[disabled]{
-      cursor:not-allowed}.captcha[disabled][data-state=verifying]{cursor:progress}.captcha[disabled][data-state=done]{cursor:default}.captcha .credits{position:absolute;bottom:10px;right:10px;font-size:var(--cap-credits-font-size);color:var(--cap-color);opacity:var(--cap-opacity-hover)}.captcha .credits span{display:none;text-decoration:underline}.captcha .credits:hover span{display:inline-block}</style>`;
+      this.#shadow.innerHTML = `<style>
+
+      .captcha * {box-sizing:border-box;}
+      
+      .captcha{background-color:var(--cap-background,#fdfdfd);border:1px solid var(--cap-border-color,#dddddd8f);border-radius:var(--cap-border-radius,14px);
+      user-select:none;
+
+      height:var(--cap-widget-height, 30px);
+      
+      width:var(--cap-widget-width, 230px);display:flex;align-items:center;padding:var(--cap-widget-padding,14px);gap:var(--cap-gap,15px);cursor:pointer;transition:filter .2s,transform .2s;position:relative;-webkit-tap-highlight-color:rgba(255,255,255,0);overflow:hidden;color:var(--cap-color,#212121)}.captcha:hover{filter:brightness(98%)}
+      
+      .checkbox{width:var(--cap-checkbox-size,25px);height:var(--cap-checkbox-size,25px);border:var(--cap-checkbox-border,1px solid #aaaaaad1);border-radius:var(--cap-checkbox-border-radius,6px);background-color:var(--cap-checkbox-background,#fafafa91);transition:opacity .2s;margin-top:var(--cap-checkbox-margin,2px);margin-bottom:var(--cap-checkbox-margin,2px)}.captcha *{font-family:var(--cap-font,system,-apple-system,"BlinkMacSystemFont",".SFNSText-Regular","San Francisco","Roboto","Segoe UI","Helvetica Neue","Lucida Grande","Ubuntu","arial",sans-serif)}
+      
+      .captcha p{margin:0;font-weight:500;font-size:15px;user-select:none;transition:opacity .2s}.captcha[data-state=verifying] .checkbox{background: none;display:flex;align-items:center;justify-content:center;transform: scale(1.1);border: none;border-radius: 50%;background: conic-gradient(var(--cap-spinner-color,#000) 0%, var(--cap-spinner-color,#000) var(--progress, 0%), var(--cap-spinner-background-color,#eee) var(--progress, 0%), var(--cap-spinner-background-color,#eee) 100%);position: relative;}.captcha[data-state=verifying] .checkbox::after {content: "";background-color: var(--cap-background,#fdfdfd);width: calc(100% - var(--cap-spinner-thickness,5px));height: calc(100% - var(--cap-spinner-thickness,5px));border-radius: 50%;margin:calc(var(--cap-spinner-thickness,5px) / 2)}.captcha[data-state=done] .checkbox{border:1px solid transparent;background-image:var(--cap-checkmark,url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%2300a67d%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E"));background-size:cover}.captcha[data-state=error] .checkbox{border:1px solid transparent;background-image:var(--cap-error-cross,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%23f55b50' d='M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8'/%3E%3C/svg%3E"));background-size:cover}.captcha[disabled]{cursor:not-allowed}.captcha[disabled][data-state=verifying]{cursor:progress}.captcha[disabled][data-state=done]{cursor:default}.captcha .credits{position:absolute;bottom:10px;right:10px;font-size:var(--cap-credits-font-size,12px);color:var(--cap-color,#212121);opacity:var(--cap-opacity-hover,0.8)}.captcha .credits span{display:none;text-decoration:underline}.captcha .credits:hover span{display:inline-block}</style>`;
 
       this.#shadow.appendChild(this.#div);
     }
@@ -488,12 +511,6 @@
       }
     }
   }
-
-  const sheet = new CSSStyleSheet();
-  sheet.replaceSync(
-    `html{--cap-font:system,-apple-system,"BlinkMacSystemFont",".SFNSText-Regular","San Francisco","Roboto","Segoe UI","Helvetica Neue","Lucida Grande","Ubuntu","arial",sans-serif;--cap-color:#212121;--cap-background:#fdfdfd;--cap-border-color:#dddddd8f;--cap-border-radius:14px;--cap-checkbox-border:1px solid #aaaaaad1;--cap-checkbox-border-radius:6px;--cap-checkbox-background:#fafafa91;--cap-widget-width:240px;--cap-widget-padding:14px;--cap-checkbox-size:24px;--cap-checkbox-margin:2px;--cap-transition-duration:0.2s;--cap-gap:15px;--cap-opacity-hover:0.8;--cap-hover-filter:brightness(97%);--cap-active-scale:0.98;--cap-credits-font-size:12px;--cap-spinner-color:black;--cap-spinner-background-color:#eee;--cap-error-cross:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%23f55b50' d='M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8'/%3E%3C/svg%3E");--cap-checkmark:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%2300a67d%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E");--cap-spinner-thickness:5px;}`
-  );
-  document.adoptedStyleSheets.push(sheet);
 
   const workerFunct = function () {
     if (
