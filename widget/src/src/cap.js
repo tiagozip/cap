@@ -100,7 +100,8 @@
 
       if (
         name === "data-cap-i18n-initial-state" &&
-        this.#div.querySelector("p")?.innerText
+        this.#div &&
+        this.#div?.querySelector("p")?.innerText
       ) {
         this.#div.querySelector("p").innerText = this.getI18nText(
           "initial-state",
