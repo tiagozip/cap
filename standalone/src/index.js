@@ -1,5 +1,6 @@
 import { Elysia, file, NotFoundError } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
+import { timingSafeEqual } from "node:crypto";
 import { cors } from "@elysiajs/cors";
 import { rateLimit } from "elysia-rate-limit";
 import Cap from "@cap.js/server";
@@ -160,7 +161,10 @@ const auth = new Elysia({
     })
   )
   .post("/", async ({ body, cookie, set }) => {
-    if (!body?.password || body.password !== ADMIN_KEY) {
+    if (
+      !body?.password ||
+      !timingSafeEqual(Buffer.from(body.password), Buffer.from(ADMIN_KEY))
+    ) {
       set.status = 401;
       return { success: false };
     }
