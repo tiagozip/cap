@@ -28,16 +28,16 @@ pub fn solve_pow(salt: String, target: String) -> u64 {
 }
 
 fn parse_hex_target(target: &str) -> Vec<u8> {
-  let mut result = Vec::with_capacity((target.len() + 1) / 2);
-  let chars: Vec<char> = target.chars().collect();
-  
-  for chunk in chars.chunks(2) {
-    let hex_str: String = chunk.iter().collect();
-    if let Ok(byte) = u8::from_str_radix(&hex_str, 16) {
-      result.push(byte);
-    }
+  let mut padded_target = target.to_string();
+
+  if padded_target.len() % 2 != 0 {
+    padded_target.push('0');
   }
-  result
+
+  (0..padded_target.len())
+    .step_by(2)
+    .map(|i| u8::from_str_radix(&padded_target[i..i + 2], 16).unwrap())
+    .collect()
 }
 
 fn write_u64_to_buffer(mut value: u64, buffer: &mut [u8]) -> usize {

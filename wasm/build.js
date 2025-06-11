@@ -46,6 +46,9 @@ if (!doTest) {
 console.log(`\n  test...`);
 execSync(`bun ${path.join("test", "node.js")}`, { stdio: "inherit" });
 
+console.log(`\n  testing odd difficulty...`);
+execSync(`bun ${path.join("test", "node_odd_difficulty.js")}`, { stdio: "inherit" });
+
 console.log(`\n  test finished!`);
 
 const doPublish = prompt("publish build? (y/N):").toLowerCase() === "y";
