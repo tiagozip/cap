@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/checkpoint-hono",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Hono Cloudflare-like checkpoint for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "index.js",
   "scripts": {

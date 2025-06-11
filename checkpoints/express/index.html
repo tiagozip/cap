@@ -163,7 +163,7 @@
       </a>
       <p class="date">{{TIME}}</p>
     </footer>
-    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.17"></script>
     <script>
       window.CAP_CUSTOM_FETCH = function (url, options) {
         console.log(url);
@@ -182,7 +182,7 @@
       widget.addEventListener("solve", (event) => {
         document.querySelector("h2").innerText =
           "Continuing to your destination...";
-          
+
         document.cookie = `__cap_clearance=${
           event.detail.token
         }; path=/; max-age=${
