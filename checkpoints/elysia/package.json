@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/middleware-elysia",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Elysia Cloudflare-like middleware for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "index.js",
   "scripts": {
