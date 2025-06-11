@@ -209,7 +209,7 @@ You can always access or set the options of the `Cap` class by accessing or modi
 
 ```json
 {
-  "challengeCount": 18,
+  "challengeCount": 50,
   "challengeSize": 32,
   "challengeDifficulty": 4,
   "expiresMs": 600000
