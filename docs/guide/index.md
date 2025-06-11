@@ -40,7 +40,7 @@ Start by adding importing the Cap widget library from a CDN:
 :::
 
 ::: warning  
-We're using the latest version of the library here for simplicity, but you should optimally pin a specific version to avoid breaking changes in the future.  
+You should optimally pin a specific version to avoid breaking changes instead of using @latest  
 :::
 
 Next, add the `<cap-widget>` component to your HTML.
@@ -49,9 +49,7 @@ Next, add the `<cap-widget>` component to your HTML.
 <cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
-::: info  
-You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`.  
-:::
+You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`. We'll tell you how to set up the server in the next section.
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
@@ -243,6 +241,10 @@ app.listen(3000, () => {
 });
 ```
 
+:::
+
+::: warning  
+These example codes don't have ratelimiting for simplicity. Make sure to add proper ratelimiting to your endpoints to prevent abuse.  
 :::
 
 ### Token validation
