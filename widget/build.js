@@ -42,7 +42,7 @@ console.timeEnd("build");
 
 console.time("test");
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: false });
 const page = await browser.newPage();
 
 const server = Bun.serve({
