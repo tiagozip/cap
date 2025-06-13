@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/widget",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Client-side widget for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "keywords": [
     "security",
@@ -51,9 +51,5 @@
   "license": "Apache-2.0",
   "author": "Tiago Rangel",
   "type": "commonjs",
-  "main": "cap.min.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "npm:publish": "sudo npm publish --access public"
-  }
+  "main": "cap.min.js"
 }

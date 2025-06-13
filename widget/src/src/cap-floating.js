@@ -63,7 +63,7 @@
 
     const capWidget = document.querySelector(capWidgetSelector);
     if (!document.contains(capWidget) && !capWidget.solve) {
-      throw new Error(`[Cap floating] Element "${capWidgetSelector}" doesn't exist or isn't a Cap widget`);
+      throw new Error(`[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`);
     }
 
     capWidget.style.display = "none";

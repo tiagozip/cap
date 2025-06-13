@@ -2,40 +2,43 @@ import fs from "fs/promises";
 import { chromium } from "playwright";
 import { minify } from "terser";
 
+const min = async (input) => {
+  return (
+    await minify(input, {
+      compress: {
+        drop_console: false,
+        dead_code: true,
+        reduce_vars: true,
+      },
+      output: {
+        beautify: false,
+        comments: false,
+      },
+      mangle: true,
+    })
+  ).code
+    .split("\\n")
+    .map((e) => {
+      return e.trimStart();
+    })
+    .join("\\n");
+};
+
 console.time("build");
 
-const paths = [
-  ["./src/src/cap.js", "./src/cap.min.js"],
-  ["./src/src/cap.js", "./src/cap.compat.min.js"],
-  ["./src/src/cap-floating.js", "./src/cap-floating.min.js"],
-];
+const rawMain = await fs.readFile("./src/src/cap.js", "utf-8");
+const minifiedWorker = await min(
+  await fs.readFile("./src/src/worker.js", "utf-8")
+);
 
-await Promise.all(
-  paths.map(async function ([inpath, outpath]) {
-    const input = await fs.readFile(inpath, "utf-8");
+const bundle = rawMain.replace("%%workerScript%%", minifiedWorker);
 
-    const minified = (
-      await minify(input, {
-        compress: {
-          drop_console: true,
-          dead_code: true,
-          reduce_vars: true,
-          drop_console: false,
-        },
-        output: {
-          beautify: false,
-          comments: false,
-        },
-      })
-    ).code
-      .split("\\n")
-      .map((e) => {
-        return e.trimStart();
-      })
-      .join("\\n");
+await fs.writeFile("./src/cap.min.js", bundle);
+await fs.writeFile("./src/cap.min.js", await min(bundle));
 
-    await fs.writeFile(outpath, minified);
-  })
+await fs.writeFile(
+  "./src/cap-floating.min.js",
+  await min(await fs.readFile("./src/src/cap-floating.js", "utf-8"))
 );
 
 console.timeEnd("build");
@@ -62,10 +65,12 @@ const server = Bun.serve({
       console.error("test failed, quitting");
       process.exit(1);
     },
-    "/solved": () => {
+    "/solved": async () => {
+      await page.close();
+      await browser.close();
+
       console.timeEnd("test");
       server.stop();
-      browser.close();
 
       const publish = prompt("\npublish package to npm? (y/N)");
 
@@ -82,4 +87,4 @@ const server = Bun.serve({
   },
 });
 
-await page.goto(`http://localhost:3000/`);
+page.goto(`http://localhost:3000/`);

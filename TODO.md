@@ -1,4 +1,4 @@
 - standalone: v2 with analytics and dashboard
-- standalone: custom versions for asset managem
+- standalone: custom versions for asset management
 - checkpoints: traefik support?
-- general: ability to change challenge algorithm 
+- general: ability to change challenge algorithm
