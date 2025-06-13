@@ -1,6 +1,4 @@
 (function () {
-  let workerScript;
-
   const WASM_VERSION = "0.0.5";
 
   const capFetch = function () {
@@ -68,7 +66,10 @@
 
     initialize() {
       this.#workerUrl = URL.createObjectURL(
-        new Blob([workerScript], {
+        // MARK: worker injection
+        // this placeholder will be replaced with the actual worker by the build script
+
+        new Blob([`%%workerScript%%`], {
           type: "application/javascript",
         })
       );
@@ -220,7 +221,7 @@
               workers[workerId] = new Worker(this.#workerUrl);
             } catch (error) {
               console.error(
-                "[cap] Error terminating/recreating worker:",
+                "[cap] error terminating/recreating worker:",
                 error
               );
             }
@@ -270,7 +271,7 @@
             try {
               w.terminate();
             } catch (error) {
-              console.error("[cap] Error terminating worker:", error);
+              console.error("[cap] error terminating worker:", error);
             }
           }
         });
@@ -299,20 +300,10 @@
         "initial-state",
         "I'm a human"
       )}</p><a href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener"><span>Secured by&nbsp;</span>Cap</a>`;
-      this.#shadow.innerHTML = `<style>
 
-      .captcha * {box-sizing:border-box;}
-      
-      .captcha{background-color:var(--cap-background,#fdfdfd);border:1px solid var(--cap-border-color,#dddddd8f);border-radius:var(--cap-border-radius,14px);
-      user-select:none;
-
-      height:var(--cap-widget-height, 30px);
-      
-      width:var(--cap-widget-width, 230px);display:flex;align-items:center;padding:var(--cap-widget-padding,14px);gap:var(--cap-gap,15px);cursor:pointer;transition:filter .2s,transform .2s;position:relative;-webkit-tap-highlight-color:rgba(255,255,255,0);overflow:hidden;color:var(--cap-color,#212121)}.captcha:hover{filter:brightness(98%)}
-      
-      .checkbox{width:var(--cap-checkbox-size,25px);height:var(--cap-checkbox-size,25px);border:var(--cap-checkbox-border,1px solid #aaaaaad1);border-radius:var(--cap-checkbox-border-radius,6px);background-color:var(--cap-checkbox-background,#fafafa91);transition:opacity .2s;margin-top:var(--cap-checkbox-margin,2px);margin-bottom:var(--cap-checkbox-margin,2px)}.captcha *{font-family:var(--cap-font,system,-apple-system,"BlinkMacSystemFont",".SFNSText-Regular","San Francisco","Roboto","Segoe UI","Helvetica Neue","Lucida Grande","Ubuntu","arial",sans-serif)}
-      
-      .captcha p{margin:0;font-weight:500;font-size:15px;user-select:none;transition:opacity .2s}.captcha[data-state=verifying] .checkbox{background: none;display:flex;align-items:center;justify-content:center;transform: scale(1.1);border: none;border-radius: 50%;background: conic-gradient(var(--cap-spinner-color,#000) 0%, var(--cap-spinner-color,#000) var(--progress, 0%), var(--cap-spinner-background-color,#eee) var(--progress, 0%), var(--cap-spinner-background-color,#eee) 100%);position: relative;}.captcha[data-state=verifying] .checkbox::after {content: "";background-color: var(--cap-background,#fdfdfd);width: calc(100% - var(--cap-spinner-thickness,5px));height: calc(100% - var(--cap-spinner-thickness,5px));border-radius: 50%;margin:calc(var(--cap-spinner-thickness,5px) / 2)}.captcha[data-state=done] .checkbox{border:1px solid transparent;background-image:var(--cap-checkmark,url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%2300a67d%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E"));background-size:cover}.captcha[data-state=error] .checkbox{border:1px solid transparent;background-image:var(--cap-error-cross,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%23f55b50' d='M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8'/%3E%3C/svg%3E"));background-size:cover}.captcha[disabled]{cursor:not-allowed}.captcha[disabled][data-state=verifying]{cursor:progress}.captcha[disabled][data-state=done]{cursor:default}.captcha .credits{position:absolute;bottom:10px;right:10px;font-size:var(--cap-credits-font-size,12px);color:var(--cap-color,#212121);opacity:var(--cap-opacity-hover,0.8)}.captcha .credits span{display:none;text-decoration:underline}.captcha .credits:hover span{display:inline-block}</style>`;
+      this.#shadow.innerHTML = `<style>.captcha * {box-sizing:border-box;}.captcha{background-color:var(--cap-background,#fdfdfd);border:1px solid var(--cap-border-color,#dddddd8f);border-radius:var(--cap-border-radius,14px);
+      user-select:none;height:var(--cap-widget-height, 30px);width:var(--cap-widget-width, 230px);display:flex;align-items:center;padding:var(--cap-widget-padding,14px);gap:var(--cap-gap,15px);cursor:pointer;transition:filter .2s,transform .2s;position:relative;-webkit-tap-highlight-color:rgba(255,255,255,0);overflow:hidden;color:var(--cap-color,#212121)}.captcha:hover{filter:brightness(98%)}.checkbox{width:var(--cap-checkbox-size,25px);height:var(--cap-checkbox-size,25px);border:var(--cap-checkbox-border,1px solid #aaaaaad1);border-radius:var(--cap-checkbox-border-radius,6px);background-color:var(--cap-checkbox-background,#fafafa91);transition:opacity .2s;margin-top:var(--cap-checkbox-margin,2px);margin-bottom:var(--cap-checkbox-margin,2px)}.captcha *{font-family:var(--cap-font,system,-apple-system,"BlinkMacSystemFont",".SFNSText-Regular","San Francisco","Roboto","Segoe UI","Helvetica Neue","Lucida Grande","Ubuntu","arial",sans-serif)}.captcha p{margin:0;font-weight:500;font-size:15px;user-select:none;transition:opacity .2s}.captcha[data-state=verifying]
+.checkbox{background: none;display:flex;align-items:center;justify-content:center;transform: scale(1.1);border: none;border-radius: 50%;background: conic-gradient(var(--cap-spinner-color,#000) 0%, var(--cap-spinner-color,#000) var(--progress, 0%), var(--cap-spinner-background-color,#eee) var(--progress, 0%), var(--cap-spinner-background-color,#eee) 100%);position: relative;}.captcha[data-state=verifying] .checkbox::after {content: "";background-color: var(--cap-background,#fdfdfd);width: calc(100% - var(--cap-spinner-thickness,5px));height: calc(100% - var(--cap-spinner-thickness,5px));border-radius: 50%;margin:calc(var(--cap-spinner-thickness,5px) / 2)}.captcha[data-state=done] .checkbox{border:1px solid transparent;background-image:var(--cap-checkmark,url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%2300a67d%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E"));background-size:cover}.captcha[data-state=error] .checkbox{border:1px solid transparent;background-image:var(--cap-error-cross,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%23f55b50' d='M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8'/%3E%3C/svg%3E"));background-size:cover}.captcha[disabled]{cursor:not-allowed}.captcha[disabled][data-state=verifying]{cursor:progress}.captcha[disabled][data-state=done]{cursor:default}.captcha .credits{position:absolute;bottom:10px;right:10px;font-size:var(--cap-credits-font-size,12px);color:var(--cap-color,#212121);opacity:var(--cap-opacity-hover,0.8)}.captcha .credits span{display:none;text-decoration:underline}.captcha .credits:hover span{display:inline-block}</style>`;
 
       this.#shadow.appendChild(this.#div);
     }
@@ -407,16 +398,11 @@
         return;
       }
 
-      try {
-        const func = new Function("event", code);
-        func.call(this, event);
-      } catch (error) {
-        console.error(`[cap] Error executing ${attributeName}:`, error);
-      }
+      new Function("event", code).call(this, event);
     }
 
     error(message = "Unknown error") {
-      console.error("[cap] Error:", message);
+      console.error("[cap]", message);
       this.dispatchEvent("error", { isCap: true, message });
     }
 
@@ -512,133 +498,13 @@
       }
     }
   }
-
-  const workerFunct = function () {
-    if (
-      typeof WebAssembly !== "object" ||
-      typeof WebAssembly?.instantiate !== "function"
-    ) {
-      self.onmessage = async ({ data: { salt, target } }) => {
-        // Fallback solver in case WASM is not available
-
-        let nonce = 0;
-        const batchSize = 50000;
-        let processed = 0;
-        const encoder = new TextEncoder();
-
-        const targetBytes = new Uint8Array(target.length / 2);
-        for (let k = 0; k < targetBytes.length; k++) {
-          targetBytes[k] = parseInt(target.substring(k * 2, k * 2 + 2), 16);
-        }
-        const targetBytesLength = targetBytes.length;
-
-        while (true) {
-          try {
-            for (let i = 0; i < batchSize; i++) {
-              const inputString = salt + nonce;
-              const inputBytes = encoder.encode(inputString);
-
-              const hashBuffer = await crypto.subtle.digest(
-                "SHA-256",
-                inputBytes
-              );
-
-              const hashBytes = new Uint8Array(
-                hashBuffer,
-                0,
-                targetBytesLength
-              );
-
-              let matches = true;
-              for (let k = 0; k < targetBytesLength; k++) {
-                if (hashBytes[k] !== targetBytes[k]) {
-                  matches = false;
-                  break;
-                }
-              }
-
-              if (matches) {
-                self.postMessage({ nonce, found: true });
-                return;
-              }
-
-              nonce++;
-            }
-
-            processed += batchSize;
-          } catch (error) {
-            console.error("[cap] fallback worker error", error);
-            self.postMessage({
-              found: false,
-              error: error.message,
-            });
-            return;
-          }
-        }
-      };
-
-      return console.warn(
-        "[cap] WebAssembly is not supported, falling back to alternative solver."
-      );
-    }
-
-    let wasmCacheUrl, solve_pow_function;
-
-    self.onmessage = async ({ data: { salt, target, wasmUrl } }) => {
-      if (wasmCacheUrl !== wasmUrl) {
-        wasmCacheUrl = wasmUrl;
-        await import(wasmUrl)
-          .then((wasmModule) => {
-            return wasmModule.default().then((instance) => {
-              solve_pow_function = (
-                instance && instance.exports ? instance.exports : wasmModule
-              ).solve_pow;
-            });
-          })
-          .catch((e) => {
-            console.error("[cap] using fallback solver due to error:", e);
-          });
-      }
-
-      try {
-        const startTime = performance.now();
-        const nonce = solve_pow_function(salt, target);
-        const endTime = performance.now();
-
-        self.postMessage({
-          nonce: Number(nonce),
-          found: true,
-          durationMs: (endTime - startTime).toFixed(2),
-        });
-      } catch (error) {
-        console.error("[cap] solver error", error);
-        self.postMessage({
-          found: false,
-          error: error.message || String(error),
-        });
-      }
-    };
-
-    self.onerror = (error) => {
-      self.postMessage({
-        found: false,
-        error: `Worker error: ${error.message || error}`,
-      });
-    };
-  };
-
-  workerScript = `(() => {${workerFunct
-    .toString()
-    .replace(/^function\s*\([^\)]*\)\s*{|\}$/g, "")
-    .trim()}})()`;
-
   window.Cap = Cap;
 
-  if (!customElements.get("cap-widget")) {
+  if (!customElements.get("cap-widget") && !window?.CAP_DONT_SKIP_REDEFINE) {
     customElements.define("cap-widget", CapWidget);
   } else {
     console.warn(
-      "The cap-widget element has already been defined. Skipping re-defining it."
+      "[cap] the cap-widget element has already been defined, skipping re-defining it.\nto prevent this, set window.CAP_DONT_SKIP_REDEFINE to true"
     );
   }
 
