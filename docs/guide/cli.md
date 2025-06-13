@@ -2,22 +2,11 @@
 
 `cli` is a simple command-line interface for solving CAPTCHAs made with Cap. It's mainly designed for testing and when you need to solve these CAPTCHAs in a browser without JavaScript support.
 
-```bash
-❯ bunx '@cap.js/cli'
-```
-
-```
-@cap.js/cli cli solver for cap challenges
-
-Usage:
-  $ bunx '@cap.js/cli' <challenges>
-
-Options:
-  <challenges>  The challenges to solve in
-                format `salt:target`
-```
-
 If you're on Windows, you might need to use `bunx '@cap.js/cli'` (with quotes) instead of `bunx @cap.js/cli` to avoid issues with the `@` symbol.
+
+Note that `cli` is not meant to be used in production environments, you should use the solver instead. It's primarily for testing purposes and should not be used in a real application.
+
+It's also not being as actively developed as the rest of the Cap ecosystem, so it may not support all features.
 
 ## Usage
 
