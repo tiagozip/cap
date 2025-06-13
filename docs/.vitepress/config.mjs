@@ -151,6 +151,7 @@ export default withMermaid({
     sidebar: [
       { text: "Quickstart", link: "/guide/index.md" },
       { text: "Feature comparison", link: "/guide/alternatives.md" },
+      { text: "Community libraries", link: "/guide/community.md" },
       {
         text: "Modes",
         collapsed: false,
