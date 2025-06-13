@@ -4,10 +4,10 @@
   "license": "Apache-2.0",
   "author": "Tiago Rangel",
   "type": "commonjs",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "bun run server.js",
-    "dev": "bun run --watch server.js",
+    "start": "bun run index.js",
+    "dev": "bun run --watch index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

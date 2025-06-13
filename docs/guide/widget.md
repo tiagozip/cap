@@ -1,21 +1,22 @@
 # @cap.js/widget
 
-> [!NOTE]  
+> [!NOTE]
+>
 > **Requirements:** All modern browsers should be supported, but the build script specifically targets the last 10 versions of Chrome, Firefox, Safari and Edge.
 
 `@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the Captcha solver. First, add it to your client-side code:
 
 ::: code-group
 
-```html [jsdelivr]
+```html
 <script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
 ```
 
-```html [unpkg]
+```html
 <script src="https://unpkg.com/@cap.js/widget"></script>
 ```
 
-```html [standalone server]
+```html
 <script src="https://<server url>/assets/widget.js"></script>
 
 <!-- tip: make sure to set the wasm endpoint too! -->
@@ -23,8 +24,10 @@
 
 :::
 
-::: warning  
-We're using the latest version of the library here for simplicity, but you should optimally pin a specific version to avoid breaking changes in the future.  
+::: warning
+
+We're using the latest version of the library here for simplicity, but you should optimally pin a specific version to avoid breaking changes in the future.
+
 :::
 
 You can now use the `<cap-widget>` component in your HTML.
@@ -33,8 +36,9 @@ You can now use the `<cap-widget>` component in your HTML.
 <cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
-> [!NOTE]  
-> You'll need to start a server with an API exposing the Cap methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.  
+> [!NOTE]
+>
+> You'll need to start a server with an API exposing the Cap methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.
 
 > [!TIP] The following attributes are supported:
 >
@@ -79,9 +83,11 @@ You can change the text on each label of the widget by setting the `data-cap-i18
 ></cap-widget>
 ```
 
-## Custom fetch
+## Customizing the widget
 
-You can override the default fetch implementation by setting `window.CAP_CUSTOM_FETCH` to a custom function. This function will receive the URL and options as arguments and should return a promise that resolves to the response.
+### fetch function
+
+You can override the default browser fetch implementation by setting `window.CAP_CUSTOM_FETCH` to a custom function. This function will receive the URL and options as arguments and should return a promise that resolves to the response.
 
 ```js
 window.CAP_CUSTOM_FETCH = function (url, options) {
@@ -90,6 +96,36 @@ window.CAP_CUSTOM_FETCH = function (url, options) {
 };
 ```
 
-## Custom WASM URL
+## WASM URL
 
 You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js`
+
+## Widget appearance
+
+You can fully change how the widget looks by setting various CSS variables on the `cap-widget` element. The following CSS variables are supported:
+
+```css
+cap-widget {
+  --cap-background: #fdfdfd;
+  --cap-border-color: #dddddd8f;
+  --cap-border-radius: 14px;
+  --cap-widget-height: 30px;
+  --cap-widget-width: 230px;
+  --cap-widget-padding: 14px;
+  --cap-gap: 15px;
+  --cap-color: #212121;
+  --cap-checkbox-size: 25px;
+  --cap-checkbox-border: 1px solid #aaaaaad1;
+  --cap-checkbox-border-radius: 6px;
+  --cap-checkbox-background: #fafafa91;
+  --cap-checkbox-margin: 2px;
+  --cap-font: system, -apple-system, "BlinkMacSystemFont", ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
+  --cap-spinner-color: #000;
+  --cap-spinner-background-color: #eee;
+  --cap-spinner-thickness: 5px;
+  --cap-checkmark: url("data:image/svg+xml,%3Csvg%20xml...");
+  --cap-error-cross: url("data:image/svg+xml,%3Csvg xml...");
+  --cap-credits-font-size: 12px;
+  --cap-opacity-hover: 0.8;
+}
+```

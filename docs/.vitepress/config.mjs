@@ -164,10 +164,10 @@ export default withMermaid({
         text: "Libraries",
         collapsed: false,
         items: [
-          { text: "@cap.js/server", link: "/guide/server.md" },
-          { text: "@cap.js/widget", link: "/guide/widget.md" },
-          { text: "@cap.js/solver", link: "/guide/solver.md" },
-          { text: "@cap.js/cli", link: "/guide/cli.md" },
+          { text: "Server", link: "/guide/server.md" },
+          { text: "Widget", link: "/guide/widget.md" },
+          { text: "Solver", link: "/guide/solver.md" },
+          { text: "CLI", link: "/guide/cli.md" },
         ],
       },
       {
