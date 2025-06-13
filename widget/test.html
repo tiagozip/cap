@@ -6,13 +6,11 @@
     <script>
       window.CAP_CUSTOM_FETCH = async (url, options) => {
         if (url === "/api/challenge") {
-          const browserCrypto = window.crypto;
-
           return new Response(
             JSON.stringify({
               challenge: Array.from({ length: 5 }, () => [
                 Array.from(
-                  browserCrypto.getRandomValues(
+                  window.crypto.getRandomValues(
                     new Uint8Array(Math.ceil(32 / 2))
                   )
                 )
@@ -21,7 +19,7 @@
                   .slice(0, 32),
 
                 Array.from(
-                  browserCrypto.getRandomValues(
+                  window.crypto.getRandomValues(
                     new Uint8Array(Math.ceil(2 / 2))
                   )
                 )

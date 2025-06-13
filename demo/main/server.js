@@ -1,54 +1,52 @@
-import fs from "fs";
-import path from "path";
+import fs from "fs/promises";
+import { Elysia, file } from "elysia";
 import Cap from "@cap.js/server";
-import Fastify from "fastify";
 
-const fastify = Fastify();
 const cap = new Cap({
   tokens_store_path: ".data/tokensList.json",
 });
 
-fastify.get("/", (req, res) => {
-  res.header("Content-Type", "text/html");
-  res.send(fs.createReadStream(path.join(__dirname, "index.html")));
+const app = new Elysia();
+
+app.get("/", () => file("./index.html"));
+
+app.get("/cap.js", async ({ set }) => {
+  // in the newest version, the worker is injected into the main file
+  // by a build script. since we don't have a build script here,
+  // we'll need to build it ourselves.
+
+  const main = await fs.readFile("../../widget/src/src/cap.js", "utf-8");
+  const worker = await fs.readFile("../../widget/src/src/worker.js", "utf-8");
+
+  const bundle = main.replace("%%workerScript%%", worker);
+
+  set.headers = {
+    "Content-Type": "application/javascript",
+  };
+
+  return bundle;
 });
 
-fastify.get("/cap.js", (req, res) => {
-  res.header("Content-Type", "application/javascript");
-  res.send(
-    fs.createReadStream(path.join(__dirname, "../../widget/src/src/cap.js"))
-  );
-});
+app.get("/cap-floating.js", () => file("../../widget/src/src/cap-floating.js"));
 
-fastify.get("/cap-floating.js", (req, res) => {
-  res.header("Content-Type", "application/javascript");
-  res.send(
-    fs.createReadStream(
-      path.join(__dirname, "../../widget/src/src/cap-floating.js")
-    )
-  );
-});
+app.post("/api/challenge", () => cap.createChallenge());
 
-fastify.post("/api/challenge", (req, res) => {
-  res.send(cap.createChallenge());
-});
-
-fastify.post("/api/redeem", async (req, res) => {
-  const { token, solutions } = req.body;
+app.post("/api/redeem", async ({ body, set }) => {
+  const { token, solutions } = body;
   if (!token || !solutions) {
-    return res.code(400).send({ success: false });
+    set.status = 400;
+    return { success: false };
   }
 
   const answer = await cap.redeemChallenge({ token, solutions });
-
-  res.send(answer);
 
   console.log("new challenge redeemed", {
     ...answer,
     isValid: (await cap.validateToken(answer.token)).success,
   });
+
+  return answer;
 });
 
-fastify.listen({ port: 3000, host: "0.0.0.0" }).then(() => {
-  console.log("Server is running on http://localhost:3000");
-});
+app.listen(3000);
+console.log("Server is running on http://localhost:3000");
