@@ -135,7 +135,7 @@ type Solution = {
     /**
      * - Array of [salt, target, solution] tuples
      */
-    solutions: Array<[string, string, string]>;
+    solutions: Array<[string, string, number]>;
 };
 type CapConfig = {
     /**
