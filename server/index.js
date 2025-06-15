@@ -42,7 +42,7 @@
 /**
  * @typedef {Object} Solution
  * @property {string} token - The challenge token
- * @property {Array<[string, string, string]>} solutions - Array of [salt, target, solution] tuples
+ * @property {Array<[string, string, number]>} solutions - Array of [salt, target, solution] tuples
  */
 
 /**
