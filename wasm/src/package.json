@@ -51,7 +51,7 @@
     "url": "https://github.com/tiagorangel1/cap/issues"
   },
   "scripts": {
-    "npm:publish": "sudo npm publish --access public"
+    "npm:publish": "bun publish --access public"
   },
   "homepage": "https://github.com/tiagorangel1/cap#readme"
 }
