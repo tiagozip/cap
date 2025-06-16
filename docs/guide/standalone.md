@@ -130,3 +130,5 @@ And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm_bg.wasm
 ```js
 window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
 ```
+
+By default, these fetch from `process.env.CACHE_HOST`. You can change this by setting the `CACHE_HOST` environment variable when running the server. If you don't set it, it defaults to `https://cdn.jsdelivr.net`. You can also set it to `disable` to disable the assets server entirely.
