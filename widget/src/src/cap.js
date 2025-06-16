@@ -143,7 +143,7 @@
 
         this.#div.setAttribute(
           "aria-label",
-          "Verifying you're a human, please wait"
+          this.getI18nText("verifying-aria-label", "Verifying you're a human, please wait")
         );
 
         this.dispatchEvent("progress", { progress: 0 });
@@ -189,14 +189,14 @@
 
           this.#div.setAttribute(
             "aria-label",
-            "We have verified you're a human, you may now continue"
+            this.getI18nText("verified-aria-label", "We have verified you're a human, you may now continue")
           );
 
           return { success: true, token: this.token };
         } catch (err) {
           this.#div.setAttribute(
             "aria-label",
-            "An error occurred, please try again"
+            this.getI18nText("error-aria-label", "An error occurred, please try again")
           );
           this.error(err.message);
           throw err;
@@ -309,7 +309,7 @@
       this.#div.classList.add("captcha");
       this.#div.setAttribute("role", "button");
       this.#div.setAttribute("tabindex", "0");
-      this.#div.setAttribute("aria-label", "Click to verify you're a human");
+      this.#div.setAttribute("aria-label", this.getI18nText("verify-aria-label", "Click to verify you're a human"));
       this.#div.setAttribute("aria-live", "polite");
       this.#div.setAttribute("disabled", "true");
       this.#div.innerHTML = `<div class="checkbox"></div><p>${this.getI18nText(
