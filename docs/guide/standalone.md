@@ -58,7 +58,7 @@ Example:
 ></cap-widget>
 ```
 
-> [!TIP]   
+> [!TIP]  
 > Does generating challenges not work? Make sure your server is publicly accessible and that `CORS_ORIGIN` is set correctly to allow requests from your website's origin.
 
 ### Server-side
@@ -130,5 +130,7 @@ And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm_bg.wasm
 ```js
 window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
 ```
+
+You can and should also change the version of the widget and WASM files by setting `process.env.WIDGET_VERSION` and `process.env.WASM_VERSION`. This will help you avoid breaking changes in the future.
 
 By default, these fetch from `process.env.CACHE_HOST`. You can change this by setting the `CACHE_HOST` environment variable when running the server. If you don't set it, it defaults to `https://cdn.jsdelivr.net`. You can also set it to `disable` to disable the assets server entirely.
