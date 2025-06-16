@@ -83,6 +83,8 @@ You can change the text on each label of the widget by setting the `data-cap-i18
 ></cap-widget>
 ```
 
+`verify-aria-label`, `verifying-aria-label`, `verified-aria-label`, `error-aria-label` are also supported for screen readers.
+
 ## Customizing the widget
 
 ### fetch function
@@ -119,7 +121,8 @@ cap-widget {
   --cap-checkbox-border-radius: 6px;
   --cap-checkbox-background: #fafafa91;
   --cap-checkbox-margin: 2px;
-  --cap-font: system, -apple-system, "BlinkMacSystemFont", ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
+  --cap-font: system, -apple-system, "BlinkMacSystemFont", ".SFNSText-Regular", "San Francisco",
+    "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
   --cap-spinner-color: #000;
   --cap-spinner-background-color: #eee;
   --cap-spinner-thickness: 5px;
