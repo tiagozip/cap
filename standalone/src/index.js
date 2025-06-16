@@ -61,24 +61,24 @@ const updateCache = async () => {
   if (!(currentTime - lastUpdate > updateInterval)) return;
 
   const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
-
   if (CACHE_HOST === "disable") return;
+
+  const WIDGET_VERSION = process.env.WIDGET_VERSION || "latest";
+  const WASM_VERSION = process.env.WASM_VERSION || "latest";
 
   try {
     const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] =
       await Promise.all([
-        fetch(`${CACHE_HOST}/npm/@cap.js/widget@latest`).then((r) =>
-          r.text()
+        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`).then((r) => r.text()),
+        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`).then(
+          (r) => r.text()
         ),
-        fetch(
-          `${CACHE_HOST}/npm/@cap.js/widget/cap-floating.min.js`
-        ).then((r) => r.text()),
-        fetch(
-          `${CACHE_HOST}/npm/@cap.js/wasm/browser/cap_wasm_bg.wasm`
-        ).then((r) => r.arrayBuffer()),
-        fetch(
-          `${CACHE_HOST}/npm/@cap.js/wasm/browser/cap_wasm.min.js`
-        ).then((r) => r.text()),
+        fetch(`${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`).then(
+          (r) => r.arrayBuffer()
+        ),
+        fetch(`${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`).then(
+          (r) => r.text()
+        ),
       ]);
 
     cacheConfig["lastUpdate"] = currentTime;
