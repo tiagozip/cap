@@ -1,4 +1,3 @@
 - standalone: v2 with analytics and dashboard
 - checkpoints: traefik support?
 - general: ability to change challenge algorithm
-- wasm: minified loader
