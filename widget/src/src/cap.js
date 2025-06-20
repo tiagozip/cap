@@ -1,5 +1,5 @@
 (function () {
-  const WASM_VERSION = "0.0.5";
+  const WASM_VERSION = "0.0.6";
 
   const capFetch = function () {
     if (window?.CAP_CUSTOM_FETCH) {
