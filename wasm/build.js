@@ -1,3 +1,4 @@
+import { minify } from "terser";
 import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
@@ -35,6 +36,17 @@ console.log(`\n  Removing .gitignore...`);
   } catch {}
 });
 
+console.log(`\n  Minifing loaders...`);
+
+await Promise.all(
+  [browserOutDir, nodeOutDir].map(async (dir) => {
+    const loaderPath = path.join(dir, "cap_wasm.js");
+    const code = fs.readFileSync(loaderPath, "utf8");
+    const result = await minify(code);
+    fs.writeFileSync(loaderPath, result.code);
+  })
+);
+
 console.log(`\n🎉 All builds finished successfully!\n`);
 
 const doTest = prompt("test build? (y/N):").toLowerCase() === "y";
@@ -47,7 +59,9 @@ console.log(`\n  test...`);
 execSync(`bun ${path.join("test", "node.js")}`, { stdio: "inherit" });
 
 console.log(`\n  testing odd difficulty...`);
-execSync(`bun ${path.join("test", "node_odd_difficulty.js")}`, { stdio: "inherit" });
+execSync(`bun ${path.join("test", "node_odd_difficulty.js")}`, {
+  stdio: "inherit",
+});
 
 console.log(`\n  test finished!`);
 
