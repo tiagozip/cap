@@ -1,16 +1,16 @@
 # Alternatives to Cap
 
-| CAPTCHA | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | Checkpoint support | GDPR/CCPA Compliant | Customizable | Hard for bots | Easy to integrate |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| **Cap** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟨 | ✅ |
-| Cloudflare Turnstile | ❌ | ✅ | 🟨 | 🟨 | ✅ | ❌ | 🟨 | ✅ | ❌ | 🟨 | ✅ |
-| reCAPTCHA | ❌ | 🟨 | ❌ | ✅ | ❌ | 🟨 | ❌ | 🟨 | ❌ | ❌ | ✅ |
-| hCAPTCHA | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | 🟨 | ❌ | 🟨 | ✅ |
-| Altcha | ✅ | ✅ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | 🟨 | 🟨 |
-| FriendlyCaptcha | ❌ | ❌ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | 🟨 | 🟨 |
-| MTCaptcha | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | ✅ | ❌ | ❌ | 🟨 |
-| GeeTest | ❌ | ❌ | ❌ | 🟨 | 🟨 | 🟨 | ❌ | ✅ | ❌ | 🟨 | 🟨 |
-| Arkose Labs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟨 | ❌ | ❌ |
+| CAPTCHA | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | Checkpoint support | Widget support | GDPR/CCPA Compliant | Customizable | Hard for bots | Easy to integrate |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| **Cap** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 🟨 | ✅ |
+| Cloudflare Turnstile | ❌ | ✅ | 🟨 | 🟨 | ✅ | ❌ | 🟨 | ✅ | ✅ | ❌ | 🟨 | ✅ |
+| reCAPTCHA | ❌ | 🟨 | ❌ | ✅ | ❌ | 🟨 | ❌ | ✅ | 🟨 | ❌ | ❌ | ✅ |
+| hCAPTCHA | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | ✅ | 🟨 | ❌ | 🟨 | ✅ |
+| Altcha | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | 🟨 | 🟨 |
+| FriendlyCaptcha | ❌ | ❌ | ✅ | 🟨 | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | 🟨 | 🟨 |
+| MTCaptcha | ❌ | 🟨 | 🟨 | ❌ | ❌ | 🟨 | ❌ | ✅ | ✅ | ❌ | ❌ | 🟨 |
+| GeeTest | ❌ | ❌ | ❌ | 🟨 | 🟨 | 🟨 | ❌ | ✅ | ✅ | ❌ | 🟨 | 🟨 |
+| Arkose Labs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟨 | ❌ | ❌ |
 
 #### Notes:
 
@@ -54,3 +54,7 @@ Cap is free, self-hosted and open-source, while GeeTest is a paid service. Cap i
 ### Arkose Labs
 
 Even while being extremely hard, slow and annoying for humans to solve, Arkose's FunCAPTCHA can be easily solved by LLMs due to their audio CAPTCHA. It's also closed-source and paid.
+
+### Anubis
+
+Anubis is kind of different from usual CAPTCHAs. It's more to prevent scraping, such as Cap's checkpoints, and doesn't offer any widget support or more customizable server-side integration (at least to my knowledge). It also isn't really that secure, as bypassing it is trivial due to its default low difficulty.
