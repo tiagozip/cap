@@ -192,6 +192,7 @@ export default withMermaid({
       },
       { text: "Benchmark", link: "/guide/benchmark.md" },
       { text: "Demo", link: "/guide/demo.md" },
+      { text: "GitHub", link: "https://github.com/tiagorangel1/cap" },
     ],
 
     socialLinks: [
