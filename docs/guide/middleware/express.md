@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-bun add express cookie-parser @cap.js/middleware-express
+bun add express cookie-parser @cap.js/checkpoint-express
 ```
 
 ## Usage
