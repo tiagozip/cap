@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login to Cap</title>
+    <link rel="icon" href="./public/logo-small.webp" />
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+          Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
+      }
+      body {
+        text-align: center;
+        margin: 0px;
+        padding: 0px;
+        margin-top: 10%;
+        background-color: #181818;
+        color: #e8e8ea;
+      }
+      form {
+        max-width: 300px;
+        margin: 0px auto;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        text-align: left;
+      }
+      img {
+        width: 60px;
+      }
+      label {
+        font-size: 14px;
+        line-height: 1.5;
+        display: block;
+        margin-bottom: 3px;
+        color: #d9dfe5eb;
+      }
+
+      .password-wrapper {
+        border: 1px solid #e3e4e810;
+        background-color: #e3e4e807;
+        display: flex;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        transition: box-shadow 0.13s ease-in-out;
+      }
+
+      .showhide-password {
+        border: none;
+        cursor: pointer;
+        color: white;
+        background-color: transparent;
+        padding: 0;
+        margin-right: 8px;
+      }
+
+      .password {
+        font-size: 24px;
+        line-height: 1.33333333;
+        background-color: transparent;
+        border: none;
+        width: 100%;
+        padding: 12px;
+        height: 40px;
+        color: inherit;
+        font-weight: 400;
+        letter-spacing: -2px;
+        margin: 0px;
+      }
+
+      .password.show-password {
+        letter-spacing: 0px;
+        font-size: 14px;
+      }
+
+      .password:focus {
+        outline: none;
+      }
+
+      .password-wrapper:has(.password:focus) {
+        box-shadow: 0px 0px 0px 3px rgba(255, 255, 255, 0.5);
+      }
+
+      .submit {
+        padding: 6px 10px;
+        border-radius: 6px;
+        height: 40px;
+        text-align: center;
+        font-weight: 500;
+        border: none;
+        color: black;
+        background: white;
+        background-origin: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+        cursor: pointer;
+        font-size: 14px;
+        transition: box-shadow 0.13s, opacity 0.2s;
+      }
+
+      .submit:focus {
+        box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
+          0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
+          0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
+        outline: 0;
+      }
+
+      .submit:disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+      }
+
+      p.bottom {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      p.bottom .poweredby {
+        margin-left: auto;
+      }
+
+      p.err {
+        color: #ffffff;
+        display: none;
+        margin: 0px;
+        margin-top: 12px;
+        font-size: 14px;
+      }
+
+      a {
+        color: rgb(255, 255, 255);
+        opacity: 0.4;
+        font-size: 14px;
+        transition: opacity 0.2s;
+      }
+
+      a:hover {
+        opacity: 1;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .logo img {
+        width: 45px;
+        height: 45px;
+        margin-bottom: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <form action="javascript:void(0)">
+      <div class="logo">
+        <img src="./public/logo-small.webp" alt="Cap logo" />
+      </div>
+      <label for="password">Admin key</label>
+      <div class="password-wrapper">
+        <input
+          type="password"
+          name="password"
+          placeholder="•••••••••••••••••••••"
+          class="password"
+        />
+        <button
+          title="Show/hide password"
+          class="showhide-password"
+          type="button"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-eye-icon lucide-eye"
+          >
+            <path
+              d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
+
+      <button type="submit" class="submit" disabled>Continue</button>
+      <p class="err"></p>
+      <p class="bottom">
+        <!-- prettier-ignore -->
+        <a
+          href="https://github.com/tiagorangel1/cap/issues/new/choose"
+          target="_blank"
+          rel="nofollow noopener"
+        >Need help?</a>
+        <a href="https://capjs.js.org/" target="_blank" class="poweredby">
+          Powered by Cap
+        </a>
+      </p>
+    </form>
+  </body>
+  <script>
+    let loading = false;
+    document.querySelector("input").focus();
+
+    document.querySelector(".password").addEventListener("input", function (e) {
+      if (document.querySelector(".password").value.trim().length < 30) {
+        document.querySelector("button[type=submit]").disabled = true;
+        return;
+      }
+      if (!loading) {
+        document.querySelector("button[type=submit]").disabled = false;
+      }
+    });
+
+    document
+      .querySelector("form")
+      .addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const admin_key = document.querySelector("input[name=password]").value;
+
+        if (!admin_key) return;
+
+        document.querySelector("button[type=submit]").disabled = true;
+
+        const { success, session_token, hashed_token, expires } = await (
+          await fetch("/auth/login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              admin_key,
+            }),
+          })
+        ).json();
+
+        if (success && session_token) {
+          localStorage.setItem(
+            "cap_auth",
+            JSON.stringify({
+              token: session_token,
+              expires: expires,
+              hash: hashed_token,
+            })
+          );
+
+          document.querySelector("p.err").style.display = "none";
+          location.reload();
+          return;
+        }
+
+        document.querySelector("button[type=submit]").disabled = false;
+        document.querySelector("p.err").style.display = "block";
+        document.querySelector("p.err").innerText =
+          "Incorrect admin key. Please try again.";
+        document.querySelector("input[name=password]").value = "";
+      });
+
+    document
+      .querySelector(".showhide-password")
+      .addEventListener("click", () => {
+        const passwordInput = document.querySelector("input[name=password]");
+        const showhideButton = document.querySelector(".showhide-password");
+        passwordInput.classList.toggle("show-password");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          passwordInput.placeholder = "";
+          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
+        } else {
+          passwordInput.type = "password";
+          passwordInput.placeholder = "••••••••••••••";
+          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+        }
+      });
+  </script>
+</html>

@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start": "vitepress dev",
-    "dev": "vitepress dev",
+    "start": "bunx --bun vitepress dev",
+    "dev": "bunx --bun vitepress dev",
     "build": "vitepress build",
     "preview": "vitepress preview"
   },
