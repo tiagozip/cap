@@ -94,6 +94,3 @@ debug/
 target/
 **/*.rs.bk
 *.pdb
-
-
-standalone-v2-beta/**

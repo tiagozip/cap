@@ -3,324 +3,195 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cap</title>
-    <link rel="icon" href="./public/logo.png" />
-    <style>
-      * {
-        font-family: system, -apple-system, "BlinkMacSystemFont", ".SFNSText-Regular",
-          "San Francisco", "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", "Ubuntu",
-          "arial", sans-serif;
-        box-sizing: border-box;
-      }
+    <link rel="stylesheet" href="./public/index.css" />
 
-      body {
-        max-width: 600px;
-        padding: 15px;
-        margin: 3rem auto;
-        background-color: #121214;
-        color: #e8e8ea;
-      }
-
-      nav .logo {
-        width: 30px;
-        height: 30px;
-        display: block;
-        margin-bottom: -4px;
-      }
-
-      nav {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      nav a {
-        margin-left: auto;
-        color: inherit;
-        text-decoration: none;
-        font-size: 14px;
-        opacity: 0.7;
-      }
-      nav a:hover {
-        opacity: 1;
-      }
-
-      nav h1 {
-        font-weight: 500;
-        margin: 0px;
-        font-size: 20px;
-        margin-left: 6px;
-      }
-
-      p.text {
-        line-height: 1.5;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 15px;
-      }
-
-      h2 {
-        font-weight: 600;
-        font-size: 23px;
-      }
-
-      .title {
-        display: flex;
-        gap: 4px;
-        align-items: center;
-      }
-
-      .title button {
-        margin-left: auto;
-      }
-
-      button.btn {
-        padding: 6px 10px;
-        border-radius: 6px;
-        border: none;
-        color: white;
-        background: #0076d8;
-        background-origin: border-box;
-        user-select: none;
-        -webkit-user-select: none;
-        touch-action: manipulation;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      button.btn:focus {
-        box-shadow: inset 0px 0.8px 0px -0.25px rgba(0, 118, 216, 0.2),
-          0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(0, 118, 216, 0.5);
-        outline: 0;
-      }
-
-      button.btn:disabled {
-        opacity: 0.4;
-        filter: grayscale(1);
-        pointer-events: none;
-      }
-
-      .dialog-wrapper {
-        position: fixed;
-        top: 0px;
-        left: 0px;
-        right: 0px;
-        bottom: 0px;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: fade-in 0.2s;
-      }
-
-      @keyframes fade-in {
-        0% {
-          opacity: 0;
-        }
-        100% {
-          opacity: 1;
-        }
-      }
-
-      .dialog-wrapper .dialog {
-        max-width: 450px;
-        width: 100%;
-        background-color: #18181a;
-        border-radius: 18px;
-        padding: 20px;
-        position: relative;
-        animation: dialog-in 0.2s;
-        box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px,
-          rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px,
-          rgba(0, 0, 0, 0.09) 0px -3px 5px;
-      }
-
-      @keyframes dialog-in {
-        0% {
-          transform: scale(0.98);
-        }
-        100% {
-          transform: scale(1);
-        }
-      }
-
-      .dialog .close-button {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background-color: transparent;
-        border: none;
-        color: #e8e8ea;
-        cursor: pointer;
-      }
-
-      .dialog h2 {
-        margin: 0px;
-        font-size: 20px;
-        margin-bottom: 16px;
-        user-select: none;
-      }
-
-      .dialog .actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        user-select: none;
-      }
-
-      .key-creation-form {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 18px;
-        margin-top: 6px;
-      }
-
-      .key-creation-form label {
-        font-size: 14px;
-        margin-bottom: 6px;
-        opacity: 0.9;
-        user-select: none;
-      }
-
-      .key-creation-form input {
-        border-radius: 8px;
-        border: none;
-        padding: 10px 14px;
-        border: 1px solid rgba(255, 255, 255, 0.17);
-        background-color: transparent;
-        color: inherit;
-      }
-
-      .key-creation-form input:focus {
-        outline: none;
-        box-shadow: 0px 0px 0px 2px rgba(255, 255, 255, 0.2);
-      }
-
-      .key-creation-form input:disabled {
-        opacity: 0.5;
-        pointer-events: none;
-      }
-
-      .keys p {
-        text-align: center;
-        margin: 0px;
-        margin-top: 8px;
-        opacity: 0.8;
-        font-size: 15px;
-      }
-
-      .keys .copy-key {
-        padding: 6px 10px;
-        border-radius: 6px;
-        border: none;
-        color: #fff;
-        background: rgba(255, 255, 255, 0.05);
-        background-origin: border-box;
-        -webkit-user-select: none;
-        user-select: none;
-        touch-action: manipulation;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .keys .copy-key:focus {
-        box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
-          0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(255, 255, 255, 0.1);
-        outline: 0;
-      }
-
-      .keys .edit-key {
-        border: none;
-        background-color: transparent;
-        touch-action: manipulation;
-        cursor: pointer;
-        opacity: 0.8;
-        color: inherit;
-        padding: 0px;
-        margin-right: 8px;
-        margin-bottom: -4px;
-        display: block;
-      }
-
-      .keys .edit-key:hover {
-        opacity: 1;
-      }
-
-      .keys .key {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 10px;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-      }
-
-      .key .key-name {
-        margin-right: auto;
-      }
-
-      .action-secundary {
-        border: none;
-        padding: 0px;
-        background-color: transparent;
-        color: white;
-        cursor: pointer;
-        opacity: 0.8;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 14px;
-      }
-
-      .action-secundary:hover {
-        opacity: 1;
-      }
-
-      .dialog .actions-col {
-        flex-direction: column;
-        align-items: start;
-      }
-
-      .key-id {
-        opacity: 0.8;
-        font-family: monospace;
-      }
-    </style>
+    <link rel="icon" href="./public/logo-small.webp" />
+    <title>Cap Standalone</title>
   </head>
   <body>
     <nav>
-      <img src="./public/logo.png" alt="Cap logo" class="logo" />
-      <h1>Cap</h1>
-      <a href="/internal/auth/logout" class="logout">Logout</a>
-    </nav>
-
-    <div class="title">
-      <h2>Your keys</h2>
-      <button class="new-keys btn">
+      <button class="logo">
+        <img src="./public/logo-small.webp" alt="Cap logo" />
+        <p>Standalone</p>
+      </button>
+      <button class="logout">Logout</button>
+      <button class="settings">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="lucide lucide-plus-icon lucide-plus"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-settings"
         >
-          <path d="M5 12h14" />
-          <path d="M12 5v14" />
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path
+            d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"
+          />
+          <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
         </svg>
-        Create key
       </button>
+    </nav>
+    <div class="state-loading">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+        alt="Loading..."
+        title="Loading..."
+      >
+        <style>
+          .spinner_ajPY {
+            transform-origin: center;
+            animation: spinner_AtaB 0.4s infinite linear;
+          }
+          @keyframes spinner_AtaB {
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+        </style>
+        <path
+          d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"
+          opacity=".25"
+          fill="white"
+        />
+        <path
+          d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+          class="spinner_ajPY"
+          fill="white"
+        />
+      </svg>
     </div>
 
-    <div class="keys">
-      <p>Loading keys...</p>
+    <div class="state-homepage" style="display: none">
+      <div class="keys-top">
+        <input type="text" placeholder="Search keys…" class="search-input" />
+        <button class="create-key">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-plus-icon lucide-plus"
+          >
+            <path d="M5 12h14" />
+            <path d="M12 5v14" />
+          </svg>
+          <span>Add key</span>
+        </button>
+      </div>
+      <div class="keys-list"></div>
+    </div>
+
+    <div class="state-key-page" style="display: none">
+      <button class="keypage-back">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+          <path d="M15 6l-6 6l6 6" />
+        </svg>
+        Back
+      </button>
+      <div class="topbar">
+        <div class="left">
+          <h1></h1>
+          <button title="Copy site key"></button>
+        </div>
+        <div class="right">
+          <select class="time-duration">
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="last28days">Last 28 Days</option>
+            <option value="last91days">Last 91 Days</option>
+            <option value="alltime">All time</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="chart"></canvas>
+      </div>
+
+      <h2>Configuration</h2>
+
+      <div class="config">
+        <div class="config-item">
+          <label for="keyName">Key name</label>
+          <input type="text" id="keyName" value="" />
+        </div>
+        <div class="config-item">
+          <label for="difficulty">Difficulty</label>
+          <input type="number" id="difficulty" value="" />
+        </div>
+        <div class="config-item">
+          <label for="challengeCount">Challenge Count</label>
+          <input type="number" id="challengeCount" value="" />
+        </div>
+        <div class="config-item">
+          <label for="saltSize">Salt Size</label>
+          <input type="number" id="saltSize" value="" />
+        </div>
+        <button>Save</button>
+      </div>
+
+      <h2>Danger zone</h2>
+      <div class="danger-zone-buttons">
+        <button class="rotate-secret">Rotate key secret</button>
+        <button class="delete-key">Delete key</button>
+      </div>
+    </div>
+
+    <div class="state-settings" style="display: none">
+      <h1>Settings</h1>
+      <h2>Sessions</h2>
+
+      <div class="sessions-list"></div>
+
+      <div class="apikeys-title">
+        <h2>API Keys</h2>
+        <button class="create-api-key">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-plus-icon lucide-plus"
+          >
+            <path d="M5 12h14"></path>
+            <path d="M12 5v14"></path>
+          </svg>
+          <span>Create</span>
+        </button>
+      </div>
+      <div class="apikeys-list"></div>
     </div>
   </body>
-  <script src="/public/index.js"></script>
+  <script src="./public/js/index.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0" async></script>
 </html>

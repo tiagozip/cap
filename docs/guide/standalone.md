@@ -1,5 +1,9 @@
 # Standalone server
 
+> [!WARNING]  
+> **You are viewing the docs for a legacy version of Cap's Standalone server.** It is no longer actively maintained and will only receive critical security updates. While v1 is still tagged and pullable, certain commands below might not work anymore.    
+> [New docs](standalone/index.md)
+
 ## Installation
 
 Cap Standalone is a self-hosted version of Cap's backend that allows you to spin up a server to validate and create challenges so you can use it with languages other than JS.

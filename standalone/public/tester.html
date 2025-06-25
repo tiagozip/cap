@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Challenge Tester</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+      }
+      main {
+        margin: 2rem auto;
+        padding: 1rem;
+        max-width: 500px;
+        background-color: white;
+        border-radius: 8px;
+      }
+      label,
+      input,
+      button {
+        display: block;
+        width: 100%;
+        margin-bottom: 0.75rem;
+        box-sizing: border-box;
+        font-size: 1rem;
+      }
+      input,
+      button {
+        padding: 0.5em;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      pre {
+        background: #fafafa;
+        border: 1px solid #ddd;
+        padding: 0.5em;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      cap-widget {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <label for="keyIdInput">Key ID:</label>
+      <input type="text" id="keyIdInput" placeholder="e.g. 19d7e51172" />
+
+      <label for="secretKeyInput">Secret key:</label>
+      <input
+        type="password"
+        id="secretKeyInput"
+        placeholder="e.g. eOAdXZvmQecVrvh..."
+      />
+
+      <button id="startButton">Start</button>
+
+      <pre class="logs">No logs</pre>
+    </main>
+
+    <script src="https://unpkg.com/@cap.js/widget@0.1.21/cap.min.js"></script>
+    <script>
+      const keyIdInput = document.getElementById("keyIdInput");
+      const secretKeyInput = document.getElementById("secretKeyInput");
+      const startButton = document.getElementById("startButton");
+      const logsElement = document.querySelector(".logs");
+      let cap = null;
+
+      const log = (msg) => {
+        logsElement.textContent += `${msg}\n`;
+        logsElement.scrollTop = logsElement.scrollHeight;
+      };
+
+      async function validateToken(keyId, secretKey, token) {
+        log(`\nValidating token...`);
+        const response = await fetch(`/${keyId}/siteverify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ secret: secretKey, response: token }),
+        });
+        const { success } = await response.json();
+        log(`Token: ${token}`);
+        log(`Siteverify response: ${success}`);
+      }
+
+      const handleStart = async () => {
+        const keyId = keyIdInput.value.trim();
+        const secretKey = secretKeyInput.value.trim();
+
+        if (!keyId || !secretKey) {
+          logsElement.textContent =
+            "Error: Key ID and Secret Key are required.";
+          return;
+        }
+
+        logsElement.textContent = `Requesting challenge for Key ID: ${keyId}...\n`;
+        startButton.disabled = true;
+        const startTime = Date.now();
+
+        cap?.widget?.remove();
+        cap = new Cap({ apiEndpoint: `/${keyId}/` });
+        cap.widget.style.display = "block";
+
+        cap.addEventListener("progress", (e) =>
+          log(`Solving... ${e.detail.progress}%`)
+        );
+        cap.addEventListener("error", (e) => log(`ERROR: ${e.detail.error}`));
+
+        try {
+          const result = await cap.solve();
+          log(`Solved in ${Date.now() - startTime}ms`);
+          await validateToken(keyId, secretKey, result.token);
+        } catch (err) {
+          log(`Error during solve: ${err}`);
+        } finally {
+          startButton.disabled = false;
+          if (cap.widget) cap.widget.style.display = "none";
+        }
+      };
+
+      startButton.addEventListener("click", handleStart);
+    </script>
+  </body>
+</html>
