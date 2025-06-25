@@ -23,6 +23,8 @@ Cap consists mainly of the **widget** (can be used invisibly) and **server** (yo
 
 This guide details how to use the usual setup. You can find guides on using the [Standalone server](./standalone.md), [M2M solver](./solver.md), and [checkpoint middleware](./middleware/index.md) in their respective sections.
 
+We highly recommend checking out the [Standalone mode](./standalone/index.md) as it's complete, fast, simple to set up, and works with any language that can make HTTP requests. It also includes a dashboard, API key support, and more.
+
 ## Client-side
 
 Start by adding importing the Cap widget library from a CDN:
@@ -243,9 +245,11 @@ app.listen(3000, () => {
 
 :::
 
-::: warning  
-These example codes don't have ratelimiting for simplicity. Make sure to add proper ratelimiting to your endpoints to prevent abuse.  
-:::
+Note that these are the simplest examples possible. You should adapt them to your needs. Usually, you'll want to:
+
+- Use an actual database such as SQLite or Redis for storing tokens and challenges. This is done for you in the [Standalone server](./standalone/index.md)
+
+- Add some kind of actual ratelimiting. This is also done for you in the [Standalone server](./standalone/index.md)
 
 ### Token validation
 
