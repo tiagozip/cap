@@ -146,84 +146,144 @@ export const server = new Elysia({
           bucketSize = 3600;
           startTime = Math.floor(Date.now() / 1000 / 86400) * 86400;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? AND bucket <= ?
+            GROUP BY bucket 
+            ORDER BY bucket
+          `);
           break;
         case "yesterday":
           bucketSize = 3600;
           startTime = Math.floor(Date.now() / 1000 / 86400) * 86400 - 86400;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? AND bucket < ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? AND bucket < ? 
+            GROUP BY bucket 
+            ORDER BY bucket
+          `);
           break;
         case "last7days":
           bucketSize = 86400;
-          startTime = now - 7 * 86400;
+          startTime = Math.floor((now - 7 * 86400) / 86400) * 86400;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? 
+            GROUP BY (bucket / 86400) * 86400
+            ORDER BY bucket
+          `);
           break;
         case "last28days":
           bucketSize = 86400;
-          startTime = now - 28 * 86400;
+          startTime = Math.floor((now - 28 * 86400) / 86400) * 86400;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? 
+            GROUP BY (bucket / 86400) * 86400
+            ORDER BY bucket
+          `);
           break;
         case "last91days":
           bucketSize = 86400;
-          startTime = now - 91 * 86400;
+          startTime = Math.floor((now - 91 * 86400) / 86400) * 86400;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? 
+            GROUP BY (bucket / 86400) * 86400
+            ORDER BY bucket
+          `);
           break;
         case "alltime":
           bucketSize = 86400;
           startTime = 0;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? 
+            GROUP BY (bucket / 86400) * 86400
+            ORDER BY bucket
+          `);
           break;
         default:
           bucketSize = 3600;
           startTime = currentStart;
           dataQuery = db.query(`
-          SELECT bucket, SUM(count) as count 
-          FROM solutions 
-          WHERE siteKey = ? AND bucket >= ? 
-          GROUP BY bucket 
-          ORDER BY bucket
-        `);
+            SELECT bucket, SUM(count) as count 
+            FROM solutions 
+            WHERE siteKey = ? AND bucket >= ? 
+            GROUP BY bucket 
+            ORDER BY bucket
+          `);
       }
 
-      const historyData =
-        chartDuration === "yesterday"
-          ? dataQuery.all(params.siteKey, startTime, startTime + 86400)
-          : dataQuery.all(params.siteKey, startTime);
+      let historyData;
+      if (chartDuration === "yesterday") {
+        historyData = dataQuery.all(
+          params.siteKey,
+          startTime,
+          startTime + 86400
+        );
+      } else if (chartDuration === "today") {
+        const currentHourBucket = Math.floor(now / 3600) * 3600;
+        historyData = dataQuery.all(
+          params.siteKey,
+          startTime,
+          currentHourBucket
+        );
+      } else {
+        historyData = dataQuery.all(params.siteKey, startTime);
+      }
+
+      if (
+        chartDuration === "last7days" ||
+        chartDuration === "last28days" ||
+        chartDuration === "last91days"
+      ) {
+        const days =
+          chartDuration === "last7days"
+            ? 7
+            : chartDuration === "last28days"
+            ? 28
+            : 91;
+        const completeData = [];
+        const dataMap = new Map(
+          historyData.map((item) => [item.bucket, item.count])
+        );
+
+        const currentDayStart = Math.floor(now / 86400) * 86400;
+
+        for (let i = 0; i < days; i++) {
+          const dayBucket = currentDayStart - (days - 1 - i) * 86400;
+          completeData.push({
+            bucket: dayBucket,
+            count: dataMap.get(dayBucket) || 0,
+          });
+        }
+
+        historyData = completeData;
+      } else if (chartDuration === "today") {
+        const completeData = [];
+        const dataMap = new Map(
+          historyData.map((item) => [item.bucket, item.count])
+        );
+
+        const currentHour = Math.floor(now / 3600);
+        const startHour = Math.floor(startTime / 3600);
+
+        for (let hour = startHour; hour <= currentHour; hour++) {
+          const hourBucket = hour * 3600;
+          completeData.push({
+            bucket: hourBucket,
+            count: dataMap.get(hourBucket) || 0,
+          });
+        }
+
+        historyData = completeData;
+      }
 
       const currentSolves =
         get24hSolvesQuery.get(params.siteKey, currentStart).total || 0;
