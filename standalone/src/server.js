@@ -377,6 +377,8 @@ export const server = new Elysia({
       }
 
       db.query(`DELETE FROM keys WHERE siteKey = ?`).run(params.siteKey);
+      db.query(`DELETE FROM solutions WHERE siteKey = ?`).run(params.siteKey);
+      
       return { success: true };
     },
     {
