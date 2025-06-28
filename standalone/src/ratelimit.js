@@ -1,7 +1,7 @@
 export const ratelimitGenerator = (req, server) => {
   if (process.env.RATELIMIT_IP_HEADER) {
     const header = process.env.RATELIMIT_IP_HEADER;
-    const ip = req.headers[header] || req.headers.get(header.toLowerCase());
+    const ip = req.headers.get(header) || req.headers.get(header.toLowerCase());
 
     if (ip) {
       return ip.split(",")[0].trim();
