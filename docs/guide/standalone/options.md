@@ -29,10 +29,10 @@ For the floating mode, use:
 <script src="https://<server url>/assets/floating.js"></script>
 ```
 
-And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm_bg.wasm` file, like this:
+And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm.js` file, like this:
 
 ```js
-window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
+window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm.js";
 ```
 
 By default, these fetch from `process.env.CACHE_HOST` (which defaults to `https://cdn.jsdelivr.net`). You can change this by setting the `CACHE_HOST` env variable when running the server.
