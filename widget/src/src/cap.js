@@ -343,6 +343,7 @@
           !this.#div.hasAttribute("disabled")
         ) {
           e.preventDefault();
+          e.stopPropagation();
           this.solve();
         }
       });
