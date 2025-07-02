@@ -1,11 +1,11 @@
 {
   "name": "@cap.js/solver",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Server-side solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "index.js",
   "scripts": {
     "test": "bun ./example.js",
-    "npm:publish": "npm publish --access public"
+    "npm:publish": "bun publish --access public"
   },
   "author": "Tiago",
   "license": "Apache-2.0",
