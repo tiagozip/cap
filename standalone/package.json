@@ -1,6 +1,6 @@
 {
   "name": "cap-standalone",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.js",
@@ -45,7 +45,7 @@
     "turing-test"
   ],
   "dependencies": {
-    "@cap.js/server": "^1.0.16",
+    "@cap.js/server": "2.0.0",
     "@elysiajs/cors": "^1.3.3",
     "@elysiajs/static": "^1.3.0",
     "@elysiajs/swagger": "^1.3.1",

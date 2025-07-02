@@ -83,7 +83,7 @@ export const capServer = new Elysia({
     insertChallengeQuery.run(
       params.siteKey,
       challenge.token,
-      challenge.challenge.map((c) => c.join(":")).join("\n"),
+      Object.values(challenge.challenge).join(","),
       challenge.expires
     );
 
@@ -109,7 +109,11 @@ export const capServer = new Elysia({
       state: {
         challengesList: {
           [challenge.token]: {
-            challenge: challenge.data.split("\n").map((c) => c.split(":")),
+            challenge: {
+              c: challenge.data.split(",")[0],
+              s: challenge.data.split(",")[1],
+              d: challenge.data.split(",")[2],
+            },
             expires: challenge.expires,
           },
         },
