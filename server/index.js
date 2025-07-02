@@ -14,9 +14,11 @@
 
 /**
  * @typedef {Object} ChallengeData
- * @property {Array<ChallengeTuple>} challenge - Array of [salt, target] tuples
+ * @property {Object} challenge - Challenge configuration object
+ * @property {number} challenge.c - Number of challenges
+ * @property {number} challenge.s - Size of each challenge
+ * @property {number} challenge.d - Difficulty level
  * @property {number} expires - Expiration timestamp
- * @property {string} token - Challenge token
  */
 
 /**
@@ -41,8 +43,8 @@
 
 /**
  * @typedef {Object} Solution
- * @property {string} token - The challenge token
- * @property {Array<[string, string, number]>} solutions - Array of [salt, target, solution] tuples
+ * @property {string} token - Challenge token
+ * @property {number[]} solutions - Array of challenge solutions
  */
 
 /**
@@ -59,6 +61,45 @@ const fs = require("fs/promises");
 const { EventEmitter } = require("events");
 
 const DEFAULT_TOKENS_STORE = ".data/tokensList.json";
+
+/**
+ * Generates a deterministic hex string of given length from a string seed
+ *
+ * @param {string} seed - Initial seed value
+ * @param {number} length - Output hex string length
+ * @returns {string} Deterministic hex string generated from the seed
+ */
+function prng(seed, length) {
+  /**
+   * @param {string} str
+   */
+  function fnv1a(str) {
+    let hash = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash +=
+        (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return hash >>> 0;
+  }
+
+  let state = fnv1a(seed);
+  let result = "";
+
+  function next() {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state >>> 0;
+  }
+
+  while (result.length < length) {
+    const rnd = next();
+    result += rnd.toString(16).padStart(8, "0");
+  }
+
+  return result.substring(0, length);
+}
 
 /**
  * Main Cap class
@@ -107,43 +148,28 @@ class Cap extends EventEmitter {
   /**
    * Generates a new challenge
    * @param {ChallengeConfig} [conf] - Challenge configuration
-   * @returns {{ challenge: Array<ChallengeTuple>, token?: string, expires: number }} Challenge data
+   * @returns {{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }} Challenge data
    */
   createChallenge(conf) {
     this._cleanExpiredTokens();
 
-    /** @type {Array<ChallengeTuple>} */
-    const challenges = Array.from(
-      { length: (conf && conf.challengeCount) || 50 },
-      () =>
-        /** @type {ChallengeTuple} */ ([
-          crypto
-            .randomBytes(Math.ceil(((conf && conf.challengeSize) || 32) / 2))
-            .toString("hex")
-            .slice(0, (conf && conf.challengeSize) || 32),
-          crypto
-            .randomBytes(
-              Math.ceil(((conf && conf.challengeDifficulty) || 4) / 2)
-            )
-            .toString("hex")
-            .slice(0, (conf && conf.challengeDifficulty) || 4),
-        ])
-    );
+    /** @type {{c: number, s: number, d: number}} */
+    const challenge = {
+      c: (conf && conf.challengeCount) || 50,
+      s: (conf && conf.challengeSize) || 32,
+      d: (conf && conf.challengeDifficulty) || 4,
+    };
 
     const token = crypto.randomBytes(25).toString("hex");
     const expires = Date.now() + ((conf && conf.expiresMs) || 600000);
 
     if (conf && conf.store === false) {
-      return { challenge: challenges, expires };
+      return { challenge, expires };
     }
 
-    this.config.state.challengesList[token] = {
-      challenge: challenges,
-      expires,
-      token,
-    };
+    this.config.state.challengesList[token] = { expires, challenge };
 
-    return { challenge: challenges, token, expires };
+    return { challenge, token, expires };
   }
 
   /**
@@ -152,7 +178,12 @@ class Cap extends EventEmitter {
    * @returns {Promise<{success: boolean, message?: string, token?: string, expires?: number}>}
    */
   async redeemChallenge({ token, solutions }) {
-    if (!token || !solutions) {
+    if (
+      !token ||
+      !solutions ||
+      !Array.isArray(solutions) ||
+      solutions.some((s) => typeof s !== "number")
+    ) {
       return { success: false, message: "Invalid body" };
     }
 
@@ -166,13 +197,26 @@ class Cap extends EventEmitter {
 
     delete this.config.state.challengesList[token];
 
-    const isValid = challengeData.challenge.every(([salt, target]) => {
-      const solution = solutions.find(([s, t]) => s === salt && t === target);
+    let i = 0;
+
+    const challenges = Array.from(
+      { length: challengeData.challenge.c },
+      () => {
+        i = i + 1;
+
+        return [
+          prng(`${token}${i}`, challengeData.challenge.s),
+          prng(`${token}${i}d`, challengeData.challenge.d),
+        ];
+      }
+    );
+
+    const isValid = challenges.every(([salt, target], i) => {
       return (
-        solution &&
+        solutions[i] &&
         crypto
           .createHash("sha256")
-          .update(salt + solution[2])
+          .update(salt + solutions[i])
           .digest("hex")
           .startsWith(target)
       );
@@ -218,7 +262,7 @@ class Cap extends EventEmitter {
       if (!(conf && conf.keepToken)) {
         delete this.config.state.tokensList[key];
       }
-      
+
       if (!this.config.noFSState) {
         await fs.writeFile(
           this.config.tokens_store_path,
