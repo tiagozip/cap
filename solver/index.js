@@ -1,6 +1,34 @@
 import { Worker } from "worker_threads";
 import os from "os";
-import { performance } from "perf_hooks";
+
+function prng(seed, length) {
+  function fnv1a(str) {
+    let hash = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash +=
+        (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return hash >>> 0;
+  }
+
+  let state = fnv1a(seed);
+  let result = "";
+
+  function next() {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state >>> 0;
+  }
+
+  while (result.length < length) {
+    const rnd = next();
+    result += rnd.toString(16).padStart(8, "0");
+  }
+
+  return result.substring(0, length);
+}
 
 const workerBlob = new Blob(
   [
@@ -18,8 +46,6 @@ try {
   
   parentPort.postMessage({
     nonce,
-    salt,
-    target,
     challengeIndex,
     duration
   });
@@ -40,7 +66,22 @@ try {
 
 const workerUrl = URL.createObjectURL(workerBlob);
 
-export default function wasmSolver(challenges, config = {}) {
+export default function solve(challenge, config = {}) {
+  let challenges = challenge;
+
+  if (!Array.isArray(challenges)) {
+    let i = 0;
+
+    challenges = Array.from({ length: config.c }, () => {
+      i = i + 1;
+
+      return [
+        prng(`${challenges}${i}`, config.s),
+        prng(`${challenges}${i}d`, config.d),
+      ];
+    });
+  }
+
   const totalChallenges = challenges.length;
   const numWorkers =
     config?.workerCount || Math.min(totalChallenges, os.cpus().length);
@@ -50,9 +91,11 @@ export default function wasmSolver(challenges, config = {}) {
   let activeWorkers = 0;
   const results = new Array(totalChallenges);
 
-  return new Promise((resolve, reject) => {
-    const startTime = performance.now();
+  if (totalChallenges === 0) {
+    resolve([]);
+  }
 
+  return new Promise((resolve, reject) => {
     function startWorker() {
       if (nextChallengeIndex < totalChallenges && activeWorkers < numWorkers) {
         const currentChallengeIndex = nextChallengeIndex;
@@ -77,11 +120,7 @@ export default function wasmSolver(challenges, config = {}) {
             return;
           }
 
-          results[result.challengeIndex] = [
-            result.salt,
-            result.target,
-            result.nonce,
-          ];
+          results[result.challengeIndex] = result.nonce;
           challengesProcessed++;
 
           if (config?.onProgress) {
@@ -97,10 +136,10 @@ export default function wasmSolver(challenges, config = {}) {
           }
 
           if (challengesProcessed === totalChallenges) {
-            resolve(results.filter(Boolean));
-          } else {
-            startWorker();
+            return resolve(results);
           }
+
+          startWorker();
         });
 
         worker.on("error", (err) => {
@@ -114,10 +153,6 @@ export default function wasmSolver(challenges, config = {}) {
 
     for (let i = 0; i < numWorkers; i++) {
       startWorker();
-    }
-
-    if (totalChallenges === 0) {
-      resolve([]);
     }
   });
 }

@@ -1,4 +1,4 @@
-import solver from "./index.js";
+import solver from "../index.js";
 
 const CHALLENGES = [
   ["e455cea65e98bc3c36287f43769da211", "dceb"],

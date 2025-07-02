@@ -158,8 +158,7 @@ export default withMermaid({
         items: [
           { text: "Server", link: "/guide/server.md" },
           { text: "Widget", link: "/guide/widget.md" },
-          { text: "Solver", link: "/guide/solver.md" },
-          { text: "CLI", link: "/guide/cli.md" },
+          { text: "Solver", link: "/guide/solver.md" }
         ],
       },
       {
