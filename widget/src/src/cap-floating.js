@@ -15,7 +15,8 @@
 
     element.onclick = null;
 
-    const offset = parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
+    const offset =
+      parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
     const position =
       element.getAttribute("data-cap-floating-position") || "top";
     const rect = element.getBoundingClientRect();
@@ -23,8 +24,20 @@
     Object.assign(capWidget.style, {
       display: "block",
       position: "absolute",
-      zIndex: "99999"
+      zIndex: "99999",
+      opacity: "0",
+      transform: "scale(0.98)",
+      marginTop: "-4px",
+      boxShadow: "rgba(0, 0, 0, 0.05) 0px 6px 24px 0px",
+      borderRadius: "14px",
+      transition: "opacity 0.15s, margin-top 0.2s, transform 0.2s",
     });
+
+    setTimeout(() => {
+      capWidget.style.transform = "scale(1)";
+      capWidget.style.opacity = "1";
+      capWidget.style.marginTop = "0";
+    }, 5);
 
     const centerX = rect.left + (rect.width - capWidget.offsetWidth) / 2;
     const safeX = Math.min(centerX, window.innerWidth - capWidget.offsetWidth);
@@ -52,6 +65,12 @@
       }, 500);
 
       setTimeout(() => {
+        capWidget.style.transform = "scale(0.98)";
+        capWidget.style.opacity = "0";
+        capWidget.style.marginTop = "-4px";
+      }, 500);
+
+      setTimeout(() => {
         capWidget.style.display = "none";
       }, 700);
     });
@@ -63,7 +82,9 @@
 
     const capWidget = document.querySelector(capWidgetSelector);
     if (!document.contains(capWidget) && !capWidget.solve) {
-      throw new Error(`[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`);
+      throw new Error(
+        `[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`
+      );
     }
 
     capWidget.style.display = "none";
