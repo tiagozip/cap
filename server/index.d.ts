@@ -16,10 +16,14 @@ declare class Cap extends EventEmitter<[never]> {
     /**
      * Generates a new challenge
      * @param {ChallengeConfig} [conf] - Challenge configuration
-     * @returns {{ challenge: Array<ChallengeTuple>, token?: string, expires: number }} Challenge data
+     * @returns {{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }} Challenge data
      */
     createChallenge(conf?: ChallengeConfig): {
-        challenge: Array<ChallengeTuple>;
+        challenge: {
+            c: number;
+            s: number;
+            d: number;
+        };
         token?: string;
         expires: number;
     };
@@ -77,17 +81,17 @@ type PathLike = import("fs").PathLike;
 type ChallengeTuple = [string, string];
 type ChallengeData = {
     /**
-     * - Array of [salt, target] tuples
+     * - Challenge configuration object
      */
-    challenge: Array<ChallengeTuple>;
+    challenge: {
+        c: number;
+        s: number;
+        d: number;
+    };
     /**
      * - Expiration timestamp
      */
     expires: number;
-    /**
-     * - Challenge token
-     */
-    token: string;
 };
 type ChallengeState = {
     /**
@@ -129,13 +133,13 @@ type TokenConfig = {
 };
 type Solution = {
     /**
-     * - The challenge token
+     * - Challenge token
      */
     token: string;
     /**
-     * - Array of [salt, target, solution] tuples
+     * - Array of challenge solutions
      */
-    solutions: Array<[string, string, number]>;
+    solutions: number[];
 };
 type CapConfig = {
     /**

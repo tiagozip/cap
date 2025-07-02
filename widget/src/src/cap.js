@@ -143,7 +143,10 @@
 
         this.#div.setAttribute(
           "aria-label",
-          this.getI18nText("verifying-aria-label", "Verifying you're a human, please wait")
+          this.getI18nText(
+            "verifying-aria-label",
+            "Verifying you're a human, please wait"
+          )
         );
 
         this.dispatchEvent("progress", { progress: 0 });
@@ -157,7 +160,56 @@
               method: "POST",
             })
           ).json();
-          const solutions = await this.solveChallenges(challenge);
+
+          let challenges = challenge;
+
+          if (!Array.isArray(challenges)) {
+            function prng(seed, length) {
+              function fnv1a(str) {
+                let hash = 2166136261;
+                for (let i = 0; i < str.length; i++) {
+                  hash ^= str.charCodeAt(i);
+                  hash +=
+                    (hash << 1) +
+                    (hash << 4) +
+                    (hash << 7) +
+                    (hash << 8) +
+                    (hash << 24);
+                }
+                return hash >>> 0;
+              }
+
+              let state = fnv1a(seed);
+              let result = "";
+
+              function next() {
+                state ^= state << 13;
+                state ^= state >>> 17;
+                state ^= state << 5;
+                return state >>> 0;
+              }
+
+              while (result.length < length) {
+                const rnd = next();
+                result += rnd.toString(16).padStart(8, "0");
+              }
+
+              return result.substring(0, length);
+            }
+
+            let i = 0;
+
+            challenges = Array.from({ length: challenge.c }, () => {
+              i = i + 1;
+
+              return [
+                prng(`${token}${i}`, challenge.s),
+                prng(`${token}${i}d`, challenge.d),
+              ];
+            });
+          }
+
+          const solutions = await this.solveChallenges(challenges);
 
           const resp = await (
             await capFetch(`${apiEndpoint}redeem`, {
@@ -189,14 +241,20 @@
 
           this.#div.setAttribute(
             "aria-label",
-            this.getI18nText("verified-aria-label", "We have verified you're a human, you may now continue")
+            this.getI18nText(
+              "verified-aria-label",
+              "We have verified you're a human, you may now continue"
+            )
           );
 
           return { success: true, token: this.token };
         } catch (err) {
           this.#div.setAttribute(
             "aria-label",
-            this.getI18nText("error-aria-label", "An error occurred, please try again")
+            this.getI18nText(
+              "error-aria-label",
+              "An error occurred, please try again"
+            )
           );
           this.error(err.message);
           throw err;
@@ -249,7 +307,8 @@
             this.dispatchEvent("progress", {
               progress: Math.round((completed / total) * 100),
             });
-            resolve([salt, target, data.nonce]);
+            
+            resolve(data.nonce);
           };
 
           worker.onerror = (err) => {
@@ -309,7 +368,10 @@
       this.#div.classList.add("captcha");
       this.#div.setAttribute("role", "button");
       this.#div.setAttribute("tabindex", "0");
-      this.#div.setAttribute("aria-label", this.getI18nText("verify-aria-label", "Click to verify you're a human"));
+      this.#div.setAttribute(
+        "aria-label",
+        this.getI18nText("verify-aria-label", "Click to verify you're a human")
+      );
       this.#div.setAttribute("aria-live", "polite");
       this.#div.setAttribute("disabled", "true");
       this.#div.innerHTML = `<div class="checkbox" part="checkbox"></div><p part="label">${this.getI18nText(

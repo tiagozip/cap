@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import { Elysia, file } from "elysia";
-import Cap from "@cap.js/server";
+import Cap from "../../server/index.js";
 
 const cap = new Cap({
   tokens_store_path: ".data/tokensList.json",
