@@ -3,9 +3,10 @@
     typeof WebAssembly !== "object" ||
     typeof WebAssembly?.instantiate !== "function"
   ) {
-    self.onmessage = async ({ data: { salt, target } }) => {
-      // Fallback solver in case WASM is not available
+    // fallback worker for environments without wasm
+    // this is much slower than the wasm version
 
+    self.onmessage = async ({ data: { salt, target } }) => {
       let nonce = 0;
       const batchSize = 50000;
       let processed = 0;
@@ -48,7 +49,7 @@
 
           processed += batchSize;
         } catch (error) {
-          console.error("[cap worker] fallback worker error", error);
+          console.error("[cap worker]", error);
           self.postMessage({
             found: false,
             error: error.message,
