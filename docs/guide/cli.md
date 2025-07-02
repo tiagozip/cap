@@ -1,5 +1,9 @@
 # @cap.js/cli
 
+:::warning
+This package is deprecated. Please use the `@cap.js/solver` package for M2M use instead.
+:::
+
 `cli` is a simple command-line interface for solving CAPTCHAs made with Cap. It's mainly designed for testing and when you need to solve these CAPTCHAs in a browser without JavaScript support.
 
 If you're on Windows, you might need to use `bunx '@cap.js/cli'` (with quotes) instead of `bunx @cap.js/cli` to avoid issues with the `@` symbol.
