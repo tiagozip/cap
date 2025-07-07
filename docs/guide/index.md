@@ -21,7 +21,7 @@ Here, try it yourself:
 
 Cap consists mainly of the **widget** (can be used invisibly) and **server** (you can use the Standalone server instead). Alternatively, M2M is also supported and there's also a checkpoint middleware similar to Cloudflare.
 
-This guide details how to use the usual setup. You can find guides on using the [Standalone server](./standalone.md), [M2M solver](./solver.md), and [checkpoint middleware](./middleware/index.md) in their respective sections.
+This guide details how to use the usual setup. You can find guides on using the [Standalone server](./standalone/index.md), [M2M solver](./solver.md), and [checkpoint middleware](./middleware/index.md) in their respective sections.
 
 We highly recommend checking out the [Standalone mode](./standalone/index.md) as it's complete, fast, simple to set up, and works with any language that can make HTTP requests. It also includes a dashboard, API key support, and more.
 
@@ -71,7 +71,7 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's methods running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
 
-At least Node 14 is required. Most modern Bun or Deno versions should work too. If you don't use JavaScript in your server, consider using the [Standalone](standalone.md) server.
+At least Node 14 is required. Most modern Bun or Deno versions should work too.
 
 Start by installing it:
 
@@ -92,7 +92,7 @@ pnpm i @cap.js/server
 :::
 
 ::: tip  
-Don't use JavaScript on your backend? Try the [Standalone mode](./standalone.md).  
+Don't use JavaScript on your backend? Try the [Standalone mode](./standalone/index.md).  
 :::
 
 Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
