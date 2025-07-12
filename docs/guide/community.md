@@ -7,3 +7,4 @@ Note that these libraries are not maintained by Cap but by the community and as 
 - **[@espressotutorialsgmbh/cap-angular-widget](https://www.npmjs.com/package/@espressotutorialsgmbh/cap-angular-widget)**: Angular widget wrapper
 - **[samwafgo/cap_go_server](https://github.com/samwafgo/cap_go_server)**: Go server implementation of Cap
 - **[ackcoder/go-cap](https://github.com/ackcoder/go-cap)** Another Go server implementation of Cap
+- **[django-cap](https://pypi.org/project/django-cap/)** Python implementation for Cap's server with Django
