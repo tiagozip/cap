@@ -57,8 +57,8 @@ Even while being extremely hard, slow and annoying for humans to solve, Arkose's
 
 ### Anubis
 
-Anubis is kind of different from usual CAPTCHAs. It's more to prevent scraping, such as Cap's checkpoints, and doesn't offer any widget support or more customizable server-side integration (at least to my knowledge). It also isn't really that secure, as bypassing it is trivial due to its default low difficulty.
+Anubis is quite different from typical captchas. It's mainly designed to block scraping (like Cap's checkpoints) but afaik lacks widget support and customizable server-side integration. It's also not very secure, since its default difficulty is low and easy to bypass.
 
-Also worth noting that Anubis' implementation is also slightly flawed: it's much slower than it could be, leading to people usually setting a lower weight (because if you don't it'll be a burden to access your website), making it far easier for bad crawlers to just use more optimized algorithms to quickly solve it. Why? It doesn't use WASM at all, which is a huge performance hit.
+It's implementation has performance issues too. Anubis runs slower than necessary because it doesn’t use WebAssembly at all (unlike Cap). As such, both the default difficulty and the difficulty usually set by other websites is low to avoid frustrating users. That makes it easier for attackers to use optimized algorithms to solve it quickly.
 
-Also, the noscript version is obviously ridiculous and not safe at all, as it just asks you to wait 5 seconds before making another request - even less efective than a simple rate limit.
+Plus, the noscript fallback is basically useless: it just makes users wait a few seconds before retrying, which is even weaker than a basic rate limit.
