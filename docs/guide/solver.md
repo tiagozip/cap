@@ -2,6 +2,8 @@
 
 `@cap.js/solver` is a standalone library that can be used to solve Cap challenges from the server. It's extremely simple (no dependencies, one single file) yet as fast and efficient as the widget. Note that it can **only be used with Bun**. Node.js support is not planned.
 
+This package does not bypass any actual proof-of-work.
+
 ## Installation
 
 ```bash
