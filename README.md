@@ -27,7 +27,7 @@ Cap is built into 2 main parts:
 
 There are also some other helpful packages:
 
-- **[M2M](https://capjs.js.org/guide/solver.html)**: Server-side solver for Cap challenges, useful for protecting API endpoints that you still want public
+- **[M2M](https://capjs.js.org/guide/solver.html)**: Server-side solver for Cap challenges, useful for protecting API endpoints that you still want public. This doesn't bypass the actual proof-of-work.
 
 - **[@cap.js/cli](https://capjs.js.org/guide/cli.html)**: Command-line interface for solving CAPTCHAs made with Cap. It's mainly designed for testing and when you need to solve these CAPTCHAs in a browser without JavaScript support.
 
