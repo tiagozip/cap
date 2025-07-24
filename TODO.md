@@ -1,3 +1,2 @@
-- standalone: v2 with analytics and dashboard
-- checkpoints: traefik support?
+- checkpoints: traefik support maybe?
 - general: ability to change challenge algorithm
