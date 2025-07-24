@@ -13,18 +13,22 @@ onMounted(() => {
       return new Response(
         JSON.stringify({
           challenge: Array.from({ length: 50 }, () => [
-            Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2))))
+            Array.from(
+              browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2)))
+            )
               .map((byte) => byte.toString(16).padStart(2, "0"))
               .join("")
               .slice(0, 32),
 
-            Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(4 / 2))))
+            Array.from(
+              browserCrypto.getRandomValues(new Uint8Array(Math.ceil(4 / 2)))
+            )
               .map((byte) => byte.toString(16).padStart(2, "0"))
               .join("")
               .slice(0, 4),
           ]),
           token: "",
-          expires: new Date().getTime() + 6000 * 100,
+          expires: Date.now() + 6000 * 100,
         }),
         {
           status: 200,
@@ -37,7 +41,7 @@ onMounted(() => {
         JSON.stringify({
           success: true,
           token: "",
-          expires: new Date().getTime() + 3600000,
+          expires: Date.now() + 3600000,
         }),
         {
           status: 200,

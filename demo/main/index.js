@@ -1,4 +1,4 @@
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 import { Elysia, file } from "elysia";
 import Cap from "../../server/index.js";
 
@@ -13,7 +13,7 @@ app.get("/", () => file("./index.html"));
 app.get("/cap.js", async ({ set }) => {
   // in the newest version, the worker is injected into the main file
   // by a build script. since we don't have a build script here,
-  // we'll need to build it ourselves.
+  // we'll need to run a minimal build ourselves.
 
   const main = await fs.readFile("../../widget/src/src/cap.js", "utf-8");
   const worker = await fs.readFile("../../widget/src/src/worker.js", "utf-8");

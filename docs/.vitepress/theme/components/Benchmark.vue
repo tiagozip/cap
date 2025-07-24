@@ -45,7 +45,7 @@ const doBenchmark = async (i, total) => {
                 .slice(0, difficulty.value),
             ]),
             token: "",
-            expires: new Date().getTime() + 6000 * 100,
+            expires: Date.now() + 6000 * 100,
           }),
           {
             status: 200,
@@ -58,7 +58,7 @@ const doBenchmark = async (i, total) => {
           JSON.stringify({
             success: true,
             token: "",
-            expires: new Date().getTime() + 1000 * 60,
+            expires: Date.now() + 1000 * 60,
           }),
           {
             status: 200,

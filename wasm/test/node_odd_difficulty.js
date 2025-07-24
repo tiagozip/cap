@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { solve_pow } from "../src/node/cap_wasm.js";
 
 //                  salt,         target
@@ -19,5 +19,5 @@ should start with ${target}
 is                ${actualHash.slice(0, target.length)} (${actualHash})
 
 ${
-  actualHash.slice(0, target.length) === target ? "✅ success!" : "❌ invalid"
+	actualHash.slice(0, target.length) === target ? "✅ success!" : "❌ invalid"
 }`);
