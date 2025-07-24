@@ -1,11 +1,11 @@
 (() => {
 	const WASM_VERSION = "0.0.6";
 
-	const capFetch = () => {
+	const capFetch = (...args) => {
 		if (window?.CAP_CUSTOM_FETCH) {
-			return window.CAP_CUSTOM_FETCH(...arguments);
+			return window.CAP_CUSTOM_FETCH(...args);
 		}
-		return fetch(...arguments);
+		return fetch(...args);
 	};
 
 	function prng(seed, length) {
@@ -181,8 +181,14 @@
 				this.dispatchEvent("progress", { progress: 0 });
 
 				try {
-					const apiEndpoint = this.getAttribute("data-cap-api-endpoint");
-					if (!apiEndpoint) throw new Error("Missing API endpoint");
+					let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
+
+					if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
+						apiEndpoint = "/";
+					} else if (!apiEndpoint)
+						throw new Error(
+							"Missing API endpoint. Either custom fetch or an API endpoint must be provided.",
+						);
 
 					const { challenge, token } = await (
 						await capFetch(`${apiEndpoint}challenge`, {
@@ -548,11 +554,15 @@
 				widget.setAttribute(a, b);
 			});
 
+			if (!config.apiEndpoint && !window?.CAP_CUSTOM_FETCH) {
+				widget.remove();
+				throw new Error(
+					"Missing API endpoint. Either custom fetch or an API endpoint must be provided.",
+				);
+			}
+
 			if (config.apiEndpoint) {
 				widget.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
-			} else {
-				widget.remove();
-				throw new Error("Missing API endpoint");
 			}
 
 			this.widget = widget;
