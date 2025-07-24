@@ -3,7 +3,7 @@
   "description": "Cap demo",
   "license": "Apache-2.0",
   "author": "Tiago Rangel",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "bun run index.js",

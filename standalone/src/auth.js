@@ -1,10 +1,8 @@
-import { rateLimit } from "elysia-rate-limit";
-import { timingSafeEqual } from "node:crypto";
-import { randomBytes } from "crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Elysia } from "elysia";
-
-import { ratelimitGenerator } from "./ratelimit.js";
+import { rateLimit } from "elysia-rate-limit";
 import { db } from "./db.js";
+import { ratelimitGenerator } from "./ratelimit.js";
 
 const { ADMIN_KEY } = process.env;
 
@@ -18,137 +16,137 @@ const getValidTokenQuery = db.query(`
 
 if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
 if (ADMIN_KEY.length < 30)
-  throw new Error(
-    "auth: Admin key too short. Please use one that's at least 30 characters"
-  );
+	throw new Error(
+		"auth: Admin key too short. Please use one that's at least 30 characters",
+	);
 
 export const auth = new Elysia({
-  prefix: "/auth",
+	prefix: "/auth",
 })
-  .use(
-    rateLimit({
-      duration: 30_000,
-      max: 20_000,
-      scoping: "scoped",
-      generator: ratelimitGenerator,
-    })
-  )
-  .post("/login", async ({ body, set, cookie }) => {
-    const { admin_key } = body;
+	.use(
+		rateLimit({
+			duration: 30_000,
+			max: 20_000,
+			scoping: "scoped",
+			generator: ratelimitGenerator,
+		}),
+	)
+	.post("/login", async ({ body, set, cookie }) => {
+		const { admin_key } = body;
 
-    const a = Buffer.from(admin_key, "utf8");
-    const b = Buffer.from(ADMIN_KEY, "utf8");
+		const a = Buffer.from(admin_key, "utf8");
+		const b = Buffer.from(ADMIN_KEY, "utf8");
 
-    if (!a || !b || a.length !== b.length) {
-      set.status = 401;
-      return { success: false };
-    }
+		if (!a || !b || a.length !== b.length) {
+			set.status = 401;
+			return { success: false };
+		}
 
-    if (!timingSafeEqual(a, b)) {
-      set.status = 401;
-      return { success: false };
-    }
+		if (!timingSafeEqual(a, b)) {
+			set.status = 401;
+			return { success: false };
+		}
 
-    if (admin_key !== ADMIN_KEY) {
-      // as a last check, in case an attacker somehow bypasses
-      // timingSafeEqual, we're checking AGAIN to see if the tokens
-      // are right.
+		if (admin_key !== ADMIN_KEY) {
+			// as a last check, in case an attacker somehow bypasses
+			// timingSafeEqual, we're checking AGAIN to see if the tokens
+			// are right.
 
-      // yes, this is vulnerable to timing attacks, but those are
-      // hard to execute and literally just accepting an invalid token
-      // is worse.
+			// yes, this is vulnerable to timing attacks, but those are
+			// hard to execute and literally just accepting an invalid token
+			// is worse.
 
-      set.status = 401;
-      return { success: false };
-    }
+			set.status = 401;
+			return { success: false };
+		}
 
-    const session_token = randomBytes(30).toString("hex");
-    const expires = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
-    const created = Date.now();
+		const session_token = randomBytes(30).toString("hex");
+		const expires = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 days
+		const created = Date.now();
 
-    const hashedToken = await Bun.password.hash(session_token);
+		const hashedToken = await Bun.password.hash(session_token);
 
-    loginQuery.run({
-      $token: hashedToken,
-      $created: created,
-      $expires: expires,
-    });
+		loginQuery.run({
+			$token: hashedToken,
+			$created: created,
+			$expires: expires,
+		});
 
-    cookie.cap_authed.set({
-      value: "yes",
-      expires: new Date(expires),
-    });
+		cookie.cap_authed.set({
+			value: "yes",
+			expires: new Date(expires),
+		});
 
-    return { success: true, session_token, hashed_token: hashedToken, expires };
-  });
+		return { success: true, session_token, hashed_token: hashedToken, expires };
+	});
 
 export const authBeforeHandle = async ({ set, headers }) => {
-  const { authorization } = headers;
+	const { authorization } = headers;
 
-  set.headers["X-Content-Type-Options"] = "nosniff";
-  set.headers["X-Frame-Options"] = "DENY";
-  set.headers["X-XSS-Protection"] = "1; mode=block";
+	set.headers["X-Content-Type-Options"] = "nosniff";
+	set.headers["X-Frame-Options"] = "DENY";
+	set.headers["X-XSS-Protection"] = "1; mode=block";
 
-  if (authorization?.startsWith("Bot ")) {
-    const botToken = authorization.replace("Bot ", "").trim();
-    const [id, token] = botToken.split("_");
+	if (authorization?.startsWith("Bot ")) {
+		const botToken = authorization.replace("Bot ", "").trim();
+		const [id, token] = botToken.split("_");
 
-    if (!id || !token) {
-      set.status = 401;
-      return { success: false, error: "Unauthorized. Invalid bot token." };
-    }
+		if (!id || !token) {
+			set.status = 401;
+			return { success: false, error: "Unauthorized. Invalid bot token." };
+		}
 
-    const apiKey = db.query(`SELECT * FROM api_keys WHERE id = $id`).get({
-      $id: id,
-    });
+		const apiKey = db.query(`SELECT * FROM api_keys WHERE id = $id`).get({
+			$id: id,
+		});
 
-    if (!apiKey) {
-      set.status = 401;
-      return {
-        success: false,
-        error: "Unauthorized. Deleted or non-existent bot token.",
-      };
-    }
+		if (!apiKey) {
+			set.status = 401;
+			return {
+				success: false,
+				error: "Unauthorized. Deleted or non-existent bot token.",
+			};
+		}
 
-    if (!(await Bun.password.verify(token, apiKey.tokenHash))) {
-      set.status = 401;
-      return { success: false, error: "Unauthorized. Invalid bot token." };
-    }
+		if (!(await Bun.password.verify(token, apiKey.tokenHash))) {
+			set.status = 401;
+			return { success: false, error: "Unauthorized. Invalid bot token." };
+		}
 
-    return;
-  }
+		return;
+	}
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    set.status = 401;
-    return {
-      success: false,
-      error:
-        "Unauthorized. An API key or session token is required to use this endpoint.",
-    };
-  }
+	if (!authorization || !authorization.startsWith("Bearer ")) {
+		set.status = 401;
+		return {
+			success: false,
+			error:
+				"Unauthorized. An API key or session token is required to use this endpoint.",
+		};
+	}
 
-  const { token, hash } = JSON.parse(
-    atob(authorization.replace("Bearer ", "").trim())
-  );
+	const { token, hash } = JSON.parse(
+		atob(authorization.replace("Bearer ", "").trim()),
+	);
 
-  const validToken = getValidTokenQuery.get({
-    $token: hash,
-    $now: Date.now(),
-  });
+	const validToken = getValidTokenQuery.get({
+		$token: hash,
+		$now: Date.now(),
+	});
 
-  if (!validToken) {
-    set.status = 401;
-    return {
-      success: false,
-      error: "Unauthorized. An invalid session token was used.",
-    };
-  }
+	if (!validToken) {
+		set.status = 401;
+		return {
+			success: false,
+			error: "Unauthorized. An invalid session token was used.",
+		};
+	}
 
-  if (!(await Bun.password.verify(token, validToken.token))) {
-    set.status = 401;
-    return {
-      success: false,
-      error: "Unauthorized. An invalid session token was used.",
-    };
-  }
+	if (!(await Bun.password.verify(token, validToken.token))) {
+		set.status = 401;
+		return {
+			success: false,
+			error: "Unauthorized. An invalid session token was used.",
+		};
+	}
 };
