@@ -42,7 +42,7 @@ You can now use the `<cap-widget>` component in your HTML.
 
 > [!TIP] The following attributes are supported:
 >
-> - `data-cap-api-endpoint`: API endpoint (required)
+> - `data-cap-api-endpoint`: API endpoint (required if not using custom fetch)
 > - `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:

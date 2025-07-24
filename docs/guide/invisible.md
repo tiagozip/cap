@@ -19,8 +19,8 @@ const cap = new Cap({
 });
 
 cap.addEventListener("progress", (event) => { // [!code focus]
-  console.log(`Solving... ${event.detail.progress}% done`); // [!code focus]
-}); // [!code focus]
+  console.log(`Solving... ${event.detail.progress}% done`);
+});
 ```
 
 Behind the scenes, Cap creates a hidden `cap-widget` element and uses it to solve the challenge.
