@@ -1,10 +1,9 @@
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import Cap from "@cap.js/server";
-import crypto from "crypto";
 import Elysia from "elysia";
-
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
 
 export const capMiddleware = (userOptions) => {
 	const options = {
