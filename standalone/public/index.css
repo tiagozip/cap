@@ -492,7 +492,7 @@ nav .logout:hover {
   border: none;
   border-radius: 6px;
   color: white;
-  background-color: transparent;
+  background-color: #181818;
   padding: 0px;
   font-family: inherit;
   cursor: pointer;
