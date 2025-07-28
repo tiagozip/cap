@@ -168,9 +168,13 @@ app.listen(3000, () => {
 
 :::
 
-::: warning    
-These example codes don't have ratelimiting for simplicity. Make sure to add proper ratelimiting to your endpoints to prevent abuse.    
-:::
+Note that these are the simplest examples possible. You should adapt them to your needs. Usually, you'll want to:
+
+- Use an actual database such as SQLite or Redis for storing tokens and challenges — in this example, we're using a very simple JSON db + memory access.
+
+- Some kind of actual ratelimiting.
+
+Both of these are done for you in the [Standalone server](./standalone/index.md), but here's also [an example with everything for a simple Elysia app](#full-example-with-elysia).
 
 Then, you can verify the CAPTCHA tokens on your server by calling the `await cap.validateToken("<token>")` method. Example:
 
@@ -246,3 +250,161 @@ You can always access or set the options of the `Cap` class by accessing or modi
 ```
 
 **Response:** `{ success }`
+
+## Full example with Elysia
+
+```js
+import { Elysia, t } from "elysia";
+import Cap from "@cap.js/server";
+import { cors } from "@elysiajs/cors";
+import { rateLimit } from "elysia-rate-limit";
+import { Database } from "bun:sqlite";
+
+const db = new Database("./.data/cap.sqlite");
+
+db.query(
+  `create table if not exists challenges (
+    token string not null,
+    data string not null,
+    expires integer not null,
+    primary key (token)
+  )`
+).run();
+
+db.query(
+  `create table if not exists tokens (
+    token string not null,
+    expires integer not null,
+    primary key (token)
+  )`
+).run();
+
+const insertChallengeQuery = db.query(`
+  INSERT INTO challenges (token, data, expires)
+  VALUES (?, ?, ?)
+`);
+const getChallengeQuery = db.query(`
+  SELECT * FROM challenges WHERE token = ?
+`);
+const deleteChallengeQuery = db.query(`
+  DELETE FROM challenges WHERE token = ?
+`);
+
+const insertTokenQuery = db.query(`
+  INSERT INTO tokens (token, expires)
+  VALUES (?, ?)
+`);
+const getTokenQuery = db.query(`
+  SELECT * FROM tokens WHERE token = ?
+`);
+const deleteTokenQuery = db.query(`
+  DELETE FROM tokens WHERE token = ?
+`);
+
+const challengeCount = 50;
+
+export const capServer = new Elysia({
+  prefix: "/cap",
+})
+  .use(
+    rateLimit({
+      scoping: "scoped",
+      max: 45,
+      duration: 5_000,
+    })
+  )
+  .use(
+    cors({
+      origin: ["http://localhost:3000", "https://ytbot.tiagorangel.com"],
+      methods: ["POST"],
+    })
+  )
+  .post("/challenge", () => {
+    const cap = new Cap({
+      noFSState: true,
+    });
+
+    const challenge = cap.createChallenge({
+      challengeCount,
+    });
+
+    insertChallengeQuery.run(
+      challenge.token,
+      Object.values(challenge.challenge).join(","),
+      challenge.expires
+    );
+
+    return challenge;
+  })
+  .post(
+    "/redeem",
+    async ({ body, set }) => {
+      const challenge = getChallengeQuery.get(body.token);
+
+      if (!challenge) {
+        set.status = 404;
+        return { error: "Challenge not found" };
+      }
+
+      try {
+        deleteChallengeQuery.run(body.token);
+      } catch (e) {
+        set.status = 404;
+        return { error: "Challenge not found or already redeemed/expired" };
+      }
+
+      const cap = new Cap({
+        noFSState: true,
+        state: {
+          challengesList: {
+            [challenge.token]: {
+              challenge: {
+                c: challenge.data.split(",")[0],
+                s: challenge.data.split(",")[1],
+                d: challenge.data.split(",")[2],
+              },
+              expires: challenge.expires,
+            },
+          },
+        },
+      });
+
+      const { success, token, expires } = await cap.redeemChallenge(body);
+
+      if (!success) {
+        set.status = 403;
+        return { error: "Invalid solution" };
+      }
+
+      insertTokenQuery.run(token, expires);
+
+      return {
+        success: true,
+        token,
+        expires,
+      };
+    },
+    {
+      body: t.Object({
+        token: t.String(),
+        solutions: t.Array(t.Number()),
+      }),
+    }
+  );
+
+export const validateToken = async (_token) => {
+  const token = getTokenQuery.get(_token);
+
+  if (!token) {
+    return { error: "Token not found" };
+  }
+
+  if (token.expires < Math.floor(Date.now() / 1000)) {
+    deleteTokenQuery.run(_token);
+    return { error: "Token expired" };
+  }
+
+  deleteTokenQuery.run(_token);
+  return { success: true };
+};
+```
