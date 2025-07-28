@@ -315,7 +315,7 @@ export const capServer = new Elysia({
   )
   .use(
     cors({
-      origin: ["http://localhost:3000", "https://ytbot.tiagorangel.com"],
+      origin: ["http://localhost:3000", "..."],
       methods: ["POST"],
     })
   )
@@ -407,4 +407,12 @@ export const validateToken = async (_token) => {
   deleteTokenQuery.run(_token);
   return { success: true };
 };
+
+setInterval(() => {
+  const now = Math.floor(Date.now() / 1000);
+  
+  db.query(`DELETE FROM challenges WHERE expires < ?`).run(now);
+  
+  db.query(`DELETE FROM tokens WHERE expires < ?`).run(now);
+}, 60000);
 ```
