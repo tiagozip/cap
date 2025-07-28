@@ -51,7 +51,7 @@ Next, add the `<cap-widget>` component to your HTML.
 <cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
-You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. In the server-side example we provided, it's set to `/api`, but you can change this by replacing every `app.post('/api/...', ...)` to `app.post('/<endpoint>/...', ...)`. We'll tell you how to set up the server in the next section.
+You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. We'll tell you how to set this up in the next section.
 
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
@@ -69,194 +69,14 @@ Alternatively, you can use `onsolve=""` directly within the widget or wrap the w
 
 ## Server-side
 
-Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's methods running at the same URL as specified in the `data-cap-api-endpoint` attribute. This is easy since we've already pre-made a library to help you generate and validate challenges for you.
+Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.
 
-At least Node 14 is required. Most modern Bun or Deno versions should work too.
+You can choose between using the Standalone server or implementing your own server using the `@cap.js/server` package.
 
-Start by installing it:
+- For most use cases, we recommend using the **[Standalone server](./standalone/index.md)** as it provides a complete solution with built-in features like token storage, ratelimiting, analytics, and a pretty nice dashboard. However, it does require docker and exposing the server port.
 
-::: code-group
+- However, if you prefer to implement your own server, you can use the `@cap.js/server` package. This package provides the necessary methods to create and validate challenges, as well as redeem solutions, but it only works with a JavaScript backend.
 
-```bash [bun]
-bun add @cap.js/server
-```
+  It also gives you a small, simple JSON token storage, but you'll probably want to use a more robust solution like SQLite or Redis, but don't worry, we'll tell you everything about that [on the server guide](./server.md).
 
-```bash [npm]
-npm i @cap.js/server
-```
-
-```bash [pnpm]
-pnpm i @cap.js/server
-```
-
-:::
-
-::: tip  
-Don't use JavaScript on your backend? Try the [Standalone mode](./standalone/index.md).  
-:::
-
-Now, you'll need to change your server code to add the routes that Cap needs to work. Here's an example:
-
-::: code-group
-
-```js [elysia]
-import { Elysia } from "elysia";
-import Cap from "@cap.js/server";
-
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-new Elysia()
-  .post("/api/challenge", () => {
-    return cap.createChallenge();
-  })
-
-  .post("/api/redeem", async ({ body, set }) => {
-    const { token, solutions } = body;
-
-    if (!token || !solutions) {
-      set.status = 400;
-      return { success: false };
-    }
-
-    return await cap.redeemChallenge({ token, solutions });
-  })
-  .listen(3000);
-
-console.log(`🦊 Elysia is running at http://localhost:3000`);
-```
-
-```js [fastify]
-import Fastify from "fastify";
-import Cap from "@cap.js/server";
-
-const fastify = Fastify();
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-fastify.post("/api/challenge", (req, res) => {
-  res.send(cap.createChallenge());
-});
-
-fastify.post("/api/redeem", async (req, res) => {
-  const { token, solutions } = req.body;
-  if (!token || !solutions) {
-    return res.code(400).send({ success: false });
-  }
-
-  res.send(await cap.redeemChallenge({ token, solutions }));
-});
-
-fastify.listen({ port: 3000, host: "0.0.0.0" }).then(() => {
-  console.log("Server is running on http://localhost:3000");
-});
-```
-
-```js [bun.serve]
-import Cap from "@cap.js/server";
-
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-Bun.serve({
-  port: 3000,
-  routes: {
-    "/api/challenge": {
-      POST: () => {
-        return Response.json(cap.createChallenge());
-      },
-    },
-    "/api/redeem": {
-      POST: async (req) => {
-        const body = await req.json();
-        const { token, solutions } = body;
-
-        if (!token || !solutions) {
-          return Response.json({ success: false }, { status: 400 });
-        }
-
-        return Response.json(await cap.redeemChallenge({ token, solutions }));
-      },
-    },
-  },
-});
-
-console.log(`Server running at http://localhost:3000`);
-```
-
-```js [hono]
-import { Hono } from "hono";
-import Cap from "@cap.js/server";
-
-const app = new Hono();
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-app.post("/api/challenge", (c) => {
-  return c.json(cap.createChallenge());
-});
-
-app.post("/api/redeem", async (c) => {
-  const { token, solutions } = await c.req.json();
-  if (!token || !solutions) {
-    return c.json({ success: false }, 400);
-  }
-
-  return c.json(await cap.redeemChallenge({ token, solutions }));
-});
-
-export default {
-  port: 3000,
-  fetch: app.fetch,
-};
-```
-
-```js [express]
-import express from "express";
-import Cap from "@cap.js/server";
-
-const app = express();
-app.use(express.json());
-
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-app.post("/api/challenge", (req, res) => {
-  res.json(cap.createChallenge());
-});
-
-app.post("/api/redeem", async (req, res) => {
-  const { token, solutions } = req.body;
-  if (!token || !solutions) {
-    return res.status(400).json({ success: false });
-  }
-  res.json(await cap.redeemChallenge({ token, solutions }));
-});
-
-app.listen(3000, () => {
-  console.log("Listening on port 3000");
-});
-```
-
-:::
-
-Note that these are the simplest examples possible. You should adapt them to your needs. Usually, you'll want to:
-
-- Use an actual database such as SQLite or Redis for storing tokens and challenges. This is done for you in the [Standalone server](./standalone/index.md)
-
-- Add some kind of actual ratelimiting. This is also done for you in the [Standalone server](./standalone/index.md)
-
-### Token validation
-
-Once the token is generated and captured, you can use it later to validate the user's identity. You can do this by calling `await cap.validateToken` in your server-side code:
-
-```js
-await cap.validateToken("..."); // returns { success: Boolean }
-```
-
-Note that the token will immediately be deleted after this. To prevent this, use `await cap.validateToken("...", { keepToken: true })`.
+- If you would like the simplicity of the server package but with another language, check out the [community packages](./community.md)
