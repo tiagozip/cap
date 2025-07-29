@@ -1,20 +1,86 @@
 # Demo
 
-### Default widget
-<Demo />
+<style>
+.login-form {
+  width: 300px;
+  border: 1px solid var(--vp-c-divider);
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  margin-top: 1em;
+}
 
-### Custom widget
-<div style="
-    --cap-background: #161618;
-    --cap-color: #f3f3f3;
-    --cap-border-color: rgba(255, 255, 255, .05);
-    --cap-checkbox-border-radius: 6px;
-    --cap-border-radius: 4px;
-    --cap-checkbox-background: transparent;
-    --cap-checkmark: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E);
-    --cap-spinner-color: white;
-    --cap-spinner-background-color: rgba(255, 255, 255, .1);">
-  <Demo custom />
+.login-form .input {
+  display: flex;
+  flex-direction: column;
+  cursor: text;
+  transition: box-shadow .2s;
+}
+
+.login-form .input:has(input:focus) {
+  box-shadow: 0 0 0 .25rem rgba(38, 181, 250, .25);
+}
+
+.login-form label {
+  font-weight: 500;
+  opacity: .65;
+  padding-left: .75rem;
+  padding-top: .375rem;
+  font-size: 13px;
+}
+
+.login-form input {
+  font-size: 16px;
+  padding: .375rem .75rem;
+  padding-top: 0px;
+  font-family: inherit;
+}
+
+.signin-button {
+  font-size: 1.25rem;
+  width: 300px;
+  background-color: var(--vp-c-brand-1);
+  height: 48px;
+  color: #1B1B1F;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: filter .2s;
+  margin-bottom: 1em;
+}
+
+.signin-button:hover {
+  filter: brightness(90%)
+}
+
+.signin-button:active {
+  filter: brightness(80%)
+}
+
+.signin-button:not(.active) {
+  opacity: .7;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+</style>
+
+<div class="login-form">
+  <div class="input" style="border-top-left-radius:8px;border-top-right-radius:8px;border-bottom:1px solid var(--vp-c-divider);">
+    <label for="username">Username</label>
+    <input id="username" placeholder="example" autocomplete="off" />
+  </div>
+
+  <div class="input" style="border-bottom-left-radius:8px;border-bottom-right-radius:8px;">
+    <label for="password">Password</label>
+    <input type="password" id="pass" autocomplete="off" readonly="" value="Password123!" />
+  </div>
 </div>
 
+<div style="margin-bottom: 1rem;--cap-widget-width:300px;">
+  <Demo />
+</div>
+
+<button class="signin-button" onclick="alert('Success!')">Sign in</button>
+
 You can find more demos [in the GitHub repo](https://github.com/tiagorangel1/cap/tree/main/demo). Note that this demo is not a full implementation of Cap and uses a placeholder server.
+
+Note that the widget is also fully customizable! If you don't like how it looks, you can use CSS variables to change just about everything.
