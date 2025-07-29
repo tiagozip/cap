@@ -12,10 +12,7 @@
 | GeeTest | ❌ | ❌ | ❌ | 🟨 | 🟨 | 🟨 | ❌ | ✅ | ✅ | ❌ | 🟨 | 🟨 |
 | Arkose Labs | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟨 | ❌ | ❌ |
 
-#### Notes:
-
-- "Hard for bots" does not include solvers like 2captcha or BrightData, as I cannot verify their legitimacy myself.
-- Arkose Labs is considered "Easy for Bots" as their audio CAPTCHA is easy to solve by multi-modal LLMs.
+**Note:** "Hard for bots" does not consider solvers like 2captcha, XEvil solver, or BrightData, as I cannot verify their legitimacy myself. However, they're extremely cheap.
 
 ## All alternatives
 
@@ -31,13 +28,17 @@ Not only is Cap significantly smaller and faster than reCAPTCHA, it's open-sourc
 
 Pretty much the same as reCAPTCHA, although hCAPTCHA is significantly more secure. Personally it's the best alternative to Cap, even though the widget's bundle size alone is significantly bigger.
 
-Fun fact about hCAPTCHA, an attacker can easily solve it for $1.05/1k results while _you_ (the site owner) need to pay hCAPTCHA $1/1k solves just for the captcha, even if the content behind the captcha doesn't cost you anything.
-
-Imagine if anyone could drain $100 dollars from your bank account just by knowing your name and paying $105 - pretty scary, right?
+Unfortunately, hCAPTCHA is extremely expensive to use. At the time of writing, it's [$1/1k solutions](https://www.hcaptcha.com/pricing)
 
 ### Altcha
 
-Cap is slightly smaller than altcha and easier to integrate, but if you don't care about that and want a more popular solution I would highly recommend checking it out.
+Cap is slightly smaller than Altcha and includes extra features like checkpoints, progress tracking, and a simpler dashboard. if you don’t need those and prefer a more mature solution, Altcha is a still a solid choice.
+
+### mCAPTCHA
+
+mCAPTCHA is similar to both Cap and Altcha, but unfortunately mCAPTCHA doesn't look actively maintained anymore (the last commit was over a year ago).
+
+Its bundle is also significantly larger, with the widget iframe being at 250kb! (150kb of that is just for a shield png)
 
 ### FriendlyCaptcha
 
