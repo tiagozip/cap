@@ -6,6 +6,8 @@ Press the button below to run a simple benchmark.
 
 ## Benchmark results
 
+Using widget 0.1.25, WASM 0.0.6. These use a placeholder server, speeds might vary depending on your setup and network latency.
+
 | Tier      | Device             | Chrome | Safari |
 | --------- | ------------------ | ------ | ------ |
 | Low-end   | Samsung Galaxy A11 | 4.583s | -      |
@@ -21,5 +23,3 @@ Tested with BrowserStack using the following configuration:
 - **Number of challenges:** 50
 - **Salt/challenge size:** 32
 - **Number of benchmarks:** 50
-
-Note that this benchmark uses a placeholder server and that the actual speed might vary in production depending on network latency.

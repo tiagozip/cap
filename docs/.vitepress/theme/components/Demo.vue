@@ -37,6 +37,10 @@ onMounted(() => {
       );
     }
     if (url === "/api/redeem") {
+      if (document.querySelector(".signin-button")) {
+        document.querySelector(".signin-button").classList.add("active");
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
