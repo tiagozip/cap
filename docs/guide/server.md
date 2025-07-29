@@ -260,6 +260,7 @@ import { cors } from "@elysiajs/cors";
 import { rateLimit } from "elysia-rate-limit";
 import { Database } from "bun:sqlite";
 
+// make sure this is a real file!
 const db = new Database("./.data/cap.sqlite");
 
 db.query(
