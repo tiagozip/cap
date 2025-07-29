@@ -32,18 +32,16 @@ Start by adding importing the Cap widget library from a CDN:
 ::: code-group
 
 ```html [jsdelivr]
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.25"></script>
 ```
 
 ```html [unpkg]
-<script src="https://unpkg.com/@cap.js/widget"></script>
+<script src="https://unpkg.com/@cap.js/widget@0.1.25"></script>
 ```
 
 :::
 
-::: warning  
-You should optimally pin a specific version to avoid breaking changes instead of using @latest  
-:::
+You can also just add it with `npm i @cap.js/widget` if your setup supports it, using a CDN isn't really required.
 
 Next, add the `<cap-widget>` component to your HTML.
 
