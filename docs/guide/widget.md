@@ -102,7 +102,7 @@ window.CAP_CUSTOM_FETCH = function (url, options) {
 
 You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js`
 
-## Widget appearance
+## Customizing
 
 You can fully change how the widget looks by setting various CSS variables on the `cap-widget` element. The following CSS variables are supported:
 
@@ -126,8 +126,8 @@ cap-widget {
   --cap-spinner-color: #000;
   --cap-spinner-background-color: #eee;
   --cap-spinner-thickness: 5px;
-  --cap-checkmark: url("data:image/svg+xml,%3Csvg%20xml...");
-  --cap-error-cross: url("data:image/svg+xml,%3Csvg xml...");
+  --cap-checkmark: url("data:image/svg+xml,...");
+  --cap-error-cross: url("data:image/svg+xml,...");
   --cap-credits-font-size: 12px;
   --cap-opacity-hover: 0.8;
 }
