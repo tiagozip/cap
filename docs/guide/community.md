@@ -1,8 +1,6 @@
 # Community libraries
 
-Want to use Cap without the standalone server and with a different language? Here are some community-maintained libraries that might help:
-
-**Warning:** These libraries are community-maintained and not officially supported or actively monitored for security by Cap. We can't guarantee their quality, security, or compatibility. If you want to add a library, feel free to open a pull request!
+Want to use Cap without the standalone server and with a different language? Here are some community-maintained libraries that might help. If you want to add a library, feel free to open a pull request!
 
 ## Widgets
 
@@ -17,6 +15,8 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 - **[@espressotutorialsgmbh/cap-angular-widget](https://www.npmjs.com/package/@espressotutorialsgmbh/cap-angular-widget)**
 
 ## Server
+
+**Warning:** These libraries are community-maintained and not officially supported or actively monitored for security by Cap. We can't guarantee their quality, security, or compatibility. They also might not support newer features such as storage hooks or seeded challenges.
 
 ### Java
 

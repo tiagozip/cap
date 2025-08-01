@@ -48,17 +48,41 @@
  */
 
 /**
+ * @typedef {Object} ChallengeStorage
+ * @property {function(string, ChallengeData): Promise<void>} store - Store challenge data
+ * @property {function(string): Promise<ChallengeData|null>} read - Retrieve challenge data
+ * @property {function(string): Promise<void>} delete - Delete challenge data
+ * @property {function(): Promise<string[]>} listExpired - List expired challenge tokens
+ */
+
+/**
+ * @typedef {Object} TokenStorage
+ * @property {function(string, number): Promise<void>} store - Store token with expiration
+ * @property {function(string): Promise<number|null>} get - Retrieve token expiration
+ * @property {function(string): Promise<void>} delete - Delete token
+ * @property {function(): Promise<string[]>} listExpired - List expired token keys
+ */
+
+/**
+ * @typedef {Object} StorageHooks
+ * @property {ChallengeStorage} [challenges] - Challenge storage hooks
+ * @property {TokenStorage} [tokens] - Token storage hooks
+ */
+
+/**
  * @typedef {Object} CapConfig
  * @property {string} tokens_store_path - Path to store the tokens file
  * @property {ChallengeState} state - State configuration
  * @property {boolean} noFSState - Whether to disable the state file
+ * @property {boolean} [disableAutoCleanup] - Whether to disable automatic cleanup of expired tokens and challenges
+ * @property {StorageHooks} [storage] - Custom storage hooks for challenges and tokens
  */
 
 /** @type {typeof import('node:crypto')} */
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 /** @type {typeof import('node:fs/promises')} */
 const fs = require("node:fs/promises");
-const { EventEmitter } = require("events");
+const { EventEmitter } = require("node:events");
 
 const DEFAULT_TOKENS_STORE = ".data/tokensList.json";
 
@@ -109,7 +133,10 @@ class Cap extends EventEmitter {
 	/** @type {Promise<void>|null} */
 	_cleanupPromise;
 
-	/** @type {Required<CapConfig>} */
+	/** @type {number} */
+	_lastCleanup;
+
+	/** @type {CapConfig} */
 	config;
 
 	/**
@@ -119,7 +146,8 @@ class Cap extends EventEmitter {
 	constructor(configObj) {
 		super();
 		this._cleanupPromise = null;
-		/** @type {Required<CapConfig>} */
+		this._lastCleanup = 0;
+		/** @type {CapConfig} */
 		this.config = {
 			tokens_store_path: DEFAULT_TOKENS_STORE,
 			noFSState: false,
@@ -130,7 +158,7 @@ class Cap extends EventEmitter {
 			...configObj,
 		};
 
-		if (!this.config.noFSState) {
+		if (!this.config.noFSState && !this.config.storage?.tokens) {
 			this._loadTokens().catch(() => {});
 		}
 
@@ -146,28 +174,79 @@ class Cap extends EventEmitter {
 	}
 
 	/**
+	 * Performs cleanup if enough time has passed since last cleanup
+	 * @private
+	 * @returns {Promise<void>}
+	 */
+	async _lazyCleanup() {
+		if (this.config.disableAutoCleanup) return;
+
+		const now = Date.now();
+		const fiveMinutes = 5 * 60 * 1000;
+
+		if (now - this._lastCleanup > fiveMinutes) {
+			await this._cleanExpiredTokens();
+			this._lastCleanup = now;
+		}
+	}
+
+	/**
+	 * Retrieves challenge data from storage
+	 * @private
+	 * @param {string} token - Challenge token
+	 * @returns {Promise<ChallengeData|null>} Challenge data or null if not found
+	 */
+	async _getChallenge(token) {
+		if (this.config.storage?.challenges?.read) {
+			return (await this.config.storage.challenges.read(token)) || null;
+		}
+
+		return this.config.state.challengesList[token] || null;
+	}
+
+	/**
+	 * Deletes challenge from storage
+	 * @private
+	 * @param {string} token - Challenge token
+	 * @returns {Promise<void>}
+	 */
+	async _deleteChallenge(token) {
+		if (this.config.storage?.challenges?.delete) {
+			await this.config.storage.challenges.delete(token);
+		} else {
+			delete this.config.state.challengesList[token];
+		}
+	}
+
+	/**
 	 * Generates a new challenge
 	 * @param {ChallengeConfig} [conf] - Challenge configuration
-	 * @returns {{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }} Challenge data
+	 * @returns {Promise<{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }>} Challenge data
 	 */
-	createChallenge(conf) {
-		this._cleanExpiredTokens();
+	async createChallenge(conf) {
+		await this._lazyCleanup();
 
 		/** @type {{c: number, s: number, d: number}} */
 		const challenge = {
-			c: conf?.challengeCount || 50,
-			s: conf?.challengeSize || 32,
-			d: conf?.challengeDifficulty || 4,
+			c: conf?.challengeCount ?? 50,
+			s: conf?.challengeSize ?? 32,
+			d: conf?.challengeDifficulty ?? 4,
 		};
 
 		const token = crypto.randomBytes(25).toString("hex");
-		const expires = Date.now() + (conf?.expiresMs || 600000);
+		const expires = Date.now() + (conf?.expiresMs ?? 600000);
 
 		if (conf && conf.store === false) {
 			return { challenge, expires };
 		}
 
-		this.config.state.challengesList[token] = { expires, challenge };
+		const challengeData = { expires, challenge };
+
+		if (this.config.storage?.challenges?.store) {
+			await this.config.storage.challenges.store(token, challengeData);
+		} else {
+			this.config.state.challengesList[token] = challengeData;
+		}
 
 		return { challenge, token, expires };
 	}
@@ -187,15 +266,14 @@ class Cap extends EventEmitter {
 			return { success: false, message: "Invalid body" };
 		}
 
-		this._cleanExpiredTokens();
+		await this._lazyCleanup();
 
-		const challengeData = this.config.state.challengesList[token];
+		const challengeData = await this._getChallenge(token);
+		await this._deleteChallenge(token);
+
 		if (!challengeData || challengeData.expires < Date.now()) {
-			delete this.config.state.challengesList[token];
-			return { success: false, message: "Challenge expired" };
+			return { success: false, message: "Challenge invalid or expired" };
 		}
-
-		delete this.config.state.challengesList[token];
 
 		let i = 0;
 
@@ -225,19 +303,61 @@ class Cap extends EventEmitter {
 		const expires = Date.now() + 20 * 60 * 1000;
 		const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
 		const id = crypto.randomBytes(8).toString("hex");
+		const tokenKey = `${id}:${hash}`;
 
-		if (this?.config?.state?.tokensList)
-			this.config.state.tokensList[`${id}:${hash}`] = expires;
+		if (this.config.storage?.tokens?.store) {
+			await this.config.storage.tokens.store(tokenKey, expires);
+		} else {
+			if (this?.config?.state?.tokensList) {
+				this.config.state.tokensList[tokenKey] = expires;
+			}
 
-		if (!this.config.noFSState) {
-			await fs.writeFile(
-				this.config.tokens_store_path,
-				JSON.stringify(this.config.state.tokensList),
-				"utf8",
-			);
+			if (!this.config.noFSState) {
+				await fs.writeFile(
+					this.config.tokens_store_path,
+					JSON.stringify(this.config.state.tokensList),
+					"utf8",
+				);
+			}
 		}
 
 		return { success: true, token: `${id}:${vertoken}`, expires };
+	}
+
+	/**
+	 * Retrieves token expiration from storage
+	 * @private
+	 * @param {string} tokenKey - Token key
+	 * @returns {Promise<number|null>} Token expiration or null if not found
+	 */
+	async _getToken(tokenKey) {
+		if (this.config.storage?.tokens?.get) {
+			return await this.config.storage.tokens.get(tokenKey);
+		}
+
+		return this.config.state.tokensList[tokenKey] || null;
+	}
+
+	/**
+	 * Deletes token from storage
+	 * @private
+	 * @param {string} tokenKey - Token key
+	 * @returns {Promise<void>}
+	 */
+	async _deleteToken(tokenKey) {
+		if (this.config.storage?.tokens?.delete) {
+			await this.config.storage.tokens.delete(tokenKey);
+		} else {
+			delete this.config.state.tokensList[tokenKey];
+
+			if (!this.config.noFSState) {
+				await fs.writeFile(
+					this.config.tokens_store_path,
+					JSON.stringify(this.config.state.tokensList),
+					"utf8",
+				);
+			}
+		}
 	}
 
 	/**
@@ -247,25 +367,27 @@ class Cap extends EventEmitter {
 	 * @returns {Promise<{success: boolean}>}
 	 */
 	async validateToken(token, conf) {
-		this._cleanExpiredTokens();
+		await this._lazyCleanup();
 
-		const [id, vertoken] = token.split(":");
+		if (!token || typeof token !== "string") {
+			return { success: false };
+		}
+
+		const parts = token.split(":");
+		if (parts.length !== 2 || !parts[0] || !parts[1]) {
+			return { success: false };
+		}
+
+		const [id, vertoken] = parts;
 		const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
 		const key = `${id}:${hash}`;
 
 		await this._waitForTokensList();
 
-		if (this.config.state.tokensList[key]) {
+		const tokenExpires = await this._getToken(key);
+		if (tokenExpires && tokenExpires > Date.now()) {
 			if (!conf?.keepToken) {
-				delete this.config.state.tokensList[key];
-			}
-
-			if (!this.config.noFSState) {
-				await fs.writeFile(
-					this.config.tokens_store_path,
-					JSON.stringify(this.config.state.tokensList),
-					"utf8",
-				);
+				await this._deleteToken(key);
 			}
 
 			return { success: true };
@@ -285,6 +407,7 @@ class Cap extends EventEmitter {
 				.split("/")
 				.slice(0, -1)
 				.join("/");
+
 			if (dirPath) {
 				await fs.mkdir(dirPath, { recursive: true });
 			}
@@ -293,9 +416,9 @@ class Cap extends EventEmitter {
 				await fs.access(this.config.tokens_store_path);
 				const data = await fs.readFile(this.config.tokens_store_path, "utf-8");
 				this.config.state.tokensList = JSON.parse(data) || {};
-				this._cleanExpiredTokens();
+				await this._lazyCleanup();
 			} catch {
-				console.warn(`[cap] Tokens file not found, creating a new empty one`);
+				console.warn(`[cap] tokens file not found, creating a new empty one`);
 				await fs.writeFile(this.config.tokens_store_path, "{}", "utf-8");
 				this.config.state.tokensList = {};
 			}
@@ -308,25 +431,58 @@ class Cap extends EventEmitter {
 	}
 
 	/**
-	 * Removes expired tokens and challenges from memory
+	 * Removes expired tokens and challenges from memory and storage
 	 * @private
-	 * @returns {boolean} - True if any tokens were changed/removed
+	 * @returns {Promise<boolean>} - True if any tokens were changed/removed
 	 */
-	_cleanExpiredTokens() {
+	async _cleanExpiredTokens() {
 		const now = Date.now();
 		let tokensChanged = false;
 
-		for (const k in this.config.state.challengesList) {
-			if (this.config.state.challengesList[k].expires < now) {
-				delete this.config.state.challengesList[k];
-			}
+		if (this.config.storage?.challenges?.listExpired) {
+			const expiredChallenges =
+				await this.config.storage.challenges.listExpired();
+
+			await Promise.all(
+				expiredChallenges.map(async (token) => {
+					await this._deleteChallenge(token);
+				}),
+			);
+		} else if (!this.config.storage?.challenges) {
+			const expired = Object.entries(this.config.state.challengesList)
+				.filter(([_, v]) => v.expires < now)
+				.map(([k]) => k);
+
+			await Promise.all(
+				expired.map(async (k) => {
+					await this._deleteChallenge(k);
+				}),
+			);
+		} else {
+			console.warn(
+				"[cap] challenge storage hooks provided but no listExpired, couldn't delete expired challenges",
+			);
 		}
 
-		for (const k in this.config.state.tokensList) {
-			if (this.config.state.tokensList[k] < now) {
-				delete this.config.state.tokensList[k];
-				tokensChanged = true;
+		if (this.config.storage?.tokens?.listExpired) {
+			const expiredTokens = await this.config.storage.tokens.listExpired();
+			await Promise.all(
+				expiredTokens.map(async (tokenKey) => {
+					await this._deleteToken(tokenKey);
+					tokensChanged = true;
+				}),
+			);
+		} else if (!this.config.storage?.tokens) {
+			for (const k in this.config.state.tokensList) {
+				if (this.config.state.tokensList[k] < now) {
+					await this._deleteToken(k);
+					tokensChanged = true;
+				}
 			}
+		} else {
+			console.warn(
+				"[cap] token storage hooks provided but no listExpired, couldn't delete expired tokens",
+			);
 		}
 
 		return tokensChanged;
@@ -357,9 +513,13 @@ class Cap extends EventEmitter {
 		if (this._cleanupPromise) return this._cleanupPromise;
 
 		this._cleanupPromise = (async () => {
-			const tokensChanged = this._cleanExpiredTokens();
+			const tokensChanged = await this._cleanExpiredTokens();
 
-			if (tokensChanged) {
+			if (
+				tokensChanged &&
+				!this.config.noFSState &&
+				!this.config.storage?.tokens?.store
+			) {
 				await fs.writeFile(
 					this.config.tokens_store_path,
 					JSON.stringify(this.config.state.tokensList),
