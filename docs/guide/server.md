@@ -1,6 +1,6 @@
 # @cap.js/server
 
-`@cap.js/server` is Cap's server-side library. It helps you create and validate challenges for your users. Start by installing it using bun (recommended), npm, or pnpm:
+`@cap.js/server` is Cap's server-side library for creating and validating challenges. Install it using your preferred package manager:
 
 ::: code-group
 
@@ -18,142 +18,123 @@ pnpm i @cap.js/server
 
 :::
 
-## Example code
+## Getting started
 
-::: code-group
+The best way to use Cap is with **storage hooks** that connect to your database. Here's a simple example with SQLite:
 
-```js [Elysia]
-import { Elysia } from "elysia";
+```js
 import Cap from "@cap.js/server";
+import { Database } from "bun:sqlite";
+
+const db = new Database("cap.db");
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS challenges (
+    token TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    expires INTEGER NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS tokens (
+    key TEXT PRIMARY KEY,
+    expires INTEGER NOT NULL
+  );
+`);
 
 const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
+  storage: {
+    challenges: {
+      store: async (token, challengeData) => {
+        db.prepare(
+          "INSERT OR REPLACE INTO challenges (token, data, expires) VALUES (?, ?, ?)"
+        ).run(token, JSON.stringify(challengeData), challengeData.expires);
+      },
+      read: async (token) => {
+        const row = db
+          .prepare(
+            "SELECT data, expires FROM challenges WHERE token = ? AND expires > ?"
+          )
+          .get(token, Date.now());
 
-new Elysia()
-  .post("/api/challenge", () => {
-    return cap.createChallenge();
-  })
+        return row
+          ? { challenge: JSON.parse(row.data), expires: row.expires }
+          : null;
+      },
+      delete: async (token) => {
+        db.prepare("DELETE FROM challenges WHERE token = ?").run(token);
+      },
+      listExpired: async () => {
+        const rows = db
+          .prepare("SELECT token FROM challenges WHERE expires <= ?")
+          .all(Date.now());
 
-  .post("/api/redeem", async ({ body, set }) => {
-    const { token, solutions } = body;
-
-    if (!token || !solutions) {
-      set.status = 400;
-      return { success: false };
-    }
-
-    return await cap.redeemChallenge({ token, solutions });
-  })
-  .listen(3000);
-
-console.log(`🦊 Elysia is running at http://localhost:3000`);
-```
-
-```js [Fastify]
-import Fastify from "fastify";
-import Cap from "@cap.js/server";
-
-const fastify = Fastify();
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-fastify.post("/api/challenge", (req, res) => {
-  res.send(cap.createChallenge());
-});
-
-fastify.post("/api/redeem", async (req, res) => {
-  const { token, solutions } = req.body;
-  if (!token || !solutions) {
-    return res.code(400).send({ success: false });
-  }
-
-  res.send(await cap.redeemChallenge({ token, solutions }));
-});
-
-fastify.listen({ port: 3000, host: "0.0.0.0" }).then(() => {
-  console.log("Server is running on http://localhost:3000");
-});
-```
-
-```js [Bun.serve]
-import Cap from "@cap.js/server";
-
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
-
-Bun.serve({
-  port: 3000,
-  routes: {
-    "/api/challenge": {
-      POST: () => {
-        return Response.json(cap.createChallenge());
+        return rows.map((row) => row.token);
       },
     },
-    "/api/redeem": {
-      POST: async (req) => {
-        const body = await req.json();
-        const { token, solutions } = body;
+    tokens: {
+      store: async (tokenKey, expires) => {
+        db.prepare(
+          "INSERT OR REPLACE INTO tokens (key, expires) VALUES (?, ?)"
+        ).run(tokenKey, expires);
+      },
+      get: async (tokenKey) => {
+        const row = db
+          .prepare("SELECT expires FROM tokens WHERE key = ? AND expires > ?")
+          .get(tokenKey, Date.now());
 
-        if (!token || !solutions) {
-          return Response.json({ success: false }, { status: 400 });
-        }
+        return row ? row.expires : null;
+      },
+      delete: async (tokenKey) => {
+        db.prepare("DELETE FROM tokens WHERE key = ?").run(tokenKey);
+      },
+      listExpired: async () => {
+        const rows = db
+          .prepare("SELECT key FROM tokens WHERE expires <= ?")
+          .all(Date.now());
 
-        return Response.json(await cap.redeemChallenge({ token, solutions }));
+        return rows.map((row) => row.key);
       },
     },
   },
 });
 
-console.log(`Server running at http://localhost:3000`);
+export default cap;
 ```
 
-```js [hono]
-import { Hono } from "hono";
-import Cap from "@cap.js/server";
+Now, you can connect this to your backend to expose the routes needed for the widget:
 
-const app = new Hono();
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
-});
+::: code-group
 
-app.post("/api/challenge", (c) => {
-  return c.json(cap.createChallenge());
-});
+```js [Elysia]
+import { Elysia } from "elysia";
+import cap from "...";
 
-app.post("/api/redeem", async (c) => {
-  const { token, solutions } = await c.req.json();
-  if (!token || !solutions) {
-    return c.json({ success: false }, 400);
-  }
-
-  return c.json(await cap.redeemChallenge({ token, solutions }));
-});
-
-export default {
-  port: 3000,
-  fetch: app.fetch,
-};
+new Elysia()
+  .post("/cap/challenge", async () => {
+    return await cap.createChallenge();
+  })
+  .post("/cap/redeem", async ({ body, set }) => {
+    const { token, solutions } = body;
+    if (!token || !solutions) {
+      set.status = 400;
+      return { success: false };
+    }
+    return await cap.redeemChallenge({ token, solutions });
+  })
+  .listen(3000);
 ```
 
 ```js [Express]
 import express from "express";
-import Cap from "@cap.js/server";
+import cap from "...";
 
 const app = express();
 app.use(express.json());
 
-const cap = new Cap({
-  tokens_store_path: ".data/tokensList.json",
+app.post("/cap/challenge", async (req, res) => {
+  res.json(await cap.createChallenge());
 });
 
-app.post("/api/challenge", (req, res) => {
-  res.json(cap.createChallenge());
-});
-
-app.post("/api/redeem", async (req, res) => {
+app.post("/cap/redeem", async (req, res) => {
   const { token, solutions } = req.body;
   if (!token || !solutions) {
     return res.status(400).json({ success: false });
@@ -161,47 +142,75 @@ app.post("/api/redeem", async (req, res) => {
   res.json(await cap.redeemChallenge({ token, solutions }));
 });
 
-app.listen(3000, () => {
-  console.log("Listening on port 3000");
+app.listen(3000);
+```
+
+```js [Fastify]
+import Fastify from "fastify";
+import cap from "...";
+
+const fastify = Fastify();
+
+fastify.post("/cap/challenge", async (req, res) => {
+  res.send(await cap.createChallenge());
 });
+
+fastify.post("/cap/redeem", async (req, res) => {
+  const { token, solutions } = req.body;
+  if (!token || !solutions) {
+    return res.code(400).send({ success: false });
+  }
+  res.send(await cap.redeemChallenge({ token, solutions }));
+});
+
+fastify.listen({ port: 3000 });
 ```
 
 :::
 
-Note that these are the simplest examples possible. You should adapt them to your needs. Usually, you'll want to:
+In this example, the Cap API is at `/cap/` — set that in your widget as `data-cap-api-endpoint` ([see widget docs](./widget.md)).
 
-- Use an actual database such as SQLite or Redis for storing tokens and challenges — in this example, we're using a very simple JSON db + memory access.
-
-- Some kind of actual ratelimiting.
-
-Both of these are done for you in the [Standalone server](./standalone/index.md), but here's also [an example with everything for a simple Elysia app](#full-example-with-elysia).
-
-Then, you can verify the CAPTCHA tokens on your server by calling the `await cap.validateToken("<token>")` method. Example:
+When someone completes the CAPTCHA and sends the token back to your backend, you can validate the token and proceed with your logic.
 
 ```js
-const { success } = await cap.validateToken("9363220f..."); // [!code highlight]
+const { success } = await cap.validateToken("...");
 
-if (success) {
-  console.log("Valid token");
-} else {
-  console.log("Invalid token");
-}
+if (!success) throw new Error("invalid cap token");
+
+// ...your logic
 ```
 
-## Supported methods and arguments
-
-The following methods are supported:
+## Methods and arguments
 
 #### `new Cap({ ... })`
-
-Creates a new Cap instance.
 
 **Arguments**
 
 ```json
 {
+  // used for json keyval storage. storage hooks are recommended instead
   "tokens_store_path": ".data/tokensList.json",
+
+  // disables all filesystem operations, usually used along editing the state. storage hooks are recommended instead
   "noFSState": false,
+
+  "disableAutoCleanup": false,
+
+  "storage": {
+    "challenges": {
+      "store": "async (token, challengeData) => {}",
+      "read": "async (token) => {}",
+      "delete": "async (token) => {}",
+      "listExpired": "async () => []"
+    },
+    "tokens": {
+      "store": "async (tokenKey, expires) => {}",
+      "get": "async (tokenKey) => {}",
+      "delete": "async (tokenKey) => {}",
+      "listExpired": "async () => []"
+    }
+  },
+
   "state": {
     "challengesList": {},
     "tokensList": {}
@@ -211,7 +220,7 @@ Creates a new Cap instance.
 
 You can always access or set the options of the `Cap` class by accessing or modifying the `cap.config` object.
 
-#### `cap.createChallenge({ ... })`
+#### `await cap.createChallenge({ ... })`
 
 **Arguments**
 
@@ -224,9 +233,7 @@ You can always access or set the options of the `Cap` class by accessing or modi
 }
 ```
 
-**Response:** `{ challenge, expires }`
-
-> if `noFSState` is set to `true`, the state will be stored in memory only. You can use this together with setting `config.state` to use a custom db such as redis for storing tokens. Added by [#16](https://github.com/tiagorangel1/cap/pull/16)
+**Response:** `{ challenge, token, expires }`
 
 #### `cap.redeemChallenge({ ... })`
 
@@ -251,169 +258,6 @@ You can always access or set the options of the `Cap` class by accessing or modi
 
 **Response:** `{ success }`
 
-## Full example with Elysia
+#### `await cap.cleanup()`
 
-```js
-import { Elysia, t } from "elysia";
-import Cap from "@cap.js/server";
-import { cors } from "@elysiajs/cors";
-import { rateLimit } from "elysia-rate-limit";
-import { Database } from "bun:sqlite";
-
-// make sure this is a real file!
-const db = new Database("./.data/cap.sqlite");
-
-db.query(
-  `create table if not exists challenges (
-    token string not null,
-    data string not null,
-    expires integer not null,
-    primary key (token)
-  )`
-).run();
-
-db.query(
-  `create table if not exists tokens (
-    token string not null,
-    expires integer not null,
-    primary key (token)
-  )`
-).run();
-
-const insertChallengeQuery = db.query(`
-  INSERT INTO challenges (token, data, expires)
-  VALUES (?, ?, ?)
-`);
-const getChallengeQuery = db.query(`
-  SELECT * FROM challenges WHERE token = ?
-`);
-const deleteChallengeQuery = db.query(`
-  DELETE FROM challenges WHERE token = ?
-`);
-
-const insertTokenQuery = db.query(`
-  INSERT INTO tokens (token, expires)
-  VALUES (?, ?)
-`);
-const getTokenQuery = db.query(`
-  SELECT * FROM tokens WHERE token = ?
-`);
-const deleteTokenQuery = db.query(`
-  DELETE FROM tokens WHERE token = ?
-`);
-
-const challengeCount = 50;
-
-export const capServer = new Elysia({
-  prefix: "/cap",
-})
-  .use(
-    rateLimit({
-      scoping: "scoped",
-      max: 45,
-      duration: 5_000,
-    })
-  )
-  .use(
-    cors({
-      origin: ["http://localhost:3000", "..."],
-      methods: ["POST"],
-    })
-  )
-  .post("/challenge", () => {
-    const cap = new Cap({
-      noFSState: true,
-    });
-
-    const challenge = cap.createChallenge({
-      challengeCount,
-    });
-
-    insertChallengeQuery.run(
-      challenge.token,
-      Object.values(challenge.challenge).join(","),
-      challenge.expires
-    );
-
-    return challenge;
-  })
-  .post(
-    "/redeem",
-    async ({ body, set }) => {
-      const challenge = getChallengeQuery.get(body.token);
-
-      if (!challenge) {
-        set.status = 404;
-        return { error: "Challenge not found" };
-      }
-
-      try {
-        deleteChallengeQuery.run(body.token);
-      } catch (e) {
-        set.status = 404;
-        return { error: "Challenge not found or already redeemed/expired" };
-      }
-
-      const cap = new Cap({
-        noFSState: true,
-        state: {
-          challengesList: {
-            [challenge.token]: {
-              challenge: {
-                c: challenge.data.split(",")[0],
-                s: challenge.data.split(",")[1],
-                d: challenge.data.split(",")[2],
-              },
-              expires: challenge.expires,
-            },
-          },
-        },
-      });
-
-      const { success, token, expires } = await cap.redeemChallenge(body);
-
-      if (!success) {
-        set.status = 403;
-        return { error: "Invalid solution" };
-      }
-
-      insertTokenQuery.run(token, expires);
-
-      return {
-        success: true,
-        token,
-        expires,
-      };
-    },
-    {
-      body: t.Object({
-        token: t.String(),
-        solutions: t.Array(t.Number()),
-      }),
-    }
-  );
-
-export const validateToken = async (_token) => {
-  const token = getTokenQuery.get(_token);
-
-  if (!token) {
-    return { error: "Token not found" };
-  }
-
-  if (token.expires < Math.floor(Date.now() / 1000)) {
-    deleteTokenQuery.run(_token);
-    return { error: "Token expired" };
-  }
-
-  deleteTokenQuery.run(_token);
-  return { success: true };
-};
-
-setInterval(() => {
-  const now = Math.floor(Date.now() / 1000);
-  
-  db.query(`DELETE FROM challenges WHERE expires < ?`).run(now);
-  
-  db.query(`DELETE FROM tokens WHERE expires < ?`).run(now);
-}, 60000);
-```
+Cleans up all expired challenges and tokens. This is usually done for you by default.
