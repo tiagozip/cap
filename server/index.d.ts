@@ -11,14 +11,36 @@ declare class Cap extends EventEmitter<[never]> {
     constructor(configObj?: Partial<CapConfig>);
     /** @type {Promise<void>|null} */
     _cleanupPromise: Promise<void> | null;
-    /** @type {Required<CapConfig>} */
-    config: Required<CapConfig>;
+    /** @type {number} */
+    _lastCleanup: number;
+    /** @type {CapConfig} */
+    config: CapConfig;
+    /**
+     * Performs cleanup if enough time has passed since last cleanup
+     * @private
+     * @returns {Promise<void>}
+     */
+    private _lazyCleanup;
+    /**
+     * Retrieves challenge data from storage
+     * @private
+     * @param {string} token - Challenge token
+     * @returns {Promise<ChallengeData|null>} Challenge data or null if not found
+     */
+    private _getChallenge;
+    /**
+     * Deletes challenge from storage
+     * @private
+     * @param {string} token - Challenge token
+     * @returns {Promise<void>}
+     */
+    private _deleteChallenge;
     /**
      * Generates a new challenge
      * @param {ChallengeConfig} [conf] - Challenge configuration
-     * @returns {{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }} Challenge data
+     * @returns {Promise<{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }>} Challenge data
      */
-    createChallenge(conf?: ChallengeConfig): {
+    createChallenge(conf?: ChallengeConfig): Promise<{
         challenge: {
             c: number;
             s: number;
@@ -26,7 +48,7 @@ declare class Cap extends EventEmitter<[never]> {
         };
         token?: string;
         expires: number;
-    };
+    }>;
     /**
      * Redeems a challenge solution in exchange for a token
      * @param {Solution} param0 - Challenge solution data
@@ -38,6 +60,20 @@ declare class Cap extends EventEmitter<[never]> {
         token?: string;
         expires?: number;
     }>;
+    /**
+     * Retrieves token expiration from storage
+     * @private
+     * @param {string} tokenKey - Token key
+     * @returns {Promise<number|null>} Token expiration or null if not found
+     */
+    private _getToken;
+    /**
+     * Deletes token from storage
+     * @private
+     * @param {string} tokenKey - Token key
+     * @returns {Promise<void>}
+     */
+    private _deleteToken;
     /**
      * Validates a token
      * @param {string} token - The token to validate
@@ -54,9 +90,9 @@ declare class Cap extends EventEmitter<[never]> {
      */
     private _loadTokens;
     /**
-     * Removes expired tokens and challenges from memory
+     * Removes expired tokens and challenges from memory and storage
      * @private
-     * @returns {boolean} - True if any tokens were changed/removed
+     * @returns {Promise<boolean>} - True if any tokens were changed/removed
      */
     private _cleanExpiredTokens;
     /**
@@ -72,7 +108,7 @@ declare class Cap extends EventEmitter<[never]> {
     cleanup(): Promise<void>;
 }
 declare namespace Cap {
-    export { Crypto, FsPromises, PathLike, ChallengeTuple, ChallengeData, ChallengeState, ChallengeConfig, TokenConfig, Solution, CapConfig };
+    export { Crypto, FsPromises, PathLike, ChallengeTuple, ChallengeData, ChallengeState, ChallengeConfig, TokenConfig, Solution, ChallengeStorage, TokenStorage, StorageHooks, CapConfig };
 }
 import { EventEmitter } from "events";
 type Crypto = typeof import("node:crypto");
@@ -141,6 +177,52 @@ type Solution = {
      */
     solutions: number[];
 };
+type ChallengeStorage = {
+    /**
+     * - Store challenge data
+     */
+    store: (arg0: string, arg1: ChallengeData) => Promise<void>;
+    /**
+     * - Retrieve challenge data
+     */
+    read: (arg0: string) => Promise<ChallengeData | null>;
+    /**
+     * - Delete challenge data
+     */
+    delete: (arg0: string) => Promise<void>;
+    /**
+     * - List expired challenge tokens
+     */
+    listExpired: () => Promise<string[]>;
+};
+type TokenStorage = {
+    /**
+     * - Store token with expiration
+     */
+    store: (arg0: string, arg1: number) => Promise<void>;
+    /**
+     * - Retrieve token expiration
+     */
+    get: (arg0: string) => Promise<number | null>;
+    /**
+     * - Delete token
+     */
+    delete: (arg0: string) => Promise<void>;
+    /**
+     * - List expired token keys
+     */
+    listExpired: () => Promise<string[]>;
+};
+type StorageHooks = {
+    /**
+     * - Challenge storage hooks
+     */
+    challenges?: ChallengeStorage | undefined;
+    /**
+     * - Token storage hooks
+     */
+    tokens?: TokenStorage | undefined;
+};
 type CapConfig = {
     /**
      * - Path to store the tokens file
@@ -154,4 +236,12 @@ type CapConfig = {
      * - Whether to disable the state file
      */
     noFSState: boolean;
+    /**
+     * - Whether to disable automatic cleanup of expired tokens and challenges
+     */
+    disableAutoCleanup?: boolean | undefined;
+    /**
+     * - Custom storage hooks for challenges and tokens
+     */
+    storage?: StorageHooks | undefined;
 };
