@@ -84,7 +84,7 @@ export const assetsServer = new Elysia({
 })
 	.use(
 		cors({
-			origin: process.env.CORS_ORIGIN || true,
+			origin: process.env.CORS_ORIGIN?.split(",") || true,
 			methods: ["GET"],
 		}),
 	)

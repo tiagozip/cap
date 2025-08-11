@@ -352,7 +352,7 @@ const internal = new Elysia({ prefix: "/internal" })
 const api = new Elysia({ prefix: "/:key" })
 	.use(
 		cors({
-			origin: process.env.CORS_ORIGIN || true,
+			origin: process.env.CORS_ORIGIN?.split(",") || true,
 		}),
 	)
 	.use(
@@ -408,7 +408,7 @@ const api = new Elysia({ prefix: "/:key" })
 const assetsServer = new Elysia({ prefix: "/assets" })
 	.use(
 		cors({
-			origin: process.env.CORS_ORIGIN || true,
+			origin: process.env.CORS_ORIGIN?.split(",") || true,
 			methods: ["GET"],
 		}),
 	)
