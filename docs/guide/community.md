@@ -18,6 +18,10 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 
 **Warning:** These libraries are community-maintained and not officially supported or actively monitored for security by Cap. We can't guarantee their quality, security, or compatibility. They also might not support newer features such as storage hooks or seeded challenges.
 
+### Cloudflare Workers (Serverless/JavaScript/TypeScript)
+
+- **[xyTom/cap-worker](https://github.com/xyTom/cap-worker)**: Serverless CAP CAPTCHA implementation on Cloudflare Workers with Durable Objects, featuring global edge deployment and auto-scaling
+
 ### Java
 
 - **[luckygc/cap-server](https://github.com/luckygc/cap-server)**: Replacement of wuhunyu's Java server that fixes [an important issue](https://github.com/tiagorangel1/cap/issues/69#issuecomment-3079407189)
