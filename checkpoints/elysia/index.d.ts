@@ -1,5 +1,5 @@
-import type { Elysia } from "elysia";
 import Cap from "@cap.js/server";
+import type { Elysia } from "elysia";
 
 export interface CapMiddlewareOptions {
   /**
