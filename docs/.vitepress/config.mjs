@@ -47,7 +47,7 @@ export default withMermaid({
 			{
 				property: "og:description",
 				content:
-					"Cap.js is a fast, privacy-friendly proof-of-work CAPTCHA alternative to reCAPTCHA and hCaptcha. Zero dependencies, developer-friendly, and effective against spam, DDoS, and automation.",
+					"Cap.js is a fast, privacy-first proof-of-work CAPTCHA alternative to reCAPTCHA and hCaptcha. Zero dependencies, developer-friendly, and effective against spam, DDoS, and automation.",
 			},
 		],
 		["meta", { property: "og:url", content: "https://capjs.js.org" }],
@@ -68,7 +68,7 @@ export default withMermaid({
 			{
 				name: "twitter:description",
 				content:
-					"Cap.js is a fast, privacy-friendly proof-of-work CAPTCHA alternative to reCAPTCHA and hCaptcha.",
+					"Cap.js is a fast, privacy-first proof-of-work CAPTCHA alternative to reCAPTCHA and hCaptcha.",
 			},
 		],
 		[
@@ -188,6 +188,7 @@ export default withMermaid({
 					{ text: "Invisible mode", link: "/guide/invisible.md" },
 				],
 			},
+			/*
 			{
 				text: "Checkpoint",
 				collapsed: true,
@@ -198,6 +199,7 @@ export default withMermaid({
 					{ text: "Express", link: "/guide/middleware/express.md" },
 				],
 			},
+			*/
 			{
 				text: "Proof-of-work",
 				collapsed: true,
