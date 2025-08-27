@@ -147,6 +147,7 @@ class Cap extends EventEmitter {
 		super();
 		this._cleanupPromise = null;
 		this._lastCleanup = 0;
+		this._tokensReady = null;
 		/** @type {CapConfig} */
 		this.config = {
 			tokens_store_path: DEFAULT_TOKENS_STORE,
@@ -159,7 +160,9 @@ class Cap extends EventEmitter {
 		};
 
 		if (!this.config.noFSState && !this.config.storage?.tokens) {
-			this._loadTokens().catch(() => {});
+			this._tokensReady = this._loadTokens().catch(() => {});
+		} else {
+			this._tokensReady = Promise.resolve();
 		}
 
 		process.on("beforeExit", () => this.cleanup());
@@ -494,15 +497,7 @@ class Cap extends EventEmitter {
 	 * @returns {Promise<void>}
 	 */
 	_waitForTokensList() {
-		return new Promise((resolve) => {
-			const l = () => {
-				if (this.config.state.tokensList) {
-					return resolve();
-				}
-				setTimeout(l, 10);
-			};
-			l();
-		});
+		return this._tokensReady;
 	}
 
 	/**
