@@ -478,8 +478,9 @@
 				return;
 			}
 
-			// Security: Only allow safe callback references, no arbitrary code execution
-			if (typeof window[callbackName] === "function") {
+			// Security: Prevent prototype pollution by checking own properties only
+			if (Object.prototype.hasOwnProperty.call(window, callbackName) && 
+				typeof window[callbackName] === "function") {
 				try {
 					window[callbackName].call(this, event);
 				} catch (error) {
