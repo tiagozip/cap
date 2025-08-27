@@ -473,12 +473,21 @@
 		}
 
 		executeAttributeCode(attributeName, event) {
-			const code = this.getAttribute(attributeName);
-			if (!code) {
+			const callbackName = this.getAttribute(attributeName);
+			if (!callbackName) {
 				return;
 			}
 
-			new Function("event", code).call(this, event);
+			// Security: Only allow safe callback references, no arbitrary code execution
+			if (typeof window[callbackName] === "function") {
+				try {
+					window[callbackName].call(this, event);
+				} catch (error) {
+					console.error(`[cap] Error executing callback ${attributeName}:`, error);
+				}
+			} else {
+				console.warn(`[cap] Callback '${callbackName}' is not a function or does not exist`);
+			}
 		}
 
 		error(message = "Unknown error") {
