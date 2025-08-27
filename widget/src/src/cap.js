@@ -487,7 +487,7 @@
 					console.error(`[cap] Error executing callback ${attributeName}:`, error);
 				}
 			} else {
-				console.warn(`[cap] Callback '${callbackName}' is not a function or does not exist`);
+				console.warn("[cap] Callback is not a function or does not exist");
 			}
 		}
 
