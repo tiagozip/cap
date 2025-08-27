@@ -10,14 +10,19 @@
 		}
 		const targetBytesLength = targetBytes.length;
 
+		const saltBytes = encoder.encode(salt);
+		const inputBuffer = new Uint8Array(saltBytes.length + 20);
+		inputBuffer.set(saltBytes);
+
 		while (true) {
 			try {
 				for (let i = 0; i < batchSize; i++) {
-					const inputString = salt + nonce;
-					const inputBytes = encoder.encode(inputString);
+					const nonceStr = nonce.toString();
+					const nonceBytes = encoder.encode(nonceStr);
+					inputBuffer.set(nonceBytes, saltBytes.length);
+					const inputView = inputBuffer.subarray(0, saltBytes.length + nonceBytes.length);
 
-					const hashBuffer = await crypto.subtle.digest("SHA-256", inputBytes);
-
+					const hashBuffer = await crypto.subtle.digest("SHA-256", inputView);
 					const hashBytes = new Uint8Array(hashBuffer, 0, targetBytesLength);
 
 					let matches = true;
