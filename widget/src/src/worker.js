@@ -10,14 +10,25 @@
 		}
 		const targetBytesLength = targetBytes.length;
 
+		const saltBytes = encoder.encode(salt);
+		const MAX_NONCE_BYTES = 20;
+		const inputBuffer = new Uint8Array(saltBytes.length + MAX_NONCE_BYTES);
+		inputBuffer.set(saltBytes);
+
 		while (true) {
 			try {
 				for (let i = 0; i < batchSize; i++) {
-					const inputString = salt + nonce;
-					const inputBytes = encoder.encode(inputString);
+					const nonceStr = nonce.toString();
+					const nonceBytes = encoder.encode(nonceStr);
+					
+					if (nonceBytes.length > MAX_NONCE_BYTES) {
+						throw new Error("Nonce too large for buffer");
+					}
+					
+					inputBuffer.set(nonceBytes, saltBytes.length);
+					const inputView = inputBuffer.subarray(0, saltBytes.length + nonceBytes.length);
 
-					const hashBuffer = await crypto.subtle.digest("SHA-256", inputBytes);
-
+					const hashBuffer = await crypto.subtle.digest("SHA-256", inputView);
 					const hashBytes = new Uint8Array(hashBuffer, 0, targetBytesLength);
 
 					let matches = true;
