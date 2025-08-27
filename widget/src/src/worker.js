@@ -11,7 +11,8 @@
 		const targetBytesLength = targetBytes.length;
 
 		const saltBytes = encoder.encode(salt);
-		const inputBuffer = new Uint8Array(saltBytes.length + 20);
+		const MAX_NONCE_BYTES = 20;
+		const inputBuffer = new Uint8Array(saltBytes.length + MAX_NONCE_BYTES);
 		inputBuffer.set(saltBytes);
 
 		while (true) {
@@ -19,6 +20,11 @@
 				for (let i = 0; i < batchSize; i++) {
 					const nonceStr = nonce.toString();
 					const nonceBytes = encoder.encode(nonceStr);
+					
+					if (nonceBytes.length > MAX_NONCE_BYTES) {
+						throw new Error("Nonce too large for buffer");
+					}
+					
 					inputBuffer.set(nonceBytes, saltBytes.length);
 					const inputView = inputBuffer.subarray(0, saltBytes.length + nonceBytes.length);
 
