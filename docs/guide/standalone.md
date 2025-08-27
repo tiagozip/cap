@@ -37,6 +37,11 @@ Then, you can access the dashboard at `http://localhost:3000`, log in, and creat
 
 You can change the default CORS settings for redeeming tokens, generating challenges and serving assets by setting the `CORS_ORIGIN` environment variable when running the server. This defaults to `*`, which allows all origins. This will directly assign to Access-Control-Allow-Origin header.
 
+### Hostname and port
+
+You can change the default port and hostname by setting the `SERVER_PORT` and `SERVER_HOSTNAME` environment variables when running the server. This defaults are `0.0.0.0` for hostname and `3000` for port.
+If you change port or hostname, you need to adapt Docker's port forwarding.
+
 ## Usage
 
 ### Client-side
