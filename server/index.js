@@ -403,7 +403,7 @@ class Cap extends EventEmitter {
 	 */
 	async _loadTokens() {
 		if (this.config.noFSState || this.config.storage?.tokens) return;
-		
+
 		try {
 			const dirPath = this.config.tokens_store_path
 				.split("/")
@@ -497,6 +497,10 @@ class Cap extends EventEmitter {
 	 */
 	_waitForTokensList() {
 		return new Promise((resolve) => {
+			if (this.config.state.tokensList) {
+				return resolve();
+			}
+
 			const l = () => {
 				if (this.config.state.tokensList) {
 					return resolve();
