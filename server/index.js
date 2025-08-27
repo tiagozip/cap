@@ -288,7 +288,7 @@ class Cap extends EventEmitter {
 
 		const isValid = challenges.every(([salt, target], i) => {
 			return (
-				solutions[i] &&
+				typeof solutions[i] === "number" &&
 				crypto
 					.createHash("sha256")
 					.update(salt + solutions[i])
@@ -402,6 +402,8 @@ class Cap extends EventEmitter {
 	 * @returns {Promise<void>}
 	 */
 	async _loadTokens() {
+		if (this.config.noFSState || this.config.storage?.tokens) return;
+		
 		try {
 			const dirPath = this.config.tokens_store_path
 				.split("/")
