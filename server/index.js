@@ -288,7 +288,7 @@ class Cap extends EventEmitter {
 
 		const isValid = challenges.every(([salt, target], i) => {
 			return (
-				solutions[i] &&
+				typeof solutions[i] === 'number' &&
 				crypto
 					.createHash("sha256")
 					.update(salt + solutions[i])
