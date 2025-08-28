@@ -24,7 +24,7 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 
 ### Java
 
-- **[luckygc/cap-server](https://github.com/luckygc/cap-server)**: Replacement of wuhunyu's Java server that fixes [an important issue](https://github.com/tiagorangel1/cap/issues/69#issuecomment-3079407189)
+- **[luckygc/cap-server](https://github.com/luckygc/cap-server)**: Replacement of wuhunyu's Java server that fixes [an important issue](https://github.com/tiagozip/cap/issues/69#issuecomment-3079407189)
 
 - **[wuhunyu/cap-server-java](https://github.com/wuhunyu/cap-server-java)**
 

@@ -11,7 +11,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+    "url": "git+https://github.com/tiagozip/cap.git"
   },
   "keywords": [
     "security",
@@ -52,9 +52,9 @@
     "turing-test"
   ],
   "bugs": {
-    "url": "https://github.com/tiagorangel1/cap/issues"
+    "url": "https://github.com/tiagozip/cap/issues"
   },
-  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "homepage": "https://github.com/tiagozip/cap#readme",
   "dependencies": {
     "@cap.js/wasm": "^0.0.4"
   }
