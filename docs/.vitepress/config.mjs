@@ -117,7 +117,7 @@ export default withMermaid({
     "name": "Tiago Rangel",
     "url": "https://tiagorangel.com"
   },
-  "license": "https://github.com/tiagorangel1/cap/blob/main/LICENSE",
+  "license": "https://github.com/tiagozip/cap/blob/main/LICENSE",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -147,13 +147,13 @@ export default withMermaid({
 		siteTitle: "Cap",
 
 		editLink: {
-			pattern: "https://github.com/tiagorangel1/cap/edit/main/docs/:path",
+			pattern: "https://github.com/tiagozip/cap/edit/main/docs/:path",
 		},
 
 		nav: [
 			{ text: "Home", link: "/" },
 			{ text: "Docs", link: "/guide" },
-			{ text: "GitHub", link: "https://github.com/tiagorangel1/cap" },
+			{ text: "GitHub", link: "https://github.com/tiagozip/cap" },
 		],
 
 		sidebar: [
@@ -211,11 +211,11 @@ export default withMermaid({
 			},
 			{ text: "Benchmark", link: "/guide/benchmark.md" },
 			{ text: "Demo", link: "/guide/demo.md" },
-			{ text: "GitHub", link: "https://github.com/tiagorangel1/cap" },
+			{ text: "GitHub", link: "https://github.com/tiagozip/cap" },
 		],
 
 		socialLinks: [
-			{ icon: "github", link: "https://github.com/tiagorangel1/cap" },
+			{ icon: "github", link: "https://github.com/tiagozip/cap" },
 			{ icon: "twitter", link: "https://x.com/0xtiago_" },
 		],
 

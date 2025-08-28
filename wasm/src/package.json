@@ -3,7 +3,7 @@
   "version": "0.0.6",
   "description": "WASM solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "main": "./node/cap_wasm.js",
-  "keywords":  [
+  "keywords": [
     "security",
     "detection",
     "prevention",
@@ -45,13 +45,13 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+    "url": "git+https://github.com/tiagozip/cap.git"
   },
   "bugs": {
-    "url": "https://github.com/tiagorangel1/cap/issues"
+    "url": "https://github.com/tiagozip/cap/issues"
   },
   "scripts": {
     "npm:publish": "bun publish --access public"
   },
-  "homepage": "https://github.com/tiagorangel1/cap#readme"
+  "homepage": "https://github.com/tiagozip/cap#readme"
 }

@@ -9,7 +9,7 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://capjs.js.org/guide/demo.html">Demo</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://github.com/tiagorangel1/cap/issues/new">Issues</a>
+  <a href="https://github.com/tiagozip/cap/issues/new">Issues</a>
   <br />
 </div>
 
