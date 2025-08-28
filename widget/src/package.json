@@ -40,13 +40,13 @@
     "filtering",
     "turing-test"
   ],
-  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "homepage": "https://github.com/tiagozip/cap#readme",
   "bugs": {
-    "url": "https://github.com/tiagorangel1/cap/issues"
+    "url": "https://github.com/tiagozip/cap/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+    "url": "git+https://github.com/tiagozip/cap.git"
   },
   "license": "Apache-2.0",
   "author": "Tiago Rangel",

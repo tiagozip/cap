@@ -18,7 +18,7 @@ hero:
       link: /guide/demo.md
     - theme: alt
       text: View on GitHub
-      link: https://github.com/tiagorangel1/cap
+      link: https://github.com/tiagozip/cap
 
 features:
   - icon: ⚡️
