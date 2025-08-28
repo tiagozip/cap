@@ -7,7 +7,7 @@
   "private": false,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+    "url": "git+https://github.com/tiagozip/cap.git"
   },
   "scripts": {
     "npm:publish": "npm publish --access public"
@@ -66,7 +66,7 @@
     "cli": "./index.js"
   },
   "bugs": {
-    "url": "https://github.com/tiagorangel1/cap/issues"
+    "url": "https://github.com/tiagozip/cap/issues"
   },
-  "homepage": "https://github.com/tiagorangel1/cap#readme"
+  "homepage": "https://github.com/tiagozip/cap#readme"
 }

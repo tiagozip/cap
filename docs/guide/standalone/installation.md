@@ -27,7 +27,7 @@ Make sure to replace `your_secret_password` with a strong password, as anyone wi
 
 Then, you can access the dashboard at `http://localhost:3000`, log in, and create a key. You'll get a site key and a secret key which you'll be able to use on your widget.
 
-On Debian and other OSes that don't use `iptables`, if you can't open the dashboard, try setting `--network=host` in the run command. Thanks to [Boro Vukovic](https://github.com/tiagorangel1/cap/issues/70#issuecomment-3086464282) for letting me know about this.
+On Debian and other OSes that don't use `iptables`, if you can't open the dashboard, try setting `--network=host` in the run command. Thanks to [Boro Vukovic](https://github.com/tiagozip/cap/issues/70#issuecomment-3086464282) for letting me know about this.
 
 You'll also need to make the server publicly accessible from the internet, as the widget needs to be able to reach it.
 
