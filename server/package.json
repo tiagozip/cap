@@ -1,18 +1,18 @@
 {
   "name": "@cap.js/server",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "Tiago",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+    "url": "git+https://github.com/tiagozip/cap.git"
   },
   "main": "index.js",
   "types": "index.d.ts",
   "bugs": {
-    "url": "https://github.com/tiagorangel1/cap/issues"
+    "url": "https://github.com/tiagozip/cap/issues"
   },
   "description": "Server-side challenge generator and verifier for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
-  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "homepage": "https://github.com/tiagozip/cap#readme",
   "keywords": [
     "security",
     "detection",

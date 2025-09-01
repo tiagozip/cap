@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tiagorangel1/cap.git"
+    "url": "git+https://github.com/tiagozip/cap.git"
   },
   "keywords": [
     "security",
@@ -51,9 +51,9 @@
   "author": "Tiago",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/tiagorangel1/cap/issues"
+    "url": "https://github.com/tiagozip/cap/issues"
   },
-  "homepage": "https://github.com/tiagorangel1/cap#readme",
+  "homepage": "https://github.com/tiagozip/cap#readme",
   "dependencies": {
     "@cap.js/server": "^1.0.15"
   }
