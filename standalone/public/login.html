@@ -16,7 +16,7 @@
         margin: 0px;
         padding: 0px;
         margin-top: 14vh;
-        background-color: #181818;
+        background-color: #111113;
         color: #e8e8ea;
       }
       form {
@@ -27,20 +27,29 @@
         width: 100%;
         text-align: left;
       }
+      form h1 {
+        font-size: 24px;
+        font-weight: 500;
+        text-align: center;
+        margin-bottom: 28px;
+        margin-top: 0;
+      }
       img {
         width: 60px;
       }
       label {
         font-size: 14px;
         line-height: 1.5;
+        font-weight: 500;
         display: block;
-        margin-bottom: 3px;
-        color: #d9dfe5eb;
+        margin-bottom: 8px;
+        color: #eee;
       }
 
       .password-wrapper {
-        border: 1px solid #e3e4e810;
-        background-color: #e3e4e807;
+        box-shadow: inset 0 0 0 1px color(display-p3 0.9608 0.9608 1 / 0.242);
+        color: #eee;
+        border: none;
         display: flex;
         border-radius: 8px;
         margin-bottom: 16px;
@@ -53,7 +62,7 @@
         color: white;
         background-color: transparent;
         padding: 0;
-        margin-right: 8px;
+        margin-right: 10px;
       }
 
       .password {
@@ -80,7 +89,7 @@
       }
 
       .password-wrapper:has(.password:focus) {
-        box-shadow: 0px 0px 0px 3px rgba(255, 255, 255, 0.5);
+        box-shadow: 0px 0px 0px 2px white;
       }
 
       .submit {
@@ -90,8 +99,8 @@
         text-align: center;
         font-weight: 500;
         border: none;
-        color: black;
-        background: white;
+        color: white;
+        background: #007aff;
         background-origin: border-box;
         user-select: none;
         -webkit-user-select: none;
@@ -104,7 +113,7 @@
       .submit:focus {
         box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
           0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
-          0px 0px 0px 3.5px rgba(255, 255, 255, 0.5);
+          0px 0px 0px 3.5px rgba(0, 122, 255, 0.5);
         outline: 0;
       }
 
@@ -134,11 +143,13 @@
         color: rgb(255, 255, 255);
         opacity: 0.4;
         font-size: 14px;
-        transition: opacity 0.2s;
+        text-underline-offset: 2px;
+        text-decoration: none;
       }
 
       a:hover {
         opacity: 1;
+        text-decoration: underline;
       }
 
       .logo {
@@ -150,7 +161,7 @@
       .logo img {
         width: 45px;
         height: 45px;
-        margin-bottom: 1em;
+        margin-bottom: 6px;
       }
     </style>
   </head>
@@ -159,6 +170,7 @@
       <div class="logo">
         <img src="./public/logo-small.webp" alt="Cap logo" />
       </div>
+      <h1>Welcome to Cap!</h1>
       <label for="password">Admin key</label>
       <div class="password-wrapper">
         <input
@@ -192,15 +204,32 @@
         </button>
       </div>
 
-      <button type="submit" class="submit" disabled>Continue</button>
+      <button type="submit" class="submit">Continue</button>
       <p class="err"></p>
       <p class="bottom">
         <!-- prettier-ignore -->
+        <a href="https://github.com/tiagozip/cap" target="_blank" rel="follow noopener" style="height: 24px;width: 24px;">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 17 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fill-rule="evenodd"
+            clip-rule="evenodd"
+            d="M8.5 2.22168C5.23312 2.22168 2.58496 4.87398 2.58496 8.14677C2.58496 10.7642 4.27962 12.9853 6.63026 13.7684C6.92601 13.8228 7.03366 13.6401 7.03366 13.4827C7.03366 13.3425 7.02893 12.9693 7.02597 12.4754C5.38041 12.8333 5.0332 11.681 5.0332 11.681C4.76465 10.996 4.37663 10.8139 4.37663 10.8139C3.83954 10.4471 4.41744 10.4542 4.41744 10.4542C5.01072 10.4956 5.32303 11.0647 5.32303 11.0647C5.85065 11.9697 6.70774 11.7082 7.04431 11.5568C7.09873 11.1741 7.25134 10.9132 7.42051 10.7654C6.10737 10.6157 4.72621 10.107 4.72621 7.83683C4.72621 7.19031 4.95689 6.66092 5.33486 6.24686C5.27394 6.09721 5.07105 5.49447 5.39283 4.67938C5.39283 4.67938 5.88969 4.51967 7.01947 5.28626C7.502 5.15466 7.99985 5.08763 8.5 5.08692C9.00278 5.08929 9.50851 5.15495 9.98113 5.28626C11.1103 4.51967 11.606 4.67879 11.606 4.67879C11.9289 5.49447 11.7255 6.09721 11.6651 6.24686C12.0437 6.66092 12.2732 7.19031 12.2732 7.83683C12.2732 10.1129 10.8897 10.6139 9.5724 10.7606C9.78475 10.9434 9.97344 11.3048 9.97344 11.8579C9.97344 12.6493 9.96634 13.2887 9.96634 13.4827C9.96634 13.6413 10.0728 13.8258 10.3733 13.7678C11.5512 13.3728 12.5751 12.6175 13.3003 11.6089C14.0256 10.6002 14.4155 9.38912 14.415 8.14677C14.415 4.87398 11.7663 2.22168 8.5 2.22168Z"
+            fill="currentColor"
+          ></path>
+        </svg></a>
         <a
           href="https://github.com/tiagozip/cap/issues/new/choose"
           target="_blank"
-          rel="nofollow noopener"
-        >Need help?</a>
+          rel="follow noopener"
+        >
+          Report issue
+        </a>
         <a href="https://capjs.js.org/" target="_blank" class="poweredby">
           Powered by Cap
         </a>
@@ -210,16 +239,6 @@
   <script>
     let loading = false;
     document.querySelector("input").focus();
-
-    document.querySelector(".password").addEventListener("input", function (e) {
-      if (document.querySelector(".password").value.trim().length < 30) {
-        document.querySelector("button[type=submit]").disabled = true;
-        return;
-      }
-      if (!loading) {
-        document.querySelector("button[type=submit]").disabled = false;
-      }
-    });
 
     document
       .querySelector("form")
@@ -275,11 +294,11 @@
 
         if (passwordInput.type === "password") {
           passwordInput.type = "text";
-          passwordInput.placeholder = "";
+          passwordInput.placeholder = "MyCapAdminKey1234567!";
           showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
         } else {
           passwordInput.type = "password";
-          passwordInput.placeholder = "••••••••••••••";
+          passwordInput.placeholder = "•••••••••••••••••••••";
           showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
         }
       });

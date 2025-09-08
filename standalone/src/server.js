@@ -505,6 +505,18 @@ export const server = new Elysia({
 			},
 		},
 	)
+	.get(
+		"/about",
+		async () => {
+			const pkg = await import("../package.json", { assert: { type: "json" } });
+
+			return {
+				bun: Bun.version,
+				ver: pkg.default.version,
+			};
+		},
+		{},
+	)
 	.post(
 		"/logout",
 		async ({ body, headers, set }) => {
