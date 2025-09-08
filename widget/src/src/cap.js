@@ -146,7 +146,7 @@
 			this.#div = document.createElement("div");
 			this.createUI();
 			this.addEventListeners();
-			await this.initialize();
+			this.initialize();
 			this.#div.removeAttribute("disabled");
 
 			const workers = this.getAttribute("data-cap-worker-count");
@@ -326,6 +326,24 @@
 							window.CAP_CUSTOM_WASM_URL ||
 							`https://cdn.jsdelivr.net/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
 					});
+
+					if (
+						typeof WebAssembly !== "object" ||
+						typeof WebAssembly?.instantiate !== "function"
+					) {
+						if (this.#shadow.querySelector(".warning")) return;
+						const warningEl = document.createElement("div");
+						warningEl.className = "warning";
+						warningEl.style.cssText = `width: var(--cap-widget-width, 230px);background: rgb(237, 56, 46);color: white;padding: 4px 6px;padding-bottom: calc(var(--cap-border-radius, 14px) + 5px);font-size: 10px;box-sizing: border-box;font-family: system-ui;border-top-left-radius: 8px;border-top-right-radius: 8px;text-align: center;padding-bottom:calc(var(--cap-border-radius,14px) + 5px);user-select:none;margin-bottom: -35.5px;opacity: 0;transition: margin-bottom .3s,opacity .3s;`;
+						warningEl.innerText =
+							this.getI18nText("wasm-disabled", "Enable WASM for significantly faster solving");
+						this.#shadow.insertBefore(warningEl, this.#shadow.firstChild);
+
+						setTimeout(() => {
+							warningEl.style.marginBottom = `calc(-1 * var(--cap-border-radius, 14px))`
+							warningEl.style.opacity = 1;
+						}, 10);
+					}
 				});
 
 			const results = [];
