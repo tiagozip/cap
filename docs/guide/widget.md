@@ -80,6 +80,7 @@ You can change the text on each label of the widget by setting the `data-cap-i18
   data-cap-i18n-initial-state="I'm a human"
   data-cap-i18n-solved-label="I'm a human"
   data-cap-i18n-error-label="Error"
+  data-cap-i18n-wasm-disabled="Enable WASM for significantly faster solving"
 ></cap-widget>
 ```
 
