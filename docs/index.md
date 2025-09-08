@@ -4,8 +4,8 @@ layout: home
 
 hero:
   name: "Cap"
-  text: "A modern, lightning-quick PoW captcha"
-  tagline: "Cap is a lightweight, modern open-source CAPTCHA alternative using proof-of-work"
+  text: "The modern, open-source CAPTCHA"
+  tagline: "Lightweight, self-hosted, privacy-friendly, and designed to put you first. Switch from reCAPTCHA in minutes."
   image:
     src: /logo.png
     alt: VitePress
@@ -23,27 +23,27 @@ hero:
 features:
   - icon: ⚡️
     title: 250x smaller than hCaptcha
-    details: Cap's widget library is extremely small, only about ~20kb (including WASM)
+    details: ~20kb, zero dependencies, loads in milliseconds
   - icon: 🔒️
     title: Privacy-first
-    details: Cap doesn't track, fingerprint, or collect any user data.
+    details: Cap doesn't send any telemetry back to our servers
   - icon: 🌈
     title: Fully customizable
-    details: Cap is self-hostable so you can customize both the backend & frontend (or you can just use CSS variables)
-  - icon: 🤖
-    title: PoW-based
-    details: Cap uses PoW instead of visual puzzles, making it easier for humans and harder for bots
-  - icon: 🧩
+    details: Change the colors, size, position, icons and more with CSS variables
+  - icon: 💽
+    title: Proof-of-work
+    details: Your users no longer have to waste time solving visual puzzles.
+  - icon: 🐳
     title: Standalone mode
-    details: Cap offers a standalone mode with Docker, allowing you to use it with languages other than JS
+    details: Run Cap anywhere with a Docker container with analytics & more
   - icon: 💨
     title: Invisible
-    details: Cap can run invisibly in the background without the widget
-  - icon: ⚓
-    title: Floating mode
-    details: Cap can keep your CAPTCHA hidden until a button is pressed
+    details: Hide Cap's widget and solve challenges in the background
+  - icon: 🤖
+    title: M2M
+    details: Keep your APIs protected while accessible to friendly robots
   - icon: 🌳
-    title: Fully FOSS
+    title: Open-source
     details: Completely free & open-source under the Apache 2.0 license
 ---
 

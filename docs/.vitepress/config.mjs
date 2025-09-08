@@ -128,7 +128,7 @@ export default withMermaid({
 		[
 			"script",
 			{
-				src: "https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.25",
+				src: "https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.28",
 				async: true,
 			},
 		],
