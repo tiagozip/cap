@@ -10,7 +10,7 @@ Unlike traditional CAPTCHAs, Cap:
 
 - Is fast and unobtrusive
 - Uses no tracking or cookies
-- Uses proof-of-work instead of intrusive puzzles
+- Uses proof-of-work instead of annoying visual puzzles
 - Is fully accessible and self-hostable
 
 Here, try it yourself:
