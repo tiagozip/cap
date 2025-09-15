@@ -14,6 +14,12 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 
 - **[@espressotutorialsgmbh/cap-angular-widget](https://www.npmjs.com/package/@espressotutorialsgmbh/cap-angular-widget)**
 
+## Hooks
+
+These are React hook implementations of the Cap API, allowing full customization of the user experience.
+
+- **[@takeshape/use-cap]([https://npmjs](https://www.npmjs.com/package/@takeshape/use-cap)**
+
 ## Server
 
 **Warning:** These libraries are community-maintained and not officially supported or actively monitored for security by Cap. We can't guarantee their quality, security, or compatibility. They also might not support newer features such as storage hooks or seeded challenges.
