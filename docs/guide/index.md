@@ -32,11 +32,11 @@ Start by adding importing the Cap widget library from a CDN:
 ::: code-group
 
 ```html [jsdelivr]
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.25"></script>
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.28"></script>
 ```
 
 ```html [unpkg]
-<script src="https://unpkg.com/@cap.js/widget@0.1.25"></script>
+<script src="https://unpkg.com/@cap.js/widget@0.1.28"></script>
 ```
 
 :::
