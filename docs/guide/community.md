@@ -9,6 +9,7 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 ### React
 
 - **[@pitininja/cap-react-widget](https://www.npmjs.com/package/@pitininja/cap-react-widget)**
+- **[cap-widget](https://ui.ednesdayw.com/docs/components/cap-widget)**: A headless, shadcn-compatible React component for CAP (Captcha-Alternative Protocol) integration
 
 ### Angular
 
