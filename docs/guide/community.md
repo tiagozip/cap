@@ -18,7 +18,7 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 
 These are React hook implementations of the Cap API, allowing full customization of the user experience.
 
-- **[@takeshape/use-cap]([https://npmjs](https://www.npmjs.com/package/@takeshape/use-cap)**
+- **[@takeshape/use-cap](https://www.npmjs.com/package/@takeshape/use-cap)**
 
 ## Server
 
