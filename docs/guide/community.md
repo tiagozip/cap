@@ -9,10 +9,17 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 ### React
 
 - **[@pitininja/cap-react-widget](https://www.npmjs.com/package/@pitininja/cap-react-widget)**
+- **[cap-widget](https://ui.ednesdayw.com/docs/components/cap-widget)**: A headless, shadcn-compatible React component for CAP
 
 ### Angular
 
 - **[@espressotutorialsgmbh/cap-angular-widget](https://www.npmjs.com/package/@espressotutorialsgmbh/cap-angular-widget)**
+
+## Hooks
+
+These are React hook implementations of the Cap API, allowing full customization of the user experience.
+
+- **[@takeshape/use-cap](https://www.npmjs.com/package/@takeshape/use-cap)**
 
 ## Server
 
