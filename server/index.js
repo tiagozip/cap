@@ -52,7 +52,7 @@
  * @property {function(string, ChallengeData): Promise<void>} store - Store challenge data
  * @property {function(string): Promise<ChallengeData|null>} read - Retrieve challenge data
  * @property {function(string): Promise<void>} delete - Delete challenge data
- * @property {function(): Promise<string[]>} listExpired - List expired challenge tokens
+ * @property {function(): Promise<string[]>} deleteExpired - Delete expired challenge tokens
  */
 
 /**
@@ -60,7 +60,7 @@
  * @property {function(string, number): Promise<void>} store - Store token with expiration
  * @property {function(string): Promise<number|null>} get - Retrieve token expiration
  * @property {function(string): Promise<void>} delete - Delete token
- * @property {function(): Promise<string[]>} listExpired - List expired token keys
+ * @property {function(): Promise<string[]>} deleteExpired - Delete expired token keys
  */
 
 /**
@@ -441,15 +441,8 @@ class Cap extends EventEmitter {
 		const now = Date.now();
 		let tokensChanged = false;
 
-		if (this.config.storage?.challenges?.listExpired) {
-			const expiredChallenges =
-				await this.config.storage.challenges.listExpired();
-
-			await Promise.all(
-				expiredChallenges.map(async (token) => {
-					await this._deleteChallenge(token);
-				}),
-			);
+		if (this.config.storage?.challenges?.deleteExpired) {
+			await this.config.storage.challenges.deleteExpired();
 		} else if (!this.config.storage?.challenges) {
 			const expired = Object.entries(this.config.state.challengesList)
 				.filter(([_, v]) => v.expires < now)
@@ -462,18 +455,12 @@ class Cap extends EventEmitter {
 			);
 		} else {
 			console.warn(
-				"[cap] challenge storage hooks provided but no listExpired, couldn't delete expired challenges",
+				"[cap] challenge storage hooks provided but no deleteExpired, couldn't delete expired challenges",
 			);
 		}
 
-		if (this.config.storage?.tokens?.listExpired) {
-			const expiredTokens = await this.config.storage.tokens.listExpired();
-			await Promise.all(
-				expiredTokens.map(async (tokenKey) => {
-					await this._deleteToken(tokenKey);
-					tokensChanged = true;
-				}),
-			);
+		if (this.config.storage?.tokens?.deleteExpired) {
+			await this.config.storage.tokens.deleteExpired();
 		} else if (!this.config.storage?.tokens) {
 			for (const k in this.config.state.tokensList) {
 				if (this.config.state.tokensList[k] < now) {
@@ -483,7 +470,7 @@ class Cap extends EventEmitter {
 			}
 		} else {
 			console.warn(
-				"[cap] token storage hooks provided but no listExpired, couldn't delete expired tokens",
+				"[cap] token storage hooks provided but no deleteExpired, couldn't delete expired tokens",
 			);
 		}
 

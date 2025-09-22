@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/server",
-  "version": "3.0.1",
+  "version": "4.0.1",
   "author": "Tiago",
   "repository": {
     "type": "git",
@@ -54,7 +54,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "npm:publish": "bun publish --access public"
+    "publish": "bun publish --access public"
   },
   "type": "commonjs",
   "dependencies": {

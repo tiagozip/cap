@@ -62,12 +62,8 @@ const cap = new Cap({
       delete: async (token) => {
         db.prepare("DELETE FROM challenges WHERE token = ?").run(token);
       },
-      listExpired: async () => {
-        const rows = db
-          .prepare("SELECT token FROM challenges WHERE expires <= ?")
-          .all(Date.now());
-
-        return rows.map((row) => row.token);
+      deleteExpired: async () => {
+        db.prepare("DELETE FROM challenges WHERE expires <= ?").run(Date.now());
       },
     },
     tokens: {
@@ -86,12 +82,8 @@ const cap = new Cap({
       delete: async (tokenKey) => {
         db.prepare("DELETE FROM tokens WHERE key = ?").run(tokenKey);
       },
-      listExpired: async () => {
-        const rows = db
-          .prepare("SELECT key FROM tokens WHERE expires <= ?")
-          .all(Date.now());
-
-        return rows.map((row) => row.key);
+      deleteExpired: async () => {
+        db.prepare("DELETE FROM tokens WHERE expires <= ?").run(Date.now());
       },
     },
   },
@@ -201,13 +193,13 @@ if (!success) throw new Error("invalid cap token");
       "store": "async (token, challengeData) => {}",
       "read": "async (token) => {}",
       "delete": "async (token) => {}",
-      "listExpired": "async () => []"
+      "deleteExpired": "async () => {}"
     },
     "tokens": {
       "store": "async (tokenKey, expires) => {}",
       "get": "async (tokenKey) => {}",
       "delete": "async (tokenKey) => {}",
-      "listExpired": "async () => []"
+      "deleteExpired": "async () => {}"
     }
   },
 
