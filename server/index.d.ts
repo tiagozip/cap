@@ -191,9 +191,9 @@ type ChallengeStorage = {
      */
     delete: (arg0: string) => Promise<void>;
     /**
-     * - List expired challenge tokens
+     * - Delete expired challenge tokens
      */
-    listExpired: () => Promise<string[]>;
+    deleteExpired: () => Promise<string[]>;
 };
 type TokenStorage = {
     /**
@@ -209,9 +209,9 @@ type TokenStorage = {
      */
     delete: (arg0: string) => Promise<void>;
     /**
-     * - List expired token keys
+     * - Delete expired token keys
      */
-    listExpired: () => Promise<string[]>;
+    deleteExpired: () => Promise<string[]>;
 };
 type StorageHooks = {
     /**
