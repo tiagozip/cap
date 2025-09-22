@@ -73,8 +73,6 @@ You can choose between using the Standalone server or implementing your own serv
 
 - For most use cases, we recommend using the **[Standalone server](./standalone/index.md)** as it provides a complete solution with built-in features like token storage, ratelimiting, analytics, and a pretty nice dashboard. However, it does require docker and exposing the server port.
 
-- However, if you prefer to implement your own server, you can use the `@cap.js/server` package. This package provides the necessary methods to create and validate challenges, as well as redeem solutions, but it only works with a JavaScript backend.
-
-  It also gives you a small, simple JSON token storage, but you'll probably want to use a more robust solution like SQLite or Redis, but don't worry, we'll tell you everything about that [on the server guide](./server.md).
+- However, if you prefer to implement your own server, you can use the `@cap.js/server` package. This package provides the necessary methods to create and validate challenges, as well as redeem solutions, but it only works with a JavaScript backend and you'll have to add your own db. [See the server guide](./server.md) for more details.
 
 - If you would like the simplicity of the server package but with another language, check out the [community packages](./community.md)
