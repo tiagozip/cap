@@ -95,7 +95,6 @@
 
 		initialize() {
 			this.#workerUrl = URL.createObjectURL(
-				// MARK: worker injection
 				// this placeholder will be replaced with the actual worker by the build script
 
 				new Blob([`%%workerScript%%`], {

@@ -1,11 +1,12 @@
 import { Database } from "bun:sqlite";
 import fs from "node:fs";
+import { join } from "node:path";
 
-fs.mkdirSync("./.data", {
+fs.mkdirSync(process.env.DATA_PATH || "./.data", {
 	recursive: true,
 });
 
-const db = new Database("./.data/db.sqlite");
+const db = new Database(join(process.env.DATA_PATH || "./.data", "db.sqlite"));
 
 db.query(
 	`create table if not exists sessions (

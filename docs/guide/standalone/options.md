@@ -44,3 +44,6 @@ By default, Standalone will use Elysia's built-in `server.requestIP` function to
 If so, you can change the IP extraction logic to simply read from a header set in `RATELIMIT_IP_HEADER` in your env. For example, if you were using Cloudflare, you might set `RATELIMIT_IP_HEADER` to `cf-connecting-ip`. On most setups, this is `x-forwarded-for`.
 
 If you're interested in an option to fully disable ratelimiting, let us know using GitHub issues.
+
+## Custom data path
+If you would like the data to be stored in a custom path inside the container, you can set the `DATA_PATH` environment variable to the desired path. Note that this only works in Standalone 2.0.9 or above. Added by [#100](https://github.com/tiagozip/cap/issues/100)

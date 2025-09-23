@@ -13,7 +13,8 @@ if (
 	);
 }
 
-const dataDir = "./.data";
+const dataDir = process.env.DATA_PATH || "./.data";
+
 const updateCache = async () => {
 	if (process.env.ENABLE_ASSETS_SERVER !== "true") return;
 
@@ -23,7 +24,7 @@ const updateCache = async () => {
 		cacheConfig = JSON.parse(await fs.readFile("./assets-cache.json", "utf-8"));
 	} catch {}
 
-	const lastUpdate = cacheConfig["lastUpdate"] || 0;
+	const lastUpdate = cacheConfig.lastUpdate || 0;
 	const currentTime = Date.now();
 	const updateInterval = 1000 * 60 * 60 * 24; // 1 day
 
@@ -51,7 +52,7 @@ const updateCache = async () => {
 				).then((r) => r.text()),
 			]);
 
-		cacheConfig["lastUpdate"] = currentTime;
+		cacheConfig.lastUpdate = currentTime;
 		await fs.writeFile(
 			path.join(dataDir, "assets-cache.json"),
 			JSON.stringify(cacheConfig),

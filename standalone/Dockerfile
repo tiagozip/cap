@@ -20,7 +20,8 @@ COPY --from=prod /temp/prod/node_modules node_modules
 COPY --from=prerelease /usr/src/app .
 WORKDIR /usr/src/app
 
-RUN mkdir -p /usr/src/app/.data && chown -R bun:bun /usr/src/app/.data
+ENV DATA_PATH=/usr/src/app/.data
+RUN mkdir -p ${DATA_PATH} && chown -R bun:bun ${DATA_PATH}
 
 EXPOSE 3000/tcp
 
