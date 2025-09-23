@@ -65,6 +65,8 @@ widget.addEventListener("solve", function (e) {
 
 Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data. for this, it'll create a hidden field with name set to its `data-cap-hidden-field-name` attribute or `cap-token`).
 
+You can learn how to use the widget in more detail (such as the invisible mode) in the [widget guide](./widget.md).
+
 ## Server-side
 
 Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.
