@@ -52,7 +52,7 @@
  * @property {function(string, ChallengeData): Promise<void>} store - Store challenge data
  * @property {function(string): Promise<ChallengeData|null>} read - Retrieve challenge data
  * @property {function(string): Promise<void>} delete - Delete challenge data
- * @property {function(): Promise<string[]>} deleteExpired - Delete expired challenge tokens
+ * @property {function(): Promise<void>} deleteExpired - Delete expired challenge tokens
  */
 
 /**
@@ -60,7 +60,7 @@
  * @property {function(string, number): Promise<void>} store - Store token with expiration
  * @property {function(string): Promise<number|null>} get - Retrieve token expiration
  * @property {function(string): Promise<void>} delete - Delete token
- * @property {function(): Promise<string[]>} deleteExpired - Delete expired token keys
+ * @property {function(): Promise<void>} deleteExpired - Delete expired token keys
  */
 
 /**
