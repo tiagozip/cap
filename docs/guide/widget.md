@@ -4,7 +4,7 @@
 >
 > **Requirements:** All modern browsers should be supported, but the build script specifically targets the last 10 versions of Chrome, Firefox, Safari and Edge.
 
-`@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the Captcha solver. First, add it to your client-side code:
+`@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the CAPTCHA solver. First, add it to your client-side code:
 
 ::: code-group
 
@@ -23,6 +23,12 @@
 ```
 
 :::
+
+You can also import it if you're using a bundler:
+
+```js
+import Cap from '@cap.js/widget';
+```
 
 ::: warning
 
@@ -59,6 +65,19 @@ widget.addEventListener("solve", function (e) {
 
 Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data. for this, it'll create a hidden field with name set to its `data-cap-hidden-field-name` attribute or `cap-token`).
 
+## Invisible mode
+You can use `new Cap({ ... })` in your client-side JavaScript to create a new Cap instance and use the `solve()` method to solve the challenge. This is helpful for situations where you don't want the Cap widget to be visible but still want security, e.g. on a social media app when posting something.
+
+```js
+import Cap from '@cap.js/widget';
+
+const cap = new Cap({
+  apiEndpoint: '/api/cap'
+});
+
+const token = await cap.solve();
+```
+
 ## Supported events
 
 The following custom events are supported:
@@ -94,7 +113,8 @@ You can override the default browser fetch implementation by setting `window.CAP
 
 ```js
 window.CAP_CUSTOM_FETCH = function (url, options) {
-  // Custom fetch implementation
+  // … add your custom fetch implementation
+
   return fetch(url, options);
 };
 ```
@@ -133,3 +153,7 @@ cap-widget {
   --cap-opacity-hover: 0.8;
 }
 ```
+
+## Types
+
+Cap's widget is fully typed. You can find the type definitions in the `cap.d.ts` file.

@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/widget",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "Client-side widget for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "keywords": [
     "security",
@@ -49,7 +49,8 @@
     "url": "git+https://github.com/tiagozip/cap.git"
   },
   "license": "Apache-2.0",
-  "author": "Tiago Rangel",
+  "author": "Tiago",
   "type": "commonjs",
-  "main": "cap.min.js"
+  "main": "cap.min.js",
+  "types": "cap.d.ts"
 }
