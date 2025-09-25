@@ -20,8 +20,15 @@ const get24hPreviousQuery = db.query(`
 `);
 const getKeysQuery = db.query(`SELECT * FROM keys ORDER BY created DESC`);
 
+// Normalize BASE_PATH
+let basePath = process.env.BASE_PATH || '';
+if (basePath) {
+	if (!basePath.startsWith('/')) basePath = '/' + basePath;
+	if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+}
+
 export const server = new Elysia({
-	prefix: "/server",
+	prefix: basePath + "/server",
 	detail: {
 		security: [
 			{

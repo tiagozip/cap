@@ -79,8 +79,15 @@ const updateCache = async () => {
 updateCache();
 setInterval(updateCache, 1000 * 60 * 60);
 
+// Normalize BASE_PATH
+let basePath = process.env.BASE_PATH || '';
+if (basePath) {
+	if (!basePath.startsWith('/')) basePath = '/' + basePath;
+	if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+}
+
 export const assetsServer = new Elysia({
-	prefix: "/assets",
+	prefix: basePath + "/assets",
 	detail: { tags: ["Assets"] },
 })
 	.use(

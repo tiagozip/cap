@@ -251,8 +251,12 @@
 
         document.querySelector("button[type=submit]").disabled = true;
 
+        // Extract base path from current URL
+        const currentPath = window.location.pathname;
+        const basePath = currentPath === '/' ? '' : currentPath.replace(/\/$/, '');
+        
         const { success, session_token, hashed_token, expires } = await (
-          await fetch("/auth/login", {
+          await fetch(`${basePath}/auth/login`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

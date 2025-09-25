@@ -9,6 +9,13 @@ import { server } from "./server.js";
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || '0.0.0.0'
 
+// Normalize BASE_PATH: optional, defaults to no base path, must start with '/' and not end with '/'
+let basePath = process.env.BASE_PATH || '';
+if (basePath) {
+	if (!basePath.startsWith('/')) basePath = '/' + basePath;
+	if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+}
+
 new Elysia({
 	serve: {
 		port: serverPort,
@@ -20,7 +27,7 @@ new Elysia({
 			scalarConfig: {
 				customCss: `.section-header-wrapper .section-header.tight { margin-top: 10px; }`,
 			},
-			exclude: ["/", "/auth/login"],
+			exclude: [basePath + "/", basePath + "/auth/login"],
 			documentation: {
 				tags: [
 					{
@@ -56,8 +63,23 @@ new Elysia({
 			},
 		}),
 	)
-	.use(staticPlugin())
-	.get("/", async ({ cookie }) => {
+	.get(basePath + "/public/*", ({ params }) => {
+		const filePath = params['*'] || '';
+		return file(`./public/${filePath}`);
+	})
+	.use(staticPlugin({
+		assets: "./public",
+		prefix: "/public"
+	}))
+	.get(basePath, ({ set }) => {
+		// Redirect to add trailing slash when base path is configured
+		if (basePath) {
+			set.status = 301;
+			set.headers.Location = basePath + "/";
+			return "Redirecting...";
+		}
+	})
+	.get(basePath + "/", async ({ cookie }) => {
 		return file(
 			cookie.cap_authed?.value === "yes"
 				? "./public/index.html"
@@ -70,4 +92,10 @@ new Elysia({
 	.use(capServer)
 	.listen(serverPort);
 
-console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}`);
+console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}${basePath}`);
+if (basePath) {
+	console.log(` Base path configured: ${basePath}`);
+	console.log(` Auth endpoint: ${basePath}/auth/login`);
+	console.log(` Server API: ${basePath}/server/*`);
+	console.log(` Assets: ${basePath}/assets/*`);
+}

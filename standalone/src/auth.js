@@ -20,8 +20,15 @@ if (ADMIN_KEY.length < 30)
 		"auth: Admin key too short. Please use one that's at least 30 characters",
 	);
 
+// Normalize BASE_PATH
+let basePath = process.env.BASE_PATH || '';
+if (basePath) {
+	if (!basePath.startsWith('/')) basePath = '/' + basePath;
+	if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+}
+
 export const auth = new Elysia({
-	prefix: "/auth",
+	prefix: basePath + "/auth",
 })
 	.use(
 		rateLimit({

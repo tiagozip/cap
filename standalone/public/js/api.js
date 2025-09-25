@@ -19,7 +19,10 @@ export default async (method, path, body) => {
       requestInit.body = JSON.stringify(body);
     }
 
-    const json = await (await fetch(`/server${path}`, requestInit)).json();
+    // Extract base path from current URL
+    const currentPath = window.location.pathname;
+    const basePath = currentPath === '/' ? '' : currentPath.replace(/\/$/, '');
+    const json = await (await fetch(`${basePath}/server${path}`, requestInit)).json();
 
     if (json?.error === "Unauthorized") {
       localStorage.removeItem("cap_auth");

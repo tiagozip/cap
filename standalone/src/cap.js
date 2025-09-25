@@ -42,7 +42,15 @@ const upsertSolutionQuery = db.query(`
   DO UPDATE SET count = count + 1
 `);
 
+// Normalize BASE_PATH
+let basePath = process.env.BASE_PATH || '';
+if (basePath) {
+	if (!basePath.startsWith('/')) basePath = '/' + basePath;
+	if (basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+}
+
 export const capServer = new Elysia({
+	prefix: basePath,
 	detail: {
 		tags: ["Challenges"],
 	},
