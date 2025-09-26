@@ -10,9 +10,6 @@ Set the `BASE_PATH` environment variable to the desired path prefix:
 # Host at /cap
 BASE_PATH=/cap bun run src/index.js
 
-# Host at /captcha  
-BASE_PATH=/captcha bun run src/index.js
-
 # Host at /security/cap
 BASE_PATH=/security/cap bun run src/index.js
 ```
@@ -22,9 +19,6 @@ BASE_PATH=/security/cap bun run src/index.js
 ```bash
 # Basic usage with BASE_PATH
 docker run -e BASE_PATH=/cap -e ADMIN_KEY=your_admin_key tiago2/cap:latest
-
-# With port mapping
-docker run -p 3000:3000 -e BASE_PATH=/captcha -e ADMIN_KEY=your_admin_key tiago2/cap:latest
 
 # Using docker-compose
 # docker-compose.yml
@@ -53,9 +47,9 @@ ADMIN_KEY=your_admin_key
 When using the Cap widget with a custom BASE_PATH, you must include the base path in the `data-cap-api-endpoint` attribute:
 
 ```html
-<!-- For BASE_PATH=/captcha -->
+<!-- For BASE_PATH=/cap -->
 <cap-widget 
-  data-cap-api-endpoint="/captcha/YOUR_SITE_KEY/"
+  data-cap-api-endpoint="/cap/YOUR_SITE_KEY/"
   data-cap-hidden-field-name="cap-token">
 </cap-widget>
 
