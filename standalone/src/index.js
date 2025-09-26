@@ -7,12 +7,12 @@ import { capServer } from "./cap.js";
 import { server } from "./server.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
-const serverHostname = process.env.SERVER_HOSTNAME || '0.0.0.0'
+const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
 
 new Elysia({
 	serve: {
 		port: serverPort,
-		hostname: serverHostname
+		hostname: serverHostname,
 	},
 })
 	.use(
