@@ -93,9 +93,3 @@ new Elysia({
 	.listen(serverPort);
 
 console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}${basePath}`);
-if (basePath) {
-	console.log(` Base path configured: ${basePath}`);
-	console.log(` Auth endpoint: ${basePath}/auth/login`);
-	console.log(` Server API: ${basePath}/server/*`);
-	console.log(` Assets: ${basePath}/assets/*`);
-}
