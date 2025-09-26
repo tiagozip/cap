@@ -42,6 +42,22 @@ You can change the default CORS settings for redeeming tokens, generating challe
 You can change the default port and hostname by setting the `SERVER_PORT` and `SERVER_HOSTNAME` environment variables when running the server. This defaults are `0.0.0.0` for hostname and `3000` for port.
 If you change port or hostname, you need to adapt Docker's port forwarding.
 
+### Custom Base Path
+
+You can provide a custom root URL for UI and API access by setting the `BASE_PATH` environment variables when running the server. This defaults to no base path, serving all requests from the hostname root. The BASE_PATH is automatically normalized to start with `/` and to not end with `/`.
+
+Example running server with custom root URL:
+
+```bash
+docker run -d \
+  -p 3000:3000 \
+  -v cap-data:/usr/src/app/.data \
+  -e ADMIN_KEY=your_secret_key \
+  -e BASE_PATH=/cap \
+  --name cap-standalone \
+  tiago2/cap:latest
+```
+
 ## Usage
 
 ### Client-side
@@ -65,6 +81,16 @@ Example:
 <cap-widget
   data-cap-api-endpoint="https://cap.example.com/d9256640cb53/api/"
 ></cap-widget>
+```
+
+When using the Cap widget with a custom BASE_PATH, you must include the base path in the `data-cap-api-endpoint` attribute:
+
+```html
+<!-- For BASE_PATH=/cap -->
+<cap-widget
+  data-cap-api-endpoint="https://cap.example.com/cap/d9256640cb53/api/"
+  data-cap-hidden-field-name="cap-token">
+</cap-widget>
 ```
 
 > [!TIP]  
