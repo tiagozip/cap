@@ -87,7 +87,7 @@ if (basePath) {
 }
 
 export const assetsServer = new Elysia({
-	prefix: basePath + "/assets",
+	prefix: `${basePath}/assets`,
 	detail: { tags: ["Assets"] },
 })
 	.use(

@@ -63,13 +63,9 @@ new Elysia({
 			},
 		}),
 	)
-	.get(basePath + "/public/*", ({ params }) => {
-		const filePath = params['*'] || '';
-		return file(`./public/${filePath}`);
-	})
 	.use(staticPlugin({
 		assets: "./public",
-		prefix: "/public"
+		prefix: `${basePath}/public`
 	}))
 	.get(basePath, ({ set }) => {
 		// Redirect to add trailing slash when base path is configured
