@@ -1,5 +1,5 @@
-import { Worker } from "worker_threads";
-import os from "os";
+import os from "node:os";
+import { Worker } from "node:worker_threads";
 
 function prng(seed, length) {
   function fnv1a(str) {
@@ -61,7 +61,7 @@ try {
   ],
   {
     type: "application/typescript",
-  }
+  },
 );
 
 const workerUrl = URL.createObjectURL(workerBlob);
@@ -114,7 +114,7 @@ export default function solve(challenge, config = {}) {
           if (result.error) {
             console.error(
               `Error in worker for challenge ${currentChallengeIndex}:`,
-              result.error
+              result.error,
             );
             reject(new Error(`Worker error: ${result.error}`));
             return;
@@ -126,7 +126,7 @@ export default function solve(challenge, config = {}) {
           if (config?.onProgress) {
             config.onProgress({
               progress: Math.floor(
-                (challengesProcessed / totalChallenges) * 100
+                (challengesProcessed / totalChallenges) * 100,
               ),
               currentChallenge: currentChallengeIndex,
               challengesProcessed,
