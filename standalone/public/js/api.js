@@ -23,8 +23,13 @@ export default async (method, path, body) => {
 
     if (json?.error === "Unauthorized") {
       localStorage.removeItem("cap_auth");
-      document.cookie =
-        "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      if (window?.CookieStore && CookieStore.prototype.delete) {
+        window.cookieStore.delete("cap_authed");
+      } else {
+        // biome-ignore lint/suspicious/noDocumentCookie: fallback implemented
+        document.cookie =
+          "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      }
       location.reload();
     }
 
