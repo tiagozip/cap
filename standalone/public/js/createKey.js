@@ -1,9 +1,8 @@
 import sendApiRequest from "./api.js";
-import setState from "./state.js";
 import initHomepage from "./homepage.js";
-
-import { createModal } from "./utils.js";
 import loadKeyPage from "./keyPage.js";
+import setState from "./state.js";
+import { createModal } from "./utils.js";
 
 async function openCreateKey(namePrefill = "") {
   const modal = createModal(
