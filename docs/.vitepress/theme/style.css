@@ -198,5 +198,11 @@ img {
 }
 
 .VPHero .heading span.name.clip {
-    display: none;
+  display: none;
+}
+
+/* biome-ignore lint/style/noDescendingSpecificity: order should be respected */
+*, *::before, *::after {
+  scrollbar-width: thin;
+  scrollbar-color: hsla(255 0 255 / 15%) #1b1b1f;
 }
