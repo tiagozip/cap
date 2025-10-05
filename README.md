@@ -6,7 +6,7 @@ Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="http
 
 ## Documentation
 
-[Read the Cap docs](https://capjs.js.org), try the [demo](https://capjs.js.org/guide/demo.html) or read the [feature comparison](https://capjs.js.org/guide/alternatives.html)
+[Read the Cap docs] (https://capjs.js.org), try the [demo](https://capjs.js.org/guide/demo.html) or read the [feature comparison](https://capjs.js.org/guide/alternatives.html)
 
 ## What is Cap?
 
