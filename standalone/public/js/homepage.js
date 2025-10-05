@@ -59,7 +59,7 @@ const initHomepage = async () => {
       keyEl.querySelector(".open-key").click();
     });
 
-    keyEl.querySelector(".open-key").addEventListener("click", (event) => {
+    keyEl.querySelector(".open-key").addEventListener("click", () => {
       loadKeyPage(key.siteKey);
     });
   });
