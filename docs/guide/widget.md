@@ -147,10 +147,10 @@ cap-widget {
   --cap-spinner-thickness: 5px;
   --cap-checkmark: url("data:image/svg+xml,...");
   --cap-error-cross: url("data:image/svg+xml,...");
-  --cap-credits-font-size: 12px;
-  --cap-opacity-hover: 0.8;
 }
 ```
+
+<small>Note: you _can_ technically hide the "Cap" label, but we kindly ask you to leave it visible. It's unobtrusive, doesn't track users, lightweight, and helps Cap grow.</small>
 
 ## Types
 
