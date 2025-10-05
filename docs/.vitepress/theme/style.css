@@ -51,7 +51,7 @@
 
   --vp-c-brand-1: #26b5fa;
   --vp-c-brand-2: #0688e5;
-  --vp-c-brand-3: #007AFF;
+  --vp-c-brand-3: #007aff;
   --vp-c-brand-soft: var(--vp-c-indigo-soft);
 
   --vp-c-tip-1: var(--vp-c-brand-1);
@@ -202,7 +202,13 @@ img {
 }
 
 /* biome-ignore lint/style/noDescendingSpecificity: order should be respected */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   scrollbar-width: thin;
   scrollbar-color: hsla(255 0 255 / 15%) #1b1b1f;
+}
+
+html, body {
+  scrollbar-gutter: stable;
 }
