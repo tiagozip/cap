@@ -87,6 +87,46 @@ const { EventEmitter } = require("node:events");
 const DEFAULT_TOKENS_STORE = ".data/tokensList.json";
 
 /**
+ * Generates a cryptographically secure random hex string of given length
+ *
+ * @param {number} bytesCount
+ * @returns {Promise<string>} Deterministic hex string generated from the seed
+ */
+async function randomHex(bytesCount) {
+  if (crypto.getRandomValues) {
+    const bytes = new Uint8Array(bytesCount);
+    crypto.getRandomValues(bytes);
+
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  return new Promise((resolve, reject) => {
+    crypto.randomBytes(bytesCount, (err, buf) => {
+      if (err) return reject(err);
+      resolve(buf.toString("hex"));
+    });
+  });
+}
+
+/**
+ * Calculates a SHA256 hash of a given string
+ * @param {string} str
+ * @returns {Promise<string>}
+ */
+async function sha256(str) {
+  if (crypto.webcrypto?.subtle) {
+    const enc = new TextEncoder();
+    const hash = await crypto.webcrypto.subtle.digest(
+      "SHA-256",
+      enc.encode(str)
+    );
+    return Buffer.from(hash).toString("hex");
+  }
+
+  return crypto.createHash("sha256").update(str).digest("hex");
+}
+
+/**
  * Generates a deterministic hex string of given length from a string seed
  *
  * @param {string} seed - Initial seed value
@@ -94,35 +134,35 @@ const DEFAULT_TOKENS_STORE = ".data/tokensList.json";
  * @returns {string} Deterministic hex string generated from the seed
  */
 function prng(seed, length) {
-	/**
-	 * @param {string} str
-	 */
-	function fnv1a(str) {
-		let hash = 2166136261;
-		for (let i = 0; i < str.length; i++) {
-			hash ^= str.charCodeAt(i);
-			hash +=
-				(hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
-		}
-		return hash >>> 0;
-	}
+  /**
+   * @param {string} str
+   */
+  function fnv1a(str) {
+    let hash = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash +=
+        (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return hash >>> 0;
+  }
 
-	let state = fnv1a(seed);
-	let result = "";
+  let state = fnv1a(seed);
+  let result = "";
 
-	function next() {
-		state ^= state << 13;
-		state ^= state >>> 17;
-		state ^= state << 5;
-		return state >>> 0;
-	}
+  function next() {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state >>> 0;
+  }
 
-	while (result.length < length) {
-		const rnd = next();
-		result += rnd.toString(16).padStart(8, "0");
-	}
+  while (result.length < length) {
+    const rnd = next();
+    result += rnd.toString(16).padStart(8, "0");
+  }
 
-	return result.substring(0, length);
+  return result.substring(0, length);
 }
 
 /**
@@ -130,399 +170,399 @@ function prng(seed, length) {
  * @extends EventEmitter
  */
 class Cap extends EventEmitter {
-	/** @type {Promise<void>|null} */
-	_cleanupPromise;
+  /** @type {Promise<void>|null} */
+  _cleanupPromise;
 
-	/** @type {number} */
-	_lastCleanup;
+  /** @type {number} */
+  _lastCleanup;
 
-	/** @type {CapConfig} */
-	config;
+  /** @type {CapConfig} */
+  config;
 
-	/**
-	 * Creates a new Cap instance
-	 * @param {Partial<CapConfig>} [configObj] - Configuration object
-	 */
-	constructor(configObj) {
-		super();
-		this._cleanupPromise = null;
-		this._lastCleanup = 0;
-		/** @type {CapConfig} */
-		this.config = {
-			tokens_store_path: DEFAULT_TOKENS_STORE,
-			noFSState: false,
-			state: {
-				challengesList: {},
-				tokensList: {},
-			},
-			...configObj,
-		};
+  /**
+   * Creates a new Cap instance
+   * @param {Partial<CapConfig>} [configObj] - Configuration object
+   */
+  constructor(configObj) {
+    super();
+    this._cleanupPromise = null;
+    this._lastCleanup = 0;
+    /** @type {CapConfig} */
+    this.config = {
+      tokens_store_path: DEFAULT_TOKENS_STORE,
+      noFSState: false,
+      state: {
+        challengesList: {},
+        tokensList: {},
+      },
+      ...configObj,
+    };
 
-		if (!this.config.noFSState && !this.config.storage?.tokens) {
-			this._loadTokens().catch(() => {});
-		}
+    if (!this.config.noFSState && !this.config.storage?.tokens) {
+      this._loadTokens().catch(() => {});
+    }
 
-		process.on("beforeExit", () => this.cleanup());
+    process.on("beforeExit", () => this.cleanup());
 
-		["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) => {
-			process.once(signal, () => {
-				this.cleanup()
-					.then(() => process.exit(0))
-					.catch(() => process.exit(1));
-			});
-		});
-	}
+    ["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) => {
+      process.once(signal, () => {
+        this.cleanup()
+          .then(() => process.exit(0))
+          .catch(() => process.exit(1));
+      });
+    });
+  }
 
-	/**
-	 * Performs cleanup if enough time has passed since last cleanup
-	 * @private
-	 * @returns {Promise<void>}
-	 */
-	async _lazyCleanup() {
-		if (this.config.disableAutoCleanup) return;
+  /**
+   * Performs cleanup if enough time has passed since last cleanup
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _lazyCleanup() {
+    if (this.config.disableAutoCleanup) return;
 
-		const now = Date.now();
-		const fiveMinutes = 5 * 60 * 1000;
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
 
-		if (now - this._lastCleanup > fiveMinutes) {
-			await this._cleanExpiredTokens();
-			this._lastCleanup = now;
-		}
-	}
+    if (now - this._lastCleanup > fiveMinutes) {
+      this._cleanExpiredTokens().catch((err) => {
+        console.error("[cap] cleanup failed", err);
+      });
+      this._lastCleanup = now;
+    }
+  }
 
-	/**
-	 * Retrieves challenge data from storage
-	 * @private
-	 * @param {string} token - Challenge token
-	 * @returns {Promise<ChallengeData|null>} Challenge data or null if not found
-	 */
-	async _getChallenge(token) {
-		if (this.config.storage?.challenges?.read) {
-			return (await this.config.storage.challenges.read(token)) || null;
-		}
+  /**
+   * Retrieves challenge data from storage
+   * @private
+   * @param {string} token - Challenge token
+   * @returns {Promise<ChallengeData|null>} Challenge data or null if not found
+   */
+  async _getChallenge(token) {
+    if (this.config.storage?.challenges?.read) {
+      return (await this.config.storage.challenges.read(token)) || null;
+    }
 
-		return this.config.state.challengesList[token] || null;
-	}
+    return this.config.state.challengesList[token] || null;
+  }
 
-	/**
-	 * Deletes challenge from storage
-	 * @private
-	 * @param {string} token - Challenge token
-	 * @returns {Promise<void>}
-	 */
-	async _deleteChallenge(token) {
-		if (this.config.storage?.challenges?.delete) {
-			await this.config.storage.challenges.delete(token);
-		} else {
-			delete this.config.state.challengesList[token];
-		}
-	}
+  /**
+   * Deletes challenge from storage
+   * @private
+   * @param {string} token - Challenge token
+   * @returns {Promise<void>}
+   */
+  async _deleteChallenge(token) {
+    if (this.config.storage?.challenges?.delete) {
+      await this.config.storage.challenges.delete(token);
+    } else {
+      delete this.config.state.challengesList[token];
+    }
+  }
 
-	/**
-	 * Generates a new challenge
-	 * @param {ChallengeConfig} [conf] - Challenge configuration
-	 * @returns {Promise<{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }>} Challenge data
-	 */
-	async createChallenge(conf) {
-		await this._lazyCleanup();
+  /**
+   * Generates a new challenge
+   * @param {ChallengeConfig} [conf] - Challenge configuration
+   * @returns {Promise<{ challenge: {c: number, s: number, d: number}, token?: string, expires: number }>} Challenge data
+   */
+  async createChallenge(conf) {
+    await this._lazyCleanup();
 
-		/** @type {{c: number, s: number, d: number}} */
-		const challenge = {
-			c: conf?.challengeCount ?? 50,
-			s: conf?.challengeSize ?? 32,
-			d: conf?.challengeDifficulty ?? 4,
-		};
+    /** @type {{c: number, s: number, d: number}} */
+    const challenge = {
+      c: conf?.challengeCount ?? 50,
+      s: conf?.challengeSize ?? 32,
+      d: conf?.challengeDifficulty ?? 4,
+    };
 
-		const token = crypto.randomBytes(25).toString("hex");
-		const expires = Date.now() + (conf?.expiresMs ?? 600000);
+    const token = await randomHex(25);
+    const expires = Date.now() + (conf?.expiresMs ?? 600000);
 
-		if (conf && conf.store === false) {
-			return { challenge, expires };
-		}
+    if (conf && conf.store === false) {
+      return { challenge, expires };
+    }
 
-		const challengeData = { expires, challenge };
+    const challengeData = { expires, challenge };
 
-		if (this.config.storage?.challenges?.store) {
-			await this.config.storage.challenges.store(token, challengeData);
-		} else {
-			this.config.state.challengesList[token] = challengeData;
-		}
+    if (this.config.storage?.challenges?.store) {
+      await this.config.storage.challenges.store(token, challengeData);
+    } else {
+      this.config.state.challengesList[token] = challengeData;
+    }
 
-		return { challenge, token, expires };
-	}
+    return { challenge, token, expires };
+  }
 
-	/**
-	 * Redeems a challenge solution in exchange for a token
-	 * @param {Solution} param0 - Challenge solution data
-	 * @returns {Promise<{success: boolean, message?: string, token?: string, expires?: number}>}
-	 */
-	async redeemChallenge({ token, solutions }) {
-		if (
-			!token ||
-			!solutions ||
-			!Array.isArray(solutions) ||
-			solutions.some((s) => typeof s !== "number")
-		) {
-			return { success: false, message: "Invalid body" };
-		}
+  /**
+   * Redeems a challenge solution in exchange for a token
+   * @param {Solution} param0 - Challenge solution data
+   * @returns {Promise<{success: boolean, message?: string, token?: string, expires?: number}>}
+   */
+  async redeemChallenge({ token, solutions }) {
+    if (
+      !token ||
+      !solutions ||
+      !Array.isArray(solutions) ||
+      solutions.some((s) => typeof s !== "number")
+    ) {
+      return { success: false, message: "Invalid body" };
+    }
 
-		await this._lazyCleanup();
+    await this._lazyCleanup();
 
-		const challengeData = await this._getChallenge(token);
-		await this._deleteChallenge(token);
+    const challengeData = await this._getChallenge(token);
+    await this._deleteChallenge(token);
 
-		if (!challengeData || challengeData.expires < Date.now()) {
-			return { success: false, message: "Challenge invalid or expired" };
-		}
+    if (!challengeData || challengeData.expires < Date.now()) {
+      return { success: false, message: "Challenge invalid or expired" };
+    }
 
-		let i = 0;
+    let i = 0;
 
-		const challenges = Array.from({ length: challengeData.challenge.c }, () => {
-			i = i + 1;
+    const challenges = Array.from({ length: challengeData.challenge.c }, () => {
+      i = i + 1;
 
-			return [
-				prng(`${token}${i}`, challengeData.challenge.s),
-				prng(`${token}${i}d`, challengeData.challenge.d),
-			];
-		});
+      return [
+        prng(`${token}${i}`, challengeData.challenge.s),
+        prng(`${token}${i}d`, challengeData.challenge.d),
+      ];
+    });
 
-		const isValid = challenges.every(([salt, target], i) => {
-			return (
-				typeof solutions[i] === "number" &&
-				crypto
-					.createHash("sha256")
-					.update(salt + solutions[i])
-					.digest("hex")
-					.startsWith(target)
-			);
-		});
+    const hashes = await Promise.all(
+      challenges.map(([salt, target], i) => {
+        if (typeof solutions[i] !== "number") return null;
+        return sha256(salt + solutions[i]).then((h) => [h, target]);
+      })
+    );
 
-		if (!isValid) return { success: false, message: "Invalid solution" };
+    const isValid = hashes.every((pair) => pair?.[0].startsWith(pair[1]));
 
-		const vertoken = crypto.randomBytes(15).toString("hex");
-		const expires = Date.now() + 20 * 60 * 1000;
-		const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
-		const id = crypto.randomBytes(8).toString("hex");
-		const tokenKey = `${id}:${hash}`;
+    if (!isValid) return { success: false, message: "Invalid solution" };
 
-		if (this.config.storage?.tokens?.store) {
-			await this.config.storage.tokens.store(tokenKey, expires);
-		} else {
-			if (this?.config?.state?.tokensList) {
-				this.config.state.tokensList[tokenKey] = expires;
-			}
+    const vertoken = await randomHex(15);
+    const expires = Date.now() + 20 * 60 * 1000;
+    const hash = await sha256(vertoken);
+    const id = await randomHex(8);
+    const tokenKey = `${id}:${hash}`;
 
-			if (!this.config.noFSState) {
-				await fs.writeFile(
-					this.config.tokens_store_path,
-					JSON.stringify(this.config.state.tokensList),
-					"utf8",
-				);
-			}
-		}
+    if (this.config.storage?.tokens?.store) {
+      await this.config.storage.tokens.store(tokenKey, expires);
+    } else {
+      if (this?.config?.state?.tokensList) {
+        this.config.state.tokensList[tokenKey] = expires;
+      }
 
-		return { success: true, token: `${id}:${vertoken}`, expires };
-	}
+      if (!this.config.noFSState) {
+        await fs.writeFile(
+          this.config.tokens_store_path,
+          JSON.stringify(this.config.state.tokensList),
+          "utf8"
+        );
+      }
+    }
 
-	/**
-	 * Retrieves token expiration from storage
-	 * @private
-	 * @param {string} tokenKey - Token key
-	 * @returns {Promise<number|null>} Token expiration or null if not found
-	 */
-	async _getToken(tokenKey) {
-		if (this.config.storage?.tokens?.get) {
-			return await this.config.storage.tokens.get(tokenKey);
-		}
+    return { success: true, token: `${id}:${vertoken}`, expires };
+  }
 
-		return this.config.state.tokensList[tokenKey] || null;
-	}
+  /**
+   * Retrieves token expiration from storage
+   * @private
+   * @param {string} tokenKey - Token key
+   * @returns {Promise<number|null>} Token expiration or null if not found
+   */
+  async _getToken(tokenKey) {
+    if (this.config.storage?.tokens?.get) {
+      return await this.config.storage.tokens.get(tokenKey);
+    }
 
-	/**
-	 * Deletes token from storage
-	 * @private
-	 * @param {string} tokenKey - Token key
-	 * @returns {Promise<void>}
-	 */
-	async _deleteToken(tokenKey) {
-		if (this.config.storage?.tokens?.delete) {
-			await this.config.storage.tokens.delete(tokenKey);
-		} else {
-			delete this.config.state.tokensList[tokenKey];
+    return this.config.state.tokensList[tokenKey] || null;
+  }
 
-			if (!this.config.noFSState) {
-				await fs.writeFile(
-					this.config.tokens_store_path,
-					JSON.stringify(this.config.state.tokensList),
-					"utf8",
-				);
-			}
-		}
-	}
+  /**
+   * Deletes token from storage
+   * @private
+   * @param {string} tokenKey - Token key
+   * @returns {Promise<void>}
+   */
+  async _deleteToken(tokenKey) {
+    if (this.config.storage?.tokens?.delete) {
+      await this.config.storage.tokens.delete(tokenKey);
+    } else {
+      delete this.config.state.tokensList[tokenKey];
 
-	/**
-	 * Validates a token
-	 * @param {string} token - The token to validate
-	 * @param {TokenConfig} [conf] - Validation configuration
-	 * @returns {Promise<{success: boolean}>}
-	 */
-	async validateToken(token, conf) {
-		await this._lazyCleanup();
+      if (!this.config.noFSState) {
+        await fs.writeFile(
+          this.config.tokens_store_path,
+          JSON.stringify(this.config.state.tokensList),
+          "utf8"
+        );
+      }
+    }
+  }
 
-		if (!token || typeof token !== "string") {
-			return { success: false };
-		}
+  /**
+   * Validates a token
+   * @param {string} token - The token to validate
+   * @param {TokenConfig} [conf] - Validation configuration
+   * @returns {Promise<{success: boolean}>}
+   */
+  async validateToken(token, conf) {
+    await this._lazyCleanup();
 
-		const parts = token.split(":");
-		if (parts.length !== 2 || !parts[0] || !parts[1]) {
-			return { success: false };
-		}
+    if (!token || typeof token !== "string") {
+      return { success: false };
+    }
 
-		const [id, vertoken] = parts;
-		const hash = crypto.createHash("sha256").update(vertoken).digest("hex");
-		const key = `${id}:${hash}`;
+    const parts = token.split(":");
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      return { success: false };
+    }
 
-		await this._waitForTokensList();
+    const [id, vertoken] = parts;
+    const hash = await sha256(vertoken);
+    const key = `${id}:${hash}`;
 
-		const tokenExpires = await this._getToken(key);
-		if (tokenExpires && tokenExpires > Date.now()) {
-			if (!conf?.keepToken) {
-				await this._deleteToken(key);
-			}
+    await this._waitForTokensList();
 
-			return { success: true };
-		}
+    const tokenExpires = await this._getToken(key);
+    if (tokenExpires && tokenExpires > Date.now()) {
+      if (!conf?.keepToken) {
+        await this._deleteToken(key);
+      }
 
-		return { success: false };
-	}
+      return { success: true };
+    }
 
-	/**
-	 * Loads tokens from the storage file
-	 * @private
-	 * @returns {Promise<void>}
-	 */
-	async _loadTokens() {
-		if (this.config.noFSState || this.config.storage?.tokens) return;
+    return { success: false };
+  }
 
-		try {
-			const dirPath = this.config.tokens_store_path
-				.split("/")
-				.slice(0, -1)
-				.join("/");
+  /**
+   * Loads tokens from the storage file
+   * @private
+   * @returns {Promise<void>}
+   */
+  async _loadTokens() {
+    if (this.config.noFSState || this.config.storage?.tokens) return;
 
-			if (dirPath) {
-				await fs.mkdir(dirPath, { recursive: true });
-			}
+    try {
+      const dirPath = this.config.tokens_store_path
+        .split("/")
+        .slice(0, -1)
+        .join("/");
 
-			try {
-				await fs.access(this.config.tokens_store_path);
-				const data = await fs.readFile(this.config.tokens_store_path, "utf-8");
-				this.config.state.tokensList = JSON.parse(data) || {};
-				await this._lazyCleanup();
-			} catch {
-				console.warn(`[cap] tokens file not found, creating a new empty one`);
-				await fs.writeFile(this.config.tokens_store_path, "{}", "utf-8");
-				this.config.state.tokensList = {};
-			}
-		} catch {
-			console.warn(
-				`[cap] Couldn't load or write tokens file, using empty state`,
-			);
-			this.config.state.tokensList = {};
-		}
-	}
+      if (dirPath) {
+        await fs.mkdir(dirPath, { recursive: true });
+      }
 
-	/**
-	 * Removes expired tokens and challenges from memory and storage
-	 * @private
-	 * @returns {Promise<boolean>} - True if any tokens were changed/removed
-	 */
-	async _cleanExpiredTokens() {
-		const now = Date.now();
-		let tokensChanged = false;
+      try {
+        await fs.access(this.config.tokens_store_path);
+        const data = await fs.readFile(this.config.tokens_store_path, "utf-8");
+        this.config.state.tokensList = JSON.parse(data) || {};
+        await this._lazyCleanup();
+      } catch {
+        console.warn(`[cap] tokens file not found, creating a new empty one`);
+        await fs.writeFile(this.config.tokens_store_path, "{}", "utf-8");
+        this.config.state.tokensList = {};
+      }
+    } catch {
+      console.warn(
+        `[cap] Couldn't load or write tokens file, using empty state`
+      );
+      this.config.state.tokensList = {};
+    }
+  }
 
-		if (this.config.storage?.challenges?.deleteExpired) {
-			await this.config.storage.challenges.deleteExpired();
-		} else if (!this.config.storage?.challenges) {
-			const expired = Object.entries(this.config.state.challengesList)
-				.filter(([_, v]) => v.expires < now)
-				.map(([k]) => k);
+  /**
+   * Removes expired tokens and challenges from memory and storage
+   * @private
+   * @returns {Promise<boolean>} - True if any tokens were changed/removed
+   */
+  async _cleanExpiredTokens() {
+    const now = Date.now();
+    let tokensChanged = false;
 
-			await Promise.all(
-				expired.map(async (k) => {
-					await this._deleteChallenge(k);
-				}),
-			);
-		} else {
-			console.warn(
-				"[cap] challenge storage hooks provided but no deleteExpired, couldn't delete expired challenges",
-			);
-		}
+    if (this.config.storage?.challenges?.deleteExpired) {
+      await this.config.storage.challenges.deleteExpired();
+    } else if (!this.config.storage?.challenges) {
+      const expired = Object.entries(this.config.state.challengesList)
+        .filter(([_, v]) => v.expires < now)
+        .map(([k]) => k);
 
-		if (this.config.storage?.tokens?.deleteExpired) {
-			await this.config.storage.tokens.deleteExpired();
-		} else if (!this.config.storage?.tokens) {
-			for (const k in this.config.state.tokensList) {
-				if (this.config.state.tokensList[k] < now) {
-					await this._deleteToken(k);
-					tokensChanged = true;
-				}
-			}
-		} else {
-			console.warn(
-				"[cap] token storage hooks provided but no deleteExpired, couldn't delete expired tokens",
-			);
-		}
+      await Promise.all(
+        expired.map(async (k) => {
+          await this._deleteChallenge(k);
+        })
+      );
+    } else {
+      console.warn(
+        "[cap] challenge storage hooks provided but no deleteExpired, couldn't delete expired challenges"
+      );
+    }
 
-		return tokensChanged;
-	}
+    if (this.config.storage?.tokens?.deleteExpired) {
+      await this.config.storage.tokens.deleteExpired();
+    } else if (!this.config.storage?.tokens) {
+      for (const k in this.config.state.tokensList) {
+        if (this.config.state.tokensList[k] < now) {
+          await this._deleteToken(k);
+          tokensChanged = true;
+        }
+      }
+    } else {
+      console.warn(
+        "[cap] token storage hooks provided but no deleteExpired, couldn't delete expired tokens"
+      );
+    }
 
-	/**
-	 * Waits for the tokens list to be initialized
-	 * @private
-	 * @returns {Promise<void>}
-	 */
-	_waitForTokensList() {
-		return new Promise((resolve) => {
-			if (this.config.state.tokensList) {
-				return resolve();
-			}
+    return tokensChanged;
+  }
 
-			const l = () => {
-				if (this.config.state.tokensList) {
-					return resolve();
-				}
-				setTimeout(l, 10);
-			};
-			l();
-		});
-	}
+  /**
+   * Waits for the tokens list to be initialized
+   * @private
+   * @returns {Promise<void>}
+   */
+  _waitForTokensList() {
+    return new Promise((resolve) => {
+      if (this.config.state.tokensList) {
+        return resolve();
+      }
 
-	/**
-	 * Cleans up expired tokens and syncs state
-	 * @returns {Promise<void>}
-	 */
-	async cleanup() {
-		if (this._cleanupPromise) return this._cleanupPromise;
+      const l = () => {
+        if (this.config.state.tokensList) {
+          return resolve();
+        }
+        setTimeout(l, 10);
+      };
+      l();
+    });
+  }
 
-		this._cleanupPromise = (async () => {
-			const tokensChanged = await this._cleanExpiredTokens();
+  /**
+   * Cleans up expired tokens and syncs state
+   * @returns {Promise<void>}
+   */
+  async cleanup() {
+    if (this._cleanupPromise) return this._cleanupPromise;
 
-			if (
-				tokensChanged &&
-				!this.config.noFSState &&
-				!this.config.storage?.tokens?.store
-			) {
-				await fs.writeFile(
-					this.config.tokens_store_path,
-					JSON.stringify(this.config.state.tokensList),
-					"utf8",
-				);
-			}
-		})();
+    this._cleanupPromise = (async () => {
+      const tokensChanged = await this._cleanExpiredTokens();
 
-		return this._cleanupPromise;
-	}
+      if (
+        tokensChanged &&
+        !this.config.noFSState &&
+        !this.config.storage?.tokens?.store
+      ) {
+        await fs.writeFile(
+          this.config.tokens_store_path,
+          JSON.stringify(this.config.state.tokensList),
+          "utf8"
+        );
+      }
+    })();
+
+    return this._cleanupPromise;
+  }
 }
 
 /** @type {typeof Cap} */
