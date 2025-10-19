@@ -72,11 +72,7 @@ function displayKeyData(data) {
       return;
     }
 
-    if (
-			difficulty <= 1 ||
-      challengeCount < 1 ||
-      saltSize <= 6
-    ) {
+    if (difficulty <= 1 || challengeCount < 1 || saltSize <= 6) {
       createModal(
         "Validation failed",
         `<div class="content"><p>Difficulty must be greater than 1, challenge count must be greater than zero and salt size must be greater than 6.</p></div>`
@@ -207,13 +203,20 @@ function displayKeyData(data) {
   const copyButton = document.querySelector(".state-key-page .topbar button");
   copyButton.innerHTML = `<svg  xmlns="http://www.w3.org/2000/svg"  width="16"  height="16"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-copy"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" /><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" /></svg>  Copy site key`;
 
-  copyButton.onclick = () => {
-    navigator.clipboard.writeText(key.siteKey);
-    const originalText = copyButton.innerHTML;
-    copyButton.innerHTML = `<svg  xmlns="http://www.w3.org/2000/svg"  width="16"  height="16"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg> Copied!`;
-    setTimeout(() => {
-      copyButton.innerHTML = originalText;
-    }, 2000);
+  copyButton.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(key.siteKey);
+      const originalText = copyButton.innerHTML;
+      copyButton.innerHTML = `<svg  xmlns="http://www.w3.org/2000/svg"  width="16"  height="16"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg> Copied!`;
+      setTimeout(() => {
+        copyButton.innerHTML = originalText;
+      }, 2000);
+    } catch {
+      createModal(
+        "Site key",
+        `<div class="content"><p class="small">We couldn't automatically copy your site key to your clipboard. Please copy it manually.</p><label for="site-key">Site key</label><input type="text" name="site-key" value="${key.siteKey}" readonly></div>`
+      );
+    }
   };
 }
 
@@ -329,48 +332,28 @@ function renderChart(chartData, duration) {
     const alignedBucket = Math.floor(bucketTime / bucketSize) * bucketSize;
     dataPoints.push(dataMap.get(alignedBucket) || 0);
   }
-
-  function createGradient(chart) {
-    const { ctx, chartArea } = chart;
-    if (!chartArea) {
-      return null;
-    }
-
-    const gradient = ctx.createLinearGradient(
-      0,
-      chartArea.bottom,
-      0,
-      chartArea.top
-    );
-
-    gradient.addColorStop(0, "rgba(0, 118, 216, 0.05)");
-    gradient.addColorStop(0.5, "rgba(0, 118, 216, 0.3)");
-    gradient.addColorStop(1, "rgba(0, 118, 216, 0.7)");
-
-    return gradient;
-  }
-
   currentChart = new Chart(ctx, {
     type: "line",
     data: {
       labels: labels,
       datasets: [
         {
-          label: "Daily Count",
+          label: "Solutions",
           data: dataPoints,
           fill: true,
-          backgroundColor: (context) => createGradient(context.chart),
-          borderColor: "#007AFF",
-          borderWidth: 2,
+          backgroundColor: "rgba(59, 130, 246, 0.5)",
+          borderColor: "#3b82f6",
+          borderWidth: 1,
           pointRadius: 0,
-          pointBackgroundColor: "#007AFF",
-          pointBorderColor: "#fff",
-          pointBorderWidth: 1.5,
-          pointHoverRadius: 0,
-          pointHoverBackgroundColor: "#fff",
-          pointHoverBorderColor: "#007AFF",
-          pointHoverBorderWidth: 2,
-          tension: 0,
+          pointBackgroundColor: "#3b82f6",
+          pointBorderColor: "#3b82f6",
+          pointHoverBorderWidth: 0,
+          pointHoverRadius: 3,
+          pointHoverBackgroundColor: "#3b82f6",
+          tension: 0.4,
+          animation: {
+            duration: 0
+          }
         },
       ],
     },
@@ -384,25 +367,20 @@ function renderChart(chartData, duration) {
       scales: {
         x: {
           grid: {
-            color: "rgba(255, 255, 255, 0.08)",
-            borderColor: "rgba(255, 255, 255, 0.15)",
-            drawTicks: false,
             drawOnChartArea: false,
           },
           ticks: {
-            color: "#b0b0b0",
-            maxRotation: 45,
-            minRotation: 0,
+            color: "#9ca3af",
           },
         },
         y: {
           beginAtZero: true,
           grid: {
-            color: "rgba(255, 255, 255, 0.08)",
-            borderColor: "rgba(255, 255, 255, 0.15)",
+            color: "rgba(255, 255, 255, 0.05)",
+            drawBorder: false, 
           },
           ticks: {
-            color: "#b0b0b0",
+            color: "#9ca3af",
           },
         },
       },
@@ -413,9 +391,16 @@ function renderChart(chartData, duration) {
         tooltip: {
           enabled: true,
           displayColors: false,
+          backgroundColor: "#161718",
+          titleColor: "#e5e7eb",
+          bodyColor: "#e5e7eb",
+          padding: 5,
+          borderColor: "#1F2021",
+          borderWidth: 1,
           callbacks: {
-            title: (tooltipItems) => tooltipItems[0].label,
-            label: (tooltipItem) => `${tooltipItem.raw} solves`,
+            label: (context) => {
+              return `${context.raw} solutions`;
+            },
           },
         },
       },

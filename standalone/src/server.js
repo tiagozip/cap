@@ -7,7 +7,7 @@ import { ratelimitGenerator } from "./ratelimit.js";
 
 const keyDefaults = {
 	difficulty: 4,
-	challengeCount: 50,
+	challengeCount: 80,
 	saltSize: 32,
 };
 
