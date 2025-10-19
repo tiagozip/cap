@@ -8,15 +8,15 @@
     <style>
       * {
         box-sizing: border-box;
-        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-          Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
+        font-family: InterVariable, -apple-system, BlinkMacSystemFont, Segoe UI,
+          Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
       }
       body {
         text-align: center;
         margin: 0px;
         padding: 0px;
         margin-top: 14vh;
-        background-color: #111113;
+        background-color: #161718;
         color: #e8e8ea;
       }
       form {
@@ -47,13 +47,12 @@
       }
 
       .password-wrapper {
-        box-shadow: inset 0 0 0 1px color(display-p3 0.9608 0.9608 1 / 0.242);
+        box-shadow: inset 0 0 0 1px hsl(220, 3%, 25%);
         color: #eee;
         border: none;
         display: flex;
-        border-radius: 8px;
+        border-radius: calc(0.8rem - 2px);
         margin-bottom: 16px;
-        transition: box-shadow 0.13s ease-in-out;
       }
 
       .showhide-password {
@@ -89,13 +88,18 @@
       }
 
       .password-wrapper:has(.password:focus) {
-        box-shadow: 0px 0px 0px 2px white;
+        box-shadow: inset 0 0 0 1px hsl(220, 3%, 25%), 0 0 0 2px #161718,
+          0 0 0 calc(2px + 2px) #cacbce;
       }
 
       .submit {
         padding: 6px 10px;
-        border-radius: 6px;
+        border-radius: calc(0.8rem - 2px);
         height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
         text-align: center;
         font-weight: 500;
         border: none;
@@ -126,6 +130,7 @@
         display: flex;
         align-items: center;
         gap: 4px;
+        margin-top: 24px;
       }
       p.bottom .poweredby {
         margin-left: auto;
@@ -162,6 +167,11 @@
         width: 45px;
         height: 45px;
         margin-bottom: 6px;
+      }
+
+      @font-face {
+        font-family: InterVariable;
+        src: url("./assets/InterVariable.woff2");
       }
     </style>
   </head>
@@ -204,7 +214,25 @@
         </button>
       </div>
 
-      <button type="submit" class="submit">Continue</button>
+      <button type="submit" class="submit">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-log-in me-2 h-4 w-4"
+        >
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <polyline points="10 17 15 12 10 7"></polyline>
+          <line x1="15" x2="3" y1="12" y2="12"></line>
+        </svg>
+        Sign in
+      </button>
       <p class="err"></p>
       <p class="bottom">
         <!-- prettier-ignore -->
@@ -294,7 +322,7 @@
 
         if (passwordInput.type === "password") {
           passwordInput.type = "text";
-          passwordInput.placeholder = "MyCapAdminKey1234567!";
+          passwordInput.placeholder = "correct horse battery staple";
           showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
         } else {
           passwordInput.type = "password";
