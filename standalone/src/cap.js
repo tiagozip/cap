@@ -74,7 +74,7 @@ export const capServer = new Elysia({
 
 		const keyConfig = JSON.parse(_keyConfig.config);
 
-		const challenge = cap.createChallenge({
+		const challenge = await cap.createChallenge({
 			challengeCount: keyConfig.challengeCount,
 			challengeSize: keyConfig.saltSize,
 			challengeDifficulty: keyConfig.difficulty,
