@@ -8,6 +8,8 @@ Press the button below to run a simple benchmark.
 
 Using widget 0.1.25, WASM 0.0.6. These use a placeholder server, speeds might vary depending on your setup and network latency.
 
+Note that solving might be significantly slower if you have your devtools open depending on what browser you're using. This is not intentional but is also not a bug with Cap.
+
 | Tier      | Device             | Chrome | Safari |
 | --------- | ------------------ | ------ | ------ |
 | Low-end   | Samsung Galaxy A11 | 4.583s | -      |
