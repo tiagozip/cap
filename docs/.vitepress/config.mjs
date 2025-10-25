@@ -159,25 +159,23 @@ export default withMermaid({
 		sidebar: [
 			{ text: "Quickstart", link: "/guide/index.md" },
 			{ text: "Feature comparison", link: "/guide/alternatives.md" },
-			{ text: "Community libraries", link: "/guide/community.md" },
+			{
+				text: "Standalone",
+				collapsed: false,
+				items: [
+					{ text: "Quickstart", link: "/guide/standalone/index.md" },
+					{ text: "API", link: "/guide/standalone/api.md" },
+					{ text: "Options", link: "/guide/standalone/options.md" },
+				],
+			},
 			{
 				text: "Libraries",
-				collapsed: false,
+				collapsed: true,
 				items: [
 					{ text: "Server", link: "/guide/server.md" },
 					{ text: "Widget", link: "/guide/widget.md" },
 					{ text: "Solver", link: "/guide/solver.md" },
-				],
-			},
-			{
-				text: "Standalone",
-				collapsed: true,
-				items: [
-					{ text: "About", link: "/guide/standalone/index.md" },
-					{ text: "Installation", link: "/guide/standalone/installation.md" },
-					{ text: "Usage", link: "/guide/standalone/usage.md" },
-					{ text: "API", link: "/guide/standalone/api.md" },
-					{ text: "Options", link: "/guide/standalone/options.md" },
+			{ text: "Community libraries", link: "/guide/community.md" },
 				],
 			},
 			{
