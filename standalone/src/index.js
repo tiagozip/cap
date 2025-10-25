@@ -5,6 +5,7 @@ import { assetsServer } from "./assets.js";
 import { auth } from "./auth.js";
 import { capServer } from "./cap.js";
 import { server } from "./server.js";
+import { siteverifyServer } from "./siteverify.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
@@ -71,6 +72,7 @@ new Elysia({
   .use(server)
   .use(assetsServer)
   .use(capServer)
+  .use(siteverifyServer)
   .listen(serverPort);
 
 console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}`);
