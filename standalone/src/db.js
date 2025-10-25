@@ -22,7 +22,7 @@ async function initDb() {
     throw new Error(`Unsupported DB connector "${connector}"`);
   }
 
-  db.exec(
+  await db.exec(
     `create table if not exists sessions (
 		    token text primary key not null,
 		    expires integer not null,
@@ -30,7 +30,7 @@ async function initDb() {
 		  )`
   );
 
-  db.exec(
+  await db.exec(
     `create table if not exists keys (
 		    siteKey text primary key not null,
 		    name text not null,
@@ -40,7 +40,7 @@ async function initDb() {
 		  )`
   );
 
-  db.exec(
+  await db.exec(
     `create table if not exists solutions (
 		    siteKey text not null,
 		    bucket integer not null,
@@ -49,7 +49,7 @@ async function initDb() {
 		  )`
   );
 
-  db.exec(
+  await db.exec(
     `create table if not exists challenges (
 		    siteKey text not null,
 		    token text not null,
@@ -59,7 +59,7 @@ async function initDb() {
 		  )`
   );
 
-  db.exec(
+  await db.exec(
     `create table if not exists tokens (
 		    siteKey text not null,
 		    token text not null,
@@ -68,7 +68,7 @@ async function initDb() {
 		  )`
   );
 
-  db.exec(
+  await db.exec(
     `create table if not exists api_keys (
 		    id text not null,
 		    name text not null,
