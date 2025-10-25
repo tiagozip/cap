@@ -6,27 +6,27 @@ import { rateLimit } from "elysia-rate-limit";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
-const getSitekeyConfigQuery = db.query(
+const getSitekeyConfigQuery = db.prepare(
 	`SELECT (config) FROM keys WHERE siteKey = ?`,
 );
 
-const insertChallengeQuery = db.query(`
+const insertChallengeQuery = db.prepare(`
   INSERT INTO challenges (siteKey, token, data, expires)
   VALUES (?, ?, ?, ?)
 `);
-const getChallengeQuery = db.query(`
+const getChallengeQuery = db.prepare(`
   SELECT * FROM challenges WHERE siteKey = ? AND token = ?
 `);
-const deleteChallengeQuery = db.query(`
+const deleteChallengeQuery = db.prepare(`
   DELETE FROM challenges WHERE siteKey = ? AND token = ?
 `);
 
-const insertTokenQuery = db.query(`
+const insertTokenQuery = db.prepare(`
   INSERT INTO tokens (siteKey, token, expires)
   VALUES (?, ?, ?)
 `);
 
-const upsertSolutionQuery = db.query(`
+const upsertSolutionQuery = db.prepare(`
   INSERT INTO solutions (siteKey, bucket, count)
   VALUES (?, ?, 1)
   ON CONFLICT (siteKey, bucket)
@@ -56,7 +56,7 @@ export const capServer = new Elysia({
 		const cap = new Cap({
 			noFSState: true,
 		});
-		const _keyConfig = getSitekeyConfigQuery.get(params.siteKey);
+		const _keyConfig = await getSitekeyConfigQuery.get(params.siteKey);
 
 		if (!_keyConfig) {
 			set.status = 404;
@@ -81,7 +81,7 @@ export const capServer = new Elysia({
 		return challenge;
 	})
 	.post("/:siteKey/redeem", async ({ body, set, params }) => {
-		const challenge = getChallengeQuery.get(params.siteKey, body.token);
+		const challenge = await getChallengeQuery.get(params.siteKey, body.token);
 
 		try {
 			deleteChallengeQuery.run(params.siteKey, body.token);
