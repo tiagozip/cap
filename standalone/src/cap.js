@@ -9,9 +9,6 @@ import { ratelimitGenerator } from "./ratelimit.js";
 const getSitekeyConfigQuery = db.query(
 	`SELECT (config) FROM keys WHERE siteKey = ?`,
 );
-const getSitekeyWithSecretQuery = db.query(
-	`SELECT * FROM keys WHERE siteKey = ?`,
-);
 
 const insertChallengeQuery = db.query(`
   INSERT INTO challenges (siteKey, token, data, expires)
@@ -27,12 +24,6 @@ const deleteChallengeQuery = db.query(`
 const insertTokenQuery = db.query(`
   INSERT INTO tokens (siteKey, token, expires)
   VALUES (?, ?, ?)
-`);
-const getTokenQuery = db.query(`
-  SELECT * FROM tokens WHERE siteKey = ? AND token = ?
-`);
-const deleteTokenQuery = db.query(`
-  DELETE FROM tokens WHERE siteKey = ? AND token = ?
 `);
 
 const upsertSolutionQuery = db.query(`
@@ -138,40 +129,4 @@ export const capServer = new Elysia({
 			token,
 			expires,
 		};
-	})
-	.post("/:siteKey/siteverify", async ({ body, set, params }) => {
-		const sitekey = params.siteKey;
-		const { secret, response } = body;
-
-		if (!sitekey || !secret || !response) {
-			set.status = 400;
-			return { error: "Missing required parameters" };
-		}
-
-		const keyHash = getSitekeyWithSecretQuery.get(sitekey)?.secretHash;
-		if (!keyHash) {
-			set.status = 404;
-			return { error: "Invalid site key or secret" };
-		}
-
-		if (!(await Bun.password.verify(secret, keyHash))) {
-			set.status = 403;
-			return { error: "Invalid site key or secret" };
-		}
-
-		const token = getTokenQuery.get(params.siteKey, response);
-
-		if (!token) {
-			set.status = 404;
-			return { error: "Token not found" };
-		}
-
-		if (token.expires < Date.now()) {
-			deleteTokenQuery.run(params.siteKey, response);
-			set.status = 403;
-			return { error: "Token expired" };
-		}
-
-		deleteTokenQuery.run(params.siteKey, response);
-		return { success: true };
 	});
