@@ -4,14 +4,14 @@ import { Elysia } from "elysia";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
-const getSitekeyWithSecretQuery = db.query(
+const getSitekeyWithSecretQuery = db.prepare(
 	`SELECT * FROM keys WHERE siteKey = ?`,
 );
 
-const getTokenQuery = db.query(`
+const getTokenQuery = db.prepare(`
   SELECT * FROM tokens WHERE siteKey = ? AND token = ?
 `);
-const deleteTokenQuery = db.query(`
+const deleteTokenQuery = db.prepare(`
   DELETE FROM tokens WHERE siteKey = ? AND token = ?
 `);
 
@@ -60,8 +60,8 @@ export const siteverifyServer = new Elysia({
 			return { error: "Missing required parameters" };
 		}
 
-		const keyHash = getSitekeyWithSecretQuery.get(sitekey)?.secretHash;
-		if (!keyHash) {
+		const keyHash = (await getSitekeyWithSecretQuery.get(sitekey))?.secretHash;
+		if (!keyHash || !secret) {
 			set.status = 404;
 			return { error: "Invalid site key or secret" };
 		}
@@ -74,7 +74,7 @@ export const siteverifyServer = new Elysia({
 			return { error: "Invalid site key or secret" };
 		}
 
-		const token = getTokenQuery.get(params.siteKey, response);
+		const token = await getTokenQuery.get(params.siteKey, response);
 
 		if (!token) {
 			set.status = 404;
