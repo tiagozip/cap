@@ -43,7 +43,9 @@ By default, Standalone will use Elysia's built-in `server.requestIP` function to
 
 If so, you can change the IP extraction logic to simply read from a header set in `RATELIMIT_IP_HEADER` in your env. For example, if you were using Cloudflare, you might set `RATELIMIT_IP_HEADER` to `cf-connecting-ip`. On most setups, this is `x-forwarded-for`.
 
+The `/siteverify` endpoint is intended for server-to-server use, so each request checks if your key's secret is valid. If it is, the request is allowed. If not, the request is denied and the client's IP is temporarily blocked for a few hundred milliseconds. This prevents database strain without affecting legitimate requests.
+
 If you're interested in an option to fully disable ratelimiting, let us know using GitHub issues.
 
 ## Custom data path
-If you would like the data to be stored in a custom path inside the container, you can set the `DATA_PATH` environment variable to the desired path. Note that this only works in Standalone 2.0.9 or above. Added by [#100](https://github.com/tiagozip/cap/issues/100)
+If you would like the data to be stored in a custom path inside the container, you can set the `DATA_PATH` environment variable to the desired path. Note that this only works in Standalone 2.0.9 or above.
