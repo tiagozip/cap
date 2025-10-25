@@ -10,7 +10,7 @@ const db = new Database(join(process.env.DATA_PATH || "./.data", "db.sqlite"));
 
 db.query(
 	`create table if not exists sessions (
-    token string primary key not null,
+    token text primary key not null,
     expires integer not null,
     created integer not null
   )`,
@@ -18,10 +18,10 @@ db.query(
 
 db.query(
 	`create table if not exists keys (
-    siteKey string primary key not null,
-    name string not null,
-    secretHash string not null,
-    config string not null,
+    siteKey text primary key not null,
+    name text not null,
+    secretHash text not null,
+    config text not null,
     created integer not null
   )`,
 ).run();
@@ -37,9 +37,9 @@ db.query(
 
 db.query(
 	`create table if not exists challenges (
-    siteKey string not null,
-    token string not null,
-    data string not null,
+    siteKey text not null,
+    token text not null,
+    data text not null,
     expires integer not null,
     primary key (siteKey, token)
   )`,
@@ -47,8 +47,8 @@ db.query(
 
 db.query(
 	`create table if not exists tokens (
-    siteKey string not null,
-    token string not null,
+    siteKey text not null,
+    token text not null,
     expires integer not null,
     primary key (siteKey, token)
   )`,
@@ -56,9 +56,9 @@ db.query(
 
 db.query(
 	`create table if not exists api_keys (
-    id string not null,
-    name string not null,
-    tokenHash string not null,
+    id text not null,
+    name text not null,
+    tokenHash text not null,
     created integer not null,
     primary key (id, tokenHash)
   )`,
