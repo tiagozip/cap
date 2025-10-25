@@ -10,11 +10,11 @@ let db;
 async function initDb() {
   const connector = process.env.DB_CONNECTOR;
 
-  if (connector === "turso") {
+  if (!connector || connector === "bun-sqlite") {
     const { Database } = await import("bun:sqlite");
 
     db = new Database(join(process.env.DATA_PATH || "./.data", "db.sqlite"));
-  } else if (!connector || connector === "bun-sqlite") {
+  } else if (connector === "turso") {
     const { connect } = await import("@tursodatabase/database");
 
     db = await connect(join(process.env.DATA_PATH || "./.data", "db.sqlite"));
