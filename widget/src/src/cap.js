@@ -1,6 +1,11 @@
 (() => {
 	const WASM_VERSION = "0.0.6";
 
+	// SSR fix
+	if (typeof window === "undefined") {
+    return;
+  }
+
 	const capFetch = (...args) => {
 		if (window?.CAP_CUSTOM_FETCH) {
 			return window.CAP_CUSTOM_FETCH(...args);
