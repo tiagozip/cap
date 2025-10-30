@@ -1,7 +1,6 @@
 (() => {
 	const WASM_VERSION = "0.0.6";
 
-	// SSR fix
 	if (typeof window === "undefined") {
     return;
   }
