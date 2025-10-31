@@ -15,6 +15,10 @@ These are wrappers around Cap's widget. They're usually not required as the defa
 
 - **[@espressotutorialsgmbh/cap-angular-widget](https://www.npmjs.com/package/@espressotutorialsgmbh/cap-angular-widget)**
 
+### Other
+
+- **[better-captcha](https://www.better-captcha.dev/docs/provider/cap-widget)**: A framework-agnostic widget that supports 6 different frameworks including React, SolidJS, Vue, Svelte and more
+
 ## Hooks
 
 These are React hook implementations of the Cap API, allowing full customization of the user experience.
