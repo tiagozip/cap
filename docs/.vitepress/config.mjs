@@ -87,7 +87,7 @@ export default withMermaid({
 			{
 				defer: true,
 				"data-domain": "capjs.js.org",
-				src: "https://plsb.tiagorangel.com/js/script.hash.outbound-links.pageview-props.tagged-events.js",
+				src: "https://a.tiago.zip/js/script.hash.outbound-links.pageview-props.tagged-events.js",
 			},
 		],
 		[
@@ -95,7 +95,7 @@ export default withMermaid({
 			{
 				defer: true,
 				"no-twidget": "true",
-				src: "https://tiagorangel.com/cdn/widget.js",
+				src: "https://tiago.zip/cdn/widget.js",
 			},
 		],
 		[
@@ -115,7 +115,7 @@ export default withMermaid({
   "author": {
     "@type": "Person",
     "name": "Tiago Rangel",
-    "url": "https://tiagorangel.com"
+    "url": "https://tiago.zip"
   },
   "license": "https://github.com/tiagozip/cap/blob/main/LICENSE",
   "offers": {
@@ -220,7 +220,7 @@ export default withMermaid({
 		footer: {
 			message: "Built in Europe 🇪🇺<br>Released under the Apache 2.0 License.",
 			copyright:
-				"Copyright © 2025-present <a href='https://tiagorangel.com' target='_blank'>Tiago</a>",
+				"Copyright © 2025-present <a href='https://tiago.zip' target='_blank'>Tiago</a>",
 		},
 	},
 	markdown: {
