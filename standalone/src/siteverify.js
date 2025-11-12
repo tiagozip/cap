@@ -4,17 +4,6 @@ import { Elysia } from "elysia";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
-const getSitekeyWithSecretQuery = db.prepare(
-	`SELECT * FROM keys WHERE siteKey = ?`,
-);
-
-const getTokenQuery = db.prepare(`
-  SELECT * FROM tokens WHERE siteKey = ? AND token = ?
-`);
-const deleteTokenQuery = db.prepare(`
-  DELETE FROM tokens WHERE siteKey = ? AND token = ?
-`);
-
 const blockedIPs = new Map();
 
 setInterval(() => {
@@ -60,7 +49,8 @@ export const siteverifyServer = new Elysia({
 			return { error: "Missing required parameters" };
 		}
 
-		const keyHash = (await getSitekeyWithSecretQuery.get(sitekey))?.secretHash;
+		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
+		const keyHash = keyData?.secretHash;
 		if (!keyHash || !secret) {
 			set.status = 404;
 			return { error: "Invalid site key or secret" };
@@ -74,7 +64,7 @@ export const siteverifyServer = new Elysia({
 			return { error: "Invalid site key or secret" };
 		}
 
-		const token = await getTokenQuery.get(params.siteKey, response);
+		const [token] = await db`SELECT * FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 
 		if (!token) {
 			set.status = 404;
@@ -82,11 +72,11 @@ export const siteverifyServer = new Elysia({
 		}
 
 		if (token.expires < Date.now()) {
-			deleteTokenQuery.run(params.siteKey, response);
+			await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 			set.status = 403;
 			return { error: "Token expired" };
 		}
 
-		deleteTokenQuery.run(params.siteKey, response);
+		await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 		return { success: true };
 	});

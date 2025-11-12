@@ -51,14 +51,11 @@ If you're interested in an option to fully disable ratelimiting, let us know usi
 
 If you would like the data to be stored in a custom path inside the container, you can set the `DATA_PATH` environment variable to the desired path. Note that this only works in Standalone 2.0.9 or above.
 
-## Custom DB connectors
+## Custom DB URLs
 
-Cap Standalone uses SQLite as the default database for storing keys and challenges. If you'd like to use a different database, you can set the `DB_CONNECTOR` environment variable to the name of the database connector you want to use.
+If you would like to use a different database, you can set the `DB_URL` environment variable to the URL of the database you want to use.
 
-The current accepted values are:
+We recommend keeping this to the default value, which is `sqlite://./.data/db.sqlite.`. However, using Postgres, MySQL, or any other database supported by Bun SQL might be possible, even though not officially supported or tested:
 
-- `bun-sqlite` (default): Bun's built-in SQLite support
-
-- `turso` (experimental): Uses [turso](https://turso.tech/) instead of SQLite. 
-  
-  Both can be exchanged at any time and data won't be lost, however Turso is experimental and doesn't support two or more processes using the same database at the same time (at least at the time of writing).
+- `postgres://user:pass@localhost:5432/mydb`
+- `mysql://user:password@localhost:3306/database`
