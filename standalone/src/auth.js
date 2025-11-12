@@ -6,14 +6,6 @@ import { ratelimitGenerator } from "./ratelimit.js";
 
 const { ADMIN_KEY } = process.env;
 
-const loginQuery = db.prepare(`
-  INSERT INTO sessions (token, created, expires)
-  VALUES (?, ?, ?)
-`);
-const getValidTokenQuery = db.prepare(`
-  SELECT * FROM sessions WHERE token = ? AND expires > ? LIMIT 1
-`);
-
 if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
 if (ADMIN_KEY.length < 30)
   throw new Error(
@@ -66,7 +58,10 @@ export const auth = new Elysia({
 
     const hashedToken = await Bun.password.hash(session_token);
 
-    loginQuery.run(hashedToken, created, expires);
+    await db`
+      INSERT INTO sessions (token, created, expires)
+      VALUES (${hashedToken}, ${created}, ${expires})
+    `;
 
     cookie.cap_authed.set({
       value: "yes",
@@ -92,9 +87,9 @@ export const authBeforeHandle = async ({ set, headers }) => {
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
 
-    const apiKey = await db
-      .prepare(`SELECT * FROM api_keys WHERE id = ?`)
-      .get(id);
+    const apiKey = await db`SELECT * FROM api_keys WHERE id = ${id}`.then(
+      (rows) => rows[0]
+    );
 
     if (!apiKey || !apiKey.tokenHash) {
       set.status = 401;
@@ -125,7 +120,9 @@ export const authBeforeHandle = async ({ set, headers }) => {
     atob(authorization.replace("Bearer ", "").trim())
   );
 
-  const validToken = await getValidTokenQuery.get(hash, Date.now());
+  const [validToken] = await db`
+    SELECT * FROM sessions WHERE token = ${hash} AND expires > ${Date.now()} LIMIT 1
+  `;
 
   if (!validToken) {
     set.status = 401;

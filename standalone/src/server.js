@@ -11,15 +11,6 @@ const keyDefaults = {
   saltSize: 32,
 };
 
-const get24hSolvesQuery = db.prepare(
-  `SELECT SUM(count) as total FROM solutions WHERE siteKey = ? AND bucket >= ?`
-);
-const get24hPreviousQuery = db.prepare(`
-  SELECT SUM(count) as total FROM solutions
-  WHERE siteKey = ? AND bucket >= ? AND bucket < ?
-`);
-const getKeysQuery = db.prepare(`SELECT * FROM keys ORDER BY created DESC`);
-
 export const server = new Elysia({
   prefix: "/server",
   detail: {
@@ -48,19 +39,17 @@ export const server = new Elysia({
       const currentStart = now - day;
       const previousStart = now - 2 * day;
 
-      const keys = await getKeysQuery.all();
+      const keys = await db`SELECT * FROM keys ORDER BY created DESC`;
 
       return await Promise.all(
         keys.map(async (key) => {
-          const currentResult = await get24hSolvesQuery.get(
-            key.sitekey || key.siteKey,
-            currentStart
-          );
-          const previousResult = await get24hPreviousQuery.get(
-            key.sitekey || key.siteKey,
-            previousStart,
-            currentStart
-          );
+          const [currentResult] = await db`
+            SELECT SUM(count) as total FROM solutions WHERE siteKey = ${key.sitekey || key.siteKey} AND bucket >= ${currentStart}
+          `;
+          const [previousResult] = await db`
+            SELECT SUM(count) as total FROM solutions
+            WHERE siteKey = ${key.sitekey || key.siteKey} AND bucket >= ${previousStart} AND bucket < ${currentStart}
+          `;
 
           const current = currentResult?.total || 0;
           const previous = previousResult?.total || 0;
@@ -106,15 +95,10 @@ export const server = new Elysia({
         .replace(/\//g, "")
         .replace(/=+$/, "");
 
-      db.prepare(
-        `INSERT INTO keys (siteKey, name, secretHash, config, created) VALUES (?, ?, ?, ?, ?)`
-      ).run(
-        siteKey,
-        body?.name || siteKey,
-        await Bun.password.hash(secretKey),
-        JSON.stringify(keyDefaults),
-        Date.now()
-      );
+      await db`
+        INSERT INTO keys (siteKey, name, secretHash, config, created)
+        VALUES (${siteKey}, ${body?.name || siteKey}, ${await Bun.password.hash(secretKey)}, ${JSON.stringify(keyDefaults)}, ${Date.now()})
+      `;
 
       return {
         siteKey,
@@ -133,9 +117,7 @@ export const server = new Elysia({
   .get(
     "/keys/:siteKey",
     async ({ params, query }) => {
-      const key = await db
-        .prepare(`SELECT * FROM keys WHERE siteKey = ?`)
-        .get(params.siteKey);
+      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
       if (!key) {
         return { success: false, error: "Key not found" };
       }
@@ -154,97 +136,73 @@ export const server = new Elysia({
         case "today":
           bucketSize = 3600;
           startTime = Math.floor(Date.now() / 1000 / 86400) * 86400;
-          dataQuery = db.prepare(`
-            SELECT bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? AND bucket <= ?
-            GROUP BY bucket 
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "today" };
           break;
         case "yesterday":
           bucketSize = 3600;
           startTime = Math.floor(Date.now() / 1000 / 86400) * 86400 - 86400;
-          dataQuery = db.prepare(`
-            SELECT bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? AND bucket < ? 
-            GROUP BY bucket 
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "yesterday" };
           break;
         case "last7days":
           bucketSize = 86400;
           startTime = Math.floor((now - 7 * 86400) / 86400) * 86400;
-          dataQuery = db.prepare(`
-            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? 
-            GROUP BY (bucket / 86400) * 86400
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "aggregate" };
           break;
         case "last28days":
           bucketSize = 86400;
           startTime = Math.floor((now - 28 * 86400) / 86400) * 86400;
-          dataQuery = db.prepare(`
-            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? 
-            GROUP BY (bucket / 86400) * 86400
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "aggregate" };
           break;
         case "last91days":
           bucketSize = 86400;
           startTime = Math.floor((now - 91 * 86400) / 86400) * 86400;
-          dataQuery = db.prepare(`
-            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? 
-            GROUP BY (bucket / 86400) * 86400
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "aggregate" };
           break;
         case "alltime":
           bucketSize = 86400;
           startTime = 0;
-          dataQuery = db.prepare(`
-            SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? 
-            GROUP BY (bucket / 86400) * 86400
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "aggregate" };
           break;
         default:
           bucketSize = 3600;
           startTime = currentStart;
-          dataQuery = db.prepare(`
-            SELECT bucket, SUM(count) as count 
-            FROM solutions 
-            WHERE siteKey = ? AND bucket >= ? 
-            GROUP BY bucket 
-            ORDER BY bucket
-          `);
+          dataQuery = { type: "default" };
       }
 
       let historyData;
       if (chartDuration === "yesterday") {
-        historyData = await dataQuery.all(
-          params.siteKey,
-          startTime,
-          startTime + 86400
-        );
+        historyData = await db`
+          SELECT bucket, SUM(count) as count
+          FROM solutions
+          WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime} AND bucket < ${startTime + 86400}
+          GROUP BY bucket
+          ORDER BY bucket
+        `;
       } else if (chartDuration === "today") {
         const currentHourBucket = Math.floor(now / 3600) * 3600;
-        historyData = await dataQuery.all(
-          params.siteKey,
-          startTime,
-          currentHourBucket
-        );
+        historyData = await db`
+          SELECT bucket, SUM(count) as count
+          FROM solutions
+          WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime} AND bucket <= ${currentHourBucket}
+          GROUP BY bucket
+          ORDER BY bucket
+        `;
+      } else if (dataQuery.type === "aggregate") {
+        historyData = await db`
+          SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count
+          FROM solutions
+          WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime}
+          GROUP BY (bucket / 86400) * 86400
+          ORDER BY bucket
+        `;
       } else {
-        historyData = await dataQuery.all(params.siteKey, startTime);
+        historyData = await db`
+          SELECT bucket, SUM(count) as count
+          FROM solutions
+          WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime}
+          GROUP BY bucket
+          ORDER BY bucket
+        `;
       }
 
       if (
@@ -294,8 +252,10 @@ export const server = new Elysia({
         historyData = completeData;
       }
 
-      const currentSolves =
-        (await get24hSolvesQuery.get(params.siteKey, currentStart))?.total || 0;
+      const [currentSolvesResult] = await db`
+        SELECT SUM(count) as total FROM solutions WHERE siteKey = ${params.siteKey} AND bucket >= ${currentStart}
+      `;
+      const currentSolves = currentSolvesResult?.total || 0;
 
       return {
         key: {
@@ -338,9 +298,7 @@ export const server = new Elysia({
   .put(
     "/keys/:siteKey/config",
     async ({ params, body }) => {
-      const key = await db
-        .prepare(`SELECT * FROM keys WHERE siteKey = ?`)
-        .get(params.siteKey);
+      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
       if (!key) {
         return { success: false, error: "Key not found" };
       }
@@ -354,11 +312,7 @@ export const server = new Elysia({
         saltSize,
       };
 
-      db.prepare(`UPDATE keys SET name = ?, config = ? WHERE siteKey = ?`).run(
-        config.name || key.name,
-        JSON.stringify(config),
-        params.siteKey
-      );
+      await db`UPDATE keys SET name = ${config.name || key.name}, config = ${JSON.stringify(config)} WHERE siteKey = ${params.siteKey}`;
 
       return { success: true };
     },
@@ -377,16 +331,14 @@ export const server = new Elysia({
   .delete(
     "/keys/:siteKey",
     async ({ params, set }) => {
-      const key = await db
-        .prepare(`SELECT * FROM keys WHERE siteKey = ?`)
-        .get(params.siteKey);
+      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
       if (!key) {
         set.status = 404;
         return { success: false, error: "Key not found" };
       }
 
-      db.prepare(`DELETE FROM keys WHERE siteKey = ?`).run(params.siteKey);
-      db.prepare(`DELETE FROM solutions WHERE siteKey = ?`).run(params.siteKey);
+      await db`DELETE FROM keys WHERE siteKey = ${params.siteKey}`;
+      await db`DELETE FROM solutions WHERE siteKey = ${params.siteKey}`;
 
       return { success: true };
     },
@@ -402,9 +354,7 @@ export const server = new Elysia({
   .post(
     "/keys/:siteKey/rotate-secret",
     async ({ params }) => {
-      const key = await db
-        .prepare(`SELECT * FROM keys WHERE siteKey = ?`)
-        .get(params.siteKey);
+      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
       if (!key) {
         return { success: false, error: "Key not found" };
       }
@@ -414,10 +364,7 @@ export const server = new Elysia({
         .replace(/\//g, "")
         .replace(/=+$/, "");
 
-      db.prepare(`UPDATE keys SET secretHash = ? WHERE siteKey = ?`).run(
-        await Bun.password.hash(newSecretKey),
-        params.siteKey
-      );
+      await db`UPDATE keys SET secretHash = ${await Bun.password.hash(newSecretKey)} WHERE siteKey = ${params.siteKey}`;
       return {
         secretKey: newSecretKey,
       };
@@ -434,7 +381,7 @@ export const server = new Elysia({
   .get(
     "/settings/sessions",
     async () => {
-      const sessions = await db.prepare(`SELECT * FROM sessions`).all();
+      const sessions = await db`SELECT * FROM sessions`;
       return sessions.map((session) => ({
         token: session.token.slice(-14),
         expires: new Date(session.expires).toISOString(),
@@ -450,7 +397,7 @@ export const server = new Elysia({
   .get(
     "/settings/apikeys",
     async () => {
-      const apikeys = await db.prepare(`SELECT * FROM api_keys`).all();
+      const apikeys = await db`SELECT * FROM api_keys`;
 
       return apikeys.map((key) => ({
         name: key.name,
@@ -476,9 +423,10 @@ export const server = new Elysia({
 
       const name = body.name;
 
-      db.prepare(
-        `INSERT INTO api_keys (id, name, tokenHash, created) VALUES (?, ?, ?, ?)`
-      ).run(id, name, await Bun.password.hash(token), Date.now());
+      await db`
+        INSERT INTO api_keys (id, name, tokenHash, created)
+        VALUES (${id}, ${name}, ${await Bun.password.hash(token)}, ${Date.now()})
+      `;
       return {
         apiKey: `${id}_${token}`,
       };
@@ -495,14 +443,12 @@ export const server = new Elysia({
   .delete(
     "/settings/apikeys/:id",
     async ({ params, set }) => {
-      const key = await db
-        .prepare(`SELECT * FROM api_keys WHERE id = ?`)
-        .get(params.id);
+      const [key] = await db`SELECT * FROM api_keys WHERE id = ${params.id}`;
       if (!key) {
         set.status = 404;
         return { success: false, error: "API key not found" };
       }
-      db.prepare(`DELETE FROM api_keys WHERE id = ?`).run(params.id);
+      await db`DELETE FROM api_keys WHERE id = ${params.id}`;
       return { success: true };
     },
     {
@@ -545,9 +491,8 @@ export const server = new Elysia({
         // body.session are the last characters of the session token
         // e.g. body.session = (...)8KdbcHjqxWPR6Q
 
-        const sessionRow = await db
-          .prepare(`SELECT token FROM sessions WHERE token LIKE ?`)
-          .get(`%${body.session}`);
+        const sessionRows = await db`SELECT token FROM sessions WHERE token LIKE ${'%' + body.session}`;
+        const sessionRow = sessionRows[0];
 
         if (!sessionRow) {
           set.status = 404;
@@ -556,7 +501,7 @@ export const server = new Elysia({
         session = sessionRow.token;
       }
 
-      db.prepare(`DELETE FROM sessions WHERE token = ?`).run(session);
+      await db`DELETE FROM sessions WHERE token = ${session}`;
 
       return { success: true };
     },
