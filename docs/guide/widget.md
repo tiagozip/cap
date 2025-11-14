@@ -70,7 +70,7 @@ You can use `new Cap({ ... })` in your client-side JavaScript to create a new Ca
 import Cap from '@cap.js/widget';
 
 const cap = new Cap({
-  apiEndpoint: '/api/cap'
+  apiEndpoint: '/api/cap/'
 });
 
 const token = await cap.solve();
