@@ -3,60 +3,66 @@ import path from "node:path";
 import { cors } from "@elysiajs/cors";
 import { Elysia, file } from "elysia";
 
+import { config } from "./config.js";
+
 if (
-	process.env.ENABLE_ASSETS_SERVER === "true" &&
-	(process.env.WIDGET_VERSION === "latest" ||
-		process.env.WASM_VERSION === "latest")
+	config.assetsServer.enabled &&
+	(config.assetsServer.versions.widget === "latest" ||
+		config.assetsServer.versions.widget === "latest")
 ) {
 	console.warn(
 		"📦 [asset server] using 'latest' version for assets is not recommended for production!\n   make sure to pin it to a set version using the WIDGET_VERSION and WASM_VERSION env variables.",
 	);
 }
 
-const dataDir = process.env.DATA_PATH || "./.data";
+const dataDir = config.dataPath;
 
 const updateCache = async () => {
-	if (process.env.ENABLE_ASSETS_SERVER !== "true") return;
+	if (config.assetsServer.enabled) return;
 
+	const cacheConfigPath = path.join(dataDir, "assets-cache.json");
 	let cacheConfig = {};
 
 	try {
-		cacheConfig = JSON.parse(await fs.readFile("./assets-cache.json", "utf-8"));
+		cacheConfig = JSON.parse(await fs.readFile(cacheConfigPath, "utf-8"));
 	} catch {}
 
 	const lastUpdate = cacheConfig.lastUpdate || 0;
 	const currentTime = Date.now();
 	const updateInterval = 1000 * 60 * 60 * 24; // 1 day
+	const intervalExceeded = currentTime - lastUpdate > updateInterval;
 
-	if (!(currentTime - lastUpdate > updateInterval)) return;
+	const versions = config.assetsServer.versions;;
 
-	const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
+	if (!cacheConfig.versions) cacheConfig.versions = {};
+	const versionsChanged = cacheConfig.versions.widget !== versions.widget
+		|| cacheConfig.versions.wasm !== WASM_VEversions.wasmRSION;
 
-	const WIDGET_VERSION = process.env.WIDGET_VERSION || "latest";
-	const WASM_VERSION = process.env.WASM_VERSION || "latest";
+	if (!intervalExceeded && !versionsChanged) return;
+
+	const cacheHost = config.assetsServer.cacheHost;
 
 	try {
 		const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] =
 			await Promise.all([
-				fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`).then((r) =>
+				fetch(`${cacheHost}/npm/@cap.js/widget@${versions.widget}`).then((r) =>
 					r.text(),
 				),
 				fetch(
-					`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`,
+					`${cacheHost}/npm/@cap.js/widget@${versions.widget}/cap-floating.min.js`,
 				).then((r) => r.text()),
 				fetch(
-					`${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`,
+					`${cacheHost}/npm/@cap.js/wasm@${versions.wasm}/browser/cap_wasm_bg.wasm`,
 				).then((r) => r.arrayBuffer()),
 				fetch(
-					`${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
+					`${cacheHost}/npm/@cap.js/wasm@${versions.wasm}/browser/cap_wasm.min.js`,
 				).then((r) => r.text()),
 			]);
 
 		cacheConfig.lastUpdate = currentTime;
-		await fs.writeFile(
-			path.join(dataDir, "assets-cache.json"),
-			JSON.stringify(cacheConfig),
-		);
+		cacheConfig.versions.widget = versions.widget;
+		cacheConfig.versions.wasm = versions.wasm;
+		await fs.writeFile(cacheConfigPath, JSON.stringify(cacheConfig));
 
 		await fs.writeFile(path.join(dataDir, "assets-widget.js"), widgetSource);
 		await fs.writeFile(
@@ -77,7 +83,7 @@ const updateCache = async () => {
 };
 
 updateCache();
-setInterval(updateCache, 1000 * 60 * 60);
+setInterval(updateCache, 1000 * 60 * 60); // 1 hour
 
 export const assetsServer = new Elysia({
 	prefix: "/assets",
@@ -85,7 +91,7 @@ export const assetsServer = new Elysia({
 })
 	.use(
 		cors({
-			origin: process.env.CORS_ORIGIN?.split(",") || true,
+			origin: config.corsOrigins,
 			methods: ["GET"],
 		}),
 	)

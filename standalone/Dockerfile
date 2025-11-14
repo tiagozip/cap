@@ -21,7 +21,8 @@ COPY --from=prerelease /usr/src/app .
 WORKDIR /usr/src/app
 
 ENV DATA_PATH=/usr/src/app/.data
-RUN mkdir -p ${DATA_PATH} && chown -R bun:bun ${DATA_PATH}
+RUN mkdir -p "${DATA_PATH}" && chown -R bun:bun "${DATA_PATH}"
+VOLUME [ "${DATA_PATH}" ]
 
 EXPOSE 3000/tcp
 
