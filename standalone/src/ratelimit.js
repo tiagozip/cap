@@ -1,6 +1,8 @@
+import { config } from "./config.js";
+
 export const ratelimitGenerator = (req, server) => {
-	if (process.env.RATELIMIT_IP_HEADER) {
-		const header = process.env.RATELIMIT_IP_HEADER;
+	const header = config.rateLimiting.ipHeader;
+	if (header) {
 		const ip = req.headers.get(header) || req.headers.get(header.toLowerCase());
 
 		if (ip) {
@@ -16,7 +18,7 @@ export const ratelimitGenerator = (req, server) => {
 	const ip = server?.requestIP(req)?.address;
 
 	if (!server || !req || !ip) {
-		if (process.env.HIDE_RATELIMIT_IP_WARNING !== "true") {
+		if (!config.rateLimiting.hideWarning) {
 			console.warn(
 				`⚠️  [ratelimit] Unable to determine client IP, rate limiting disabled. If you're running locally, it should be safe \n   to ignore this warning. Otherwise, make sure to set the RATELIMIT_IP_HEADER env variable to a header \n   which returns the user's IP. Hide this warning with env.HIDE_RATELIMIT_IP_WARNING=true`,
 			);

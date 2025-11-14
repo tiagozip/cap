@@ -1,16 +1,9 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Elysia } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
+import { config } from "./config.js";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
-
-const { ADMIN_KEY } = process.env;
-
-if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
-if (ADMIN_KEY.length < 12)
-  throw new Error(
-    "auth: Admin key too short. Please use one that's at least 12 characters"
-  );
 
 export const auth = new Elysia({
   prefix: "/auth",
@@ -27,7 +20,7 @@ export const auth = new Elysia({
     const { admin_key } = body;
 
     const a = Buffer.from(admin_key, "utf8");
-    const b = Buffer.from(ADMIN_KEY, "utf8");
+    const b = Buffer.from(config.adminKey, "utf8");
 
     if (!a || !b || a.length !== b.length) {
       set.status = 401;
@@ -39,7 +32,7 @@ export const auth = new Elysia({
       return { success: false };
     }
 
-    if (admin_key !== ADMIN_KEY) {
+    if (admin_key !== config.adminKey) {
       // as a last check, in case an attacker somehow bypasses
       // timingSafeEqual, we're checking AGAIN to see if the tokens
       // are right.
