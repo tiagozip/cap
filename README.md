@@ -6,40 +6,37 @@ Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="http
 
 ## Documentation
 
-[Read the Cap docs](https://capjs.js.org), try the [demo](https://capjs.js.org/guide/demo.html) or read the [feature comparison](https://capjs.js.org/guide/alternatives.html)
+**[Read the docs](https://capjs.js.org)**, try the [demo](https://capjs.js.org/guide/demo.html) or read the [feature comparison](https://capjs.js.org/guide/alternatives.html)
 
 ## What is Cap?
 
-Cap is the modern, open-source alternative to traditional CAPTCHAs that uses proof-of-work instead of annoying visual puzzles.
+Cap replaces visual captchas with modern, accessible and privacy-preserving <a href="https://capjs.js.org/guide/effectiveness.html">proof-of-work challenges</a>. No images, no tracking, no dependencies, works everywhere.
 
-Cap is built with JavaScript and Rust and both the widget and server helper have zero dependencies.
-
-You can either run it on any JavaScript runtime, or use the standalone mode with Docker.
-
----
-
-Cap is built into 2 main parts. The [widget](https://capjs.js.org/guide/widget.html) is a small client-side JavaScript library using custom components and WASM that renders the CAPTCHA and solves the challenge.
-
-The [Standalone Server](https://capjs.js.org/guide/standalone.html) is a Docker image that helps you use Cap with any language or framework. As an alternative, if your server-side uses JavaScript, you can use the lighter [server](https://capjs.js.org/guide/server.html) library.
-
-Cap also has a [M2M library](https://capjs.js.org/guide/solver.html) that implements a custom proof-of-work solver for protecting API endpoints that you still want public.
+You can either run it on any JavaScript runtime, or use the standalone mode with Docker. [Learn more about how Cap works](https://capjs.js.org/guide/)
 
 ## Why Cap?
 
 - **250x smaller than hCaptcha**  
   ~20kb, zero dependencies, loads in milliseconds
+
 - **Privacy-first**  
    Cap doesn't send any telemetry back to our servers
+
 - **Fully customizable**  
    Change the colors, size, position, icons and more with CSS variables
+
 - **Proof-of-work**  
    Your users no longer have to waste time solving visual puzzles.
+
 - **Standalone mode**  
    Run Cap anywhere with a Docker container with analytics & more
+
 - **Invisible**  
    Hide Cap's widget and solve challenges in the background
+
 - **M2M**  
    Keep your APIs protected while accessible to friendly robots
+
 - **Open-source**  
    Completely free & open-source under the Apache 2.0 license
 
