@@ -88,7 +88,7 @@ Cap is a great alternative to [reCAPTCHA](https://www.google.com/recaptcha/about
 
 ## License
 
-This project is licensed under the Apache-2.0 License, please see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache-2.0 License, please see the [LICENSE](https://github.com/tiagozip/cap/blob/main/LICENSE) file for details.
 
 Copyright ©2025 - present [tiago](https://tiago.zip)
 
