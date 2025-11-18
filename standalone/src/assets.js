@@ -18,22 +18,28 @@ const dataDir = process.env.DATA_PATH || "./.data";
 const updateCache = async () => {
 	if (process.env.ENABLE_ASSETS_SERVER !== "true") return;
 
+	const cacheConfigPath = path.join(dataDir, "assets-cache.json");
 	let cacheConfig = {};
 
 	try {
-		cacheConfig = JSON.parse(await fs.readFile("./assets-cache.json", "utf-8"));
+		cacheConfig = JSON.parse(await fs.readFile(cacheConfigPath, "utf-8"));
 	} catch {}
 
 	const lastUpdate = cacheConfig.lastUpdate || 0;
 	const currentTime = Date.now();
 	const updateInterval = 1000 * 60 * 60 * 24; // 1 day
-
-	if (!(currentTime - lastUpdate > updateInterval)) return;
-
-	const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
+	const intervalExceeded = currentTime - lastUpdate > updateInterval;
 
 	const WIDGET_VERSION = process.env.WIDGET_VERSION || "latest";
 	const WASM_VERSION = process.env.WASM_VERSION || "latest";
+
+	if (!cacheConfig.versions) cacheConfig.versions = {};
+	const versionsChanged = cacheConfig.versions.widget !== WIDGET_VERSION
+		|| cacheConfig.versions.wasm !== WASM_VERSION;
+
+	if (!intervalExceeded && !versionsChanged) return;
+
+	const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
 
 	try {
 		const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] =
@@ -53,10 +59,9 @@ const updateCache = async () => {
 			]);
 
 		cacheConfig.lastUpdate = currentTime;
-		await fs.writeFile(
-			path.join(dataDir, "assets-cache.json"),
-			JSON.stringify(cacheConfig),
-		);
+		cacheConfig.versions.widget = WIDGET_VERSION;
+		cacheConfig.versions.wasm = WASM_VERSION;
+		await fs.writeFile(cacheConfigPath, JSON.stringify(cacheConfig));
 
 		await fs.writeFile(path.join(dataDir, "assets-widget.js"), widgetSource);
 		await fs.writeFile(
@@ -77,7 +82,7 @@ const updateCache = async () => {
 };
 
 updateCache();
-setInterval(updateCache, 1000 * 60 * 60);
+setInterval(updateCache, 1000 * 60 * 60); // 1 hour
 
 export const assetsServer = new Elysia({
 	prefix: "/assets",
