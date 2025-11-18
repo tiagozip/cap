@@ -1,11 +1,7 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+To report security vulnerabilities, please email me at [`hello@tiago.zip`](mailto:hello@tiago.zip).
 
-We support the latest release of each major version. Older minor versions may not be supported.
+The latest version of all Cap packages is actively maintained and patched for all major and minor security vulnerabilities.
 
-## Reporting a Vulnerability
-
-Report any discovered vulnerabilities to the us using GitHub's [Security Advisories feature](https://github.com/tiagozip/cap/security/advisories/new). Your report will be acknowledged as soon as possible.
-
-To the greatest extent possible, we will endeavor to keep you informed of the progress being made towards a fix and full announcement, and may ask for additional information or guidance surrounding the reported issue.
+For any other versions, I can only guarantee fixes of major security vulnerabilities.

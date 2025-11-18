@@ -17,9 +17,9 @@ Thanks for your interest in contributing to Cap!
 
 - VSCode is the recommended IDE for working on Cap.
 
-- Put new docs in `docs/guide` and make sure to update the sidebar in `docs/.vitepress/config.mjs`, not scattered in subfolders.
+- For writing docs, make sure to place them inside of `docs/guide` and make sure to update the sidebar in `docs/.vitepress/config.mjs`.
 
-Run `bun install` in each package you want to work on.
+Run `bun install` in each Bun package you want to work on to install dependencies.
 
 ## Guidelines
 
@@ -29,14 +29,10 @@ Run `bun install` in each package you want to work on.
 
 - We prefer conventional commits, but they are not enforced. See [here](https://www.conventionalcommits.org/en/v1.0.0/) for reference.
 
-- Avoid excessive duplication of code or code comments.
+- No AI-generated code please. AI autocomplete is fine, but not fully AI code. If you submit AI-generated code without making it clear, it may be rejected.
 
-- No AI-generated code please! AI autocomplete is fine, but not fully AI code. If you submit AI-generated code without making it clear, it may be rejected.
-
-- Don't edit type files directly, they're auto-generated from JSDoc comments.
+- Type files are auto-generated from JSDoc comments
 
 - For optimizations, please always publish a benchmark of the before/after difference before submitting a PR, ideally including your device specs. RAM/CPU usage is also appreciated.
 
 Maintainers may reject PRs at their discretion if they don't follow these guidelines or don't align with the project's goals.
-
-Please also read our [code of conduct](CODE_OF_CONDUCT.md).
