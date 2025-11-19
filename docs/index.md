@@ -4,8 +4,8 @@ layout: home
 
 hero:
   name: "Cap"
-  text: "The modern, open-source CAPTCHA"
-  tagline: "Lightweight, self-hosted, privacy-friendly, and designed to put you first. Switch from reCAPTCHA in minutes."
+  text: "Self-hosted CAPTCHA for the modern web."
+  tagline: "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes."
   image:
     src: /logo.png
     alt: VitePress
@@ -49,7 +49,7 @@ features:
 
 ## What is Cap?
 
-Cap is the modern, open-source alternative to traditional CAPTCHAs that uses proof-of-work instead of annoying visual puzzles.
+Cap is the modern, self-hosted alternative to traditional CAPTCHAs that uses proof-of-work instead of annoying visual puzzles.
 
 Cap is built with JavaScript and Rust and both the widget and server helper have zero dependencies.
 
