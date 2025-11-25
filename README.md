@@ -48,4 +48,14 @@ This project is licensed under the Apache-2.0 License, please see the [LICENSE](
 
 Copyright ©2025 - present [tiago](https://tiago.zip)
 
+---
+
+<a href="https://www.digitalocean.com/">
+  <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_icon_blue.svg" width="30px">
+</a>
+
+Cap's free instance is supported by DigitalOcean for open-source. <a href="https://www.digitalocean.com/?refcode=7e41cf645be3&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge">Try DigitalOcean</a> and get $250 worth of credits.
+
+---
+
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920) [![Product Hunt: #1 of the month: User Experience](https://img.shields.io/badge/%231%20of%20the%20month-orange?logo=producthunt&logoColor=white)](https://www.producthunt.com/posts/cap-5?embed=true&utm_source=badge-top-post-topic-badge&utm_medium=badge&utm_souce=badge-cap-5)
