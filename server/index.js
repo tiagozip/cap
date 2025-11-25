@@ -225,7 +225,7 @@ class Cap extends EventEmitter {
     const fiveMinutes = 5 * 60 * 1000;
 
     if (now - this._lastCleanup > fiveMinutes) {
-      this._cleanExpiredTokens().catch((err) => {
+      await this._cleanExpiredTokens().catch((err) => {
         console.error("[cap] cleanup failed", err);
       });
       this._lastCleanup = now;
