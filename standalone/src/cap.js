@@ -102,7 +102,7 @@ export const capServer = new Elysia({
 			INSERT INTO solutions (siteKey, bucket, count)
 			VALUES (${params.siteKey}, ${hourlyBucket}, 1)
 			ON CONFLICT (siteKey, bucket)
-			DO UPDATE SET count = count + 1
+			DO UPDATE SET count = solutions.count + 1
 		`;
 
 		return {
