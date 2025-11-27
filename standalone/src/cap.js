@@ -29,7 +29,7 @@ export const capServer = new Elysia({
 		const cap = new Cap({
 			noFSState: true,
 		});
-		const [_keyConfig] = await db`SELECT (config) FROM keys WHERE siteKey = ${params.siteKey}`;
+		const [_keyConfig] = await db`SELECT config FROM keys WHERE siteKey = ${params.siteKey}`;
 
 		if (!_keyConfig) {
 			set.status = 404;
