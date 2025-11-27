@@ -50,7 +50,7 @@ export const siteverifyServer = new Elysia({
 		}
 
 		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
-		const keyHash = keyData?.secretHash;
+		const keyHash = keyData?.secretHash || keyData?.secrethash;
 		if (!keyHash) {
 			set.status = 404;
 			return { "success":false, error: "Site key not found" };
