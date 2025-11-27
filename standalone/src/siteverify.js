@@ -51,9 +51,9 @@ export const siteverifyServer = new Elysia({
 
 		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
 		const keyHash = keyData?.secretHash;
-		if (!keyHash || !secret) {
+		if (!keyHash) {
 			set.status = 404;
-			return { "success":false, error: "Invalid site key or secret" };
+			return { "success":false, error: "Site key not found" };
 		}
 
 		const isValidSecret = await Bun.password.verify(secret, keyHash);
@@ -61,7 +61,7 @@ export const siteverifyServer = new Elysia({
 		if (!isValidSecret) {
 			blockedIPs.set(ip, now + 250);
 			set.status = 403;
-			return { "success":false, error: "Invalid site key or secret" };
+			return { "success":false, error: "Invalid secret" };
 		}
 
 		const [token] = await db`SELECT * FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
