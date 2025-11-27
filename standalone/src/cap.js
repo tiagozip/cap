@@ -33,7 +33,7 @@ export const capServer = new Elysia({
 
 		if (!_keyConfig) {
 			set.status = 404;
-			return { error: "Invalid site key or secret" };
+			return { error: "Site key not found" };
 		}
 
 		const keyConfig = JSON.parse(_keyConfig.config);

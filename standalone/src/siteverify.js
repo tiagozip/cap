@@ -38,7 +38,7 @@ export const siteverifyServer = new Elysia({
 			set.headers["X-RateLimit-Limit"] = "1";
 			set.headers["X-RateLimit-Remaining"] = "0";
 			set.headers["X-RateLimit-Reset"] = Math.ceil(unblockTime / 1000).toString();
-			return { error: "You were temporarily for using an invalid secret key. Please try again later." };
+			return { error: "You were temporarily blocked for using an invalid secret key. Please try again later." };
 		}
 
 		const sitekey = params.siteKey;
@@ -51,9 +51,9 @@ export const siteverifyServer = new Elysia({
 
 		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
 		const keyHash = keyData?.secretHash;
-		if (!keyHash || !secret) {
+		if (!keyHash) {
 			set.status = 404;
-			return { error: "Invalid site key or secret" };
+			return { error: "Site key not found" };
 		}
 
 		const isValidSecret = await Bun.password.verify(secret, keyHash);
@@ -61,7 +61,7 @@ export const siteverifyServer = new Elysia({
 		if (!isValidSecret) {
 			blockedIPs.set(ip, now + 250);
 			set.status = 403;
-			return { error: "Invalid site key or secret" };
+			return { error: "Invalid secret" };
 		}
 
 		const [token] = await db`SELECT * FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
