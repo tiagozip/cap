@@ -1,13 +1,12 @@
 {
   "name": "@cap.js/server",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "author": "Tiago",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tiagozip/cap.git"
   },
   "main": "index.js",
-  "types": "index.d.ts",
   "bugs": {
     "url": "https://github.com/tiagozip/cap/issues"
   },
@@ -57,8 +56,9 @@
     "publish": "bunx tsc && bun publish --access public"
   },
   "type": "commonjs",
-  "dependencies": {
-    "@types/node": "^22.14.1",
-    "typescript": "^5.8.3"
+  "types": "index.d.ts",
+  "devDependencies": {
+    "@types/node": "^25.0.2",
+    "typescript": "^5.9.3"
   }
 }
