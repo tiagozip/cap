@@ -3,7 +3,7 @@ export = Cap;
  * Main Cap class
  * @extends EventEmitter
  */
-declare class Cap extends EventEmitter<[never]> {
+declare class Cap extends EventEmitter<any> {
     /**
      * Creates a new Cap instance
      * @param {Partial<CapConfig>} [configObj] - Configuration object
@@ -110,7 +110,7 @@ declare class Cap extends EventEmitter<[never]> {
 declare namespace Cap {
     export { Crypto, FsPromises, PathLike, ChallengeTuple, ChallengeData, ChallengeState, ChallengeConfig, TokenConfig, Solution, ChallengeStorage, TokenStorage, StorageHooks, CapConfig };
 }
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
 type Crypto = typeof import("node:crypto");
 type FsPromises = typeof import("node:fs/promises");
 type PathLike = import("fs").PathLike;
