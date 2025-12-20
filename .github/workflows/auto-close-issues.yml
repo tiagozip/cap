@@ -1,0 +1,37 @@
+name: Auto-close empty issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.issue.title?.trim()
+            const body = context.payload.issue.body ?? ""
+
+            const badTitle = title === "[BUG]"
+            const badBody = body.includes("A clear and concise description of what the bug is.")
+
+            if (badTitle && badBody) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                state: "closed"
+              })
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                body: "This issue has been automatically closed due to it being empty. If this isn't intentional, please re-open it with a proper title and body."
+              })
+            }
