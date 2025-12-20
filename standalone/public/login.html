@@ -16,7 +16,7 @@
         margin: 0px;
         padding: 0px;
         margin-top: 14vh;
-        background-color: #161718;
+        background-color: #181825;
         color: #e8e8ea;
       }
       form {
@@ -33,6 +33,7 @@
         text-align: center;
         margin-bottom: 28px;
         margin-top: 0;
+        user-select: none;
       }
       img {
         width: 60px;
@@ -44,10 +45,11 @@
         display: block;
         margin-bottom: 8px;
         color: #eee;
+        user-select: none;
       }
 
       .password-wrapper {
-        box-shadow: inset 0 0 0 1px hsl(220, 3%, 25%);
+        box-shadow: inset 0 0 0 1px rgba(186, 194, 222, 0.3);
         color: #eee;
         border: none;
         display: flex;
@@ -58,10 +60,10 @@
       .showhide-password {
         border: none;
         cursor: pointer;
-        color: white;
         background-color: transparent;
         padding: 0;
         margin-right: 10px;
+        color: rgba(186, 194, 222);
       }
 
       .password {
@@ -76,6 +78,7 @@
         font-weight: 400;
         letter-spacing: -2px;
         margin: 0px;
+        caret-color: #89b4fa;
       }
 
       .password.show-password {
@@ -87,9 +90,15 @@
         outline: none;
       }
 
+      .password::placeholder {
+        color: rgba(186, 194, 222, 0.5);
+        user-select: none;
+      }
+
       .password-wrapper:has(.password:focus) {
-        box-shadow: inset 0 0 0 1px hsl(220, 3%, 25%), 0 0 0 2px #161718,
-          0 0 0 calc(2px + 2px) #cacbce;
+        box-shadow: inset 0 0 0 1px rgba(137, 180, 250, 1), 
+          0px 0px 0px 2px rgba(137, 180, 250, 1);
+        transition: box-shadow 0.12s;
       }
 
       .submit {
@@ -103,21 +112,22 @@
         text-align: center;
         font-weight: 500;
         border: none;
-        color: white;
-        background: #007aff;
+        color: black;
+        background: #89b4fa;
         background-origin: border-box;
         user-select: none;
         -webkit-user-select: none;
         touch-action: manipulation;
         cursor: pointer;
         font-size: 14px;
+        z-index: 12;
         transition: box-shadow 0.13s, opacity 0.2s;
       }
 
       .submit:focus {
         box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
-          0px 0.5px 1.5px rgba(54, 122, 246, 0.25),
-          0px 0px 0px 3.5px rgba(0, 122, 255, 0.5);
+          0px 0.5px 1.5px rgba(137, 180, 250, 0.25),
+          0px 0px 0px 3.5px rgba(137, 180, 250, 0.5);
         outline: 0;
       }
 
@@ -137,36 +147,43 @@
       }
 
       p.err {
-        color: #ffffff;
+        background-color: rgba(137, 180, 250, 0.2);
+        color: rgb(228 238 255);
         display: none;
         margin: 0px;
-        margin-top: 12px;
-        font-size: 14px;
+        margin-top: -10px;
+        z-index: 10;
+        padding: 4px;
+        padding-top: 18px;
+        padding-bottom: 8px;
+        font-size: 13px;
+        border-bottom-left-radius: calc(0.8rem - 2px);
+        border-bottom-right-radius: calc(0.8rem - 2px);
+        text-align: center;
+        user-select: none;
+        transition: opacity .2s, margin-top .2s, color .2s;
+      }
+
+      @starting-style {
+        p.err {
+          opacity: 0.9;
+          color: rgba(228, 238, 255, 0.1);
+          margin-top: -40px;
+        }
       }
 
       a {
-        color: rgb(255, 255, 255);
-        opacity: 0.4;
+        color: #bac2de;
         font-size: 14px;
         text-underline-offset: 2px;
         text-decoration: none;
+        opacity: 0.6;
+        user-select: none;
       }
 
       a:hover {
         opacity: 1;
         text-decoration: underline;
-      }
-
-      .logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .logo img {
-        width: 45px;
-        height: 45px;
-        margin-bottom: 6px;
       }
 
       @font-face {
@@ -177,10 +194,7 @@
   </head>
   <body>
     <form action="javascript:void(0)">
-      <div class="logo">
-        <img src="./public/logo-small.webp" alt="Cap logo" />
-      </div>
-      <h1>Welcome to Cap!</h1>
+      <h1>Continue to your Standalone instance</h1>
       <label for="password">Admin key</label>
       <div class="password-wrapper">
         <input
@@ -236,82 +250,69 @@
       <p class="err"></p>
       <p class="bottom">
         <!-- prettier-ignore -->
-        <a href="https://github.com/tiagozip/cap" target="_blank" rel="follow noopener" style="height: 24px;width: 24px;">
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 17 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M8.5 2.22168C5.23312 2.22168 2.58496 4.87398 2.58496 8.14677C2.58496 10.7642 4.27962 12.9853 6.63026 13.7684C6.92601 13.8228 7.03366 13.6401 7.03366 13.4827C7.03366 13.3425 7.02893 12.9693 7.02597 12.4754C5.38041 12.8333 5.0332 11.681 5.0332 11.681C4.76465 10.996 4.37663 10.8139 4.37663 10.8139C3.83954 10.4471 4.41744 10.4542 4.41744 10.4542C5.01072 10.4956 5.32303 11.0647 5.32303 11.0647C5.85065 11.9697 6.70774 11.7082 7.04431 11.5568C7.09873 11.1741 7.25134 10.9132 7.42051 10.7654C6.10737 10.6157 4.72621 10.107 4.72621 7.83683C4.72621 7.19031 4.95689 6.66092 5.33486 6.24686C5.27394 6.09721 5.07105 5.49447 5.39283 4.67938C5.39283 4.67938 5.88969 4.51967 7.01947 5.28626C7.502 5.15466 7.99985 5.08763 8.5 5.08692C9.00278 5.08929 9.50851 5.15495 9.98113 5.28626C11.1103 4.51967 11.606 4.67879 11.606 4.67879C11.9289 5.49447 11.7255 6.09721 11.6651 6.24686C12.0437 6.66092 12.2732 7.19031 12.2732 7.83683C12.2732 10.1129 10.8897 10.6139 9.5724 10.7606C9.78475 10.9434 9.97344 11.3048 9.97344 11.8579C9.97344 12.6493 9.96634 13.2887 9.96634 13.4827C9.96634 13.6413 10.0728 13.8258 10.3733 13.7678C11.5512 13.3728 12.5751 12.6175 13.3003 11.6089C14.0256 10.6002 14.4155 9.38912 14.415 8.14677C14.415 4.87398 11.7663 2.22168 8.5 2.22168Z"
-            fill="currentColor"
-          ></path>
-        </svg></a>
+        <a href="https://github.com/tiagozip/cap" target="_blank" rel="follow noopener" style="position: absolute;top:-999px;">GitHub</a>
         <a
           href="https://github.com/tiagozip/cap/issues/new/choose"
           target="_blank"
           rel="follow noopener"
         >
-          Report issue
+          Report issues
         </a>
         <a href="https://capjs.js.org/" target="_blank" class="poweredby">
           Powered by Cap
         </a>
       </p>
     </form>
+    
+
   </body>
   <script>
-    let loading = false;
     document.querySelector("input").focus();
 
-    document
-      .querySelector("form")
-      .addEventListener("submit", async function (e) {
-        e.preventDefault();
+    document.querySelector("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-        const admin_key = document.querySelector("input[name=password]").value;
+      const admin_key = document.querySelector("input[name=password]").value;
 
-        if (!admin_key) return;
+      if (!admin_key) {
+        document.querySelector("input[name=password]").focus();
+        return;
+      }
 
-        document.querySelector("button[type=submit]").disabled = true;
+      document.querySelector("button[type=submit]").disabled = true;
 
-        const { success, session_token, hashed_token, expires } = await (
-          await fetch("/auth/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              admin_key,
-            }),
+      const { success, session_token, hashed_token, expires } = await (
+        await fetch("/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            admin_key,
+          }),
+        })
+      ).json();
+
+      if (success && session_token) {
+        localStorage.setItem(
+          "cap_auth",
+          JSON.stringify({
+            token: session_token,
+            expires: expires,
+            hash: hashed_token,
           })
-        ).json();
+        );
 
-        if (success && session_token) {
-          localStorage.setItem(
-            "cap_auth",
-            JSON.stringify({
-              token: session_token,
-              expires: expires,
-              hash: hashed_token,
-            })
-          );
+        document.querySelector("p.err").style.display = "none";
+        location.reload();
+        return;
+      }
 
-          document.querySelector("p.err").style.display = "none";
-          location.reload();
-          return;
-        }
-
-        document.querySelector("button[type=submit]").disabled = false;
-        document.querySelector("p.err").style.display = "block";
-        document.querySelector("p.err").innerText =
-          "Incorrect admin key. Please try again.";
-        document.querySelector("input[name=password]").value = "";
-      });
+      document.querySelector("button[type=submit]").disabled = false;
+      document.querySelector("p.err").style.display = "block";
+      document.querySelector("p.err").innerText = "Incorrect admin key";
+      document.querySelector("input[name=password]").value = "";
+    });
 
     document
       .querySelector(".showhide-password")
