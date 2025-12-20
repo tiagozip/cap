@@ -17,7 +17,7 @@ jobs:
             const title = context.payload.issue.title?.trim()
             const body = context.payload.issue.body ?? ""
 
-            const badTitle = title === "[BUG]"
+            const badTitle = title?.toLowerCase() === "[bug]"
             const badBody = body.includes("A clear and concise description of what the bug is.")
 
             if (badTitle && badBody) {
