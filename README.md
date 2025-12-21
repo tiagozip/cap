@@ -48,6 +48,7 @@ This project is licensed under the Apache-2.0 License, please see the [LICENSE](
 
 Copyright ©2025 - present [tiago](https://tiago.zip)
 
+<!--
 ---
 
 <a href="https://www.digitalocean.com/">
@@ -55,6 +56,7 @@ Copyright ©2025 - present [tiago](https://tiago.zip)
 </a>
 
 Cap's free instance is supported by DigitalOcean for open-source. <a href="https://www.digitalocean.com/?refcode=7e41cf645be3&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge">Try DigitalOcean</a> and get $250 worth of credits.
+-->
 
 ---
 
