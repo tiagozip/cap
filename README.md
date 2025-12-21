@@ -58,4 +58,4 @@ Cap's free instance is supported by DigitalOcean for open-source. <a href="https
 
 ---
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920) [![Product Hunt: #1 of the month: User Experience](https://img.shields.io/badge/%231%20of%20the%20month-orange?logo=producthunt&logoColor=white)](https://www.producthunt.com/posts/cap-5?embed=true&utm_source=badge-top-post-topic-badge&utm_medium=badge&utm_souce=badge-cap-5)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920) [![](https://data.jsdelivr.com/v1/package/npm/@cap.js/widget/badge?style=rounded)](https://www.jsdelivr.com/package/npm/@cap.js/widget)
