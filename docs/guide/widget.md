@@ -1,6 +1,6 @@
 # @cap.js/widget
 
-[![](https://data.jsdelivr.com/v1/package/npm/@cap.js/widget/badge?style=rounded)](https://www.jsdelivr.com/package/npm/@cap.js/widget)
+[![](https://data.jsdelivr.com/v1/package/npm/@cap.js/wasm/badge)](https://www.jsdelivr.com/package/npm/@cap.js/wasm)
 
 `@cap.js/widget` is Cap's client-side library. It includes the `cap-widget` web component, the invisible mode and the CAPTCHA solver. First, add it to your client-side code:
 
