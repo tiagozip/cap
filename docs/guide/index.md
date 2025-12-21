@@ -4,49 +4,39 @@ outline: deep
 
 # Quickstart
 
-Cap is a modern, lightweight, open-source CAPTCHA alternative using SHA-256 proof-of-work.
+Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using SHA-256 proof-of-work.
 
-Unlike traditional CAPTCHAs, Cap:
+Unlike traditional CAPTCHAs, Cap's fast, unobtrusive, has no telemetry or tracking, and uses accessible proof-of-work instead of annoying visual puzzles.
 
-- Is fast and unobtrusive
-- Uses no tracking or cookies
-- Uses proof-of-work instead of annoying visual puzzles
-- Is fully accessible and self-hostable
+Cap consists of a client-side widget, which solves challenges and displays the checkbox, and a server-side component, which generates challenges and redeems solutions.
 
-Here, try it yourself:
+## Integration
+
+### Widget
+
+In order for your users to be able to solve Cap challenges, you'll need to install the widget library to either use the invisible mode or add the checkbox custom component, which looks like this:
 
 <Demo />
 
-## Components
+Add the following to your website's HTML:
 
-Cap consists mainly of the **widget** (can be used invisibly) and **server** (you can use the Standalone server instead). Alternatively, M2M is also supported and there's also a checkpoint middleware similar to Cloudflare.
-
-This guide details how to use the usual setup. You can find guides on using the [Standalone server](./standalone/index.md), [M2M solver](./solver.md), and [checkpoint middleware](./middleware/index.md) in their respective sections.
-
-We highly recommend checking out the [Standalone mode](./standalone/index.md) as it's complete, fast, simple to set up, and works with any language that can make HTTP requests. It also includes a dashboard, API key support, and more.
-
-## Client-side
-
-Start by adding importing the Cap widget library from a CDN:
-
-::: code-group
-
-```html [jsdelivr]
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.28"></script>
+```html
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.32"></script>
 ```
 
-```html [unpkg]
-<script src="https://unpkg.com/@cap.js/widget@0.1.28"></script>
-```
+::: tip Using the scripts without a CDN
+
+Using `cdn.jsdelivr.net` is optional. If preferred, you can self-host the scripts by either [downloading the latest release files](https://cdn.jsdelivr.net/npm/@cap.js/widget@latest) or, if you're using a framework, installing them with `npm add @cap.js/widget` and serving them from your own server. Remember to update these regularly.
+
+`cdn.jsdelivr.net` is blocked in some jurisdictions, like some parts of China. If your website needs to be reachable from these jurisdictions, we recommend that you self-host the scripts.
 
 :::
 
-You can also just add it with `npm i @cap.js/widget` if your setup supports it, using a CDN isn't really required.
 
-Next, add the `<cap-widget>` component to your HTML.
+Next, you can either add the widget component directly to your code:
 
 ```html
-<cap-widget id="cap" data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
+<cap-widget data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
 ```
 
 You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. We'll tell you how to set this up in the next section.
@@ -54,7 +44,7 @@ You'll need to start a server with the Cap API running at the same URL as specif
 Then, in your JavaScript, listen for the `solve` event to capture the token when generated:
 
 ```js{3}
-const widget = document.querySelector("#cap");
+const widget = document.querySelector("cap-widget");
 
 widget.addEventListener("solve", function (e) {
   const token = e.detail.token;
@@ -63,18 +53,28 @@ widget.addEventListener("solve", function (e) {
 });
 ```
 
-Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data. for this, it'll create a hidden field with name set to its `data-cap-hidden-field-name` attribute or `cap-token`).
+Alternatively, you can wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data as `cap-token`.
 
-You can learn how to use the widget in more detail (such as the invisible mode) in the [widget guide](./widget.md).
+You can also use get a token programmatically without displaying the widget by using the invisible mode:
+
+```js
+const cap = new Cap({
+  apiEndpoint: "/api/"
+});
+const solution = await cap.solve();
+
+// you can attach event listeners to track progress
+cap.addEventListener("progress", (event) => { 
+  console.log(`Solving... ${event.detail.progress}% done`);
+});
+
+console.log(solution.token);
+```
 
 ## Server-side
 
-Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's methods running at the same URL as specified in the `data-cap-api-endpoint` attribute.
+Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's protocol.
 
-You can choose between using the Standalone server or implementing your own server using the `@cap.js/server` package.
+For most use cases, we recommend using the Docker **[Standalone server](./standalone/index.md)**, as it exposes a simple HTTP API and provides a simple web dashboard with analytics.
 
-- For most use cases, we recommend using the **[Standalone server](./standalone/index.md)** as it provides a complete solution with built-in features like token storage, ratelimiting, analytics, and a pretty nice dashboard. However, it does require docker and exposing the server port.
-
-- However, if you prefer to implement your own server, you can use the `@cap.js/server` package. This package provides the necessary methods to create and validate challenges, as well as redeem solutions, but it only works with a JavaScript backend and you'll have to add your own db. [See the server guide](./server.md) for more details.
-
-- If you would like the simplicity of the server package but with another language, check out the [community packages](./community.md)
+However, if you can't use Docker or need a more lightweight solution, you can use the [server library](./server.md) on Node and Bun or a [community library](./community.md) in other languages.

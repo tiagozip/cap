@@ -1,4 +1,4 @@
-# @cap.js/solver
+# M2M
 
 `@cap.js/solver` is a standalone library that can be used to solve Cap challenges from the server. It's extremely simple (no dependencies, one single file) yet as fast and efficient as the widget. Note that it can **only be used with Bun**. Node.js support is not planned.
 
@@ -56,13 +56,3 @@ The 2nd argument is optional but can always be provided. It's always an object.
 - For **all challenge types**, `onProgress` can also be used to provide a callback for progress updates.
 
 - For **seeded challenges only**, it is used to specify the number of solutions to generate, the size of the challenges, and the difficulty
-
-## FAQ
-
-### Why is this needed?
-
-Mainly for M2M interactions, where you want to solve Cap challenges on the server without user interaction.
-
-### Doesn't this defeat the purpose of Cap?
-
-Not really. Server-side solving is a core use case of proof-of-work CAPTCHAs like Cap or altcha. It's about proving effort, not necessarily involving a human. [Learn more](./effectiveness.md)

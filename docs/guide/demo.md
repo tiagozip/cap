@@ -82,5 +82,3 @@
 <button class="signin-button" onclick="alert('Success!')">Sign in</button>
 
 You can find more demos [in the GitHub repo](https://github.com/tiagozip/cap/tree/main/demo). Note that this demo is not a full implementation of Cap and uses a placeholder server.
-
-Note that the widget is also fully customizable! If you don't like how it looks, you can use CSS variables to change just about everything.

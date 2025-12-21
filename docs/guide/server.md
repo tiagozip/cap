@@ -20,70 +20,107 @@ pnpm i @cap.js/server
 
 ## Getting started
 
-The best way to use Cap is with **storage hooks** that connect to your database. Here's a simple example with SQLite:
+You'll need a database to store challenges and tokens. Here's an example using Bun's SQL module and a Postgres DB:
 
 ```js
 import Cap from "@cap.js/server";
-import { Database } from "bun:sqlite";
+import { SQL } from "bun";
 
-const db = new Database("cap.db");
+const db = new SQL(`postgres://user:password@localhost:5432/dbname`);
 
-db.exec(`
+await db`
   CREATE TABLE IF NOT EXISTS challenges (
     token TEXT PRIMARY KEY,
-    data TEXT NOT NULL,
-    expires INTEGER NOT NULL
+    data JSONB NOT NULL,
+    expires BIGINT NOT NULL
   );
+`;
+
+await db`
   CREATE TABLE IF NOT EXISTS tokens (
     key TEXT PRIMARY KEY,
-    expires INTEGER NOT NULL
+    expires BIGINT NOT NULL
   );
-`);
+`;
 
 const cap = new Cap({
   storage: {
     challenges: {
       store: async (token, challengeData) => {
-        db.prepare(
-          "INSERT OR REPLACE INTO challenges (token, data, expires) VALUES (?, ?, ?)"
-        ).run(token, JSON.stringify(challengeData), challengeData.expires);
+        await db`
+          INSERT INTO challenges (token, data, expires)
+          VALUES (${token}, ${challengeData}, ${challengeData.expires})
+          ON CONFLICT (token)
+          DO UPDATE SET
+            data = EXCLUDED.data,
+            expires = EXCLUDED.expires
+        `;
       },
+
       read: async (token) => {
-        const row = db
-          .prepare(
-            "SELECT data, expires FROM challenges WHERE token = ? AND expires > ?"
-          )
-          .get(token, Date.now());
+        const [row] = await db`
+          SELECT data, expires
+          FROM challenges
+          WHERE token = ${token}
+            AND expires > ${Date.now()}
+          LIMIT 1
+        `;
 
         return row
-          ? { challenge: JSON.parse(row.data), expires: row.expires }
+          ? { challenge: row.data, expires: Number(row.expires) }
           : null;
       },
+
       delete: async (token) => {
-        db.prepare("DELETE FROM challenges WHERE token = ?").run(token);
+        await db`
+          DELETE FROM challenges
+          WHERE token = ${token}
+        `;
       },
+
       deleteExpired: async () => {
-        db.prepare("DELETE FROM challenges WHERE expires <= ?").run(Date.now());
+        await db`
+          DELETE FROM challenges
+          WHERE expires <= ${Date.now()}
+        `;
       },
     },
+
     tokens: {
       store: async (tokenKey, expires) => {
-        db.prepare(
-          "INSERT OR REPLACE INTO tokens (key, expires) VALUES (?, ?)"
-        ).run(tokenKey, expires);
+        await db`
+          INSERT INTO tokens (key, expires)
+          VALUES (${tokenKey}, ${expires})
+          ON CONFLICT (key)
+          DO UPDATE SET
+            expires = EXCLUDED.expires
+        `;
       },
-      get: async (tokenKey) => {
-        const row = db
-          .prepare("SELECT expires FROM tokens WHERE key = ? AND expires > ?")
-          .get(tokenKey, Date.now());
 
-        return row ? row.expires : null;
+      get: async (tokenKey) => {
+        const [row] = await db`
+          SELECT expires
+          FROM tokens
+          WHERE key = ${tokenKey}
+            AND expires > ${Date.now()}
+          LIMIT 1
+        `;
+
+        return row ? Number(row.expires) : null;
       },
+
       delete: async (tokenKey) => {
-        db.prepare("DELETE FROM tokens WHERE key = ?").run(tokenKey);
+        await db`
+          DELETE FROM tokens
+          WHERE key = ${tokenKey}
+        `;
       },
+
       deleteExpired: async () => {
-        db.prepare("DELETE FROM tokens WHERE expires <= ?").run(Date.now());
+        await db`
+          DELETE FROM tokens
+          WHERE expires <= ${Date.now()}
+        `;
       },
     },
   },
@@ -98,7 +135,7 @@ Now, you can connect this to your backend to expose the routes needed for the wi
 
 ```js [Elysia]
 import { Elysia } from "elysia";
-import cap from "...";
+import cap from "./cap.js";
 
 new Elysia()
   .post("/cap/challenge", async () => {
@@ -117,7 +154,7 @@ new Elysia()
 
 ```js [Express]
 import express from "express";
-import cap from "...";
+import cap from "./cap.js";
 
 const app = express();
 app.use(express.json());
@@ -139,7 +176,7 @@ app.listen(3000);
 
 ```js [Fastify]
 import Fastify from "fastify";
-import cap from "...";
+import cap from "../cap.js";
 
 const fastify = Fastify();
 
@@ -180,12 +217,6 @@ if (!success) throw new Error("invalid cap token");
 
 ```json
 {
-  // used for json keyval storage. storage hooks are recommended instead
-  "tokens_store_path": ".data/tokensList.json",
-
-  // disables all filesystem operations, usually used along editing the state. storage hooks are recommended instead
-  "noFSState": false,
-
   "disableAutoCleanup": false,
 
   "storage": {
@@ -206,7 +237,15 @@ if (!success) throw new Error("invalid cap token");
   "state": {
     "challengesList": {},
     "tokensList": {}
-  }
+  },
+
+  // deprecated:
+
+  // used for json keyval storage
+  // "tokens_store_path": ".data/tokensList.json",
+
+  // disables all filesystem operations, usually used along editing the state
+  // "noFSState": false,
 }
 ```
 

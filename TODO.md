@@ -1,2 +1,0 @@
-- checkpoints: traefik support maybe?
-- general: ability to change challenge algorithm
