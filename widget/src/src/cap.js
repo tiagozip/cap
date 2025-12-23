@@ -292,22 +292,9 @@
 						return;
 					}
 
-					const timeout = setTimeout(() => {
-						try {
-							worker.terminate();
-							workers[workerId] = new Worker(this.#workerUrl);
-						} catch (error) {
-							console.error(
-								"[cap] error terminating/recreating worker:",
-								error,
-							);
-						}
-						reject(new Error("Worker timeout"));
-					}, 30000);
-
 					worker.onmessage = ({ data }) => {
 						if (!data.found) return;
-						clearTimeout(timeout);
+
 						completed++;
 						this.dispatchEvent("progress", {
 							progress: Math.round((completed / total) * 100),
@@ -317,7 +304,6 @@
 					};
 
 					worker.onerror = (err) => {
-						clearTimeout(timeout);
 						this.error(`Error in worker: ${err.message || err}`);
 						reject(err);
 					};
