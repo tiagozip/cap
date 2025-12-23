@@ -303,7 +303,7 @@
 							);
 						}
 						reject(new Error("Worker timeout"));
-					}, 30000);
+					}, window.CAP_CUSTOM_WORKER_TIMEOUT || 30 * 1000);
 
 					worker.onmessage = ({ data }) => {
 						if (!data.found) return;

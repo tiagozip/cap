@@ -123,6 +123,19 @@ window.CAP_CUSTOM_FETCH = function (url, options) {
 
 You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js`
 
+## Worker Timeout
+
+Control the maximum time a worker may run for a single solve attempt by setting `window.CAP_CUSTOM_WORKER_TIMEOUT` (default: 30,000 ms). This is helpful on low‑performance devices; increasing the timeout can reduce verification failures.
+
+Example:
+
+```js
+// 60 seconds
+window.CAP_CUSTOM_WORKER_TIMEOUT = 60 * 1000;
+```
+
+
+
 ## Customizing
 
 You can fully change how the widget looks by setting various CSS variables on the `cap-widget` element. The following CSS variables are supported:
