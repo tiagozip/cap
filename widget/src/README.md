@@ -1,3 +1,5 @@
-# Cap Widget
+# [@cap.js](https://capjs.js.org)/widget
 
-For docs, see [capjs.js.org](https://capjs.js.org/guide/widget.html)
+Client-side widget for Cap, the self-hosted CAPTCHA for the modern web.
+
+**[Learn more](https://github.com/tiagozip/cap)**
