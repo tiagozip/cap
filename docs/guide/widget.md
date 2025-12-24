@@ -134,8 +134,6 @@ Example:
 window.CAP_CUSTOM_WORKER_TIMEOUT = 60 * 1000;
 ```
 
-
-
 ## Customizing
 
 You can fully change how the widget looks by setting various CSS variables on the `cap-widget` element. The following CSS variables are supported:
