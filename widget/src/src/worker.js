@@ -56,7 +56,7 @@
 			console.warn("[cap worker] Wasm Multi-table not supported, falling back to JS.");
 			return false;
     }
-	}
+	};
 
 	if (
 		!isWASMSupported()
