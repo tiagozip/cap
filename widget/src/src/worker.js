@@ -50,7 +50,7 @@
     if (!(typeof WebAssembly === "object" && typeof WebAssembly.instantiate === "function")) return false;
     try {
 			// Load a minimal wasm module to check multi-table support
-			new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0,4,7,2,112,0,1,112,0,1])); 
+			new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0,4,7,2,112,0,1,112,0,1]));
 			return true;
     } catch (e) {
 			console.warn("[cap worker] Wasm Multi-table not supported, falling back to JS.");
