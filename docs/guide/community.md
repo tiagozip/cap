@@ -29,6 +29,10 @@ These are React hook implementations of the Cap API, allowing full customization
 
 **Warning:** These libraries are community-maintained and not officially supported or actively monitored for security by Cap. We can't guarantee their quality, security, or compatibility. They also might not support newer features such as storage hooks or seeded challenges.
 
+### Cloudflare Workers (Serverless/JavaScript)
+
+- **[kaerez/CFCap](https://github.com/kaerez/CFCap)**: Serverless CAP CAPTCHA implementation on Cloudflare Workers with R2 Buckets (cheaper than Durable Objects), featuring customizable TTLs, optional use of hosted JS & WASM, global edge deployment and auto-scaling
+
 ### Cloudflare Workers (Serverless/JavaScript/TypeScript)
 
 - **[xyTom/cap-worker](https://github.com/xyTom/cap-worker)**: Serverless CAP CAPTCHA implementation on Cloudflare Workers with Durable Objects, featuring global edge deployment and auto-scaling
