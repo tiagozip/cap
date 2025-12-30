@@ -15,10 +15,10 @@ jobs:
         with:
           script: |
             const title = context.payload.issue.title?.trim()
-            const body = context.payload.issue.body ?? ""
+            const body = context.payload.issue.body?.toLowerCase() ?? ""
 
             const badTitle = title?.toLowerCase() === "[bug]"
-            const badBody = body.includes("A clear and concise description of what the bug is.")
+            const badBody = body.includes("a clear and concise description of what the bug is.")
 
             if (badTitle && badBody) {
               await github.rest.issues.update({
@@ -32,6 +32,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.issue.number,
-                body: "This issue has been automatically closed due to it being empty. If this isn't intentional, please re-open it with a proper title and body."
+                body: "this issue has been automatically closed due to it being empty. if this isn't intentional, please re-open it with a proper title and body."
               })
             }
