@@ -1,78 +1,1024 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="./public/index.css" />
-
     <link rel="icon" href="./public/logo-small.webp" />
     <title>Cap Standalone</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --ctp-base: #181825;
+        --ctp-mantle: #11111b;
+        --ctp-crust: #0d0d14;
+        --ctp-surface0: #1e1e2e;
+        --ctp-surface1: #313244;
+        --ctp-surface2: #45475a;
+        --ctp-overlay0: #6c7086;
+        --ctp-overlay1: #7f849c;
+        --ctp-overlay2: #9399b2;
+        --ctp-text: #cdd6f4;
+        --ctp-subtext0: #a6adc8;
+        --ctp-subtext1: #bac2de;
+        --ctp-blue: #89b4fa;
+        --ctp-lavender: #b4befe;
+        --ctp-sapphire: #74c7ec;
+        --ctp-sky: #89dceb;
+        --ctp-teal: #94e2d5;
+        --ctp-green: #a6e3a1;
+        --ctp-yellow: #f9e2af;
+        --ctp-peach: #fab387;
+        --ctp-maroon: #eba0ac;
+        --ctp-red: #f38ba8;
+        --ctp-mauve: #cba6f7;
+        --ctp-pink: #f5c2e7;
+        --ctp-flamingo: #f2cdcd;
+        --ctp-rosewater: #f5e0dc;
+      }
+
+      body {
+        font-family:
+          InterVariable,
+          Inter,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        background: var(--ctp-base);
+        color: var(--ctp-text);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: var(--ctp-mantle);
+        gap: 12px;
+        flex-shrink: 0;
+        user-select: none;
+      }
+
+      nav h1 {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--ctp-text);
+        font-weight: 500;
+        font-size: 15px;
+        font-family: inherit;
+      }
+
+      .nav-spacer {
+        flex: 1;
+      }
+
+      .nav-btn {
+        background: none;
+        border: none;
+        color: var(--ctp-subtext0);
+        cursor: pointer;
+        padding: 6px 10px;
+        margin-right: -10px;
+        border-radius: 120px;
+        font-size: 14px;
+        font-family: inherit;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition:
+          background 0.1s,
+          color 0.1s,
+          transform 0.2s;
+      }
+
+      .nav-btn:hover {
+        background: var(--ctp-surface0);
+        color: var(--ctp-text);
+      }
+
+      .nav-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .nav-btn:active {
+        transform: scale(0.98);
+      }
+
+      .main-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        background: var(--ctp-mantle);
+      }
+
+      .sidebar {
+        width: 340px;
+        min-width: 340px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .sidebar-header {
+        padding: 2px 8px;
+      }
+
+      .search-create {
+        display: flex;
+        gap: 8px;
+      }
+
+      .search-input {
+        flex: 1;
+        background: var(--ctp-surface0);
+        border: 1px solid var(--ctp-surface2);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--ctp-text);
+        font-size: 14px;
+        font-family: inherit;
+        caret-color: var(--ctp-blue);
+      }
+
+      .search-input::placeholder {
+        color: var(--ctp-overlay0);
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--ctp-blue);
+        box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
+      }
+
+      .create-btn {
+        background: var(--ctp-blue);
+        color: var(--ctp-crust);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+        white-space: nowrap;
+        user-select: none;
+      }
+
+      .create-btn:hover {
+        opacity: 0.9;
+      }
+
+      .create-btn:active {
+        transform: scale(0.97);
+      }
+
+      .create-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .keys-list {
+        flex: 1;
+        overflow-y: auto;
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+
+      .keys-list::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .keys-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .keys-list::-webkit-scrollbar-thumb {
+        background: var(--ctp-surface1);
+        border-radius: 3px;
+      }
+
+      .key-item {
+        padding: 14px 12px;
+        cursor: pointer;
+        transition: background 0.05s;
+        border: 1px solid transparent;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .key-item:hover {
+        background: rgb(from var(--ctp-surface0) r g b / 0.5);
+      }
+
+      .key-item.active {
+        background: var(--ctp-surface0);
+
+        .key-item-name {
+          color: var(--ctp-blue);
+        }
+      }
+
+      .key-item-name {
+        font-weight: 500;
+        font-size: 15px;
+        margin-bottom: 4px;
+        color: var(--ctp-text);
+      }
+
+      .key-item-stats {
+        font-size: 13px;
+        color: var(--ctp-subtext0);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        user-select: none;
+      }
+
+      .key-item-stats .trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+      }
+
+      .key-item-stats .trend.up {
+        color: var(--ctp-green);
+      }
+
+      .key-item-stats .trend.down {
+        color: var(--ctp-red);
+      }
+
+      .key-item-stats .trend svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      .keys-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--ctp-overlay1);
+      }
+
+      .keys-empty p {
+        margin-bottom: 16px;
+      }
+
+      .detail-panel {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 32px;
+        background: var(--ctp-base);
+        margin: 6px;
+        border-radius: 8px;
+        border: 1px solid var(--ctp-surface0);
+        margin-top: 0px;
+        scrollbar-width: thin;
+        scrollbar-color: hsla(255 0 255/15%) var(--ctp-base);
+        transition: opacity 0.2s;
+      }
+
+      .detail-panel::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .detail-panel::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .detail-panel::-webkit-scrollbar-thumb {
+        background: var(--ctp-surface1);
+        border-radius: 4px;
+      }
+
+      .welcome-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--ctp-overlay1);
+        text-align: center;
+      }
+
+      .welcome-screen svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .welcome-screen h2 {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--ctp-subtext1);
+        user-select: none;
+      }
+
+      .key-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .key-header h1 {
+        font-size: 24px;
+        font-weight: 600;
+        flex: 1;
+      }
+
+      .copy-btn {
+        background: var(--ctp-surface0);
+        border: 1px solid var(--ctp-surface1);
+        color: var(--ctp-subtext1);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition:
+          background 0.15s,
+          border-color 0.15s;
+      }
+
+      .copy-btn:hover {
+        background: var(--ctp-surface1);
+        border-color: var(--ctp-surface2);
+      }
+
+      .copy-btn svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .stats-grid {
+        display: flex;
+        gap: 40px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ctp-overlay1);
+        margin-bottom: 5px;
+        user-select: none;
+      }
+
+      .stat-card-value {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--ctp-text);
+      }
+
+      .stat-card-change {
+        font-size: 13px;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .stat-card-change.up {
+        color: var(--ctp-green);
+      }
+
+      .stat-card-change.down {
+        color: var(--ctp-red);
+      }
+
+      .stat-card-change svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .chart-section {
+        margin-bottom: 24px;
+      }
+
+      .chart-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        user-select: none;
+      }
+
+      .chart-header h3 {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .time-select {
+        background: var(--ctp-surface1);
+        border: none;
+        border-radius: 6px;
+        padding: 6px 10px;
+        color: var(--ctp-text);
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      .time-select:focus {
+        outline: none;
+      }
+
+      .chart-container {
+        height: 280px;
+        position: relative;
+      }
+
+      .chart-loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(30, 30, 46, 0.8);
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+
+      .chart-loading.visible {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .config-section {
+        border-top: 1px solid var(--ctp-surface1);
+        padding-top: 20px;
+        margin-bottom: 24px;
+        margin-top: 45px;
+      }
+
+      .config-section h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .config-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .config-field label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ctp-subtext1);
+      }
+
+      .config-field input {
+        background: var(--ctp-base);
+        border: 1px solid var(--ctp-surface1);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: var(--ctp-text);
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .config-field input:focus {
+        outline: none;
+        border-color: var(--ctp-blue);
+        box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
+      }
+
+      .config-actions {
+        margin-top: 16px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .save-btn {
+        background: var(--ctp-blue);
+        color: var(--ctp-crust);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      .save-btn:hover {
+        opacity: 0.9;
+      }
+
+      .save-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .danger-section {
+        margin-top: 29px;
+      }
+
+      .danger-section h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .danger-section p {
+        font-size: 14px;
+        color: var(--ctp-subtext0);
+        margin-bottom: 16px;
+      }
+
+      .danger-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .danger-btn {
+        background: transparent;
+        border: 1px solid var(--ctp-surface2);
+        color: var(--ctp-text);
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .danger-btn:hover {
+        background: var(--ctp-surface0);
+        border-color: var(--ctp-surface2);
+      }
+
+      .danger-btn:active {
+        transform: scale(0.98);
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.15s ease;
+        padding: 20px;
+        transition: opacity 0.15s;
+      }
+
+      .modal {
+        background: var(--ctp-surface0);
+        border: 1px solid var(--ctp-surface1);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        animation: modalIn 0.2s ease;
+        transition:
+          transform 0.15s,
+          filter 0.15s;
+      }
+
+      .modal.settings-modal {
+        max-width: 600px;
+      }
+
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95) translateY(10px);
+          filter: blur(2px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+          filter: blur(0px);
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--ctp-surface1);
+        user-select: none;
+      }
+
+      .modal-header h2 {
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        color: var(--ctp-overlay1);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 6px;
+        display: flex;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+
+      .modal-close:hover {
+        background: var(--ctp-surface1);
+        color: var(--ctp-text);
+      }
+
+      .modal-close svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .modal-field {
+        margin-bottom: 16px;
+      }
+
+      .modal-field:last-child {
+        margin-bottom: 0;
+      }
+
+      .modal-field label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ctp-subtext1);
+        margin-bottom: 8px;
+      }
+
+      .modal-field input {
+        width: 100%;
+        background: var(--ctp-base);
+        border: 1px solid var(--ctp-surface1);
+        border-radius: 8px;
+        padding: 10px 12px;
+        color: var(--ctp-text);
+        font-size: 14px;
+        font-family: inherit;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+
+      .modal-field input:focus {
+        outline: none;
+        border-color: var(--ctp-blue);
+        box-shadow: 0 0 0 2px rgba(137, 180, 250, 0.2);
+      }
+
+      .modal-field input[readonly] {
+        background: var(--ctp-mantle);
+        cursor: text;
+      }
+
+      .modal-field .hint {
+        font-size: 13px;
+        color: var(--ctp-overlay1);
+        margin-top: 8px;
+      }
+
+      .modal-footer {
+        padding: 16px 20px;
+        border-top: 1px solid var(--ctp-surface1);
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      .modal-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition:
+          opacity 0.1s,
+          background 0.1s,
+          transform 0.2s;
+      }
+
+      .modal-btn:active {
+        transform: scale(0.98);
+      }
+
+      .modal-btn.primary {
+        background: var(--ctp-blue);
+        color: var(--ctp-crust);
+        border: none;
+      }
+
+      .modal-btn.primary:hover {
+        opacity: 0.9;
+      }
+
+      .modal-btn.primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .modal-btn.secondary {
+        background: var(--ctp-surface1);
+        color: var(--ctp-text);
+        border: none;
+      }
+
+      .modal-btn.secondary:hover {
+        background: var(--ctp-surface2);
+      }
+
+      .modal-btn.danger {
+        background: var(--ctp-red);
+        color: var(--ctp-crust);
+        border: none;
+      }
+
+      .modal-btn.danger:hover {
+        opacity: 0.9;
+      }
+
+      .settings-tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--ctp-base);
+        padding: 4px;
+        border-radius: 14px;
+        margin: 12px;
+        margin-bottom: 0px;
+      }
+
+      .settings-tab {
+        padding: 9px 0px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ctp-overlay1);
+        background: none;
+        cursor: pointer;
+        position: relative;
+        font-family: inherit;
+        transition: color 0.15s;
+        width: 100%;
+        border: none;
+      }
+
+      .settings-tab:hover {
+        color: var(--ctp-text);
+      }
+
+      .settings-tab.active {
+        color: var(--ctp-blue);
+        background-color: var(--ctp-surface0);
+        border-radius: 10px;
+        box-shadow: rgba(0, 0, 0, 0.05) 0px 2px 4px 0px;
+      }
+
+      .settings-content {
+        padding: 20px;
+        max-height: 400px;
+        height: 400px;
+        overflow-y: auto;
+        padding-bottom: 12px;
+      }
+
+      .settings-section {
+        display: none;
+      }
+
+      .settings-section.active {
+        display: block;
+      }
+
+      .settings-section#aboutSection {
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      .settings-section#aboutSection.active {
+        display: flex;
+      }
+
+      .session-item,
+      .apikey-item {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--ctp-surface1);
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+      }
+
+      .session-item:last-child,
+      .apikey-item:last-child {
+        border-bottom: none;
+      }
+
+      .session-info,
+      .apikey-info {
+        flex: 1;
+        display: flex;
+        gap: 15px;
+      }
+
+      .session-token,
+      .apikey-name {
+        font-weight: 500;
+        font-size: 14px;
+        margin-bottom: 4px;
+        width: 140px;
+      }
+
+      .session-meta,
+      .apikey-meta {
+        font-size: 13px;
+        color: var(--ctp-overlay1);
+      }
+
+      .session-meta .current {
+        color: var(--ctp-blue);
+        font-weight: 500;
+      }
+
+      .session-action,
+      .apikey-action {
+        background: var(--ctp-surface1);
+        border: none;
+        color: var(--ctp-subtext1);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .session-action:hover,
+      .apikey-action:hover {
+        background: var(--ctp-surface2);
+      }
+
+      .about-info {
+        color: var(--ctp-subtext0);
+        line-height: 1.6;
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      .about-info b {
+        color: var(--ctp-text);
+        font-weight: 500;
+      }
+      
+      .about-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 16px;
+        user-select: none;
+        pointer-events: none;
+      }
+
+      .github-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--ctp-surface1);
+        color: var(--ctp-text);
+        text-decoration: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: background 0.15s;
+        user-select: none;
+      }
+
+      .github-link:hover {
+        background: var(--ctp-surface2);
+      }
+
+      .github-link svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .empty-list {
+        text-align: center;
+        padding: 24px;
+        color: var(--ctp-overlay1);
+      }
+
+      .spinner {
+        width: 24px;
+        height: 24px;
+        animation: spin 0.6s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          min-width: 100%;
+          max-height: 40vh;
+          border-right: none;
+        }
+
+        .main-content {
+          flex-direction: column;
+        }
+
+        .detail-panel {
+          padding: 16px;
+        }
+
+        .stats-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      input::placeholder,
+      button {
+        user-select: none;
+      }
+
+      *::selection {
+        background-color: var(--ctp-blue);
+        color: black;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @font-face {
+        font-family: InterVariable;
+        font-display: swap;
+        src: url("./public/assets/InterVariable.woff2");
+      }
+    </style>
   </head>
   <body>
-    <nav>
-      <button class="logo">
-        <img src="./public/logo-small.webp" alt="Cap logo" />
-        <p>Standalone</p>
-      </button>
-      <button class="logout">Logout</button>
-      <button class="settings">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-settings"
-        >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <path
-            d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"
-          />
-          <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-        </svg>
-      </button>
-    </nav>
-    <div class="state-loading">
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-        alt="Loading..."
-        title="Loading..."
-      >
-        <style>
-          .spinner_ajPY {
-            transform-origin: center;
-            animation: spinner_AtaB 0.4s infinite linear;
-          }
-          @keyframes spinner_AtaB {
-            100% {
-              transform: rotate(360deg);
-            }
-          }
-        </style>
-        <path
-          d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"
-          opacity=".25"
-          fill="white"
-        />
-        <path
-          d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
-          class="spinner_ajPY"
-          fill="white"
-        />
-      </svg>
-    </div>
-
-    <div class="state-homepage" style="display: none">
-      <div class="keys-top">
-        <input type="text" placeholder="Search keys…" class="search-input" />
-        <button class="create-key">
+    <div class="app">
+      <nav>
+        <h1>Cap Standalone</h1>
+        <div class="nav-spacer"></div>
+        <button class="nav-btn" id="settingsBtn">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -83,159 +1029,76 @@
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="lucide lucide-plus-icon lucide-plus"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-settings"
           >
-            <path d="M5 12h14" />
-            <path d="M12 5v14" />
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065"
+            />
+            <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
           </svg>
-          <span>Add key</span>
+          Settings
         </button>
-      </div>
-      <div class="keys-list"></div>
-      <a
-        href="https://github.com/tiagozip/cap"
-        target="_blank"
-        class="nano-github-button"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 17 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M8.5 2.22168C5.23312 2.22168 2.58496 4.87398 2.58496 8.14677C2.58496 10.7642 4.27962 12.9853 6.63026 13.7684C6.92601 13.8228 7.03366 13.6401 7.03366 13.4827C7.03366 13.3425 7.02893 12.9693 7.02597 12.4754C5.38041 12.8333 5.0332 11.681 5.0332 11.681C4.76465 10.996 4.37663 10.8139 4.37663 10.8139C3.83954 10.4471 4.41744 10.4542 4.41744 10.4542C5.01072 10.4956 5.32303 11.0647 5.32303 11.0647C5.85065 11.9697 6.70774 11.7082 7.04431 11.5568C7.09873 11.1741 7.25134 10.9132 7.42051 10.7654C6.10737 10.6157 4.72621 10.107 4.72621 7.83683C4.72621 7.19031 4.95689 6.66092 5.33486 6.24686C5.27394 6.09721 5.07105 5.49447 5.39283 4.67938C5.39283 4.67938 5.88969 4.51967 7.01947 5.28626C7.502 5.15466 7.99985 5.08763 8.5 5.08692C9.00278 5.08929 9.50851 5.15495 9.98113 5.28626C11.1103 4.51967 11.606 4.67879 11.606 4.67879C11.9289 5.49447 11.7255 6.09721 11.6651 6.24686C12.0437 6.66092 12.2732 7.19031 12.2732 7.83683C12.2732 10.1129 10.8897 10.6139 9.5724 10.7606C9.78475 10.9434 9.97344 11.3048 9.97344 11.8579C9.97344 12.6493 9.96634 13.2887 9.96634 13.4827C9.96634 13.6413 10.0728 13.8258 10.3733 13.7678C11.5512 13.3728 12.5751 12.6175 13.3003 11.6089C14.0256 10.6002 14.4155 9.38912 14.415 8.14677C14.415 4.87398 11.7663 2.22168 8.5 2.22168Z"
-            fill="currentColor"
-          ></path>
-        </svg>
-      </a>
-    </div>
+      </nav>
 
-    <div class="state-key-page" style="display: none">
-      <button class="keypage-back">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-chevron-left"
-        >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-          <path d="M15 6l-6 6l6 6" />
-        </svg>
-        Back
-      </button>
-      <div class="topbar">
-        <div class="left">
-          <h1></h1>
-          <button title="Copy site key"></button>
-        </div>
-        <div class="right">
-          <select class="time-duration">
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="last7days">Last 7 Days</option>
-            <option value="last28days">Last 28 Days</option>
-            <option value="last91days">Last 91 Days</option>
-            <option value="alltime">All time</option>
-          </select>
-        </div>
-      </div>
-      <div class="chart-container">
-        <canvas id="chart"></canvas>
-      </div>
+      <div class="main-content">
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="search-create">
+              <input
+                type="text"
+                class="search-input"
+                id="searchInput"
+                placeholder="Find keys"
+              />
+              <button class="create-btn" id="createKeyBtn">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add
+              </button>
+            </div>
+          </div>
+          <div class="keys-list" id="keysList"></div>
+        </aside>
 
-      <h2>Configuration</h2>
+        <main class="detail-panel" id="detailPanel">
+          <div class="welcome-screen" id="welcomeScreen">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="icon icon-tabler icons-tabler-outline icon-tabler-hourglass-empty"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path
+                d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1"
+              />
+              <path
+                d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1"
+              />
+            </svg>
+            <h2>Select or create a key to see details</h2>
+          </div>
 
-      <div class="config">
-        <div class="config-item">
-          <label for="keyName">Key name</label>
-          <input type="text" id="keyName" value="" />
-        </div>
-        <div class="config-item">
-          <label for="difficulty">Difficulty</label>
-          <input type="number" id="difficulty" value="" />
-        </div>
-        <div class="config-item">
-          <label for="challengeCount">Challenge Count</label>
-          <input type="number" id="challengeCount" value="" />
-        </div>
-        <div class="config-item">
-          <label for="saltSize">Salt Size</label>
-          <input type="number" id="saltSize" value="" />
-        </div>
-        <button>Save</button>
-      </div>
-
-      <h2>Danger zone</h2>
-      <div class="danger-zone-buttons">
-        <button class="rotate-secret">Rotate key secret</button>
-        <button class="delete-key">Delete key</button>
+          <div class="key-detail" id="keyDetail" style="display: none"></div>
+        </main>
       </div>
     </div>
 
-    <div class="state-settings" style="display: none">
-      <h1>Settings</h1>
-      <h2>Sessions</h2>
-
-      <div class="sessions-list"></div>
-
-      <div class="apikeys-title">
-        <h2>API Keys</h2>
-        <button class="create-api-key">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-plus-icon lucide-plus"
-          >
-            <path d="M5 12h14"></path>
-            <path d="M12 5v14"></path>
-          </svg>
-          <span>Create</span>
-        </button>
-      </div>
-      <div class="apikeys-list"></div>
-
-      <h2>About</h2>
-      <p class="about-info"></p>
-      <a
-        href="https://github.com/tiagozip/cap"
-        target="_blank"
-        class="about-button"
-      >
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 17 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M8.5 2.22168C5.23312 2.22168 2.58496 4.87398 2.58496 8.14677C2.58496 10.7642 4.27962 12.9853 6.63026 13.7684C6.92601 13.8228 7.03366 13.6401 7.03366 13.4827C7.03366 13.3425 7.02893 12.9693 7.02597 12.4754C5.38041 12.8333 5.0332 11.681 5.0332 11.681C4.76465 10.996 4.37663 10.8139 4.37663 10.8139C3.83954 10.4471 4.41744 10.4542 4.41744 10.4542C5.01072 10.4956 5.32303 11.0647 5.32303 11.0647C5.85065 11.9697 6.70774 11.7082 7.04431 11.5568C7.09873 11.1741 7.25134 10.9132 7.42051 10.7654C6.10737 10.6157 4.72621 10.107 4.72621 7.83683C4.72621 7.19031 4.95689 6.66092 5.33486 6.24686C5.27394 6.09721 5.07105 5.49447 5.39283 4.67938C5.39283 4.67938 5.88969 4.51967 7.01947 5.28626C7.502 5.15466 7.99985 5.08763 8.5 5.08692C9.00278 5.08929 9.50851 5.15495 9.98113 5.28626C11.1103 4.51967 11.606 4.67879 11.606 4.67879C11.9289 5.49447 11.7255 6.09721 11.6651 6.24686C12.0437 6.66092 12.2732 7.19031 12.2732 7.83683C12.2732 10.1129 10.8897 10.6139 9.5724 10.7606C9.78475 10.9434 9.97344 11.3048 9.97344 11.8579C9.97344 12.6493 9.96634 13.2887 9.96634 13.4827C9.96634 13.6413 10.0728 13.8258 10.3733 13.7678C11.5512 13.3728 12.5751 12.6175 13.3003 11.6089C14.0256 10.6002 14.4155 9.38912 14.415 8.14677C14.415 4.87398 11.7663 2.22168 8.5 2.22168Z"
-            fill="currentColor"
-          ></path>
-        </svg>
-        Enjoying Cap? Star us on GitHub!
-      </a>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0"></script>
+    <script src="./public/js/dashboard.js"></script>
   </body>
-  <script src="./public/js/index.js" type="module"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0" async></script>
 </html>
