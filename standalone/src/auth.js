@@ -7,9 +7,9 @@ import { ratelimitGenerator } from "./ratelimit.js";
 const { ADMIN_KEY } = process.env;
 
 if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
-if (ADMIN_KEY.length < 30)
+if (ADMIN_KEY.length < 12)
   throw new Error(
-    "auth: Admin key too short. Please use one that's at least 30 characters"
+    "auth: Admin key too short. Please use one that's at least 12 characters"
   );
 
 export const auth = new Elysia({

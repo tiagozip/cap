@@ -34,6 +34,21 @@
         margin-bottom: 28px;
         margin-top: 0;
         user-select: none;
+        
+        
+        animation: title-in 0.6s both;
+        animation-delay: 0.1s;
+      }
+      @keyframes title-in {
+        0% {
+          opacity: 0;
+          translate: 0 50px;
+          filter: blur(10px);
+        }
+
+        to {
+          opacity: 1;
+        }
       }
       img {
         width: 60px;
@@ -46,6 +61,9 @@
         margin-bottom: 8px;
         color: #eee;
         user-select: none;
+        will-change: transform, filter, opacity;
+        animation: title-in 0.5s both;
+        animation-delay: 0.2s;
       }
 
       .password-wrapper {
@@ -55,6 +73,9 @@
         display: flex;
         border-radius: calc(0.8rem - 2px);
         margin-bottom: 16px;
+        will-change: transform, filter, opacity;
+        animation: title-in 0.5s both;
+        animation-delay: 0.3s;
       }
 
       .showhide-password {
@@ -122,6 +143,11 @@
         font-size: 14px;
         z-index: 12;
         transition: box-shadow 0.13s, opacity 0.2s;
+        
+        
+        will-change: transform, filter, opacity;
+        animation: title-in 0.5s both;
+        animation-delay: 0.4s;
       }
 
       .submit:focus {
@@ -141,6 +167,11 @@
         align-items: center;
         gap: 4px;
         margin-top: 24px;
+        
+        
+        will-change: transform, filter, opacity;
+        animation: title-in 0.5s both;
+        animation-delay: 0.5s;
       }
       p.bottom .poweredby {
         margin-left: auto;
