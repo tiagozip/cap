@@ -29,7 +29,7 @@ volumes:
 
 ::: tip Tips
 
-* Make sure to add an admin key to log into the web UI. It should be at least 30 characters long.
+* Make sure to add an admin key to log into the web UI. It should be at least 12 characters long.
 
 * If your port 3000 is already in use, feel free to change it to something else.
 
