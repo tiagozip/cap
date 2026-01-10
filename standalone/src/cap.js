@@ -29,11 +29,11 @@ export const capServer = new Elysia({
 		const cap = new Cap({
 			noFSState: true,
 		});
-		const [_keyConfig] = await db`SELECT (config) FROM keys WHERE siteKey = ${params.siteKey}`;
+		const [_keyConfig] = await db`SELECT config FROM keys WHERE siteKey = ${params.siteKey}`;
 
 		if (!_keyConfig) {
 			set.status = 404;
-			return { error: "Invalid site key or secret" };
+			return { error: "Site key not found" };
 		}
 
 		const keyConfig = JSON.parse(_keyConfig.config);
@@ -102,7 +102,7 @@ export const capServer = new Elysia({
 			INSERT INTO solutions (siteKey, bucket, count)
 			VALUES (${params.siteKey}, ${hourlyBucket}, 1)
 			ON CONFLICT (siteKey, bucket)
-			DO UPDATE SET count = count + 1
+			DO UPDATE SET count = solutions.count + 1
 		`;
 
 		return {
