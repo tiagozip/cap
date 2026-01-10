@@ -1,6 +1,6 @@
 {
   "name": "cap-standalone",
-  "version": "2.0.18",
+  "version": "2.1.0",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.js",
