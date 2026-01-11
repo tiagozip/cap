@@ -28,8 +28,9 @@ const api = async (method, path, body) => {
       opts.body = JSON.stringify(body);
     }
 
-    return await await fetch(`/server${path}`, opts).json();
+    return await (await fetch(`/server${path}`, opts)).json();
   } catch (e) {
+    console.error("standalone:", e)
     return { error: e.message };
   }
 };
@@ -91,7 +92,7 @@ async function loadKeys() {
     location.reload();
     return;
   }
-  if (keys.error) {
+  if (keys?.error) {
     keysList.innerHTML = `<div class="keys-empty"><p>Error loading keys</p></div>`;
     return;
   }
