@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Elysia, t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import { authBeforeHandle } from "./auth.js";
-import { db } from "./db.js";
+import {dateFromDb, db} from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
 const keyDefaults = {
@@ -384,8 +384,8 @@ export const server = new Elysia({
       const sessions = await db`SELECT * FROM sessions`;
       return sessions.map((session) => ({
         token: session.token.slice(-14),
-        expires: new Date(session.expires).toISOString(),
-        created: new Date(session.created).toISOString(),
+        expires: dateFromDb(session.expires).toISOString(),
+        created: dateFromDb(session.created).toISOString(),
       }));
     },
     {
@@ -402,7 +402,7 @@ export const server = new Elysia({
       return apikeys.map((key) => ({
         name: key.name,
         id: key.id,
-        created: new Date(key.created).toISOString(),
+        created: dateFromDb(key.created).toISOString(),
       }));
     },
     {

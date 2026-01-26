@@ -96,4 +96,18 @@ async function periodicCleanup() {
 
 db = await initDb();
 
-export { db };
+const maxSafeIntegerBigInt = BigInt(Number.MAX_SAFE_INTEGER);
+const minSafeIntegerBigInt = BigInt(Number.MIN_SAFE_INTEGER);
+const dateFromDb = (value) => {
+  if (value instanceof Date) return value;
+  if (typeof value === "number") return new Date(value);
+  if (typeof value === "bigint" && value <= maxSafeIntegerBigInt && value >= minSafeIntegerBigInt) {
+    return new Date(Number(value));
+  }
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    return new Date(Number(value));
+  }
+  return new Date(value);
+};
+
+export { db, dateFromDb };
