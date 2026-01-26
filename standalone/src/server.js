@@ -51,8 +51,8 @@ export const server = new Elysia({
             WHERE siteKey = ${key.sitekey || key.siteKey} AND bucket >= ${previousStart} AND bucket < ${currentStart}
           `;
 
-          const current = currentResult?.total || 0;
-          const previous = previousResult?.total || 0;
+          const current = numberFromDb(currentResult?.total || 0);
+          const previous = numberFromDb(previousResult?.total || 0);
 
           let change = 0;
           let direction = "";
@@ -69,7 +69,7 @@ export const server = new Elysia({
           return {
             siteKey: key.sitekey || key.siteKey,
             name: key.name,
-            created: key.created,
+            created: numberFromDb(key.created),
             solvesLast24h: current,
             difference: {
               value: change.toFixed(2),
