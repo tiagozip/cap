@@ -11,7 +11,10 @@ let db;
 async function initDb() {
   const dbUrl = process.env.DB_URL || `sqlite://${join(process.env.DATA_PATH || "./.data", "db.sqlite")}`;
 
-  db = new SQL(dbUrl);
+  db = new SQL({
+    url: dbUrl,
+    bigint: true,
+  });
 
   const isSqlite = db.options.adapter === "sqlite";
   const isPostgres = db.options.adapter === "postgres";
