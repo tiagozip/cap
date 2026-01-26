@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { Elysia, t } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import { authBeforeHandle } from "./auth.js";
-import {dateFromDb, db} from "./db.js";
+import {dateFromDb, db, numberFromDb} from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
 const keyDefaults = {
@@ -218,7 +218,7 @@ export const server = new Elysia({
             : 91;
         const completeData = [];
         const dataMap = new Map(
-          historyData.map((item) => [item.bucket, item.count])
+          historyData.map((item) => [numberFromDb(item.bucket), numberFromDb(item.count)])
         );
 
         const currentDayStart = Math.floor(now / 86400) * 86400;
@@ -235,7 +235,7 @@ export const server = new Elysia({
       } else if (chartDuration === "today") {
         const completeData = [];
         const dataMap = new Map(
-          historyData.map((item) => [item.bucket, item.count])
+          historyData.map((item) => [numberFromDb(item.bucket), numberFromDb(item.count)])
         );
 
         const currentHour = Math.floor(now / 3600);
@@ -255,7 +255,7 @@ export const server = new Elysia({
       const [currentSolvesResult] = await db`
         SELECT SUM(count) as total FROM solutions WHERE siteKey = ${params.siteKey} AND bucket >= ${currentStart}
       `;
-      const currentSolves = currentSolvesResult?.total || 0;
+      const currentSolves = numberFromDb(currentSolvesResult?.total || 0);
 
       return {
         key: {
