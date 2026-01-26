@@ -261,7 +261,7 @@ export const server = new Elysia({
         key: {
           siteKey: key.sitekey || key.siteKey,
           name: key.name,
-          created: key.created,
+          created: numberFromDb(key.created),
           config: JSON.parse(key.config),
         },
         stats: {
