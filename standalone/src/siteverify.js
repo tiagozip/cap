@@ -49,7 +49,7 @@ export const siteverifyServer = new Elysia({
 			return { "success":false, error: "Missing required parameters" };
 		}
 
-		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
+		const [keyData] = await db`SELECT * FROM ${db("keys")} WHERE siteKey = ${sitekey}`;
 		const keyHash = keyData?.secretHash || keyData?.secrethash;
 		if (!keyHash) {
 			set.status = 404;
@@ -64,7 +64,7 @@ export const siteverifyServer = new Elysia({
 			return { "success":false, error: "Invalid secret" };
 		}
 
-		const [token] = await db`SELECT * FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
+		const [token] = await db`SELECT * FROM ${db("tokens")} WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 
 		if (!token) {
 			set.status = 404;
@@ -72,11 +72,11 @@ export const siteverifyServer = new Elysia({
 		}
 
 		if (token.expires < Date.now()) {
-			await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
+			await db`DELETE FROM ${db("tokens")} WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 			set.status = 403;
 			return { "success":false,error: "Token expired" };
 		}
 
-		await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
+		await db`DELETE FROM ${db("tokens")} WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 		return { success: true };
 	});

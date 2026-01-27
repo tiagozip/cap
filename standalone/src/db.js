@@ -47,9 +47,6 @@ async function initDb() {
     // - api_keys (id + tokenHash): id (63 chars => 252 bytes) + tokenHash (255 chars => 1020 bytes) = 1272 bytes
   }
 
-  // Note: table names are encoded using db("tableName") to avoid conflicts with reserved keywords,
-  // which is currently a problem on mysql.
-
   await db`create table if not exists ${db("sessions")} (
     token ${tokenColType} primary key not null,
     expires bigint not null,
@@ -110,9 +107,9 @@ async function initDb() {
 async function periodicCleanup() {
   const now = Date.now();
 
-  await db`delete from sessions where expires < ${now}`;
-  await db`delete from tokens where expires < ${now}`;
-  await db`delete from challenges where expires < ${now}`;
+  await db`delete from ${db("sessions")} where expires < ${now}`;
+  await db`delete from ${db("tokens")} where expires < ${now}`;
+  await db`delete from ${db("challenges")} where expires < ${now}`;
 }
 
 db = await initDb();

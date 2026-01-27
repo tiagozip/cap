@@ -59,7 +59,7 @@ export const auth = new Elysia({
     const hashedToken = await Bun.password.hash(session_token);
 
     await db`
-      INSERT INTO sessions (token, created, expires)
+      INSERT INTO ${db("sessions")} (token, created, expires)
       VALUES (${hashedToken}, ${created}, ${expires})
     `;
 
@@ -87,7 +87,7 @@ export const authBeforeHandle = async ({ set, headers }) => {
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
 
-    const apiKey = await db`SELECT * FROM api_keys WHERE id = ${id}`.then(
+    const apiKey = await db`SELECT * FROM ${db("api_keys")} WHERE id = ${id}`.then(
       (rows) => rows[0]
     );
 
@@ -121,7 +121,7 @@ export const authBeforeHandle = async ({ set, headers }) => {
   );
 
   const [validToken] = await db`
-    SELECT * FROM sessions WHERE token = ${hash} AND expires > ${Date.now()} LIMIT 1
+    SELECT * FROM ${db("sessions")} WHERE token = ${hash} AND expires > ${Date.now()} LIMIT 1
   `;
 
   if (!validToken) {

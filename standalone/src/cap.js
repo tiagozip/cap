@@ -29,7 +29,7 @@ export const capServer = new Elysia({
 		const cap = new Cap({
 			noFSState: true,
 		});
-		const [_keyConfig] = await db`SELECT config FROM keys WHERE siteKey = ${params.siteKey}`;
+		const [_keyConfig] = await db`SELECT config FROM ${db("keys")} WHERE siteKey = ${params.siteKey} LIMIT 1`;
 
 		if (!_keyConfig) {
 			set.status = 404;
@@ -45,7 +45,7 @@ export const capServer = new Elysia({
 		});
 
 		await db`
-			INSERT INTO challenges (siteKey, token, data, expires)
+			INSERT INTO ${db("challenges")} (siteKey, token, data, expires)
 			VALUES (${params.siteKey}, ${challenge.token}, ${Object.values(challenge.challenge).join(",")}, ${challenge.expires})
 		`;
 
@@ -53,11 +53,11 @@ export const capServer = new Elysia({
 	})
 	.post("/:siteKey/redeem", async ({ body, set, params }) => {
 		const [challenge] = await db`
-			SELECT * FROM challenges WHERE siteKey = ${params.siteKey} AND token = ${body.token}
+			SELECT * FROM ${db("challenges")} WHERE siteKey = ${params.siteKey} AND token = ${body.token} LIMIT 1
 		`;
 
 		try {
-			await db`DELETE FROM challenges WHERE siteKey = ${params.siteKey} AND token = ${body.token}`;
+			await db`DELETE FROM ${db("challenges")} WHERE siteKey = ${params.siteKey} AND token = ${body.token}`;
 		} catch {
 			set.status = 404;
 			return { error: "Challenge not found" };
@@ -92,17 +92,17 @@ export const capServer = new Elysia({
 		}
 
 		await db`
-			INSERT INTO tokens (siteKey, token, expires)
+			INSERT INTO ${db("tokens")} (siteKey, token, expires)
 			VALUES (${params.siteKey}, ${token}, ${expires})
 		`;
 
 		const now = Math.floor(Date.now() / 1000);
 		const hourlyBucket = Math.floor(now / 3600) * 3600;
 		await db`
-			INSERT INTO solutions (siteKey, bucket, count)
+			INSERT INTO ${db("solutions")} (siteKey, bucket, count)
 			VALUES (${params.siteKey}, ${hourlyBucket}, 1)
 			ON CONFLICT (siteKey, bucket)
-			DO UPDATE SET count = solutions.count + 1
+			DO UPDATE SET count = ${db("solutions")}.count + 1
 		`;
 
 		return {

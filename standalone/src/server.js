@@ -39,15 +39,16 @@ export const server = new Elysia({
       const currentStart = now - day;
       const previousStart = now - 2 * day;
 
-      const keys = await db`SELECT * FROM keys ORDER BY created DESC`;
+      const keys = await db`SELECT * FROM ${db("keys")} ORDER BY created DESC`;
 
       return await Promise.all(
         keys.map(async (key) => {
           const [currentResult] = await db`
-            SELECT SUM(count) as total FROM solutions WHERE siteKey = ${key.sitekey || key.siteKey} AND bucket >= ${currentStart}
+            SELECT SUM(count) as total FROM ${db("solutions")}
+            WHERE siteKey = ${key.sitekey || key.siteKey} AND bucket >= ${currentStart}
           `;
           const [previousResult] = await db`
-            SELECT SUM(count) as total FROM solutions
+            SELECT SUM(count) as total FROM ${db("solutions")}
             WHERE siteKey = ${key.sitekey || key.siteKey} AND bucket >= ${previousStart} AND bucket < ${currentStart}
           `;
 
@@ -96,7 +97,7 @@ export const server = new Elysia({
         .replace(/=+$/, "");
 
       await db`
-        INSERT INTO keys (siteKey, name, secretHash, config, created)
+        INSERT INTO ${db("keys")} (siteKey, name, secretHash, config, created)
         VALUES (${siteKey}, ${body?.name || siteKey}, ${await Bun.password.hash(secretKey)}, ${JSON.stringify(keyDefaults)}, ${Date.now()})
       `;
 
@@ -117,7 +118,7 @@ export const server = new Elysia({
   .get(
     "/keys/:siteKey",
     async ({ params, query }) => {
-      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
+      const [key] = await db`SELECT * FROM ${db("keys")} WHERE siteKey = ${params.siteKey}`;
       if (!key) {
         return { success: false, error: "Key not found" };
       }
@@ -173,7 +174,7 @@ export const server = new Elysia({
       if (chartDuration === "yesterday") {
         historyData = await db`
           SELECT bucket, SUM(count) as count
-          FROM solutions
+          FROM ${db("solutions")}
           WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime} AND bucket < ${startTime + 86400}
           GROUP BY bucket
           ORDER BY bucket
@@ -182,7 +183,7 @@ export const server = new Elysia({
         const currentHourBucket = Math.floor(now / 3600) * 3600;
         historyData = await db`
           SELECT bucket, SUM(count) as count
-          FROM solutions
+          FROM ${db("solutions")}
           WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime} AND bucket <= ${currentHourBucket}
           GROUP BY bucket
           ORDER BY bucket
@@ -190,7 +191,7 @@ export const server = new Elysia({
       } else if (dataQuery.type === "aggregate") {
         historyData = await db`
           SELECT (bucket / 86400) * 86400 as bucket, SUM(count) as count
-          FROM solutions
+          FROM ${db("solutions")}
           WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime}
           GROUP BY (bucket / 86400) * 86400
           ORDER BY bucket
@@ -198,7 +199,7 @@ export const server = new Elysia({
       } else {
         historyData = await db`
           SELECT bucket, SUM(count) as count
-          FROM solutions
+          FROM ${db("solutions")}
           WHERE siteKey = ${params.siteKey} AND bucket >= ${startTime}
           GROUP BY bucket
           ORDER BY bucket
@@ -253,7 +254,8 @@ export const server = new Elysia({
       }
 
       const [currentSolvesResult] = await db`
-        SELECT SUM(count) as total FROM solutions WHERE siteKey = ${params.siteKey} AND bucket >= ${currentStart}
+        SELECT SUM(count) as total FROM ${db("solutions")}
+        WHERE siteKey = ${params.siteKey} AND bucket >= ${currentStart}
       `;
       const currentSolves = numberFromDb(currentSolvesResult?.total || 0);
 
@@ -298,7 +300,7 @@ export const server = new Elysia({
   .put(
     "/keys/:siteKey/config",
     async ({ params, body }) => {
-      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
+      const [key] = await db`SELECT * FROM ${db("keys")} WHERE siteKey = ${params.siteKey} LIMIT 1`;
       if (!key) {
         return { success: false, error: "Key not found" };
       }
@@ -312,7 +314,9 @@ export const server = new Elysia({
         saltSize,
       };
 
-      await db`UPDATE keys SET name = ${config.name || key.name}, config = ${JSON.stringify(config)} WHERE siteKey = ${params.siteKey}`;
+      await db`UPDATE ${db("keys")}
+               SET name = ${config.name || key.name}, config = ${JSON.stringify(config)} 
+               WHERE siteKey = ${params.siteKey}`;
 
       return { success: true };
     },
@@ -331,14 +335,14 @@ export const server = new Elysia({
   .delete(
     "/keys/:siteKey",
     async ({ params, set }) => {
-      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
+      const [key] = await db`SELECT * FROM ${db("keys")} WHERE siteKey = ${params.siteKey}`;
       if (!key) {
         set.status = 404;
         return { success: false, error: "Key not found" };
       }
 
-      await db`DELETE FROM keys WHERE siteKey = ${params.siteKey}`;
-      await db`DELETE FROM solutions WHERE siteKey = ${params.siteKey}`;
+      await db`DELETE FROM ${db("keys")} WHERE siteKey = ${params.siteKey}`;
+      await db`DELETE FROM ${db("solutions")} WHERE siteKey = ${params.siteKey}`;
 
       return { success: true };
     },
@@ -354,7 +358,7 @@ export const server = new Elysia({
   .post(
     "/keys/:siteKey/rotate-secret",
     async ({ params }) => {
-      const [key] = await db`SELECT * FROM keys WHERE siteKey = ${params.siteKey}`;
+      const [key] = await db`SELECT * FROM ${db("keys")} WHERE siteKey = ${params.siteKey} LIMIT 1`;
       if (!key) {
         return { success: false, error: "Key not found" };
       }
@@ -364,7 +368,9 @@ export const server = new Elysia({
         .replace(/\//g, "")
         .replace(/=+$/, "");
 
-      await db`UPDATE keys SET secretHash = ${await Bun.password.hash(newSecretKey)} WHERE siteKey = ${params.siteKey}`;
+      await db`UPDATE ${db("keys")} 
+               SET secretHash = ${await Bun.password.hash(newSecretKey)} 
+               WHERE siteKey = ${params.siteKey}`;
       return {
         secretKey: newSecretKey,
       };
@@ -381,7 +387,7 @@ export const server = new Elysia({
   .get(
     "/settings/sessions",
     async () => {
-      const sessions = await db`SELECT * FROM sessions`;
+      const sessions = await db`SELECT * FROM ${db("sessions")}`;
       return sessions.map((session) => ({
         token: session.token.slice(-14),
         expires: dateFromDb(session.expires).toISOString(),
@@ -397,8 +403,7 @@ export const server = new Elysia({
   .get(
     "/settings/apikeys",
     async () => {
-      const apikeys = await db`SELECT * FROM api_keys`;
-
+      const apikeys = await db`SELECT * FROM ${db("api_keys")}`;
       return apikeys.map((key) => ({
         name: key.name,
         id: key.id,
@@ -424,7 +429,7 @@ export const server = new Elysia({
       const name = body.name;
 
       await db`
-        INSERT INTO api_keys (id, name, tokenHash, created)
+        INSERT INTO ${db("api_keys")} (id, name, tokenHash, created)
         VALUES (${id}, ${name}, ${await Bun.password.hash(token)}, ${Date.now()})
       `;
       return {
@@ -443,12 +448,12 @@ export const server = new Elysia({
   .delete(
     "/settings/apikeys/:id",
     async ({ params, set }) => {
-      const [key] = await db`SELECT * FROM api_keys WHERE id = ${params.id}`;
+      const [key] = await db`SELECT * FROM ${db("api_keys")} WHERE id = ${params.id} LIMIT 1`;
       if (!key) {
         set.status = 404;
         return { success: false, error: "API key not found" };
       }
-      await db`DELETE FROM api_keys WHERE id = ${params.id}`;
+      await db`DELETE FROM ${db("api_keys")} WHERE id = ${params.id}`;
       return { success: true };
     },
     {
@@ -491,7 +496,7 @@ export const server = new Elysia({
         // body.session are the last characters of the session token
         // e.g. body.session = (...)8KdbcHjqxWPR6Q
 
-        const sessionRows = await db`SELECT token FROM sessions WHERE token LIKE ${'%' + body.session}`;
+        const sessionRows = await db`SELECT token FROM ${db("sessions")} WHERE token LIKE ${'%' + body.session}`;
         const sessionRow = sessionRows[0];
 
         if (!sessionRow) {
@@ -501,7 +506,7 @@ export const server = new Elysia({
         session = sessionRow.token;
       }
 
-      await db`DELETE FROM sessions WHERE token = ${session}`;
+      await db`DELETE FROM ${db("sessions")} WHERE token = ${session}`;
 
       return { success: true };
     },
