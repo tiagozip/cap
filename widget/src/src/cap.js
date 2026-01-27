@@ -193,6 +193,10 @@
 							"Missing API endpoint. Either custom fetch or an API endpoint must be provided.",
 						);
 
+					if (!apiEndpoint.endsWith("/")) {
+            apiEndpoint += "/";
+          }
+
 					const { challenge, token } = await (
 						await capFetch(`${apiEndpoint}challenge`, {
 							method: "POST",
