@@ -1,3 +1,3 @@
-# Security policy
+# security policy
 
-Please email me at [`hello@tiago.zip`](mailto:hello@tiago.zip) to report any security issues.
+please use [GitHub's security advisories](https://github.com/tiagozip/cap/security/advisories/new) to report any security issues.
