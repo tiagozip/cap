@@ -21,24 +21,45 @@ async function initDb() {
   const changeIntToBigInt = async (tbl, col) => {
     if (isSqlite) return; // Irrelevant in SQLite.
     if (isPostgres) {
-      await db`alter table ${sql(tbl)} alter column ${sql(col)} type bigint`.simple();
-    } else {
-      await db`alter table ${sql(tbl)} modify column ${sql(col)} bigint`.simple();
+      await db`alter table ${db(tbl)} alter column ${db(col)} type bigint`.simple();
+    } else { // Mysql needs modify column syntax...
+      await db`alter table ${db(tbl)} modify column ${db(col)} bigint`.simple();
     }
   };
-  // MySQL requires a prefix-length for indexing text. The maximum is 3072 bytes, which is 767 UTF-8 characters.
-  const indexableTextColType = isPostgres || isSqlite ? sql`text` : sql`varchar(767)`;
 
-  await db`create table if not exists sessions (
-    token ${indexableTextColType} primary key not null,
+  let siteKeyColType, tokenColType, apiTokenIdColType, apiTokenHashColType;
+  if (isSqlite || isPostgres) {
+    siteKeyColType = tokenColType = apiTokenIdColType = apiTokenHashColType = sql`text`;
+  } else {
+    // MySQL requires a prefix length for indices, thus cannot index `text`.
+    // The maximum size for an index, however, is 3072 bytes (or 767 characters using utf8mb4).
+    // However, combined keys also count towards this limit.
+
+    siteKeyColType = sql`varchar(31)`; // Site keys are quite short. Generated as 5 bytes hex (10 chars).
+    tokenColType = sql`varchar(255)`; // Used in combination with site keys. Generated as 25 bytes hex.
+    apiTokenIdColType = sql`varchar(63)`; // IDs are generated as 16 bytes hex (32 chars).
+    apiTokenHashColType = sql`varchar(255)`; // Tokens are 32 bytes base64 encoded, then hashed using Bun's algorithm.
+
+    // Combinations:
+    // - solutions (siteKey + bucket): siteKey (31 chars => 124 bytes) + bucket (bigint => 8 bytes) = 132 bytes
+    // - challenges (siteKey + token): siteKey (31 chars => 124 bytes) + token (255 chars => 1020 bytes) = 1144 bytes
+    // - tokens (siteKey + token): siteKey (31 chars => 124 bytes) + token (255 chars => 1020 bytes) = 1144 bytes
+    // - api_keys (id + tokenHash): id (63 chars => 252 bytes) + tokenHash (255 chars => 1020 bytes) = 1272 bytes
+  }
+
+  // Note: table names are encoded using db("tableName") to avoid conflicts with reserved keywords,
+  // which is currently a problem on mysql.
+
+  await db`create table if not exists ${db("sessions")} (
+    token ${tokenColType} primary key not null,
     expires bigint not null,
     created bigint not null
   )`.simple();
   await changeIntToBigInt("sessions", "expires");
   await changeIntToBigInt("sessions", "created");
 
-  await db`create table if not exists keys (
-    siteKey ${indexableTextColType} primary key not null,
+  await db`create table if not exists ${db("keys")} (
+    siteKey ${siteKeyColType} primary key not null,
     name text not null,
     secretHash text not null,
     config text not null,
@@ -46,35 +67,35 @@ async function initDb() {
   )`.simple();
   await changeIntToBigInt("keys", "created");
 
-  await db`create table if not exists solutions (
-    siteKey ${indexableTextColType} not null,
+  await db`create table if not exists ${db("solutions")} (
+    siteKey ${siteKeyColType} not null,
     bucket bigint not null,
     count integer default 0,
     primary key (siteKey, bucket)
   )`.simple();
   await changeIntToBigInt("solutions", "bucket");
 
-  await db`create table if not exists challenges (
-    siteKey ${indexableTextColType} not null,
-    token ${indexableTextColType} not null,
+  await db`create table if not exists ${db("challenges")} (
+    siteKey ${siteKeyColType} not null,
+    token ${tokenColType} not null,
     data text not null,
     expires bigint not null,
     primary key (siteKey, token)
   )`.simple();
   await changeIntToBigInt("challenges", "expires");
 
-  await db`create table if not exists tokens (
-    siteKey ${indexableTextColType} not null,
-    token ${indexableTextColType} not null,
+  await db`create table if not exists ${db("tokens")} (
+    siteKey ${siteKeyColType} not null,
+    token ${tokenColType} not null,
     expires bigint not null,
     primary key (siteKey, token)
   )`.simple();
   await changeIntToBigInt("tokens", "expires");
 
-  await db`create table if not exists api_keys (
-    id ${indexableTextColType} not null,
+  await db`create table if not exists ${db("api_keys")} (
+    id ${apiTokenIdColType} not null,
     name text not null,
-    tokenHash ${indexableTextColType} not null,
+    tokenHash ${apiTokenHashColType} not null,
     created bigint not null,
     primary key (id, tokenHash)
   )`.simple();
