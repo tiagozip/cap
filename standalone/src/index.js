@@ -60,6 +60,35 @@ new Elysia({
   .onBeforeHandle(({ set }) => {
     set.headers["X-Powered-By"] = "Cap Standalone";
   })
+  .onError(({ error, code }) => {
+    if (["VALIDATION", "NOT_FOUND"].includes(code)) {
+      return {
+        success: false,
+        error: error.code || "Internal server error",
+        detail: error
+      }
+    }
+
+    const errorId = Bun.randomUUIDv7().split("-").pop();
+    console.error(`[${error.code || "ERR"} ${errorId}]`, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      error,
+      env: {
+        bun: process.versions.bun,
+        platform: process.platform,
+        mem: process.memoryUsage()
+      }
+    }));
+
+    return {
+      success: false,
+      error: error.code || "Internal server error",
+      detail: {
+        troubleshooting: "http://capjs.js.org/guide/standalone/options.html#error-messages",
+        id: errorId
+      }
+    }
+  })
   .use(staticPlugin())
   .get("/", async ({ cookie }) => {
     return file(
