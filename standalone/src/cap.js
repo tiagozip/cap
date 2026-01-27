@@ -109,7 +109,7 @@ export const capServer = new Elysia({
 			await db`
 				INSERT INTO ${db("solutions")} (siteKey, bucket, count)
 				VALUES (${params.siteKey}, ${hourlyBucket}, 1)
-				ON DUPLICATE KEY UPDATE SET count = ${db("solutions")}.count + 1
+				ON DUPLICATE KEY UPDATE count = ${db("solutions")}.count + 1
 			`;
 		}
 
