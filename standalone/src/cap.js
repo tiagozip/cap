@@ -98,12 +98,20 @@ export const capServer = new Elysia({
 
 		const now = Math.floor(Date.now() / 1000);
 		const hourlyBucket = Math.floor(now / 3600) * 3600;
-		await db`
-			INSERT INTO ${db("solutions")} (siteKey, bucket, count)
-			VALUES (${params.siteKey}, ${hourlyBucket}, 1)
-			ON CONFLICT (siteKey, bucket)
-			DO UPDATE SET count = ${db("solutions")}.count + 1
-		`;
+		if (db.provider === "sqlite" || db.provider === "postgres") {
+			await db`
+				INSERT INTO solutions (siteKey, bucket, count)
+				VALUES (${params.siteKey}, ${hourlyBucket}, 1)
+				ON CONFLICT (siteKey, bucket)
+			    DO UPDATE SET count = solutions.count + 1
+			`;
+		} else { // Mysql is special...
+			await db`
+				INSERT INTO ${db("solutions")} (siteKey, bucket, count)
+				VALUES (${params.siteKey}, ${hourlyBucket}, 1)
+				ON DUPLICATE KEY UPDATE SET count = ${db("solutions")}.count + 1
+			`;
+		}
 
 		return {
 			success: true,
