@@ -26,8 +26,8 @@ async function initDb() {
       await db`alter table ${sql(tbl)} modify column ${sql(col)} bigint`.simple();
     }
   };
-  // MySQL requires a prefix-length for indexing text. 4096 is an arbitrarily chosen number.
-  const indexableTextColType = isPostgres || isSqlite ? sql`text` : sql`varchar(4096)`;
+  // MySQL requires a prefix-length for indexing text. While configurable, 3072 is the default maximum on MySQL 8.
+  const indexableTextColType = isPostgres || isSqlite ? sql`text` : sql`varchar(3072)`;
 
   await db`create table if not exists sessions (
     token ${indexableTextColType} primary key not null,
