@@ -59,3 +59,7 @@ We recommend keeping this to the default value, which is `sqlite://./.data/db.sq
 
 - `postgres://user:pass@localhost:5432/mydb`
 - `mysql://user:password@localhost:3306/database`
+
+## Error messages
+
+Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.
