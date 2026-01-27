@@ -38,7 +38,7 @@ export const siteverifyServer = new Elysia({
 			set.headers["X-RateLimit-Limit"] = "1";
 			set.headers["X-RateLimit-Remaining"] = "0";
 			set.headers["X-RateLimit-Reset"] = Math.ceil(unblockTime / 1000).toString();
-			return { error: "You were temporarily for using an invalid secret key. Please try again later." };
+			return { "success":false, error: "You were temporarily blocked for using an invalid secret key. Please try again later." };
 		}
 
 		const sitekey = params.siteKey;
@@ -46,14 +46,14 @@ export const siteverifyServer = new Elysia({
 
 		if (!sitekey || !secret || !response) {
 			set.status = 400;
-			return { error: "Missing required parameters" };
+			return { "success":false, error: "Missing required parameters" };
 		}
 
 		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
 		const keyHash = keyData?.secretHash;
 		if (!keyHash || !secret) {
 			set.status = 404;
-			return { error: "Invalid site key or secret" };
+			return { "success":false, error: "Invalid site key or secret" };
 		}
 
 		const isValidSecret = await Bun.password.verify(secret, keyHash);
@@ -61,20 +61,20 @@ export const siteverifyServer = new Elysia({
 		if (!isValidSecret) {
 			blockedIPs.set(ip, now + 250);
 			set.status = 403;
-			return { error: "Invalid site key or secret" };
+			return { "success":false, error: "Invalid site key or secret" };
 		}
 
 		const [token] = await db`SELECT * FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 
 		if (!token) {
 			set.status = 404;
-			return { error: "Token not found" };
+			return { "success":false, error: "Token not found" };
 		}
 
 		if (token.expires < Date.now()) {
 			await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
 			set.status = 403;
-			return { error: "Token expired" };
+			return { "success":false,error: "Token expired" };
 		}
 
 		await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
