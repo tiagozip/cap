@@ -26,8 +26,8 @@ async function initDb() {
       await db`alter table ${sql(tbl)} modify column ${sql(col)} bigint`.simple();
     }
   };
-  // MySQL requires a prefix-length for indexing text. While configurable, 3072 is the default maximum on MySQL 8.
-  const indexableTextColType = isPostgres || isSqlite ? sql`text` : sql`varchar(3072)`;
+  // MySQL requires a prefix-length for indexing text. The maximum is 3072 bytes, which is 767 UTF-8 characters.
+  const indexableTextColType = isPostgres || isSqlite ? sql`text` : sql`varchar(767)`;
 
   await db`create table if not exists sessions (
     token ${indexableTextColType} primary key not null,
