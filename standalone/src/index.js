@@ -70,20 +70,23 @@ new Elysia({
     }
 
     const errorId = Bun.randomUUIDv7().split("-").pop();
-    console.error(`[${error.code || "ERR"} ${errorId}]`, JSON.stringify({
-      timestamp: new Date().toISOString(),
-      error,
-      env: {
-        bun: process.versions.bun,
-        platform: process.platform,
-        mem: process.memoryUsage()
-      }
-    }));
+
+    if (process.env.DISABLE_ERROR_LOGGING !== "true") {
+      console.error(`[${error.code || "ERR"} ${errorId}]`, JSON.stringify({
+        timestamp: new Date().toISOString(),
+        error,
+        env: {
+          bun: process.versions.bun,
+          platform: process.platform,
+          mem: process.memoryUsage()
+        }
+      }));
+    }
 
     return {
       success: false,
       error: error.code || "Internal server error",
-      detail: {
+      detail: process.env.SHOW_ERRORS === "true" ? error : {
         troubleshooting: "http://capjs.js.org/guide/standalone/options.html#error-messages",
         id: errorId
       }
