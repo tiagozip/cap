@@ -11,11 +11,9 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            const title = context.payload.issue.title?.trim()
             const body = context.payload.issue.body?.toLowerCase() ?? ""
-            const badTitle = title?.toLowerCase().split("#")[0].trim() === "[bug]"
             const badBody = body.includes("a clear and concise description of what the bug is.")
-            if (badTitle && badBody) {
+            if (badBody) {
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -26,6 +24,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.issue.number,
-                body: "this issue has been automatically closed due to it being empty. if this isn't intentional, please re-open it with a proper title and body."
+                body: "this issue has been automatically closed due to it containing the description placeholder to prevent spam. if this isn't intentional, please re-open it with a proper body."
               })
             }
