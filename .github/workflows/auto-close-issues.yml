@@ -13,7 +13,7 @@ jobs:
           script: |
             const body = context.payload.issue.body?.toLowerCase() ?? "";
             console.log(context.payload.issue)
-            const badBody = body.includes("a clear and concise description of what the bug is.")
+            const badBody = body.includes("a clear and concise description of what the bug is")
             if (badBody) {
               await github.rest.issues.update({
                 owner: context.repo.owner,
