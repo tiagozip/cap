@@ -1,12 +1,9 @@
 name: Auto-close empty issues
-
 on:
   issues:
     types: [opened]
-
 permissions:
   issues: write
-
 jobs:
   close:
     runs-on: ubuntu-latest
@@ -14,12 +11,10 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            const title = title?.toLowerCase().split("#")[0].trim() === "[bug]";
+            const title = context.payload.issue.title?.trim()
             const body = context.payload.issue.body?.toLowerCase() ?? ""
-
-            const badTitle = title?.toLowerCase() === "[bug]"
+            const badTitle = title?.toLowerCase().split("#")[0].trim() === "[bug]"
             const badBody = body.includes("a clear and concise description of what the bug is.")
-
             if (badTitle && badBody) {
               await github.rest.issues.update({
                 owner: context.repo.owner,
@@ -27,7 +22,6 @@ jobs:
                 issue_number: context.payload.issue.number,
                 state: "closed"
               })
-
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
