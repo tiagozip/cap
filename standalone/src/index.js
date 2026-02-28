@@ -26,8 +26,7 @@ new Elysia({
         tags: [
           {
             name: "Keys",
-            description:
-              "Managing, creating and viewing keys. Requires API or session token",
+            description: "Managing, creating and viewing keys. Requires API or session token",
           },
           {
             name: "Settings",
@@ -55,7 +54,7 @@ new Elysia({
           },
         },
       },
-    })
+    }),
   )
   .onBeforeHandle(({ set }) => {
     set.headers["X-Powered-By"] = "Cap Standalone";
@@ -65,22 +64,25 @@ new Elysia({
       return {
         success: false,
         error: error.code || "Internal server error",
-        detail: error
-      }
+        detail: error,
+      };
     }
 
     const errorId = Bun.randomUUIDv7().split("-").pop();
 
     if (process.env.DISABLE_ERROR_LOGGING !== "true") {
-      console.error(`[${error.code || "ERR"} ${errorId}]`, JSON.stringify({
-        timestamp: new Date().toISOString(),
-        error,
-        env: {
-          bun: process.versions.bun,
-          platform: process.platform,
-          mem: process.memoryUsage()
-        }
-      }));
+      console.error(
+        `[${error.code || "ERR"} ${errorId}]`,
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          error,
+          env: {
+            bun: process.versions.bun,
+            platform: process.platform,
+            mem: process.memoryUsage(),
+          },
+        }),
+      );
     }
 
     return {

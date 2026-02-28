@@ -1,59 +1,59 @@
 {
   "name": "cap-standalone",
-  "version": "2.1.4",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.js",
-    "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:latest . --push"
-  },
+  "version": "2.1.5",
   "keywords": [
-    "security",
-    "detection",
-    "prevention",
-    "defense",
-    "protection",
+    "algorithm",
     "anti-abuse",
     "anti-automation",
     "anti-bot",
     "anti-ddos",
     "anti-dos",
     "anti-exploitation",
-    "anti-spam",
     "anti-scraping",
+    "anti-spam",
     "attack-mitigation",
-    "protocol",
+    "bots",
+    "captcha-alternative",
     "client-server",
-    "computational-puzzle",
     "complexity",
-    "puzzle",
+    "computational-puzzle",
     "crypto",
     "cryptographic",
-    "algorithm",
     "cybersecurity",
     "ddos",
+    "defense",
+    "detection",
+    "filtering",
     "hashcash",
     "hcaptcha",
-    "captcha-alternative",
-    "verification",
     "invisible",
     "pow",
+    "prevention",
     "proof-of-work",
+    "protection",
+    "protocol",
     "recaptcha",
+    "security",
     "spam",
-    "bots",
-    "filtering",
-    "turing-test"
+    "turing-test",
+    "verification"
   ],
+  "module": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.js",
+    "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:latest . --push"
+  },
   "dependencies": {
     "@cap.js/server": "^4.0.3",
     "@elysiajs/cors": "^1.4.0",
     "@elysiajs/static": "^1.4.4",
     "@elysiajs/swagger": "^1.3.1",
     "elysia": "^1.4.12",
-    "elysia-rate-limit": "4.4.0"
+    "elysia-rate-limit": "4.4.0",
+    "javascript-obfuscator": "^4.1.1"
   },
   "devDependencies": {
     "bun-types": "latest"
-  },
-  "module": "src/index.js"
+  }
 }

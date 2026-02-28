@@ -1,6 +1,6 @@
 # Cap Standalone
 
-Cap Standalone is the default way of self-hosting Cap's backend. It provides a simple HTTP API for the widget to use and a siteverify endpoint compatible with hCaptcha or reCAPTCHA's, along with the ability to use multiple site keys.
+Cap Standalone is the default way of self-hosting Cap's backend along with instrumentation challenges. It provides an API for the widget and a siteverify endpoint compatible with hCaptcha or reCAPTCHA's, along with the ability to use multiple site keys.
 
 ## Installation
 

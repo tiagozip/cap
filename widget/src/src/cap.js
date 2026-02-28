@@ -54,6 +54,101 @@
     return result.substring(0, length);
   }
 
+  async function runInstrumentationChallenge(instrBytes) {
+    const b64ToUint8 = (b64) => {
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return arr;
+    };
+
+    var compressed = b64ToUint8(instrBytes);
+
+    const scriptText = await new Promise(function (resolve, reject) {
+      try {
+        var ds = new DecompressionStream("deflate-raw");
+        var writer = ds.writable.getWriter();
+        var reader = ds.readable.getReader();
+        var chunks = [];
+        function pump(res) {
+          if (res.done) {
+            var len = 0,
+              off = 0;
+            for (var i = 0; i < chunks.length; i++) len += chunks[i].length;
+            var out = new Uint8Array(len);
+            for (var i = 0; i < chunks.length; i++) {
+              out.set(chunks[i], off);
+              off += chunks[i].length;
+            }
+            resolve(new TextDecoder().decode(out));
+          } else {
+            chunks.push(res.value);
+            reader.read().then(pump).catch(reject);
+          }
+        }
+        reader.read().then(pump).catch(reject);
+        writer
+          .write(compressed)
+          .then(function () {
+            writer.close();
+          })
+          .catch(reject);
+      } catch (e) {
+        reject(e);
+      }
+    });
+
+    return new Promise(function (resolve) {
+      var timeout = setTimeout(function () {
+        cleanup();
+        resolve({ __timeout: true });
+      }, 20000);
+
+      var iframe = document.createElement("iframe");
+      iframe.setAttribute("sandbox", "allow-scripts");
+      iframe.setAttribute("aria-hidden", "true");
+      iframe.style.cssText =
+        "position:absolute;width:1px;height:1px;top:-9999px;left:-9999px;border:none;opacity:0;pointer-events:none;";
+
+      var resolved = false;
+      function cleanup() {
+        if (resolved) return;
+        resolved = true;
+        clearTimeout(timeout);
+        window.removeEventListener("message", handler);
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+      }
+
+      function handler(ev) {
+        var d = ev.data;
+        if (!d || typeof d !== "object") return;
+        if (d.type === "cap:instr") {
+          cleanup();
+          if (d.blocked) {
+            resolve({ __blocked: true, blockReason: d.blockReason || "automated_browser" });
+          } else if (d.result) {
+            resolve(d.result);
+          } else {
+            resolve({ __timeout: true });
+          }
+        } else if (d.type === "cap:error") {
+          cleanup();
+          resolve({ __timeout: true });
+        }
+      }
+
+      window.addEventListener("message", handler);
+
+      iframe.srcdoc =
+        '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>' +
+        scriptText +
+        "\n</scr" +
+        "ipt></body></html>";
+
+      document.body.appendChild(iframe);
+    });
+  }
+
   let wasmModulePromise = null;
 
   const getWasmModule = () => {
@@ -214,11 +309,22 @@
             apiEndpoint += "/";
           }
 
-          const { challenge, token } = await (
-            await capFetch(`${apiEndpoint}challenge`, {
-              method: "POST",
-            })
-          ).json();
+          const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
+            method: "POST",
+          });
+
+          let challengeResp;
+          try {
+            challengeResp = await challengeRaw.json();
+          } catch (parseErr) {
+            throw new Error("Failed to parse challenge response from server");
+          }
+
+          if (challengeResp.error) {
+            throw new Error(challengeResp.error);
+          }
+
+          const { challenge, token } = challengeResp;
 
           let challenges = challenge;
 
@@ -232,19 +338,89 @@
             });
           }
 
-          const solutions = await this.solveChallenges(challenges);
+          const instrPromise = challengeResp.instrumentation
+            ? runInstrumentationChallenge(challengeResp.instrumentation)
+            : Promise.resolve(null);
 
-          const resp = await (
-            await capFetch(`${apiEndpoint}redeem`, {
-              method: "POST",
-              body: JSON.stringify({ token, solutions }),
-              headers: { "Content-Type": "application/json" },
-            })
-          ).json();
+          const powPromise = this.solveChallenges(challenges);
+
+          const instrErrorPromise = instrPromise.then((result) => {
+            if (result && result.__timeout) return result;
+            return null;
+          });
+
+          const instrEarlyError = await Promise.race([
+            instrErrorPromise,
+            powPromise.then(() => null),
+          ]);
+
+          if (instrEarlyError && instrEarlyError.__timeout) {
+            const errMsg = "Instrumentation timeout — please try again later";
+            this.updateUIBlocked(this.getI18nText("error-label", "Error"), true);
+            this.#div.setAttribute(
+              "aria-label",
+              this.getI18nText("error-aria-label", "An error occurred, please try again"),
+            );
+            this.removeEventListener("error", this.boundHandleError);
+            const errEvent = new CustomEvent("error", {
+              bubbles: true,
+              composed: true,
+              detail: { isCap: true, message: errMsg },
+            });
+            super.dispatchEvent(errEvent);
+            this.addEventListener("error", this.boundHandleError);
+            this.executeAttributeCode("onerror", errEvent);
+            console.error("[cap]", errMsg);
+            this.#solving = false;
+            return;
+          }
+
+          const [solutions, instrOut] = await Promise.all([powPromise, instrPromise]);
+
+          if (instrOut?.__timeout || instrOut?.__blocked) {
+            this.updateUIBlocked(
+              this.getI18nText("error-label", "Error"),
+              instrOut && instrOut.__blocked,
+            );
+            this.#div.setAttribute(
+              "aria-label",
+              this.getI18nText("error-aria-label", "An error occurred, please try again"),
+            );
+
+            this.removeEventListener("error", this.boundHandleError);
+            const errEvent = new CustomEvent("error", {
+              bubbles: true,
+              composed: true,
+              detail: { isCap: true, message: "Instrumentation failed" },
+            });
+            super.dispatchEvent(errEvent);
+            this.addEventListener("error", this.boundHandleError);
+
+            this.executeAttributeCode("onerror", errEvent);
+            console.error("[cap]", "Instrumentation failed");
+            this.#solving = false;
+            return;
+          }
+
+          const redeemResponse = await capFetch(`${apiEndpoint}redeem`, {
+            method: "POST",
+            body: JSON.stringify({
+              token,
+              solutions,
+              ...(instrOut && { instr: instrOut }),
+            }),
+            headers: { "Content-Type": "application/json" },
+          });
+
+          let resp;
+          try {
+            resp = await redeemResponse.json();
+          } catch {
+            throw new Error("Failed to parse server response");
+          }
 
           this.dispatchEvent("progress", { progress: 100 });
-
-          if (!resp.success) throw new Error("Invalid solution");
+          if (!resp.success) throw new Error(resp.error || "Invalid solution");
           const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
           if (this.querySelector(`input[name='${fieldName}']`)) {
             this.querySelector(`input[name='${fieldName}']`).value = resp.token;
@@ -406,9 +582,7 @@
         "Verify you're human",
       )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener" title="Secured by Cap: Self-hosted CAPTCHA for the modern web.">Cap</a>`;
 
-      const css = `%%capCSS%%`;
-
-      this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>${css}</style>`;
+      this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
 
       this.#shadow.appendChild(this.#div);
     }
@@ -489,6 +663,43 @@
       }
     }
 
+    updateUIBlocked(label, showTroubleshooting = false) {
+      if (!this.#div) return;
+
+      this.#div.setAttribute("data-state", "error");
+      this.#div.removeAttribute("disabled");
+
+      const wrapper = this.#div.querySelector(".label-wrapper");
+      if (!wrapper) return;
+
+      const troubleshootingUrl =
+        this.getAttribute("data-cap-troubleshooting-url") ||
+        "https://capjs.js.org/guide/troubleshooting/instrumentation.html";
+
+      const current = wrapper.querySelector(".label.active");
+      const next = document.createElement("span");
+      next.className = "label";
+      next.innerHTML = showTroubleshooting
+        ? `${label} · <a class="cap-troubleshoot-link" href="${troubleshootingUrl}" target="_blank" rel="noopener">${this.getI18nText("troubleshooting-label", "Troubleshoot")}</a>`
+        : label;
+      wrapper.appendChild(next);
+
+      void next.offsetWidth;
+      next.classList.add("active");
+      if (current) {
+        current.classList.remove("active");
+        current.classList.add("exit");
+        current.addEventListener("transitionend", () => current.remove(), { once: true });
+      }
+
+      const link = next.querySelector(".cap-troubleshoot-link");
+      if (link) {
+        link.addEventListener("click", (e) => {
+          e.stopPropagation();
+        });
+      }
+    }
+
     handleProgress(event) {
       if (!this.#div) return;
 
@@ -531,6 +742,8 @@
       if (!code) {
         return;
       }
+      
+      console.error("[cap] using `onxxx='…'` is strongly discouraged and will be deprecated soon. please use `addEventListener` callbacks instead.");
 
       new Function("event", code).call(this, event);
     }

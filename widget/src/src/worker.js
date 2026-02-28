@@ -4,11 +4,18 @@
     const batchSize = 50000;
     const encoder = new TextEncoder();
 
-    const targetBytes = new Uint8Array(target.length / 2);
-    for (let k = 0; k < targetBytes.length; k++) {
-      targetBytes[k] = parseInt(target.substring(k * 2, k * 2 + 2), 16);
+    const targetBits = target.length * 4;
+    const fullBytes = Math.floor(targetBits / 8);
+    const remainingBits = targetBits % 8;
+
+    const paddedTarget = target.length % 2 === 0 ? target : target + "0";
+    const targetBytesLength = paddedTarget.length / 2;
+    const targetBytes = new Uint8Array(targetBytesLength);
+    for (let k = 0; k < targetBytesLength; k++) {
+      targetBytes[k] = parseInt(paddedTarget.substring(k * 2, k * 2 + 2), 16);
     }
-    const targetBytesLength = targetBytes.length;
+
+    const partialMask = remainingBits > 0 ? (0xff << (8 - remainingBits)) & 0xff : 0;
 
     while (true) {
       try {
@@ -18,13 +25,20 @@
 
           const hashBuffer = await crypto.subtle.digest("SHA-256", inputBytes);
 
-          const hashBytes = new Uint8Array(hashBuffer, 0, targetBytesLength);
+          const hashBytes = new Uint8Array(hashBuffer);
 
           let matches = true;
-          for (let k = 0; k < targetBytesLength; k++) {
+
+          for (let k = 0; k < fullBytes; k++) {
             if (hashBytes[k] !== targetBytes[k]) {
               matches = false;
               break;
+            }
+          }
+
+          if (matches && remainingBits > 0) {
+            if ((hashBytes[fullBytes] & partialMask) !== (targetBytes[fullBytes] & partialMask)) {
+              matches = false;
             }
           }
 
@@ -123,7 +137,7 @@
 
       const instance = new WebAssembly.Instance(wasmModule, imports);
       wasm = instance.exports;
-      
+
       if (wasm.__wbindgen_start) wasm.__wbindgen_start();
 
       solve_pow_function = (salt, target) => {

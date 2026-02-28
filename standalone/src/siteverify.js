@@ -4,79 +4,81 @@ import { Elysia } from "elysia";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
-const blockedIPs = new Map();
-
-setInterval(() => {
-	const now = Date.now();
-	for (const [ip, unblockTime] of blockedIPs.entries()) {
-		if (now >= unblockTime) {
-			blockedIPs.delete(ip);
-		}
-	}
-}, 2000);
-
 export const siteverifyServer = new Elysia({
-	detail: {
-		tags: ["Challenges"],
-	},
+  detail: {
+    tags: ["Challenges"],
+  },
 })
-	.use(
-		cors({
-			origin: process.env.CORS_ORIGIN?.split(",") || true,
-			methods: ["POST"],
-		}),
-	)
-	.post("/:siteKey/siteverify", async ({ body, set, params, request, server }) => {
-		const ip = ratelimitGenerator(request, server);
-		const now = Date.now();
-		
-		const unblockTime = blockedIPs.get(ip);
-		if (unblockTime && now < unblockTime) {
-			const retryAfter = Math.ceil((unblockTime - now) / 1000);
-			set.status = 429;
-			set.headers["Retry-After"] = retryAfter.toString();
-			set.headers["X-RateLimit-Limit"] = "1";
-			set.headers["X-RateLimit-Remaining"] = "0";
-			set.headers["X-RateLimit-Reset"] = Math.ceil(unblockTime / 1000).toString();
-			return { "success":false, error: "You were temporarily blocked for using an invalid secret key. Please try again later." };
-		}
+  .use(
+    cors({
+      origin: process.env.CORS_ORIGIN?.split(",") || true,
+      methods: ["POST"],
+    }),
+  )
+  .post("/:siteKey/siteverify", async ({ body, set, params, request, server }) => {
+    const ip = ratelimitGenerator(request, server);
+    const now = Date.now();
 
-		const sitekey = params.siteKey;
-		const { secret, response } = body;
+    if (ip) {
+      const [ban] = await db`SELECT * FROM ip_bans WHERE ip = ${ip} AND expires > ${now}`;
+      if (ban) {
+        const retryAfter = Math.ceil((ban.expires - now) / 1000);
+        set.status = 429;
+        set.headers["Retry-After"] = retryAfter.toString();
+        set.headers["X-RateLimit-Limit"] = "1";
+        set.headers["X-RateLimit-Remaining"] = "0";
+        set.headers["X-RateLimit-Reset"] = Math.ceil(ban.expires / 1000).toString();
+        return {
+          success: false,
+          error:
+            "You were temporarily blocked for using an invalid secret key. Please try again later.",
+        };
+      }
+    }
 
-		if (!sitekey || !secret || !response) {
-			set.status = 400;
-			return { "success":false, error: "Missing required parameters" };
-		}
+    const sitekey = params.siteKey;
+    const { secret, response } = body;
 
-		const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
-		const keyHash = keyData?.secretHash;
-		if (!keyHash || !secret) {
-			set.status = 404;
-			return { "success":false, error: "Invalid site key or secret" };
-		}
+    if (!sitekey || !secret || !response) {
+      set.status = 400;
+      return { success: false, error: "Missing required parameters" };
+    }
 
-		const isValidSecret = await Bun.password.verify(secret, keyHash);
-		
-		if (!isValidSecret) {
-			blockedIPs.set(ip, now + 250);
-			set.status = 403;
-			return { "success":false, error: "Invalid site key or secret" };
-		}
+    const [keyData] = await db`SELECT * FROM keys WHERE siteKey = ${sitekey}`;
+    const keyHash = keyData?.secretHash;
+    if (!keyHash || !secret) {
+      set.status = 404;
+      return { success: false, error: "Invalid site key or secret" };
+    }
 
-		const [token] = await db`SELECT * FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
+    const isValidSecret = await Bun.password.verify(secret, keyHash);
 
-		if (!token) {
-			set.status = 404;
-			return { "success":false, error: "Token not found" };
-		}
+    if (!isValidSecret) {
+      if (ip) {
+        const banExpires = now + 1_000;
+        await db`
+					INSERT INTO ip_bans (ip, reason, expires)
+					VALUES (${ip}, ${"invalid_secret"}, ${banExpires})
+					ON CONFLICT (ip)
+					DO UPDATE SET reason = ${"invalid_secret"}, expires = ${banExpires}
+				`;
+      }
+      set.status = 403;
+      return { success: false, error: "Invalid site key or secret" };
+    }
 
-		if (token.expires < Date.now()) {
-			await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
-			set.status = 403;
-			return { "success":false,error: "Token expired" };
-		}
+    const [token] =
+      await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response} RETURNING *`;
 
-		await db`DELETE FROM tokens WHERE siteKey = ${params.siteKey} AND token = ${response}`;
-		return { success: true };
-	});
+    if (!token) {
+      set.status = 404;
+      return { success: false, error: "Token not found" };
+    }
+
+    if (token.expires < Date.now()) {
+      set.status = 403;
+      return { success: false, error: "Token expired" };
+    }
+
+    return { success: true };
+  });

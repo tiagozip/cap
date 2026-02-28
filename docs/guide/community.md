@@ -2,6 +2,8 @@
 
 Want to use Cap without the standalone server and with a different language? Here are some community-maintained libraries that might help. If you want to add a library, feel free to open a pull request!
 
+**Note:** These libraries frequently do **not** support new features such as seeded challenges or instrumentation challenges.
+
 ## Widgets
 
 These are wrappers around Cap's widget. They're usually not required as the default widget should work everywhere but can result in better development experience.
