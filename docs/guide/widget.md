@@ -34,6 +34,7 @@ import Cap from '@cap.js/widget';
 </script>
 <script src="https://<server url>/assets/widget.js"></script>
 ```
+
 :::
 
 You can now use the `<cap-widget>` component in your HTML.
@@ -48,6 +49,7 @@ The following attributes are supported:
 
 - `data-cap-api-endpoint`: API endpoint (required if not using custom fetch)
 - `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
+- `data-cap-troubleshooting-url`: Custom URL for the "Troubleshooting" link shown when verification is blocked (defaults to `https://capjs.js.org/guide/troubleshooting.html`). See [Troubleshooting](/guide/troubleshooting.md)
 - `onsolve=""`: Event listener for the `solve` event
 - [i18n attributes](#i18n)
 
@@ -66,13 +68,14 @@ widget.addEventListener("solve", function (e) {
 Alternatively, you can use `onsolve=""` directly within the widget or wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data. for this, it'll create a hidden field with name set to its `data-cap-hidden-field-name` attribute or `cap-token`).
 
 ## Invisible mode
+
 You can use `new Cap({ ... })` in your client-side JavaScript to create a new Cap instance and use the `solve()` method to solve the challenge. This is helpful for situations where you don't want the Cap widget to be visible but still want security, e.g. on a social media app when posting something.
 
 ```js
-import Cap from '@cap.js/widget';
+import Cap from "@cap.js/widget";
 
 const cap = new Cap({
-  apiEndpoint: '/api/cap/'
+  apiEndpoint: "/api/cap/",
 });
 
 const token = await cap.solve();
@@ -99,11 +102,12 @@ You can change the text on each label of the widget by setting the `data-cap-i18
   data-cap-i18n-initial-state="I'm a human"
   data-cap-i18n-solved-label="I'm a human"
   data-cap-i18n-error-label="Error"
+  data-cap-i18n-troubleshooting-label="Troubleshooting"
   data-cap-i18n-wasm-disabled="Enable WASM for significantly faster solving"
 ></cap-widget>
 ```
 
-`verify-aria-label`, `verifying-aria-label`, `verified-aria-label`, `error-aria-label` are also supported for screen readers.
+`verify-aria-label`, `verifying-aria-label`, `verified-aria-label`, `error-aria-label` are also supported for screen readers. `troubleshooting-label` controls the text of the "Troubleshooting" link shown when a user is blocked by instrumentation (defaults to "Troubleshooting").
 
 ## Customizing the widget
 
@@ -142,8 +146,9 @@ cap-widget {
   --cap-checkbox-border-radius: 6px;
   --cap-checkbox-background: #fafafa91;
   --cap-checkbox-margin: 2px;
-  --cap-font: system, -apple-system, "BlinkMacSystemFont", ".SFNSText-Regular", "San Francisco",
-    "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
+  --cap-font:
+    system, -apple-system, "BlinkMacSystemFont", ".SFNSText-Regular", "San Francisco", "Roboto",
+    "Segoe UI", "Helvetica Neue", "Lucida Grande", "Ubuntu", "arial", sans-serif;
   --cap-spinner-color: #000;
   --cap-spinner-background-color: #eee;
   --cap-spinner-thickness: 5px;

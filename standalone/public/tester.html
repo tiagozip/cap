@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Challenge Tester</title>
+    <title>Challenge tester</title>
     <style>
       body {
         font-family: system-ui, sans-serif;
@@ -15,6 +15,17 @@
         max-width: 500px;
         background-color: white;
         border-radius: 8px;
+      }
+      .nav-link {
+        display: inline-block;
+        margin-bottom: 1rem;
+        color: #555;
+        font-size: 0.85rem;
+        text-decoration: none;
+      }
+      .nav-link:hover {
+        color: #333;
+        text-decoration: underline;
       }
       label,
       input,
@@ -56,11 +67,7 @@
       <input type="text" id="keyIdInput" placeholder="e.g. 19d7e51172" />
 
       <label for="secretKeyInput">Secret key:</label>
-      <input
-        type="password"
-        id="secretKeyInput"
-        placeholder="e.g. eOAdXZvmQecVrvh..."
-      />
+      <input type="password" id="secretKeyInput" placeholder="e.g. eOAdXZvmQecVrvh..." />
 
       <button id="startButton">Start</button>
 
@@ -97,8 +104,7 @@
         const secretKey = secretKeyInput.value.trim();
 
         if (!keyId || !secretKey) {
-          logsElement.textContent =
-            "Error: Key ID and Secret Key are required.";
+          logsElement.textContent = "Error: Key ID and Secret Key are required.";
           return;
         }
 
@@ -110,9 +116,7 @@
         cap = new Cap({ apiEndpoint: `/${keyId}/` });
         cap.widget.style.display = "block";
 
-        cap.addEventListener("progress", (e) =>
-          log(`Solving... ${e.detail.progress}%`)
-        );
+        cap.addEventListener("progress", (e) => log(`Solving... ${e.detail.progress}%`));
         cap.addEventListener("error", (e) => log(`ERROR: ${e.detail.error}`));
 
         try {

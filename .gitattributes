@@ -1,0 +1,6 @@
+demo/** linguist-vendored
+standalone/public/tester.html linguist-vendored
+standalone/public/login.html linguist-vendored
+standalone/public/index.html linguist-vendored
+widget/test.html linguist-vendored
+wasm/test/browser.html linguist-vendored

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,8 +8,17 @@
     <style>
       * {
         box-sizing: border-box;
-        font-family: InterVariable, -apple-system, BlinkMacSystemFont, Segoe UI,
-          Roboto, Oxygen-Sans, Ubuntu, Cantarell, Helvetica Neue, sans-serif;
+        font-family:
+          InterVariable,
+          -apple-system,
+          BlinkMacSystemFont,
+          Segoe UI,
+          Roboto,
+          Oxygen-Sans,
+          Ubuntu,
+          Cantarell,
+          Helvetica Neue,
+          sans-serif;
       }
       body {
         text-align: center;
@@ -34,8 +43,7 @@
         margin-bottom: 28px;
         margin-top: 0;
         user-select: none;
-        
-        
+
         animation: title-in 0.6s both;
         animation-delay: 0.1s;
       }
@@ -117,7 +125,8 @@
       }
 
       .password-wrapper:has(.password:focus) {
-        box-shadow: inset 0 0 0 1px rgba(137, 180, 250, 1), 
+        box-shadow:
+          inset 0 0 0 1px rgba(137, 180, 250, 1),
           0px 0px 0px 2px rgba(137, 180, 250, 1);
         transition: box-shadow 0.12s;
       }
@@ -142,16 +151,18 @@
         cursor: pointer;
         font-size: 14px;
         z-index: 12;
-        transition: box-shadow 0.13s, opacity 0.2s;
-        
-        
+        transition:
+          box-shadow 0.13s,
+          opacity 0.2s;
+
         will-change: transform, filter, opacity;
         animation: title-in 0.5s both;
         animation-delay: 0.4s;
       }
 
       .submit:focus {
-        box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
+        box-shadow:
+          inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
           0px 0.5px 1.5px rgba(137, 180, 250, 0.25),
           0px 0px 0px 3.5px rgba(137, 180, 250, 0.5);
         outline: 0;
@@ -167,8 +178,7 @@
         align-items: center;
         gap: 4px;
         margin-top: 24px;
-        
-        
+
         will-change: transform, filter, opacity;
         animation: title-in 0.5s both;
         animation-delay: 0.5s;
@@ -192,7 +202,10 @@
         border-bottom-right-radius: calc(0.8rem - 2px);
         text-align: center;
         user-select: none;
-        transition: opacity .2s, margin-top .2s, color .2s;
+        transition:
+          opacity 0.2s,
+          margin-top 0.2s,
+          color 0.2s;
       }
 
       @starting-style {
@@ -234,11 +247,7 @@
           placeholder="•••••••••••••••••••••"
           class="password"
         />
-        <button
-          title="Show/hide password"
-          class="showhide-password"
-          type="button"
-        >
+        <button title="Show/hide password" class="showhide-password" type="button">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -289,13 +298,9 @@
         >
           Report issues
         </a>
-        <a href="https://capjs.js.org/" target="_blank" class="poweredby">
-          Powered by Cap
-        </a>
+        <a href="https://capjs.js.org/" target="_blank" class="poweredby"> Powered by Cap </a>
       </p>
     </form>
-    
-
   </body>
   <script>
     document.querySelector("input").focus();
@@ -331,7 +336,7 @@
             token: session_token,
             expires: expires,
             hash: hashed_token,
-          })
+          }),
         );
 
         document.querySelector("p.err").style.display = "none";
@@ -345,22 +350,20 @@
       document.querySelector("input[name=password]").value = "";
     });
 
-    document
-      .querySelector(".showhide-password")
-      .addEventListener("click", () => {
-        const passwordInput = document.querySelector("input[name=password]");
-        const showhideButton = document.querySelector(".showhide-password");
-        passwordInput.classList.toggle("show-password");
+    document.querySelector(".showhide-password").addEventListener("click", () => {
+      const passwordInput = document.querySelector("input[name=password]");
+      const showhideButton = document.querySelector(".showhide-password");
+      passwordInput.classList.toggle("show-password");
 
-        if (passwordInput.type === "password") {
-          passwordInput.type = "text";
-          passwordInput.placeholder = "correct horse battery staple";
-          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
-        } else {
-          passwordInput.type = "password";
-          passwordInput.placeholder = "•••••••••••••••••••••";
-          showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
-        }
-      });
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        passwordInput.placeholder = "correct horse battery staple";
+        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
+      } else {
+        passwordInput.type = "password";
+        passwordInput.placeholder = "•••••••••••••••••••••";
+        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+      }
+    });
   </script>
 </html>

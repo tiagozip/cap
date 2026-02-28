@@ -229,3 +229,16 @@
   text-decoration-thickness: 0.08em;
   z-index: 6;
 }
+
+.cap-troubleshoot-link {
+  color: #0066cc;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 0.08em;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: inherit;
+}
+.cap-troubleshoot-link:hover {
+  opacity: 0.8;
+}

@@ -51,10 +51,7 @@ export default withMermaid({
       },
     ],
     ["meta", { property: "og:url", content: "https://capjs.js.org" }],
-    [
-      "meta",
-      { property: "og:image", content: "https://capjs.js.org/logo.png" },
-    ],
+    ["meta", { property: "og:image", content: "https://capjs.js.org/logo.png" }],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
     [
       "meta",
@@ -71,10 +68,7 @@ export default withMermaid({
           "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
       },
     ],
-    [
-      "meta",
-      { name: "twitter:image", content: "https://capjs.js.org/logo.png" },
-    ],
+    ["meta", { name: "twitter:image", content: "https://capjs.js.org/logo.png" }],
     [
       "meta",
       {
@@ -206,8 +200,7 @@ export default withMermaid({
 
     footer: {
       message: "Built in Europe 🇪🇺<br>Released under the Apache 2.0 License.",
-      copyright:
-        "Copyright © 2025-present <a href='https://tiago.zip' target='_blank'>Tiago</a>",
+      copyright: "Copyright © 2025-present <a href='https://tiago.zip' target='_blank'>Tiago</a>",
     },
   },
   markdown: {
