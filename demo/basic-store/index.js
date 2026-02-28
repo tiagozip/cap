@@ -1,6 +1,22 @@
 import fs from "node:fs/promises";
 import { Elysia, file } from "elysia";
+import { transform } from "lightningcss";
 import Cap from "../../server/index.js";
+
+const processCSS = async () => {
+  const raw = await fs.readFile("../../widget/src/src/cap.css", "utf-8");
+  const { code } = transform({
+    filename: "cap.css",
+    code: Buffer.from(raw),
+    minify: true,
+    targets: {
+      chrome: 90 << 16,
+      firefox: 90 << 16,
+      safari: 14 << 16,
+    },
+  });
+  return code.toString();
+};
 
 const cap = new Cap({
   tokens_store_path: ".data/tokensList.json",
@@ -11,14 +27,15 @@ const app = new Elysia();
 app.get("/", () => file("./index.html"));
 
 app.get("/cap.js", async ({ set }) => {
-  // in the newest version, the worker is injected into the main file
+  // in the newest version, the worker and CSS are injected into the main file
   // by a build script. since we don't have a build script here,
   // we'll need to run a minimal build ourselves.
 
   const main = await fs.readFile("../../widget/src/src/cap.js", "utf-8");
   const worker = await fs.readFile("../../widget/src/src/worker.js", "utf-8");
+  const css = await processCSS();
 
-  const bundle = main.replace("%%workerScript%%", worker);
+  const bundle = main.replace("%%workerScript%%", worker).replace("%%capCSS%%", css);
 
   set.headers = {
     "Content-Type": "application/javascript",
@@ -28,6 +45,11 @@ app.get("/cap.js", async ({ set }) => {
 });
 
 app.get("/cap-floating.js", () => file("../../widget/src/src/cap-floating.js"));
+
+app.get("/cap.css", async ({ set }) => {
+  set.headers = { "Content-Type": "text/css" };
+  return processCSS();
+});
 
 app.post("/api/challenge", () => cap.createChallenge());
 

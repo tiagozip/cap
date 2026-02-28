@@ -3,9 +3,25 @@
 import fs from "node:fs/promises";
 import Cap from "@cap.js/server";
 import { Elysia, file } from "elysia";
+import { transform } from "lightningcss";
+
+const processCSS = async () => {
+  const raw = await fs.readFile("../../widget/src/src/cap.css", "utf-8");
+  const { code } = transform({
+    filename: "cap.css",
+    code: Buffer.from(raw),
+    minify: true,
+    targets: {
+      chrome: 90 << 16,
+      firefox: 90 << 16,
+      safari: 14 << 16,
+    },
+  });
+  return code.toString();
+};
 
 const cap = new Cap({
-	tokens_store_path: ".data/tokensList.json",
+  tokens_store_path: ".data/tokensList.json",
 });
 
 const app = new Elysia();
@@ -13,41 +29,47 @@ const app = new Elysia();
 app.get("/", () => file("./index.html"));
 
 app.get("/cap.js", async ({ set }) => {
-	// in the newest version, the worker is injected into the main file
-	// by a build script. since we don't have a build script here,
-	// we'll need to build it ourselves.
+  // in the newest version, the worker and CSS are injected into the main file
+  // by a build script. since we don't have a build script here,
+  // we'll need to build it ourselves.
 
-	const main = await fs.readFile("../../widget/src/src/cap.js", "utf-8");
-	const worker = await fs.readFile("../../widget/src/src/worker.js", "utf-8");
+  const main = await fs.readFile("../../widget/src/src/cap.js", "utf-8");
+  const worker = await fs.readFile("../../widget/src/src/worker.js", "utf-8");
+  const css = await processCSS();
 
-	const bundle = main.replace("%%workerScript%%", worker);
+  const bundle = main.replace("%%workerScript%%", worker).replace("%%capCSS%%", css);
 
-	set.headers = {
-		"Content-Type": "application/javascript",
-	};
+  set.headers = {
+    "Content-Type": "application/javascript",
+  };
 
-	return bundle;
+  return bundle;
 });
 
 app.get("/cap-floating.js", () => file("../../widget/src/src/cap-floating.js"));
 
+app.get("/cap.css", async ({ set }) => {
+  set.headers = { "Content-Type": "text/css" };
+  return processCSS();
+});
+
 app.post("/api/challenge", () => cap.createChallenge());
 
 app.post("/api/redeem", async ({ body, set }) => {
-	const { token, solutions } = body;
-	if (!token || !solutions) {
-		set.status = 400;
-		return { success: false };
-	}
+  const { token, solutions } = body;
+  if (!token || !solutions) {
+    set.status = 400;
+    return { success: false };
+  }
 
-	const answer = await cap.redeemChallenge({ token, solutions });
+  const answer = await cap.redeemChallenge({ token, solutions });
 
-	console.log("new challenge redeemed", {
-		...answer,
-		isValid: (await cap.validateToken(answer.token)).success,
-	});
+  console.log("new challenge redeemed", {
+    ...answer,
+    isValid: (await cap.validateToken(answer.token)).success,
+  });
 
-	return answer;
+  return answer;
 });
 
 app.listen(3000);

@@ -15,3 +15,7 @@ run `bun install` in each Bun package you want to work on to install dependencie
 - we recommend [Biome](https://biomejs.dev/) for formatting and linting. please fix all errors and warnings before submitting a PR
 
 - [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) are preferred
+
+## current roadmap
+
+javascript challenges and reputation-based difficulties are the main new feature focus.
