@@ -1,8 +1,8 @@
 # M2M
 
-`@cap.js/solver` is a standalone library that can be used to solve Cap challenges from the server. It's extremely simple (no dependencies, one single file) yet as fast and efficient as the widget. Note that it can **only be used with Bun**. Node.js support is not planned.
+`@cap.js/solver` is a standalone library that can be used to solve Cap challenges from the server. It's extremely simple (no dependencies, one single file) yet as fast and efficient as the widget. Note that it can **only be used with Bun**.
 
-This package does not bypass any actual proof-of-work.
+This package does not bypass any actual proof-of-work. **It does not support instrumentation challenges.**
 
 ## Installation
 
@@ -22,7 +22,7 @@ console.log(
     c: 50, // challenge count
     s: 32, // salt size
     d: 4, // difficulty
-  })
+  }),
 );
 ```
 

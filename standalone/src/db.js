@@ -9,10 +9,13 @@ fs.mkdirSync(process.env.DATA_PATH || "./.data", {
 let db;
 
 async function initDb() {
-  const dbUrl = process.env.DB_URL || `sqlite://${join(process.env.DATA_PATH || "./.data", "db.sqlite")}`;
+  const dbUrl =
+    process.env.DB_URL || `sqlite://${join(process.env.DATA_PATH || "./.data", "db.sqlite")}`;
 
   db = new SQL(dbUrl);
-
+  
+  await db`PRAGMA journal_mode = WAL;`.simple();
+  await db`PRAGMA synchronous = NORMAL;`.simple();
   await db`create table if not exists sessions (
     token text primary key not null,
     expires integer not null,
@@ -49,6 +52,12 @@ async function initDb() {
     primary key (siteKey, token)
   )`.simple();
 
+  await db`create table if not exists ip_bans (
+    ip text primary key not null,
+    reason text not null,
+    expires integer not null
+  )`.simple();
+
   await db`create table if not exists api_keys (
     id text not null,
     name text not null,
@@ -58,19 +67,24 @@ async function initDb() {
   )`.simple();
 
   setInterval(async () => {
-    const now = Date.now();
+    try {
+      const now = Date.now();
 
-    await db`delete from sessions where expires < ${now}`;
-    await db`delete from tokens where expires < ${now}`;
-    await db`delete from challenges where expires < ${now}`;
+      await db`delete from sessions where expires < ${now}`;
+      await db`delete from tokens where expires < ${now}`;
+      await db`delete from challenges where expires < ${now}`;
+      await db`delete from ip_bans where expires < ${now}`;
+    } catch (e) {
+      console.error("failed to cleanup:", e)
+    }
   }, 60 * 1000);
-
 
   const now = Date.now();
 
   await db`delete from sessions where expires < ${now}`;
   await db`delete from tokens where expires < ${now}`;
   await db`delete from challenges where expires < ${now}`;
+  await db`delete from ip_bans where expires < ${now}`;
 
   return db;
 }

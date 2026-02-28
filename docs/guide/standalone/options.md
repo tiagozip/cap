@@ -63,3 +63,9 @@ We recommend keeping this to the default value, which is `sqlite://./.data/db.sq
 ## Error messages
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.
+
+## Instrumentation challenges
+
+Cap standalone supports our JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to try stop headless browsers from solving them.
+
+You can turn on instrumentation challenges by toggling them on in your site key config. To block headless browsers, turn on "Attempt to block headless browsers"
