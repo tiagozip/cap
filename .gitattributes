@@ -5,3 +5,4 @@ standalone/public/index.html linguist-vendored
 widget/test.html linguist-vendored
 wasm/test/browser.html linguist-vendored
 standalone/Dockerfile linguist-vendored
+docs/.vitepress/theme/style.css linguist-vendored
