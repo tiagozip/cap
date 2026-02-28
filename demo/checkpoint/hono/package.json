@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "@cap.js/server": "latest",
-    "hono": "^4.7.10"
-  }
-}

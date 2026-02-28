@@ -8,6 +8,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "lightningcss": "^1.31.1",
     "playwright": "^1.52.0",
     "terser": "^5.43.1"
   }
