@@ -1,17 +1,10 @@
-import fs from "node:fs";
-import { join } from "node:path";
+import { config } from "./config.js";
 import { SQL } from "bun";
-
-fs.mkdirSync(process.env.DATA_PATH || "./.data", {
-  recursive: true,
-});
 
 let db;
 
 async function initDb() {
-  const dbUrl = process.env.DB_URL || `sqlite://${join(process.env.DATA_PATH || "./.data", "db.sqlite")}`;
-
-  db = new SQL(dbUrl);
+  db = new SQL(config.dbUrl);
 
   await db`create table if not exists sessions (
     token text primary key not null,

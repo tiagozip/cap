@@ -1,6 +1,7 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
+import { config } from "./config.js";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
@@ -22,14 +23,14 @@ export const siteverifyServer = new Elysia({
 })
 	.use(
 		cors({
-			origin: process.env.CORS_ORIGIN?.split(",") || true,
+			origin: config.corsOrigins,
 			methods: ["POST"],
 		}),
 	)
 	.post("/:siteKey/siteverify", async ({ body, set, params, request, server }) => {
 		const ip = ratelimitGenerator(request, server);
 		const now = Date.now();
-		
+
 		const unblockTime = blockedIPs.get(ip);
 		if (unblockTime && now < unblockTime) {
 			const retryAfter = Math.ceil((unblockTime - now) / 1000);
@@ -57,7 +58,7 @@ export const siteverifyServer = new Elysia({
 		}
 
 		const isValidSecret = await Bun.password.verify(secret, keyHash);
-		
+
 		if (!isValidSecret) {
 			blockedIPs.set(ip, now + 250);
 			set.status = 403;

@@ -3,6 +3,7 @@ import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 
+import { config } from "./config.js";
 import { db } from "./db.js";
 import { ratelimitGenerator } from "./ratelimit.js";
 
@@ -21,7 +22,7 @@ export const capServer = new Elysia({
 	)
 	.use(
 		cors({
-			origin: process.env.CORS_ORIGIN?.split(",") || true,
+			origin: config.corsOrigins,
 			methods: ["POST"],
 		}),
 	)
@@ -68,15 +69,16 @@ export const capServer = new Elysia({
 			return { error: "Challenge not found" };
 		}
 
+		const challengeDataParts = challenge.data.split(",");
 		const cap = new Cap({
 			noFSState: true,
 			state: {
 				challengesList: {
 					[challenge.token]: {
 						challenge: {
-							c: challenge.data.split(",")[0],
-							s: challenge.data.split(",")[1],
-							d: challenge.data.split(",")[2],
+							c: challengeDataParts[0],
+							s: challengeDataParts[1],
+							d: challengeDataParts[2],
 						},
 						expires: challenge.expires,
 					},
