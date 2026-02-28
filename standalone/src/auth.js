@@ -1,4 +1,4 @@
-import { randomBytes, timingSafeEqual } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { Elysia } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
 import { db } from "./db.js";
@@ -8,9 +8,7 @@ const { ADMIN_KEY } = process.env;
 
 if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
 if (ADMIN_KEY.length < 12)
-  throw new Error(
-    "auth: Admin key too short. Please use one that's at least 12 characters"
-  );
+  throw new Error("auth: Admin key too short. Please use one that's at least 12 characters");
 
 export const auth = new Elysia({
   prefix: "/auth",
@@ -21,33 +19,14 @@ export const auth = new Elysia({
       max: 20_000,
       scoping: "scoped",
       generator: ratelimitGenerator,
-    })
+    }),
   )
   .post("/login", async ({ body, set, cookie }) => {
     const { admin_key } = body;
 
-    const a = Buffer.from(admin_key, "utf8");
-    const b = Buffer.from(ADMIN_KEY, "utf8");
+    const hash = (v) => new Bun.CryptoHasher("sha256").update(v).digest();
 
-    if (!a || !b || a.length !== b.length) {
-      set.status = 401;
-      return { success: false };
-    }
-
-    if (!timingSafeEqual(a, b)) {
-      set.status = 401;
-      return { success: false };
-    }
-
-    if (admin_key !== ADMIN_KEY) {
-      // as a last check, in case an attacker somehow bypasses
-      // timingSafeEqual, we're checking AGAIN to see if the tokens
-      // are right.
-
-      // yes, this is vulnerable to timing attacks, but those are
-      // hard to execute and literally just accepting an invalid token
-      // is worse.
-
+    if (!crypto.timingSafeEqual(hash(admin_key), hash(ADMIN_KEY))) {
       set.status = 401;
       return { success: false };
     }
@@ -87,9 +66,7 @@ export const authBeforeHandle = async ({ set, headers }) => {
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
 
-    const apiKey = await db`SELECT * FROM api_keys WHERE id = ${id}`.then(
-      (rows) => rows[0]
-    );
+    const apiKey = await db`SELECT * FROM api_keys WHERE id = ${id}`.then((rows) => rows[0]);
 
     if (!apiKey || !apiKey.tokenHash) {
       set.status = 401;
@@ -111,14 +88,11 @@ export const authBeforeHandle = async ({ set, headers }) => {
     set.status = 401;
     return {
       success: false,
-      error:
-        "Unauthorized. An API key or session token is required to use this endpoint.",
+      error: "Unauthorized. An API key or session token is required to use this endpoint.",
     };
   }
 
-  const { token, hash } = JSON.parse(
-    atob(authorization.replace("Bearer ", "").trim())
-  );
+  const { token, hash } = JSON.parse(atob(authorization.replace("Bearer ", "").trim()));
 
   const [validToken] = await db`
     SELECT * FROM sessions WHERE token = ${hash} AND expires > ${Date.now()} LIMIT 1

@@ -30,7 +30,7 @@ const api = async (method, path, body) => {
 
     return await (await fetch(`/server${path}`, opts)).json();
   } catch (e) {
-    console.error("standalone:", e)
+    console.error("standalone:", e);
     return { error: e.message };
   }
 };
@@ -52,9 +52,7 @@ const formatRelative = (date) => {
   for (const [u, v] of Object.entries(ms)) {
     if (d >= v) {
       const val = Math.floor(d / v);
-      return past
-        ? `${val} ${u}${val > 1 ? "s" : ""} ago`
-        : `in ${val} ${u}${val > 1 ? "s" : ""}`;
+      return past ? `${val} ${u}${val > 1 ? "s" : ""} ago` : `in ${val} ${u}${val > 1 ? "s" : ""}`;
     }
   }
   return past ? "just now" : "in a moment";
@@ -75,8 +73,7 @@ const randKey = () => {
 
 async function init() {
   if (!localStorage.getItem("cap_auth")) {
-    document.cookie =
-      "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     return;
   }
 
@@ -87,8 +84,7 @@ async function loadKeys() {
   keys = await api("GET", "/keys");
   if (keys.error?.includes?.("Unauthorized")) {
     localStorage.removeItem("cap_auth");
-    document.cookie =
-      "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     location.reload();
     return;
   }
@@ -100,9 +96,7 @@ async function loadKeys() {
 }
 
 function renderKeysList(filter = "") {
-  const filtered = keys.filter((k) =>
-    k.name.toLowerCase().includes(filter.toLowerCase()),
-  );
+  const filtered = keys.filter((k) => k.name.toLowerCase().includes(filter.toLowerCase()));
 
   if (filtered.length === 0) {
     keysList.innerHTML = `
@@ -166,10 +160,7 @@ async function selectKey(siteKey) {
   const data = await api("GET", `/keys/${siteKey}`);
   document.querySelector("#detailPanel").style.opacity = "1";
   if (data.error) {
-    showModal(
-      "Error",
-      `<div class="modal-body"><p>Failed to load key: ${data.error}</p></div>`,
-    );
+    showModal("Error", `<div class="modal-body"><p>Failed to load key: ${data.error}</p></div>`);
     return;
   }
 
@@ -277,9 +268,23 @@ function renderKeyDetail() {
           <label for="cfgSaltSize">Salt size</label>
           <input type="number" id="cfgSaltSize" value="${key.config.saltSize}" min="7">
         </div>
+        <div class="switch-field">
+          <label class="switch">
+            <input type="checkbox" id="cfgInstrumentation" ${key.config.instrumentation ? "checked" : ""}>
+            <span class="switch-track"></span>
+          </label>
+          <label for="cfgInstrumentation" class="switch-label">Instrumentation challenges (experimental)</label>
+        </div>
+        <div class="switch-field" id="blockAutomatedBrowsersField" style="display: ${key.config.instrumentation ? "flex" : "none"};    align-items: normal;">
+          <label class="switch">
+            <input type="checkbox" id="cfgBlockAutomatedBrowsers" ${key.config.blockAutomatedBrowsers ? "checked" : ""}>
+            <span class="switch-track"></span>
+          </label>
+          <label for="cfgBlockAutomatedBrowsers" class="switch-label">Attempt to block headless browsers<br><span style="font-size: 12px;color: var(--ctp-overlay1);font-weight: 400;line-height: 1.3;">This may cause issues with testing or agent browsers and is not entirely foolproof.</span></label>
+        </div>
       </div>
       <div class="config-actions">
-        <button class="save-btn" id="saveConfigBtn">Save changes</button>
+        <button class="save-btn" id="saveConfigBtn" disabled>Save changes</button>
       </div>
     </div>
 
@@ -331,12 +336,44 @@ function renderKeyDetail() {
     loadChartData(e.target.value);
   });
 
-  document
-    .getElementById("saveConfigBtn")
-    .addEventListener("click", saveConfig);
-  document
-    .getElementById("rotateSecretBtn")
-    .addEventListener("click", rotateSecret);
+  function checkDirty() {
+    const name = document.getElementById("cfgName").value.trim();
+    const difficulty = parseInt(document.getElementById("cfgDifficulty").value, 10);
+    const challengeCount = parseInt(document.getElementById("cfgChallengeCount").value, 10);
+    const saltSize = parseInt(document.getElementById("cfgSaltSize").value, 10);
+    const instrumentation = document.getElementById("cfgInstrumentation").checked;
+    const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
+
+    const dirty =
+      name !== key.name ||
+      difficulty !== key.config.difficulty ||
+      challengeCount !== key.config.challengeCount ||
+      saltSize !== key.config.saltSize ||
+      instrumentation !== key.config.instrumentation ||
+      blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers;
+
+    document.getElementById("saveConfigBtn").disabled = !dirty;
+  }
+
+  for (const id of ["cfgName", "cfgDifficulty", "cfgChallengeCount", "cfgSaltSize"]) {
+    document.getElementById(id).addEventListener("input", checkDirty);
+  }
+
+  document.getElementById("cfgInstrumentation").addEventListener("change", (e) => {
+    const blockField = document.getElementById("blockAutomatedBrowsersField");
+    if (e.target.checked) {
+      blockField.style.display = "flex";
+    } else {
+      blockField.style.display = "none";
+      document.getElementById("cfgBlockAutomatedBrowsers").checked = false;
+    }
+    checkDirty();
+  });
+
+  document.getElementById("cfgBlockAutomatedBrowsers").addEventListener("change", checkDirty);
+
+  document.getElementById("saveConfigBtn").addEventListener("click", saveConfig);
+  document.getElementById("rotateSecretBtn").addEventListener("click", rotateSecret);
   document.getElementById("deleteKeyBtn").addEventListener("click", deleteKey);
 
   renderChart(key.chartData);
@@ -345,10 +382,7 @@ function renderKeyDetail() {
 async function loadChartData(duration) {
   document.getElementById("chartLoading").classList.add("visible");
 
-  const data = await api(
-    "GET",
-    `/keys/${selectedKey.siteKey}?chartDuration=${duration}`,
-  );
+  const data = await api("GET", `/keys/${selectedKey.siteKey}?chartDuration=${duration}`);
 
   document.getElementById("chartLoading").classList.remove("visible");
 
@@ -466,15 +500,11 @@ async function saveConfig() {
   btn.disabled = true;
 
   const name = document.getElementById("cfgName").value.trim();
-  const difficulty = parseInt(
-    document.getElementById("cfgDifficulty").value,
-    10,
-  );
-  const challengeCount = parseInt(
-    document.getElementById("cfgChallengeCount").value,
-    10,
-  );
+  const difficulty = parseInt(document.getElementById("cfgDifficulty").value, 10);
+  const challengeCount = parseInt(document.getElementById("cfgChallengeCount").value, 10);
   const saltSize = parseInt(document.getElementById("cfgSaltSize").value, 10);
+  const instrumentation = document.getElementById("cfgInstrumentation").checked;
+  const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
 
   if (!name || difficulty < 2 || challengeCount < 1 || saltSize < 7) {
     showModal(
@@ -490,21 +520,25 @@ async function saveConfig() {
     difficulty,
     challengeCount,
     saltSize,
+    instrumentation,
+    blockAutomatedBrowsers,
   });
-
-  btn.disabled = false;
 
   if (res.success) {
     await loadKeys();
     selectedKey.name = name;
-    selectedKey.config = { difficulty, challengeCount, saltSize };
+    selectedKey.config = {
+      difficulty,
+      challengeCount,
+      saltSize,
+      instrumentation,
+      blockAutomatedBrowsers,
+    };
     document.querySelector(".key-header h1").textContent = name;
     renderKeysList(searchInput.value);
   } else {
-    showModal(
-      "Error",
-      `<div class="modal-body"><p>Failed to save configuration.</p></div>`,
-    );
+    showModal("Error", `<div class="modal-body"><p>Failed to save configuration.</p></div>`);
+    btn.disabled = false;
   }
 }
 
@@ -514,10 +548,7 @@ function rotateSecret() {
     "This will generate a new secret key. Your existing integrations will stop working until updated.",
     "Rotate",
     async () => {
-      const res = await api(
-        "POST",
-        `/keys/${selectedKey.siteKey}/rotate-secret`,
-      );
+      const res = await api("POST", `/keys/${selectedKey.siteKey}/rotate-secret`);
       if (res.secretKey) {
         showModal(
           "Rotated secret key",
@@ -532,10 +563,7 @@ function rotateSecret() {
         `,
         );
       } else {
-        showModal(
-          "Error",
-          `<div class="modal-body"><p>Failed to rotate secret key.</p></div>`,
-        );
+        showModal("Error", `<div class="modal-body"><p>Failed to rotate secret key.</p></div>`);
       }
     },
   );
@@ -554,10 +582,7 @@ function deleteKey() {
         keyDetail.style.display = "none";
         await loadKeys();
       } else {
-        showModal(
-          "Error",
-          `<div class="modal-body"><p>Failed to delete key.</p></div>`,
-        );
+        showModal("Error", `<div class="modal-body"><p>Failed to delete key.</p></div>`);
       }
     },
     true,
@@ -601,8 +626,7 @@ function closeModal() {
   const overlay = document.querySelector(".modal-overlay");
   if (overlay) {
     overlay.style.opacity = "0";
-    overlay.querySelector(".modal").style.transform =
-      "scale(0.95) translateY(10px)";
+    overlay.querySelector(".modal").style.transform = "scale(0.95) translateY(10px)";
     overlay.querySelector(".modal").style.filter = "blur(2px)";
     document.removeEventListener("keydown", escapeHandler);
 
@@ -616,13 +640,7 @@ function showModal(title, content) {
   createModal(title, content);
 }
 
-function showConfirmModal(
-  title,
-  message,
-  confirmText,
-  onConfirm,
-  isDanger = false,
-) {
+function showConfirmModal(title, message, confirmText, onConfirm, isDanger = false) {
   const modal = createModal(
     title,
     `
@@ -710,10 +728,7 @@ function openCreateKeyModal(prefill = "") {
       await loadKeys();
       selectKey(res.siteKey);
     } else {
-      showModal(
-        "Error",
-        `<div class="modal-body"><p>Failed to create key.</p></div>`,
-      );
+      showModal("Error", `<div class="modal-body"><p>Failed to create key.</p></div>`);
     }
   });
 }
@@ -802,8 +817,7 @@ async function openSettings() {
         await api("POST", "/logout", { session: token });
         if (currentHash.endsWith(token)) {
           localStorage.removeItem("cap_auth");
-          document.cookie =
-            "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          document.cookie = "cap_authed=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
           location.reload();
         }
       });
@@ -918,10 +932,7 @@ function openCreateApiKeyModal() {
       `,
       );
     } else {
-      showModal(
-        "Error",
-        `<div class="modal-body"><p>Failed to create API key.</p></div>`,
-      );
+      showModal("Error", `<div class="modal-body"><p>Failed to create API key.</p></div>`);
     }
   });
 }

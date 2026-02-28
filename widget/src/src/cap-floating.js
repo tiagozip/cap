@@ -8,7 +8,7 @@
 
       setTimeout(() => {
         element.onclick = null;
-        handlers.forEach((h) => element.removeEventListener("click", h));
+        handlers.forEach((h) => { return element.removeEventListener("click", h) });
         element.onclick = (e) => handleClick(e, element, capWidget, handlers);
       }, 50);
     };
@@ -98,7 +98,7 @@
 
     if (handlers.length) {
       element.onclick = null;
-      handlers.forEach((h) => element.removeEventListener("click", h));
+      handlers.forEach((h) => { return element.removeEventListener("click", h) });
     }
 
     element.addEventListener("click", (e) => {

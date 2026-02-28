@@ -4,7 +4,7 @@ outline: deep
 
 # Quickstart
 
-Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using SHA-256 proof-of-work.
+Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using SHA-256 proof-of-work and instrumentation challenges.
 
 Unlike traditional CAPTCHAs, Cap's fast, unobtrusive, has no telemetry or tracking, and uses accessible proof-of-work instead of annoying visual puzzles.
 
@@ -32,7 +32,6 @@ Using `cdn.jsdelivr.net` is optional. If preferred, you can self-host the script
 
 :::
 
-
 Next, you can either add the widget component directly to your code:
 
 ```html
@@ -59,12 +58,12 @@ You can also use get a token programmatically without displaying the widget by u
 
 ```js
 const cap = new Cap({
-  apiEndpoint: "/api/"
+  apiEndpoint: "/api/",
 });
 const solution = await cap.solve();
 
 // you can attach event listeners to track progress
-cap.addEventListener("progress", (event) => { 
+cap.addEventListener("progress", (event) => {
   console.log(`Solving... ${event.detail.progress}% done`);
 });
 
@@ -75,6 +74,6 @@ console.log(solution.token);
 
 Cap is fully self-hosted, so you'll need to start a server exposing an API for Cap's protocol.
 
-For most use cases, we recommend using the Docker **[Standalone server](./standalone/index.md)**, as it exposes a simple HTTP API and provides a simple web dashboard with analytics.
+For most use cases, **we recommend using the Docker [Standalone server](./standalone/index.md)**, as it exposes a simple HTTP API and provides a simple web dashboard with analytics. It also supports our JavaScript instrumentation challenges, which force bots to use real browsers, along with optional headless browser detection.
 
 However, if you can't use Docker or need a more lightweight solution, you can use the [server library](./server.md) on Node and Bun or a [community library](./community.md) in other languages.

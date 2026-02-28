@@ -9,6 +9,8 @@ const keyDefaults = {
   difficulty: 4,
   challengeCount: 80,
   saltSize: 32,
+  instrumentation: false,
+  blockAutomatedBrowsers: false,
 };
 
 export const server = new Elysia({
@@ -27,7 +29,7 @@ export const server = new Elysia({
       max: 150,
       duration: 10_000,
       generator: ratelimitGenerator,
-    })
+    }),
   )
   .onBeforeHandle(authBeforeHandle)
   .get(
@@ -59,8 +61,7 @@ export const server = new Elysia({
 
           if (previous > 0) {
             change = ((current - previous) / previous) * 100;
-            direction =
-              current > previous ? "up" : current < previous ? "down" : "";
+            direction = current > previous ? "up" : current < previous ? "down" : "";
           } else if (current > 0) {
             change = 100;
             direction = "up";
@@ -76,14 +77,14 @@ export const server = new Elysia({
               direction,
             },
           };
-        })
+        }),
       );
     },
     {
       detail: {
         tags: ["Keys"],
       },
-    }
+    },
   )
   .post(
     "/keys",
@@ -112,7 +113,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Keys"],
       },
-    }
+    },
   )
   .get(
     "/keys/:siteKey",
@@ -210,16 +211,9 @@ export const server = new Elysia({
         chartDuration === "last28days" ||
         chartDuration === "last91days"
       ) {
-        const days =
-          chartDuration === "last7days"
-            ? 7
-            : chartDuration === "last28days"
-            ? 28
-            : 91;
+        const days = chartDuration === "last7days" ? 7 : chartDuration === "last28days" ? 28 : 91;
         const completeData = [];
-        const dataMap = new Map(
-          historyData.map((item) => [item.bucket, item.count])
-        );
+        const dataMap = new Map(historyData.map((item) => [item.bucket, item.count]));
 
         const currentDayStart = Math.floor(now / 86400) * 86400;
 
@@ -234,9 +228,7 @@ export const server = new Elysia({
         historyData = completeData;
       } else if (chartDuration === "today") {
         const completeData = [];
-        const dataMap = new Map(
-          historyData.map((item) => [item.bucket, item.count])
-        );
+        const dataMap = new Map(historyData.map((item) => [item.bucket, item.count]));
 
         const currentHour = Math.floor(now / 3600);
         const startHour = Math.floor(startTime / 3600);
@@ -287,13 +279,13 @@ export const server = new Elysia({
             t.Literal("last28days"),
             t.Literal("last91days"),
             t.Literal("alltime"),
-          ])
+          ]),
         ),
       }),
       detail: {
         tags: ["Keys"],
       },
-    }
+    },
   )
   .put(
     "/keys/:siteKey/config",
@@ -303,13 +295,25 @@ export const server = new Elysia({
         return { success: false, error: "Key not found" };
       }
 
-      const { name, difficulty, challengeCount, saltSize } = body;
-      const config = {
-        ...keyDefaults,
+      const existingConfig = JSON.parse(key.config);
+      const {
         name,
         difficulty,
         challengeCount,
         saltSize,
+        instrumentation,
+        blockAutomatedBrowsers,
+      } = body;
+      const config = {
+        ...keyDefaults,
+        ...existingConfig,
+        name,
+        difficulty,
+        challengeCount,
+        saltSize,
+        instrumentation: instrumentation ?? existingConfig.instrumentation ?? false,
+        blockAutomatedBrowsers:
+          blockAutomatedBrowsers ?? existingConfig.blockAutomatedBrowsers ?? false,
       };
 
       await db`UPDATE keys SET name = ${config.name || key.name}, config = ${JSON.stringify(config)} WHERE siteKey = ${params.siteKey}`;
@@ -322,11 +326,13 @@ export const server = new Elysia({
         difficulty: t.Optional(t.Number()),
         challengeCount: t.Optional(t.Number()),
         saltSize: t.Optional(t.Number()),
+        instrumentation: t.Optional(t.Boolean()),
+        blockAutomatedBrowsers: t.Optional(t.Boolean()),
       }),
       detail: {
         tags: ["Keys"],
       },
-    }
+    },
   )
   .delete(
     "/keys/:siteKey",
@@ -349,7 +355,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Keys"],
       },
-    }
+    },
   )
   .post(
     "/keys/:siteKey/rotate-secret",
@@ -376,7 +382,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Keys"],
       },
-    }
+    },
   )
   .get(
     "/settings/sessions",
@@ -392,7 +398,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Settings"],
       },
-    }
+    },
   )
   .get(
     "/settings/apikeys",
@@ -409,7 +415,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Settings"],
       },
-    }
+    },
   )
   .post(
     "/settings/apikeys",
@@ -438,7 +444,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Settings"],
       },
-    }
+    },
   )
   .delete(
     "/settings/apikeys/:id",
@@ -458,7 +464,7 @@ export const server = new Elysia({
       detail: {
         tags: ["Settings"],
       },
-    }
+    },
   )
   .get(
     "/about",
@@ -470,7 +476,7 @@ export const server = new Elysia({
         ver: pkg.default.version,
       };
     },
-    {}
+    {},
   )
   .post(
     "/logout",
@@ -481,9 +487,7 @@ export const server = new Elysia({
         return { success: false, error: "Unauthorized" };
       }
 
-      const { hash } = JSON.parse(
-        atob(authorization.replace("Bearer ", "").trim())
-      );
+      const { hash } = JSON.parse(atob(authorization.replace("Bearer ", "").trim()));
 
       let session = hash;
 
@@ -491,7 +495,12 @@ export const server = new Elysia({
         // body.session are the last characters of the session token
         // e.g. body.session = (...)8KdbcHjqxWPR6Q
 
-        const sessionRows = await db`SELECT token FROM sessions WHERE token LIKE ${'%' + body.session}`;
+        if (body.session < 10) {
+          return { success: false, error: "Session code too short" };
+        }
+
+        const sessionRows =
+          await db`SELECT token FROM sessions WHERE token LIKE ${`%${body.session}`}`;
         const sessionRow = sessionRows[0];
 
         if (!sessionRow) {
@@ -509,10 +518,10 @@ export const server = new Elysia({
       body: t.Optional(
         t.Object({
           session: t.Optional(t.String()),
-        })
+        }),
       ),
       detail: {
         tags: ["Settings"],
       },
-    }
+    },
   );
