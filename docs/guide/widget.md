@@ -49,7 +49,7 @@ The following attributes are supported:
 
 - `data-cap-api-endpoint`: API endpoint (required if not using custom fetch)
 - `data-cap-worker-count`: Number of workers to use (defaults to `navigator.hardwareConcurrency || 8`)
-- `data-cap-troubleshooting-url`: Custom URL for the "Troubleshooting" link shown when verification is blocked (defaults to `https://capjs.js.org/guide/troubleshooting.html`). See [Troubleshooting](/guide/troubleshooting.md)
+- `data-cap-troubleshooting-url`: Custom URL for the "Troubleshooting" link shown when verification is blocked
 - `onsolve=""`: Event listener for the `solve` event
 - [i18n attributes](#i18n)
 
