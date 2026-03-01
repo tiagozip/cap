@@ -14,8 +14,6 @@ import { ratelimitGenerator } from "./ratelimit.js";
 const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
 
-// ── JWT helpers (HMAC-SHA256, compact JWS) ──────────────────────────────
-
 const b64url = (buf) =>
   (buf instanceof Uint8Array ? Buffer.from(buf) : Buffer.from(buf, "utf8")).toString("base64url");
 
@@ -41,7 +39,6 @@ function jwtVerify(token, secret) {
 
   if (actual.length !== expected.length) return null;
 
-  // Constant-time comparison
   const a = new Uint8Array(expected);
   const b = new Uint8Array(actual);
   let diff = 0;
@@ -55,31 +52,16 @@ function jwtVerify(token, secret) {
   }
 }
 
-/** Return the raw signature bytes (last segment) for blocklisting */
 function jwtSigHex(token) {
   const lastDot = token.lastIndexOf(".");
   if (lastDot === -1) return null;
   return b64urlDecode(token.slice(lastDot + 1)).toString("hex");
 }
 
-// ── AES-256-GCM helpers ─────────────────────────────────────────────────
-// Used to encrypt instrumentation metadata inside the JWT so that the
-// expected answers are completely opaque to the client.
-
-/**
- * Derive a 32-byte encryption key from the site's jwtSecret.
- * We HMAC the secret with a fixed context label so the signing key
- * and the encryption key are always distinct even though they share
- * the same root secret.
- */
 function deriveEncKey(jwtSecret) {
   return createHmac("sha256", jwtSecret).update("cap:instr-enc-v1").digest();
 }
 
-/**
- * Encrypt arbitrary JSON-serialisable data with AES-256-GCM.
- * Returns a base64url string: iv (12 B) || authTag (16 B) || ciphertext
- */
 function encrypt(data, jwtSecret) {
   const key = deriveEncKey(jwtSecret);
   const iv = randomBytes(12);
@@ -90,10 +72,6 @@ function encrypt(data, jwtSecret) {
   return Buffer.concat([iv, tag, encrypted]).toString("base64url");
 }
 
-/**
- * Decrypt a blob produced by encrypt().  Returns the parsed object, or
- * null if decryption / authentication fails.
- */
 function decrypt(blob, jwtSecret) {
   try {
     const buf = Buffer.from(blob, "base64url");
@@ -110,8 +88,6 @@ function decrypt(blob, jwtSecret) {
     return null;
   }
 }
-
-// ── prng (must match @cap.js/server and the widget) ─────────────────────
 
 function prng(seed, length) {
   function fnv1a(str) {
@@ -141,13 +117,9 @@ function prng(seed, length) {
   return result.substring(0, length);
 }
 
-// ── sha256 ──────────────────────────────────────────────────────────────
-
 async function sha256(str) {
   return new Bun.CryptoHasher("sha256").update(str).digest("hex");
 }
-
-// ── Route definitions ───────────────────────────────────────────────────
 
 export const capServer = new Elysia({
   detail: {
@@ -169,11 +141,6 @@ export const capServer = new Elysia({
     }),
   )
 
-  // ── POST /:siteKey/challenge ────────────────────────────────────────
-  // No DB writes — the challenge token IS a JWT signed with the site's
-  // jwtSecret.  The JWT payload carries all data needed by /redeem.
-  // Instrumentation metadata is AES-256-GCM encrypted so the expected
-  // answers are never visible to the client.
   .post("/:siteKey/challenge", async ({ set, params }) => {
     const [keyRow] = await db`SELECT config, jwtSecret FROM keys WHERE siteKey = ${params.siteKey}`;
 
@@ -195,7 +162,6 @@ export const capServer = new Elysia({
     const d = keyConfig.difficulty ?? 4;
     const expires = Date.now() + CHALLENGE_TTL_MS;
 
-    // A random nonce for JWT uniqueness
     const nonce = randomBytes(25).toString("hex");
 
     const jwtPayload = {
@@ -207,30 +173,23 @@ export const capServer = new Elysia({
       exp: expires,
     };
 
-    // If instrumentation is enabled, encrypt its verification metadata
-    // and embed the opaque ciphertext in the JWT.  The cleartext
-    // instrumentation script (what the browser executes) is returned
-    // separately — outside the JWT — so the widget can run it.
     let instrBytes = null;
     if (keyConfig.instrumentation) {
       const instr = await generateInstrumentationChallenge(keyConfig);
 
-      // This is the sensitive part: expected states, variable names, etc.
-      // Encrypt it so the JWT payload doesn't leak the answers.
       jwtPayload.ei = encrypt(
         {
           id: instr.id,
           validStates: instr.validStates,
           vars: instr.vars,
           blockAutomatedBrowsers: instr.blockAutomatedBrowsers,
-          expires: instr.expires,
+          expires,
         },
         jwtSecret,
       );
 
       instrBytes = instr.instrumentation;
 
-      // Keep the cache hot
       warmForConfigs([keyConfig]);
     }
 
@@ -249,16 +208,12 @@ export const capServer = new Elysia({
     return response;
   })
 
-  // ── POST /:siteKey/redeem ──────────────────────────────────────────
-  // Verifies the JWT, checks PoW solutions, blocklists the JWT sig,
-  // then generates a redemption token and inserts it into the DB.
   .post("/:siteKey/redeem", async ({ body, set, params }) => {
     if (!body || !body.token || !body.solutions) {
       set.status = 400;
       return { error: "Missing required fields" };
     }
 
-    // ── look up site key & jwt secret ───────────────────────────────
     const [keyRow] = await db`SELECT jwtSecret FROM keys WHERE siteKey = ${params.siteKey}`;
 
     if (!keyRow) {
@@ -273,7 +228,6 @@ export const capServer = new Elysia({
       return { error: "Site key is not configured for JWT challenges" };
     }
 
-    // ── verify JWT ──────────────────────────────────────────────────
     const payload = jwtVerify(body.token, jwtSecret);
 
     if (!payload) {
@@ -291,7 +245,6 @@ export const capServer = new Elysia({
       return { error: "Challenge expired" };
     }
 
-    // ── replay protection: check blocklist ──────────────────────────
     const sig = jwtSigHex(body.token);
     if (!sig) {
       set.status = 403;
@@ -304,7 +257,6 @@ export const capServer = new Elysia({
       return { error: "Challenge already redeemed" };
     }
 
-    // ── verify PoW solutions ────────────────────────────────────────
     const { c, s: size, d: difficulty } = payload;
     const solutions = body.solutions;
 
@@ -317,8 +269,6 @@ export const capServer = new Elysia({
       return { error: "Invalid solutions" };
     }
 
-    // The widget uses the full token string (the JWT) as the PRNG seed,
-    // so the server must do the same to regenerate identical challenges.
     const prngSeed = body.token;
 
     let idx = 0;
@@ -338,9 +288,6 @@ export const capServer = new Elysia({
       return { error: "Invalid solution" };
     }
 
-    // ── instrumentation verification ────────────────────────────────
-    // The `ei` field in the JWT is AES-256-GCM encrypted; decrypt it
-    // to recover the expected instrumentation state.
     let instrMeta = null;
     if (payload.ei) {
       instrMeta = decrypt(payload.ei, jwtSecret);
@@ -364,7 +311,6 @@ export const capServer = new Elysia({
             reason: "automated_browser_detected",
           };
         }
-        // blockAutomatedBrowsers is disabled — allow through
       } else if (body.instr) {
         let instrResult;
         if (instrMeta.expires && Date.now() > instrMeta.expires) {
@@ -394,13 +340,11 @@ export const capServer = new Elysia({
       }
     }
 
-    // ── blocklist the JWT signature so it cannot be replayed ─────────
     await db`
       INSERT INTO challenge_blocklist (sig, expires)
       VALUES (${sig}, ${payload.exp})
     `;
 
-    // ── generate redemption token (NOT a JWT — opaque, DB-backed) ───
     const redeemId = randomBytes(8).toString("hex");
     const redeemSecret = randomBytes(15).toString("hex");
     const redeemToken = `${redeemId}:${redeemSecret}`;
