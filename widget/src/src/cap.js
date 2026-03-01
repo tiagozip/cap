@@ -175,253 +175,6 @@
   const SPECULATIVE_WORKERS = 1;
   const SPECULATIVE_YIELD_MS = 120;
 
-  const speculative = {
-    state: "idle",
-    challengeResp: null,
-    challenges: null,
-    results: [],
-    completedCount: 0,
-    solvePromise: null,
-    promoteFn: null,
-    _listeners: [],
-    pendingPromotion: null,
-    token: null,
-    tokenExpires: null,
-
-    notify() {
-      for (const fn of this._listeners) fn();
-      this._listeners = [];
-    },
-
-    onSettled(fn) {
-      if (this.state === "done" || this.state === "error") {
-        fn();
-      } else {
-        this._listeners.push(fn);
-      }
-    },
-  };
-
-  function _resetSpeculativeState() {
-    speculative.state = "idle";
-    speculative.challengeResp = null;
-    speculative.challenges = null;
-    speculative.results = [];
-    speculative.completedCount = 0;
-    speculative.solvePromise = null;
-    speculative.promoteFn = null;
-    speculative.pendingPromotion = null;
-    speculative._listeners = [];
-    speculative.token = null;
-    speculative.tokenExpires = null;
-
-    _attachInteractionListeners();
-  }
-
-  let _speculativeTimer = null;
-
-  function _onFirstInteraction() {
-    if (speculative.state !== "idle") return;
-    speculative.state = "waiting";
-
-    _speculativeTimer = setTimeout(() => {
-      _beginSpeculativeSolve();
-    }, SPECULATIVE_DELAY_MS);
-  }
-
-  let _currentInteractionHandler = null;
-
-  function _detachInteractionListeners() {
-    if (_currentInteractionHandler) {
-      window.removeEventListener("mousemove", _currentInteractionHandler);
-      window.removeEventListener("touchstart", _currentInteractionHandler);
-      window.removeEventListener("keydown", _currentInteractionHandler);
-      _currentInteractionHandler = null;
-    }
-  }
-
-  function _attachInteractionListeners() {
-    _detachInteractionListeners();
-
-    const handler = () => {
-      _detachInteractionListeners();
-      _onFirstInteraction();
-    };
-    _currentInteractionHandler = handler;
-    window.addEventListener("mousemove", handler, { passive: true });
-    window.addEventListener("touchstart", handler, { passive: true });
-    window.addEventListener("keydown", handler, { passive: true });
-  }
-
-  _attachInteractionListeners();
-
-  async function _beginSpeculativeSolve() {
-    if (speculative.state !== "waiting") return;
-    speculative.state = "fetching";
-
-    const widget = document.querySelector("cap-widget");
-    if (!widget) {
-      speculative.state = "idle";
-      return;
-    }
-
-    let apiEndpoint = widget.getAttribute("data-cap-api-endpoint");
-    if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
-      apiEndpoint = "/";
-    }
-    if (!apiEndpoint) {
-      speculative.state = "idle";
-      return;
-    }
-    if (!apiEndpoint.endsWith("/")) apiEndpoint += "/";
-
-    try {
-      const raw = await capFetch(`${apiEndpoint}challenge`, { method: "POST" });
-      let resp;
-      try {
-        resp = await raw.json();
-      } catch {
-        throw new Error("Failed to parse speculative challenge response");
-      }
-      if (resp.error) throw new Error(resp.error);
-
-      resp._apiEndpoint = apiEndpoint;
-      speculative.challengeResp = resp;
-
-      const { challenge, token } = resp;
-      let challenges = challenge;
-      if (!Array.isArray(challenges)) {
-        let i = 0;
-        challenges = Array.from({ length: challenge.c }, () => {
-          i++;
-          return [prng(`${token}${i}`, challenge.s), prng(`${token}${i}d`, challenge.d)];
-        });
-      }
-      speculative.challenges = challenges;
-      speculative.state = "solving";
-
-      speculative.solvePromise = _speculativeSolveAll(challenges);
-    } catch (e) {
-      console.warn("[cap] speculative challenge fetch failed:", e);
-      speculative.state = "error";
-      speculative.notify();
-    }
-  }
-
-  async function _speculativeSolveAll(challenges) {
-    _getSharedWorkerUrl();
-
-    let wasmModule = null;
-    try {
-      wasmModule = await getWasmModule();
-    } catch {}
-
-    _speculativePool.setWasm(wasmModule);
-
-    const total = challenges.length;
-    const results = new Array(total);
-
-    let concurrency = SPECULATIVE_WORKERS;
-    let promoted = false;
-
-    speculative.promoteFn = (fullCount) => {
-      if (promoted) return;
-      promoted = true;
-      concurrency = fullCount;
-      _speculativePool._size = fullCount;
-      _speculativePool._ensureSize(fullCount);
-    };
-
-    if (speculative.pendingPromotion !== null) {
-      speculative.promoteFn(speculative.pendingPromotion);
-      speculative.pendingPromotion = null;
-    }
-
-    let nextIndex = 0;
-
-    while (nextIndex < total) {
-      const batchSize = concurrency;
-      const batch = [];
-      const batchIndices = [];
-
-      for (let i = 0; i < batchSize && nextIndex < total; i++) {
-        batchIndices.push(nextIndex);
-        batch.push(challenges[nextIndex]);
-        nextIndex++;
-      }
-
-      _speculativePool._ensureSize(Math.max(concurrency, batchSize));
-
-      const batchResults = await Promise.all(
-        batch.map((challenge) =>
-          _speculativePool.run(challenge[0], challenge[1]).then((nonce) => {
-            speculative.completedCount++;
-            return nonce;
-          }),
-        ),
-      );
-
-      for (let i = 0; i < batchIndices.length; i++) {
-        results[batchIndices[i]] = batchResults[i];
-      }
-
-      if (!promoted && nextIndex < total) {
-        await new Promise((resolve) => setTimeout(resolve, SPECULATIVE_YIELD_MS));
-      }
-    }
-
-    speculative.results = results;
-    speculative.state = "redeeming";
-    _speculativeRedeem(results);
-    return results;
-  }
-
-  async function _speculativeRedeem(solutions) {
-    try {
-      const challengeResp = speculative.challengeResp;
-      const apiEndpoint = challengeResp._apiEndpoint;
-      if (!apiEndpoint) throw new Error("[cap] speculative redeem: missing apiEndpoint");
-
-      let instrOut = null;
-      if (challengeResp.instrumentation) {
-        instrOut = await runInstrumentationChallenge(challengeResp.instrumentation);
-        if (instrOut?.__timeout || instrOut?.__blocked) {
-          speculative.state = "done";
-          speculative.notify();
-          return;
-        }
-      }
-
-      const redeemRaw = await capFetch(`${apiEndpoint}redeem`, {
-        method: "POST",
-        body: JSON.stringify({
-          token: challengeResp.token,
-          solutions,
-          ...(instrOut && { instr: instrOut }),
-        }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      let resp;
-      try {
-        resp = await redeemRaw.json();
-      } catch {
-        throw new Error("Failed to parse speculative redeem response");
-      }
-
-      if (!resp.success) throw new Error(resp.error || "Speculative redeem failed");
-
-      speculative.token = resp.token;
-      speculative.tokenExpires = new Date(resp.expires).getTime();
-      speculative.state = "done";
-      speculative.notify();
-    } catch (e) {
-      console.warn("[cap] speculative redeem failed (will redo on click):", e);
-      speculative.state = "done";
-      speculative.notify();
-    }
-  }
-
   let _sharedWorkerUrl = null;
 
   function _getSharedWorkerUrl() {
@@ -543,9 +296,6 @@
     }
   }
 
-  const _speculativePool = new WorkerPool(1);
-  _speculativePool._spawn();
-
   class CapWidget extends HTMLElement {
     #resetTimer = null;
     #workersCount = navigator.hardwareConcurrency || 8;
@@ -555,6 +305,248 @@
     #host;
     #solving = false;
     #eventHandlers;
+
+    #speculative = null;
+    #speculativeTimer = null;
+    #speculativePool = null;
+    #interactionHandler = null;
+
+    #makeSpeculativeState() {
+      return {
+        state: "idle",
+        challengeResp: null,
+        challenges: null,
+        results: [],
+        completedCount: 0,
+        solvePromise: null,
+        promoteFn: null,
+        _listeners: [],
+        pendingPromotion: null,
+        token: null,
+        tokenExpires: null,
+
+        notify() {
+          for (const fn of this._listeners) fn();
+          this._listeners = [];
+        },
+
+        onSettled(fn) {
+          if (this.state === "done" || this.state === "error") {
+            fn();
+          } else {
+            this._listeners.push(fn);
+          }
+        },
+      };
+    }
+
+    #resetSpeculativeState() {
+      this.#speculative = this.#makeSpeculativeState();
+      this.#attachInteractionListeners();
+    }
+
+    #detachInteractionListeners() {
+      if (this.#interactionHandler) {
+        window.removeEventListener("mousemove", this.#interactionHandler);
+        window.removeEventListener("touchstart", this.#interactionHandler);
+        window.removeEventListener("keydown", this.#interactionHandler);
+        this.#interactionHandler = null;
+      }
+    }
+
+    #attachInteractionListeners() {
+      this.#detachInteractionListeners();
+      const handler = () => {
+        this.#detachInteractionListeners();
+        this.#onFirstInteraction();
+      };
+      this.#interactionHandler = handler;
+      window.addEventListener("mousemove", handler, { passive: true });
+      window.addEventListener("touchstart", handler, { passive: true });
+      window.addEventListener("keydown", handler, { passive: true });
+    }
+
+    #isVisible() {
+      if (typeof this.checkVisibility === "function") {
+        return this.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+      }
+      // Fallback: offsetParent is null for display:none; also check the style directly
+      return !!(this.offsetParent || this.getClientRects().length > 0);
+    }
+
+    #onFirstInteraction() {
+      if (this.#speculative.state !== "idle") return;
+      if (!this.#isVisible()) return;
+      this.#speculative.state = "waiting";
+      this.#speculativeTimer = setTimeout(() => {
+        this.#beginSpeculativeSolve();
+      }, SPECULATIVE_DELAY_MS);
+    }
+
+    async #beginSpeculativeSolve() {
+      if (this.#speculative.state !== "waiting") return;
+      this.#speculative.state = "fetching";
+
+      let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
+      if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
+        apiEndpoint = "/";
+      }
+      if (!apiEndpoint) {
+        this.#speculative.state = "idle";
+        return;
+      }
+      if (!apiEndpoint.endsWith("/")) apiEndpoint += "/";
+
+      try {
+        const raw = await capFetch(`${apiEndpoint}challenge`, { method: "POST" });
+        let resp;
+        try {
+          resp = await raw.json();
+        } catch {
+          throw new Error("Failed to parse speculative challenge response");
+        }
+        if (resp.error) throw new Error(resp.error);
+
+        resp._apiEndpoint = apiEndpoint;
+        this.#speculative.challengeResp = resp;
+
+        const { challenge, token } = resp;
+        let challenges = challenge;
+        if (!Array.isArray(challenges)) {
+          let i = 0;
+          challenges = Array.from({ length: challenge.c }, () => {
+            i++;
+            return [prng(`${token}${i}`, challenge.s), prng(`${token}${i}d`, challenge.d)];
+          });
+        }
+        this.#speculative.challenges = challenges;
+        this.#speculative.state = "solving";
+
+        this.#speculative.solvePromise = this.#speculativeSolveAll(challenges);
+      } catch (e) {
+        console.warn("[cap] speculative challenge fetch failed:", e);
+        this.#speculative.state = "error";
+        this.#speculative.notify();
+      }
+    }
+
+    async #speculativeSolveAll(challenges) {
+      _getSharedWorkerUrl();
+
+      let wasmModule = null;
+      try {
+        wasmModule = await getWasmModule();
+      } catch {}
+
+      if (!this.#speculativePool) {
+        this.#speculativePool = new WorkerPool(1);
+        this.#speculativePool._spawn();
+      }
+      this.#speculativePool.setWasm(wasmModule);
+
+      const total = challenges.length;
+      const results = new Array(total);
+
+      let concurrency = SPECULATIVE_WORKERS;
+      let promoted = false;
+
+      this.#speculative.promoteFn = (fullCount) => {
+        if (promoted) return;
+        promoted = true;
+        concurrency = fullCount;
+        this.#speculativePool._size = fullCount;
+        this.#speculativePool._ensureSize(fullCount);
+      };
+
+      if (this.#speculative.pendingPromotion !== null) {
+        this.#speculative.promoteFn(this.#speculative.pendingPromotion);
+        this.#speculative.pendingPromotion = null;
+      }
+
+      let nextIndex = 0;
+
+      while (nextIndex < total) {
+        const batchSize = concurrency;
+        const batch = [];
+        const batchIndices = [];
+
+        for (let i = 0; i < batchSize && nextIndex < total; i++) {
+          batchIndices.push(nextIndex);
+          batch.push(challenges[nextIndex]);
+          nextIndex++;
+        }
+
+        this.#speculativePool._ensureSize(Math.max(concurrency, batchSize));
+
+        const batchResults = await Promise.all(
+          batch.map((challenge) =>
+            this.#speculativePool.run(challenge[0], challenge[1]).then((nonce) => {
+              this.#speculative.completedCount++;
+              return nonce;
+            }),
+          ),
+        );
+
+        for (let i = 0; i < batchIndices.length; i++) {
+          results[batchIndices[i]] = batchResults[i];
+        }
+
+        if (!promoted && nextIndex < total) {
+          await new Promise((resolve) => setTimeout(resolve, SPECULATIVE_YIELD_MS));
+        }
+      }
+
+      this.#speculative.results = results;
+      this.#speculative.state = "redeeming";
+      this.#speculativeRedeem(results);
+      return results;
+    }
+
+    async #speculativeRedeem(solutions) {
+      try {
+        const challengeResp = this.#speculative.challengeResp;
+        const apiEndpoint = challengeResp._apiEndpoint;
+        if (!apiEndpoint) throw new Error("[cap] speculative redeem: missing apiEndpoint");
+
+        let instrOut = null;
+        if (challengeResp.instrumentation) {
+          instrOut = await runInstrumentationChallenge(challengeResp.instrumentation);
+          if (instrOut?.__timeout || instrOut?.__blocked) {
+            this.#speculative.state = "done";
+            this.#speculative.notify();
+            return;
+          }
+        }
+
+        const redeemRaw = await capFetch(`${apiEndpoint}redeem`, {
+          method: "POST",
+          body: JSON.stringify({
+            token: challengeResp.token,
+            solutions,
+            ...(instrOut && { instr: instrOut }),
+          }),
+          headers: { "Content-Type": "application/json" },
+        });
+
+        let resp;
+        try {
+          resp = await redeemRaw.json();
+        } catch {
+          throw new Error("Failed to parse speculative redeem response");
+        }
+
+        if (!resp.success) throw new Error(resp.error || "Speculative redeem failed");
+
+        this.#speculative.token = resp.token;
+        this.#speculative.tokenExpires = new Date(resp.expires).getTime();
+        this.#speculative.state = "done";
+        this.#speculative.notify();
+      } catch (e) {
+        console.warn("[cap] speculative redeem failed (will redo on click):", e);
+        this.#speculative.state = "done";
+        this.#speculative.notify();
+      }
+    }
 
     getI18nText(key, defaultValue) {
       return this.getAttribute(`data-cap-i18n-${key}`) || defaultValue;
@@ -588,6 +580,13 @@
 
     initialize() {
       _getSharedWorkerUrl();
+      if (!this.#speculative) {
+        this.#speculative = this.#makeSpeculativeState();
+      }
+      if (!this.#speculativePool) {
+        this.#speculativePool = new WorkerPool(1);
+        this.#speculativePool._spawn();
+      }
     }
 
     attributeChangedCallback(name, _, value) {
@@ -638,14 +637,7 @@
       const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
 
-      if (speculative.state === "idle" || speculative.state === "waiting") {
-        if (_speculativeTimer) {
-          clearTimeout(_speculativeTimer);
-          _speculativeTimer = null;
-        }
-        speculative.state = "waiting";
-        _speculativeTimer = setTimeout(() => _beginSpeculativeSolve(), SPECULATIVE_DELAY_MS);
-      }
+      this.#attachInteractionListeners();
     }
 
     async solve() {
@@ -677,21 +669,21 @@
           let challengeResp;
 
           if (
-            speculative.state === "done" &&
-            speculative.token &&
-            speculative.tokenExpires &&
-            Date.now() < speculative.tokenExpires
+            this.#speculative.state === "done" &&
+            this.#speculative.token &&
+            this.#speculative.tokenExpires &&
+            Date.now() < this.#speculative.tokenExpires
           ) {
             this.dispatchEvent("progress", { progress: 100 });
 
             const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
             if (this.querySelector(`input[name='${fieldName}']`)) {
-              this.querySelector(`input[name='${fieldName}']`).value = speculative.token;
+              this.querySelector(`input[name='${fieldName}']`).value = this.#speculative.token;
             }
-            this.dispatchEvent("solve", { token: speculative.token });
-            this.token = speculative.token;
+            this.dispatchEvent("solve", { token: this.#speculative.token });
+            this.token = this.#speculative.token;
 
-            const expiresIn = speculative.tokenExpires - Date.now();
+            const expiresIn = this.#speculative.tokenExpires - Date.now();
             if (this.#resetTimer) clearTimeout(this.#resetTimer);
             this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
 
@@ -704,71 +696,74 @@
             );
             if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
-            _resetSpeculativeState();
+            this.#resetSpeculativeState();
             this.#solving = false;
             return { success: true, token: this.token };
           }
 
-          if (speculative.state === "done") {
-            solutions = speculative.results;
-            challengeResp = speculative.challengeResp;
+          if (this.#speculative.state === "done") {
+            solutions = this.#speculative.results;
+            challengeResp = this.#speculative.challengeResp;
             this.dispatchEvent("progress", { progress: 100 });
           } else if (
-            speculative.state === "solving" ||
-            speculative.state === "redeeming" ||
-            speculative.state === "fetching" ||
-            speculative.state === "waiting"
+            this.#speculative.state === "solving" ||
+            this.#speculative.state === "redeeming" ||
+            this.#speculative.state === "fetching" ||
+            this.#speculative.state === "waiting"
           ) {
-            if (speculative.state === "waiting") {
-              if (_speculativeTimer) {
-                clearTimeout(_speculativeTimer);
-                _speculativeTimer = null;
+            if (this.#speculative.state === "waiting") {
+              if (this.#speculativeTimer) {
+                clearTimeout(this.#speculativeTimer);
+                this.#speculativeTimer = null;
               }
-              speculative.state = "waiting";
-              _beginSpeculativeSolve();
+              this.#speculative.state = "waiting";
+              this.#beginSpeculativeSolve();
             }
 
-            speculative.pendingPromotion = this.#workersCount;
-            if (speculative.promoteFn) {
-              speculative.promoteFn(this.#workersCount);
+            this.#speculative.pendingPromotion = this.#workersCount;
+            if (this.#speculative.promoteFn) {
+              this.#speculative.promoteFn(this.#workersCount);
             }
 
             const progressInterval = setInterval(() => {
-              if (speculative.state !== "solving" && speculative.state !== "redeeming") {
+              if (
+                this.#speculative.state !== "solving" &&
+                this.#speculative.state !== "redeeming"
+              ) {
                 clearInterval(progressInterval);
                 return;
               }
-              const total = speculative.challenges ? speculative.challenges.length : 1;
-              const done = speculative.completedCount;
+              const total = this.#speculative.challenges ? this.#speculative.challenges.length : 1;
+              const done = this.#speculative.completedCount;
               const visual =
-                speculative.state === "redeeming"
+                this.#speculative.state === "redeeming"
                   ? 99
                   : Math.min(98, Math.round((done / total) * 100));
               this.dispatchEvent("progress", { progress: visual });
             }, 150);
 
-            await new Promise((resolve) => speculative.onSettled(resolve));
+            await new Promise((resolve) => this.#speculative.onSettled(resolve));
             clearInterval(progressInterval);
 
-            if (speculative.state !== "done") {
+            if (this.#speculative.state !== "done") {
               throw new Error("Speculative solve failed – please try again");
             }
 
             if (
-              speculative.token &&
-              speculative.tokenExpires &&
-              Date.now() < speculative.tokenExpires
+              this.#speculative.token &&
+              this.#speculative.tokenExpires &&
+              Date.now() < this.#speculative.tokenExpires
             ) {
               this.dispatchEvent("progress", { progress: 100 });
 
               const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
               if (this.querySelector(`input[name='${fieldName}']`)) {
-                this.querySelector(`input[name='${fieldName}']`).value = speculative.token;
+                this.querySelector(`input[name='${fieldName}']`).value = this.#speculative.token;
               }
-              this.dispatchEvent("solve", { token: speculative.token });
-              this.token = speculative.token;
+              this.dispatchEvent("solve", { token: this.#speculative.token });
+              this.token = this.#speculative.token;
 
-              const expiresIn = speculative.tokenExpires - Date.now();
+              const expiresIn = this.#speculative.tokenExpires - Date.now();
               if (this.#resetTimer) clearTimeout(this.#resetTimer);
               this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
 
@@ -781,13 +776,13 @@
               );
               if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
-              _resetSpeculativeState();
+              this.#resetSpeculativeState();
               this.#solving = false;
               return { success: true, token: this.token };
             }
 
-            solutions = speculative.results;
-            challengeResp = speculative.challengeResp;
+            solutions = this.#speculative.results;
+            challengeResp = this.#speculative.challengeResp;
             this.dispatchEvent("progress", { progress: 100 });
           } else {
             const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
@@ -869,7 +864,7 @@
           this.dispatchEvent("solve", { token: resp.token });
           this.token = resp.token;
 
-          _resetSpeculativeState();
+          this.#resetSpeculativeState();
 
           if (this.#resetTimer) clearTimeout(this.#resetTimer);
           const expiresIn = new Date(resp.expires).getTime() - Date.now();
@@ -1112,7 +1107,6 @@
 
       const link = next.querySelector(".cap-troubleshoot-link");
       if (link) {
-        console.log("linkblud");
         link.addEventListener("click", (e) => {
           e.stopPropagation();
         });
@@ -1225,6 +1219,21 @@
       if (this.#resetTimer) {
         clearTimeout(this.#resetTimer);
         this.#resetTimer = null;
+      }
+
+      this.#detachInteractionListeners();
+      if (this.#speculativeTimer) {
+        clearTimeout(this.#speculativeTimer);
+        this.#speculativeTimer = null;
+      }
+      if (this.#speculativePool) {
+        this.#speculativePool.terminate();
+        this.#speculativePool = null;
+      }
+      if (this.#speculative) {
+        this.#speculative.state = "error";
+        this.#speculative.notify();
+        this.#speculative = null;
       }
     }
   }
