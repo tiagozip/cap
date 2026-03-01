@@ -13,16 +13,12 @@ onMounted(() => {
       return new Response(
         JSON.stringify({
           challenge: Array.from({ length: 50 }, () => [
-            Array.from(
-              browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2)))
-            )
+            Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(32 / 2))))
               .map((byte) => byte.toString(16).padStart(2, "0"))
               .join("")
               .slice(0, 32),
 
-            Array.from(
-              browserCrypto.getRandomValues(new Uint8Array(Math.ceil(4 / 2)))
-            )
+            Array.from(browserCrypto.getRandomValues(new Uint8Array(Math.ceil(4 / 2))))
               .map((byte) => byte.toString(16).padStart(2, "0"))
               .join("")
               .slice(0, 4),
@@ -33,7 +29,7 @@ onMounted(() => {
         {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
     if (url === "/api/redeem") {
@@ -50,7 +46,7 @@ onMounted(() => {
         {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
     return await window.fetch(url, options);

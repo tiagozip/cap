@@ -97,11 +97,7 @@
 
 :root {
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: -webkit-linear-gradient(
-    280deg,
-    #38c2fe,
-    #0279db
-  );
+  --vp-home-hero-name-background: -webkit-linear-gradient(280deg, #38c2fe, #0279db);
   /*
   --vp-home-hero-name-background: -webkit-linear-gradient(
     120deg,
@@ -109,11 +105,7 @@
     #41d1ff
   );
 */
-  --vp-home-hero-image-background-image: -webkit-linear-gradient(
-    -45deg,
-    #38c2fe52,
-    #0279db33
-  );
+  --vp-home-hero-image-background-image: -webkit-linear-gradient(-45deg, #38c2fe52, #0279db33);
 
   --vp-home-hero-image-filter: blur(44px);
 }
@@ -166,8 +158,8 @@ img {
 }
 
 :root {
-  --vp-font-family-mono: mono, ui-monospace, "Menlo", "Monaco", "Consolas",
-    "Liberation Mono", "Courier New", monospace !important;
+  --vp-font-family-mono:
+    mono, ui-monospace, "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace !important;
 }
 
 @font-face {
@@ -209,6 +201,7 @@ img {
   scrollbar-color: hsla(255 0 255 / 15%) #1b1b1f;
 }
 
-html, body {
+html,
+body {
   scrollbar-gutter: stable;
 }

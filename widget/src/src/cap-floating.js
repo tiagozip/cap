@@ -8,17 +8,17 @@
 
       setTimeout(() => {
         element.onclick = null;
-        handlers.forEach((h) => { return element.removeEventListener("click", h) });
+        handlers.forEach((h) => {
+          return element.removeEventListener("click", h);
+        });
         element.onclick = (e) => handleClick(e, element, capWidget, handlers);
       }, 50);
     };
 
     element.onclick = null;
 
-    const offset =
-      parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
-    const position =
-      element.getAttribute("data-cap-floating-position") || "top";
+    const offset = parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
+    const position = element.getAttribute("data-cap-floating-position") || "top";
     const rect = element.getBoundingClientRect();
 
     Object.assign(capWidget.style, {
@@ -45,12 +45,12 @@
     if (position === "top") {
       capWidget.style.top = `${Math.max(
         window.scrollY,
-        rect.top - capWidget.offsetHeight - offset + window.scrollY
+        rect.top - capWidget.offsetHeight - offset + window.scrollY,
       )}px`;
     } else {
       capWidget.style.top = `${Math.min(
         rect.bottom + offset + window.scrollY,
-        window.innerHeight - capWidget.offsetHeight + window.scrollY
+        window.innerHeight - capWidget.offsetHeight + window.scrollY,
       )}px`;
     }
 
@@ -82,23 +82,21 @@
 
     const capWidget = document.querySelector(capWidgetSelector);
     if (!document.contains(capWidget) && !capWidget.solve) {
-      throw new Error(
-        `[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`
-      );
+      throw new Error(`[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`);
     }
 
     capWidget.style.display = "none";
     const handlers = [element.onclick].filter(Boolean);
 
     if (typeof getEventListeners === "function") {
-      handlers.push(
-        ...(getEventListeners(element).click || []).map((l) => l.listener)
-      );
+      handlers.push(...(getEventListeners(element).click || []).map((l) => l.listener));
     }
 
     if (handlers.length) {
       element.onclick = null;
-      handlers.forEach((h) => { return element.removeEventListener("click", h) });
+      handlers.forEach((h) => {
+        return element.removeEventListener("click", h);
+      });
     }
 
     element.addEventListener("click", (e) => {
@@ -119,7 +117,7 @@
     mutations.forEach((mutation) =>
       mutation.addedNodes.forEach((node) => {
         if (node.nodeType === Node.ELEMENT_NODE) init(node);
-      })
-    )
+      }),
+    ),
   ).observe(document.body, { childList: true, subtree: true });
 })();

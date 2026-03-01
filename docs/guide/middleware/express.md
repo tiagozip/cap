@@ -30,7 +30,7 @@ app.use(
       token_size: 16,
       verification_template_path: join(__dirname, "./index.html"),
     */
-  })
+  }),
 );
 
 app.get("/", (req, res) => {

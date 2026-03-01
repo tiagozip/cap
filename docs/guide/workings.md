@@ -2,7 +2,7 @@
 
 By the way, this is a more technical explanation of how Cap works. If you're looking for a more general overview, check out the [Effectiveness](./effectiveness.md) page.
 
-***
+---
 
 1. When Cap is initialized, it automatically registers a custom element for the widget in the browser
 2. The widget creates a shadow DOM and appends all necessary elements to it

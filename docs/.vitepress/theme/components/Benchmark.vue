@@ -27,18 +27,14 @@ const doBenchmark = async (i, total) => {
           JSON.stringify({
             challenge: Array.from({ length: challenges.value }, () => [
               Array.from(
-                browserCrypto.getRandomValues(
-                  new Uint8Array(Math.ceil(challengeSize.value / 2))
-                )
+                browserCrypto.getRandomValues(new Uint8Array(Math.ceil(challengeSize.value / 2))),
               )
                 .map((byte) => byte.toString(16).padStart(2, "0"))
                 .join("")
                 .slice(0, challengeSize.value),
 
               Array.from(
-                browserCrypto.getRandomValues(
-                  new Uint8Array(Math.ceil(difficulty.value / 2))
-                )
+                browserCrypto.getRandomValues(new Uint8Array(Math.ceil(difficulty.value / 2))),
               )
                 .map((byte) => byte.toString(16).padStart(2, "0"))
                 .join("")
@@ -50,7 +46,7 @@ const doBenchmark = async (i, total) => {
           {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
       if (url === "/api/redeem") {
@@ -63,7 +59,7 @@ const doBenchmark = async (i, total) => {
           {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
       return await window.fetch(url, options);
@@ -84,7 +80,7 @@ const doBenchmark = async (i, total) => {
       progressValue.value = Math.min(100, Math.max(0, overallProgress));
 
       resultMessage.value = `Running benchmark ${i}/${total}... ${progress.toFixed(
-        2
+        2,
       )}% (Overall: ${overallProgress.toFixed(2)}%)`;
     });
 
@@ -95,9 +91,7 @@ const doBenchmark = async (i, total) => {
 
     progressValue.value = (i / total) * 100;
 
-    resultMessage.value = `Benchmark ${i}/${total} completed in ${Math.round(
-      time
-    )} ms.`;
+    resultMessage.value = `Benchmark ${i}/${total} completed in ${Math.round(time)} ms.`;
     return time;
   } catch (error) {
     console.error(`Benchmark ${i}/${total} failed:`, error);
@@ -132,7 +126,7 @@ async function runBenchmark() {
     const averageTime = totalTime / times.length;
 
     resultMessage.value = `Average benchmark time: ${Math.round(
-      averageTime
+      averageTime,
     )} ms over ${total} runs.`;
 
     try {
@@ -159,10 +153,7 @@ async function runBenchmark() {
 
 <template>
   <ClientOnly>
-    <div
-      class="benchmark-form"
-      :style="{ '--progress-percent': progressValue }"
-    >
+    <div class="benchmark-form" :style="{ '--progress-percent': progressValue }">
       <div class="benchmark-field">
         <label for="difficulty">Challenge difficulty</label>
         <input
@@ -242,12 +233,9 @@ async function runBenchmark() {
   background-color: var(--vp-c-bg-soft);
 
   border: 1px solid transparent;
-  background: linear-gradient(var(--vp-c-bg-soft), var(--vp-c-bg-soft))
-      padding-box,
-    conic-gradient(
-        var(--vp-c-brand-1) calc(var(--progress-percent, 0) * 1%),
-        var(--vp-c-divider) 0
-      )
+  background:
+    linear-gradient(var(--vp-c-bg-soft), var(--vp-c-bg-soft)) padding-box,
+    conic-gradient(var(--vp-c-brand-1) calc(var(--progress-percent, 0) * 1%), var(--vp-c-divider) 0)
       border-box;
 
   transition: background 0.2s ease;
@@ -289,7 +277,10 @@ async function runBenchmark() {
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  transition: background-color 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    filter 0.2s ease;
   border: none;
   cursor: pointer;
 }

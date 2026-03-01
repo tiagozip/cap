@@ -25,7 +25,8 @@ Or from the standalone server:
 
 ```html
 <script src="https://<server url>/assets/widget.js"></script>
-<script src="https://<server url>/assets/floating.js"></script> <!-- [!code ++] -->
+<script src="https://<server url>/assets/floating.js"></script>
+<!-- [!code ++] -->
 ```
 
 The following attributes are supported:

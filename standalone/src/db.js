@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import { join } from "node:path";
 import { SQL } from "bun";
@@ -13,7 +14,7 @@ async function initDb() {
     process.env.DB_URL || `sqlite://${join(process.env.DATA_PATH || "./.data", "db.sqlite")}`;
 
   db = new SQL(dbUrl);
-  
+
   await db`PRAGMA journal_mode = WAL;`.simple();
   await db`PRAGMA synchronous = NORMAL;`.simple();
   await db`create table if not exists sessions (
@@ -26,9 +27,22 @@ async function initDb() {
     siteKey text primary key not null,
     name text not null,
     secretHash text not null,
+    jwtSecret text not null default '',
     config text not null,
     created integer not null
   )`.simple();
+
+  try {
+    await db`SELECT jwtSecret FROM keys LIMIT 1`;
+  } catch {
+    await db`ALTER TABLE keys ADD COLUMN jwtSecret text not null default ''`.simple();
+  }
+
+  const keysWithoutSecret = await db`SELECT siteKey FROM keys WHERE jwtSecret = ''`;
+  for (const row of keysWithoutSecret) {
+    const secret = randomBytes(32).toString("base64url");
+    await db`UPDATE keys SET jwtSecret = ${secret} WHERE siteKey = ${row.siteKey || row.sitekey}`;
+  }
 
   await db`create table if not exists solutions (
     siteKey text not null,
@@ -37,12 +51,9 @@ async function initDb() {
     primary key (siteKey, bucket)
   )`.simple();
 
-  await db`create table if not exists challenges (
-    siteKey text not null,
-    token text not null,
-    data text not null,
-    expires integer not null,
-    primary key (siteKey, token)
+  await db`create table if not exists challenge_blocklist (
+    sig text primary key not null,
+    expires integer not null
   )`.simple();
 
   await db`create table if not exists tokens (
@@ -72,10 +83,10 @@ async function initDb() {
 
       await db`delete from sessions where expires < ${now}`;
       await db`delete from tokens where expires < ${now}`;
-      await db`delete from challenges where expires < ${now}`;
+      await db`delete from challenge_blocklist where expires < ${now}`;
       await db`delete from ip_bans where expires < ${now}`;
     } catch (e) {
-      console.error("failed to cleanup:", e)
+      console.error("failed to cleanup:", e);
     }
   }, 60 * 1000);
 
@@ -83,7 +94,7 @@ async function initDb() {
 
   await db`delete from sessions where expires < ${now}`;
   await db`delete from tokens where expires < ${now}`;
-  await db`delete from challenges where expires < ${now}`;
+  await db`delete from challenge_blocklist where expires < ${now}`;
   await db`delete from ip_bans where expires < ${now}`;
 
   return db;

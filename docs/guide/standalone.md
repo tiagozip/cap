@@ -1,7 +1,7 @@
 # Standalone server
 
 > [!WARNING]  
-> **You are viewing the docs for a legacy version of Cap's Standalone server.** It is no longer actively maintained and will only receive critical security updates. While v1 is still tagged and pullable, certain commands below might not work anymore.    
+> **You are viewing the docs for a legacy version of Cap's Standalone server.** It is no longer actively maintained and will only receive critical security updates. While v1 is still tagged and pullable, certain commands below might not work anymore.  
 > [New docs](standalone/index.md)
 
 ## Installation
@@ -62,9 +62,7 @@ Make sure to replace:
 Example:
 
 ```html
-<cap-widget
-  data-cap-api-endpoint="https://cap.example.com/d9256640cb53/api/"
-></cap-widget>
+<cap-widget data-cap-api-endpoint="https://cap.example.com/d9256640cb53/api/"></cap-widget>
 ```
 
 > [!TIP]  

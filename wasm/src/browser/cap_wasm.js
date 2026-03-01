@@ -1,1 +1,138 @@
-let wasm,WASM_VECTOR_LEN=0,cachedUint8ArrayMemory0=null;function getUint8ArrayMemory0(){return null!==cachedUint8ArrayMemory0&&0!==cachedUint8ArrayMemory0.byteLength||(cachedUint8ArrayMemory0=new Uint8Array(wasm.memory.buffer)),cachedUint8ArrayMemory0}const cachedTextEncoder="undefined"!=typeof TextEncoder?new TextEncoder("utf-8"):{encode:()=>{throw Error("TextEncoder not available")}},encodeString="function"==typeof cachedTextEncoder.encodeInto?function(e,t){return cachedTextEncoder.encodeInto(e,t)}:function(e,t){const n=cachedTextEncoder.encode(e);return t.set(n),{read:e.length,written:n.length}};function passStringToWasm0(e,t,n){if(void 0===n){const n=cachedTextEncoder.encode(e),i=t(n.length,1)>>>0;return getUint8ArrayMemory0().subarray(i,i+n.length).set(n),WASM_VECTOR_LEN=n.length,i}let i=e.length,o=t(i,1)>>>0;const r=getUint8ArrayMemory0();let a=0;for(;a<i;a++){const t=e.charCodeAt(a);if(t>127)break;r[o+a]=t}if(a!==i){0!==a&&(e=e.slice(a)),o=n(o,i,i=a+3*e.length,1)>>>0;const t=getUint8ArrayMemory0().subarray(o+a,o+i);a+=encodeString(e,t).written,o=n(o,i,a,1)>>>0}return WASM_VECTOR_LEN=a,o}export function solve_pow(e,t){const n=passStringToWasm0(e,wasm.__wbindgen_malloc,wasm.__wbindgen_realloc),i=WASM_VECTOR_LEN,o=passStringToWasm0(t,wasm.__wbindgen_malloc,wasm.__wbindgen_realloc),r=WASM_VECTOR_LEN,a=wasm.solve_pow(n,i,o,r);return BigInt.asUintN(64,a)}async function __wbg_load(e,t){if("function"==typeof Response&&e instanceof Response){if("function"==typeof WebAssembly.instantiateStreaming)try{return await WebAssembly.instantiateStreaming(e,t)}catch(t){if("application/wasm"==e.headers.get("Content-Type"))throw t;console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n",t)}const n=await e.arrayBuffer();return await WebAssembly.instantiate(n,t)}{const n=await WebAssembly.instantiate(e,t);return n instanceof WebAssembly.Instance?{instance:n,module:e}:n}}function __wbg_get_imports(){const e={wbg:{}};return e.wbg.__wbindgen_init_externref_table=function(){const e=wasm.__wbindgen_export_0,t=e.grow(4);e.set(0,void 0),e.set(t+0,void 0),e.set(t+1,null),e.set(t+2,!0),e.set(t+3,!1)},e}function __wbg_init_memory(e,t){}function __wbg_finalize_init(e,t){return wasm=e.exports,__wbg_init.__wbindgen_wasm_module=t,cachedUint8ArrayMemory0=null,wasm.__wbindgen_start(),wasm}function initSync(e){if(void 0!==wasm)return wasm;void 0!==e&&(Object.getPrototypeOf(e)===Object.prototype?({module:e}=e):console.warn("using deprecated parameters for `initSync()`; pass a single object instead"));const t=__wbg_get_imports();__wbg_init_memory(t),e instanceof WebAssembly.Module||(e=new WebAssembly.Module(e));return __wbg_finalize_init(new WebAssembly.Instance(e,t),e)}async function __wbg_init(e){if(void 0!==wasm)return wasm;void 0!==e&&(Object.getPrototypeOf(e)===Object.prototype?({module_or_path:e}=e):console.warn("using deprecated parameters for the initialization function; pass a single object instead")),void 0===e&&(e=new URL("cap_wasm_bg.wasm",import.meta.url));const t=__wbg_get_imports();("string"==typeof e||"function"==typeof Request&&e instanceof Request||"function"==typeof URL&&e instanceof URL)&&(e=fetch(e)),__wbg_init_memory(t);const{instance:n,module:i}=await __wbg_load(await e,t);return __wbg_finalize_init(n,i)}export{initSync};export default __wbg_init;
+let wasm,
+  WASM_VECTOR_LEN = 0,
+  cachedUint8ArrayMemory0 = null;
+function getUint8ArrayMemory0() {
+  return (
+    (null !== cachedUint8ArrayMemory0 && 0 !== cachedUint8ArrayMemory0.byteLength) ||
+      (cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer)),
+    cachedUint8ArrayMemory0
+  );
+}
+const cachedTextEncoder =
+    "undefined" != typeof TextEncoder
+      ? new TextEncoder("utf-8")
+      : {
+          encode: () => {
+            throw Error("TextEncoder not available");
+          },
+        },
+  encodeString =
+    "function" == typeof cachedTextEncoder.encodeInto
+      ? function (e, t) {
+          return cachedTextEncoder.encodeInto(e, t);
+        }
+      : function (e, t) {
+          const n = cachedTextEncoder.encode(e);
+          return (t.set(n), { read: e.length, written: n.length });
+        };
+function passStringToWasm0(e, t, n) {
+  if (void 0 === n) {
+    const n = cachedTextEncoder.encode(e),
+      i = t(n.length, 1) >>> 0;
+    return (
+      getUint8ArrayMemory0()
+        .subarray(i, i + n.length)
+        .set(n),
+      (WASM_VECTOR_LEN = n.length),
+      i
+    );
+  }
+  let i = e.length,
+    o = t(i, 1) >>> 0;
+  const r = getUint8ArrayMemory0();
+  let a = 0;
+  for (; a < i; a++) {
+    const t = e.charCodeAt(a);
+    if (t > 127) break;
+    r[o + a] = t;
+  }
+  if (a !== i) {
+    (0 !== a && (e = e.slice(a)), (o = n(o, i, (i = a + 3 * e.length), 1) >>> 0));
+    const t = getUint8ArrayMemory0().subarray(o + a, o + i);
+    ((a += encodeString(e, t).written), (o = n(o, i, a, 1) >>> 0));
+  }
+  return ((WASM_VECTOR_LEN = a), o);
+}
+export function solve_pow(e, t) {
+  const n = passStringToWasm0(e, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc),
+    i = WASM_VECTOR_LEN,
+    o = passStringToWasm0(t, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc),
+    r = WASM_VECTOR_LEN,
+    a = wasm.solve_pow(n, i, o, r);
+  return BigInt.asUintN(64, a);
+}
+async function __wbg_load(e, t) {
+  if ("function" == typeof Response && e instanceof Response) {
+    if ("function" == typeof WebAssembly.instantiateStreaming)
+      try {
+        return await WebAssembly.instantiateStreaming(e, t);
+      } catch (t) {
+        if ("application/wasm" == e.headers.get("Content-Type")) throw t;
+        console.warn(
+          "`WebAssembly.instantiateStreaming` failed because your server does not serve Wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n",
+          t,
+        );
+      }
+    const n = await e.arrayBuffer();
+    return await WebAssembly.instantiate(n, t);
+  }
+  {
+    const n = await WebAssembly.instantiate(e, t);
+    return n instanceof WebAssembly.Instance ? { instance: n, module: e } : n;
+  }
+}
+function __wbg_get_imports() {
+  const e = { wbg: {} };
+  return (
+    (e.wbg.__wbindgen_init_externref_table = function () {
+      const e = wasm.__wbindgen_export_0,
+        t = e.grow(4);
+      (e.set(0, void 0),
+        e.set(t + 0, void 0),
+        e.set(t + 1, null),
+        e.set(t + 2, !0),
+        e.set(t + 3, !1));
+    }),
+    e
+  );
+}
+function __wbg_init_memory(e, t) {}
+function __wbg_finalize_init(e, t) {
+  return (
+    (wasm = e.exports),
+    (__wbg_init.__wbindgen_wasm_module = t),
+    (cachedUint8ArrayMemory0 = null),
+    wasm.__wbindgen_start(),
+    wasm
+  );
+}
+function initSync(e) {
+  if (void 0 !== wasm) return wasm;
+  void 0 !== e &&
+    (Object.getPrototypeOf(e) === Object.prototype
+      ? ({ module: e } = e)
+      : console.warn("using deprecated parameters for `initSync()`; pass a single object instead"));
+  const t = __wbg_get_imports();
+  (__wbg_init_memory(t), e instanceof WebAssembly.Module || (e = new WebAssembly.Module(e)));
+  return __wbg_finalize_init(new WebAssembly.Instance(e, t), e);
+}
+async function __wbg_init(e) {
+  if (void 0 !== wasm) return wasm;
+  (void 0 !== e &&
+    (Object.getPrototypeOf(e) === Object.prototype
+      ? ({ module_or_path: e } = e)
+      : console.warn(
+          "using deprecated parameters for the initialization function; pass a single object instead",
+        )),
+    void 0 === e && (e = new URL("cap_wasm_bg.wasm", import.meta.url)));
+  const t = __wbg_get_imports();
+  (("string" == typeof e ||
+    ("function" == typeof Request && e instanceof Request) ||
+    ("function" == typeof URL && e instanceof URL)) &&
+    (e = fetch(e)),
+    __wbg_init_memory(t));
+  const { instance: n, module: i } = await __wbg_load(await e, t);
+  return __wbg_finalize_init(n, i);
+}
+export { initSync };
+export default __wbg_init;

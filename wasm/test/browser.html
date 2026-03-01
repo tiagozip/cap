@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -12,9 +12,7 @@
   </head>
   <body>
     <div class="container mt-4">
-      <button id="solveButton" class="btn btn-primary mb-3">
-        Solve challenges
-      </button>
+      <button id="solveButton" class="btn btn-primary mb-3">Solve challenges</button>
       <div id="progress" class="mb-3">Status: Idle</div>
 
       <h2>Results:</h2>
@@ -69,15 +67,13 @@
         let initError = null;
         let initPromise = null;
 
-        const absoluteWasmWrapperUrl = new URL(relativeWasmWrapperPath, baseURL)
-          .href;
+        const absoluteWasmWrapperUrl = new URL(relativeWasmWrapperPath, baseURL).href;
 
         initPromise = import(absoluteWasmWrapperUrl)
           .then((wasmModule) => {
             return wasmModule.default().then((instance) => {
-              solve_pow_function = (
-                instance && instance.exports ? instance.exports : wasmModule
-              ).solve_pow;
+              solve_pow_function = (instance && instance.exports ? instance.exports : wasmModule)
+                .solve_pow;
             });
           })
           .catch((error) => {
@@ -151,18 +147,14 @@
             data.challengeIndex === -1 ? "??" : data.challengeIndex + 1
           } errored</strong> ${
             data.salt ? `${data.salt}:${data.target}` : ""
-          }<br><pre class="bg-secondary bg-opacity-10 p-2 rounded mt-2 mb-0">${
-            data.error
-          }</pre>`;
+          }<br><pre class="bg-secondary bg-opacity-10 p-2 rounded mt-2 mb-0">${data.error}</pre>`;
         } else {
           item.classList.add("list-group-item-success");
           item.innerHTML = `<strong>Challenge #${
             data.challengeIndex + 1
           } solved</strong> with nonce <span class="text-success fw-bold">${
             data.nonce
-          }</span><br><small>${data.salt}:${data.target}<br>Took ${
-            data.durationMs
-          } ms</small>`;
+          }</span><br><small>${data.salt}:${data.target}<br>Took ${data.durationMs} ms</small>`;
         }
 
         resultsDiv.appendChild(item);
@@ -186,7 +178,7 @@
           console.log(
             `Assigning challenge index ${currentIndex} (Task ${
               currentIndex + 1
-            }/${challenges.length}) to a worker.`
+            }/${challenges.length}) to a worker.`,
           );
 
           const challengeData = challenges[currentIndex];
@@ -223,19 +215,13 @@
         try {
           let baseURL;
           const currentPath = window.location.pathname;
-          const directoryPath = currentPath.substring(
-            0,
-            currentPath.lastIndexOf("/") + 1
-          );
+          const directoryPath = currentPath.substring(0, currentPath.lastIndexOf("/") + 1);
           baseURL = window.location.origin + directoryPath;
           if (!baseURL.endsWith("/")) {
             baseURL += "/";
           }
 
-          const finalWorkerCode = workerCodeTemplate.replace(
-            /\$\{baseURL\}/g,
-            baseURL
-          );
+          const finalWorkerCode = workerCodeTemplate.replace(/\$\{baseURL\}/g, baseURL);
 
           const blob = new Blob([finalWorkerCode], {
             type: "application/javascript",
@@ -246,20 +232,14 @@
             const worker = new Worker(workerBlobUrl, { type: "module" });
 
             worker.onmessage = (event) => {
-              if (
-                event.data &&
-                typeof event.data.challengeIndex !== "undefined"
-              ) {
+              if (event.data && typeof event.data.challengeIndex !== "undefined") {
                 challengesProcessed++;
                 allResults[event.data.challengeIndex] = event.data;
                 displayResult(event.data);
                 updateProgress();
 
                 if (challengesProcessed === challenges.length) {
-                  const totalTime = (
-                    (performance.now() - startTime) /
-                    1000
-                  ).toFixed(2);
+                  const totalTime = ((performance.now() - startTime) / 1000).toFixed(2);
                   progressDiv.textContent = `Status: All ${challenges.length} challenges processed in ${totalTime} seconds.`;
                   progressDiv.classList.remove("text-danger", "fw-bold");
                   cleanupWorkers();
@@ -274,7 +254,7 @@
 
               console.error(
                 `Main: Initialization/Setup error from Worker ${i + 1}:`,
-                event.data.error
+                event.data.error,
               );
               displayResult({
                 challengeIndex: -1,
@@ -288,17 +268,12 @@
             };
 
             worker.onerror = (error) => {
-              console.error(
-                `Main: Error reported from Worker ${i + 1}:`,
-                error
-              );
+              console.error(`Main: Error reported from Worker ${i + 1}:`, error);
               displayResult({
                 challengeIndex: -1,
                 error: `Worker ${i + 1} ${error.message || "Unknown error"}`,
               });
-              progressDiv.textContent = `Status: Error in Worker ${
-                i + 1
-              }. Stopping.`;
+              progressDiv.textContent = `Status: Error in Worker ${i + 1}. Stopping.`;
               progressDiv.classList.add("text-danger", "fw-bold");
               cleanupWorkers();
               solveButton.disabled = false;
