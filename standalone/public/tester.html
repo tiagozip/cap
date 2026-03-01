@@ -64,10 +64,10 @@
   <body>
     <main>
       <label for="keyIdInput">Key ID:</label>
-      <input type="text" id="keyIdInput" placeholder="e.g. 19d7e51172" />
+      <input type="text" id="keyIdInput" placeholder="e.g. 19d7e51172" value="9a42f69c25" />
 
       <label for="secretKeyInput">Secret key:</label>
-      <input type="password" id="secretKeyInput" placeholder="e.g. eOAdXZvmQecVrvh..." />
+      <input type="password" id="secretKeyInput" placeholder="e.g. eOAdXZvmQecVrvh..." value="mCge83PaqDf86p7W0hxykvAkYwAU1r1izAALFvUPinbO7gX4fDRA" />
 
       <button id="startButton">Start</button>
 
@@ -122,6 +122,7 @@
         try {
           const result = await cap.solve();
           log(`Solved in ${Date.now() - startTime}ms`);
+          console.log(result)
           await validateToken(keyId, secretKey, result.token);
         } catch (err) {
           log(`Error during solve: ${err}`);
