@@ -129,7 +129,7 @@ export const capServer = new Elysia({
   .use(
     rateLimit({
       scoping: "scoped",
-      max: 45,
+      max: 30,
       duration: 5_000,
       generator: ratelimitGenerator,
     }),

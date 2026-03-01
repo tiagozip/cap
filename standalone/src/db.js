@@ -63,12 +63,6 @@ async function initDb() {
     primary key (siteKey, token)
   )`.simple();
 
-  await db`create table if not exists ip_bans (
-    ip text primary key not null,
-    reason text not null,
-    expires integer not null
-  )`.simple();
-
   await db`create table if not exists api_keys (
     id text not null,
     name text not null,
@@ -84,7 +78,6 @@ async function initDb() {
       await db`delete from sessions where expires < ${now}`;
       await db`delete from tokens where expires < ${now}`;
       await db`delete from challenge_blocklist where expires < ${now}`;
-      await db`delete from ip_bans where expires < ${now}`;
     } catch (e) {
       console.error("failed to cleanup:", e);
     }
@@ -95,7 +88,6 @@ async function initDb() {
   await db`delete from sessions where expires < ${now}`;
   await db`delete from tokens where expires < ${now}`;
   await db`delete from challenge_blocklist where expires < ${now}`;
-  await db`delete from ip_bans where expires < ${now}`;
 
   return db;
 }
