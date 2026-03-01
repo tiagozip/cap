@@ -1,9 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Elysia, t } from "elysia";
-import { rateLimit } from "elysia-rate-limit";
 import { authBeforeHandle } from "./auth.js";
 import { db } from "./db.js";
-import { ratelimitGenerator } from "./ratelimit.js";
 
 const keyDefaults = {
   difficulty: 4,
@@ -23,14 +21,6 @@ export const server = new Elysia({
     ],
   },
 })
-  .use(
-    rateLimit({
-      scoping: "scoped",
-      max: 150,
-      duration: 10_000,
-      generator: ratelimitGenerator,
-    }),
-  )
   .onBeforeHandle(authBeforeHandle)
   .get(
     "/keys",
