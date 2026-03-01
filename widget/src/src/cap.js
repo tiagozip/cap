@@ -662,8 +662,6 @@
         );
         this.dispatchEvent("progress", { progress: 0 });
 
-        if (hasHaptics) navigator.vibrate(5);
-
         try {
           let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
           if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
@@ -708,7 +706,7 @@
 
             _resetSpeculativeState();
             this.#solving = false;
-            return;
+            return { success: true, token: this.token };
           }
 
           if (speculative.state === "done") {
@@ -785,7 +783,7 @@
 
               _resetSpeculativeState();
               this.#solving = false;
-              return;
+              return { success: true, token: this.token };
             }
 
             solutions = speculative.results;
@@ -1009,6 +1007,11 @@
 
       this.#div.addEventListener("click", () => {
         if (!this.#div.hasAttribute("disabled")) this.solve();
+      });
+      this.#div.addEventListener("mousedown", () => {
+        if (!this.#div.hasAttribute("disabled") && hasHaptics) {
+          navigator.vibrate(5);
+        }
       });
 
       this.#div.addEventListener("keydown", (e) => {
