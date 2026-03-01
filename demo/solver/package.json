@@ -1,15 +1,15 @@
 {
   "name": "solver",
-  "module": "index.js",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "module": "index.js",
+  "dependencies": {
+    "@cap.js/solver": "latest"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "@cap.js/solver": "latest"
   }
 }
