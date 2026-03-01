@@ -1,24 +1,13 @@
 (() => {
   const WASM_VERSION = "0.0.6";
+  const hasHaptics =
+    "vibrate" in navigator && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   if (typeof window === "undefined") {
     return;
   }
 
-  const capFetch = (u, _conf = {}) => {
-    const conf = {
-      ..._conf,
-      headers: {
-        ...(_conf.headers || {}),
-        "Cap-Stamp": btoa(
-          String.fromCharCode(
-            ...[[Date.now()]].map((n) => [n >> 24, n >> 16, n >> 8, n[0]].map((x) => x & 255))[0],
-          ),
-        ).replace(/=/g, ""),
-        "Cap-Solver": `0,${WASM_VERSION}`,
-      },
-    };
-
+  const capFetch = (u, conf = {}) => {
     if (window?.CAP_CUSTOM_FETCH) {
       return window.CAP_CUSTOM_FETCH(u, conf);
     }
@@ -673,6 +662,8 @@
         );
         this.dispatchEvent("progress", { progress: 0 });
 
+        if (hasHaptics) navigator.vibrate(5);
+
         try {
           let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
           if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
@@ -713,6 +704,7 @@
                 "We have verified you're a human, you may now continue",
               ),
             );
+            if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
             _resetSpeculativeState();
             this.#solving = false;
@@ -789,6 +781,7 @@
                   "We have verified you're a human, you may now continue",
                 ),
               );
+              if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
               _resetSpeculativeState();
               this.#solving = false;
@@ -895,6 +888,7 @@
               "We have verified you're a human, you may now continue",
             ),
           );
+          if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
           return { success: true, token: this.token };
         } catch (err) {
@@ -915,7 +909,6 @@
       let completed = 0;
 
       const speculativeHead = 0;
-      const remaining = total - speculativeHead;
 
       let wasmModule = null;
       const wasmSupported =
@@ -1116,7 +1109,7 @@
 
       const link = next.querySelector(".cap-troubleshoot-link");
       if (link) {
-        console.log("linkblud")
+        console.log("linkblud");
         link.addEventListener("click", (e) => {
           e.stopPropagation();
         });
@@ -1138,7 +1131,7 @@
       if (wrapper) {
         const activeLabel = wrapper.querySelector(".label.active");
         if (activeLabel) {
-          activeLabel.textContent = `${this.getI18nText("verifying-label", "Verifying...")} ${event.detail.progress}%`;
+          activeLabel.textContent = `${this.getI18nText("verifying-label", "Verifying...")}`;
         }
       }
 
@@ -1153,6 +1146,8 @@
     handleError(event) {
       this.updateUI("error", this.getI18nText("error-label", "Error. Try again."));
       this.executeAttributeCode("onerror", event);
+
+      if (hasHaptics) navigator.vibrate([10, 40, 10]);
     }
 
     handleReset(event) {
