@@ -3,7 +3,7 @@
 Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://capjs.js.org/guide/effectiveness.html">SHA-256 proof-of-work</a>. It's fast, private, and extremely simple to integrate.
 
 <a href="https://capjs.js.org/guide/demo.html"><img src="./assets/captcha.svg" alt="Cap widget" width="250"></a>
- 
+
 ## Documentation
 
 **[Read the docs](https://capjs.js.org)**, try the [demo](https://capjs.js.org/guide/demo.html) or read the [feature comparison](https://capjs.js.org/guide/alternatives.html)
@@ -48,8 +48,7 @@ This project is licensed under the Apache-2.0 License, please see the [LICENSE](
 
 Copyright ©2025 - present [tiago](https://tiago.zip)
 
-<!--
----
+## <!--
 
 <a href="https://www.digitalocean.com/">
   <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/SVG/DO_Logo_icon_blue.svg" width="30px">

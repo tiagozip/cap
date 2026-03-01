@@ -4,7 +4,6 @@ about: Open a bug report
 title: "[bug] "
 labels: bug
 assignees: tiagozip
-
 ---
 
 <!--
@@ -16,6 +15,7 @@ issues that don't meet these requirements will be closed automatically.
 a clear and concise description of what the bug is and how it happened.
 
 **affects:**
+
 - [] standalone
 - [] widget (ui)
 - [] widget (wasm solver)

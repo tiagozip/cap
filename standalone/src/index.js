@@ -3,7 +3,7 @@ import { swagger } from "@elysiajs/swagger";
 import { Elysia, file } from "elysia";
 import { assetsServer } from "./assets.js";
 import { auth } from "./auth.js";
-import { capServer } from "./cap.js";
+import { capServer, prewarmInstrumentation } from "./cap.js";
 import { server } from "./server.js";
 import { siteverifyServer } from "./siteverify.js";
 
@@ -88,19 +88,18 @@ new Elysia({
     return {
       success: false,
       error: error.code || "Internal server error",
-      detail: process.env.SHOW_ERRORS === "true" ? error : {
-        troubleshooting: "http://capjs.js.org/guide/standalone/options.html#error-messages",
-        id: errorId
-      }
-    }
+      detail:
+        process.env.SHOW_ERRORS === "true"
+          ? error
+          : {
+              troubleshooting: "http://capjs.js.org/guide/standalone/options.html#error-messages",
+              id: errorId,
+            },
+    };
   })
   .use(staticPlugin())
   .get("/", async ({ cookie }) => {
-    return file(
-      cookie.cap_authed?.value === "yes"
-        ? "./public/index.html"
-        : "./public/login.html"
-    );
+    return file(cookie.cap_authed?.value === "yes" ? "./public/index.html" : "./public/login.html");
   })
   .use(auth)
   .use(server)
@@ -110,3 +109,5 @@ new Elysia({
   .listen(serverPort);
 
 console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}`);
+
+prewarmInstrumentation();

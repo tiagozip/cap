@@ -1,48 +1,35 @@
-import { Worker } from "node:worker_threads";
-import { fileURLToPath } from "node:url";
+import { fork } from "node:child_process";
 import { dirname, join } from "node:path";
-import { cpus } from "node:os";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const WORKER_PATH = join(__dirname, "instrumentation-worker.js");
 
-const POOL_SIZE = process.env.INSTRUMENTATION_WORKERS || Math.min(4, cpus().length || 4);
+const POOL_MAX = Number(process.env.INSTRUMENTATION_WORKERS) || 1;
 const WORKER_TIMEOUT = 15_000;
 const MAX_QUEUE_SIZE = 50;
 const QUEUE_ITEM_TTL = 20_000;
 
-class InstrumentationWorkerPool {
-  constructor(size) {
-    this._size = size;
-    this._workers = [];
+class InstrumentationProcessPool {
+  constructor(maxSize) {
+    this._maxSize = maxSize;
+    this._busy = 0;
     this._queue = [];
-    this._available = [];
-
-    for (let i = 0; i < size; i++) {
-      this._spawnWorker(i);
-    }
   }
 
-  _spawnWorker(index) {
-    const worker = new Worker(WORKER_PATH);
-    this._workers[index] = worker;
-    this._available.push(index);
-
-    worker.on("error", (err) => {
-      console.error(`[cap] instrumentation worker ${index} error:`, err);
-      try {
-        worker.terminate();
-      } catch {}
-      this._spawnWorker(index);
+  _spawnOne() {
+    const child = fork(WORKER_PATH, [], {
+      stdio: ["pipe", "pipe", "pipe", "ipc"],
     });
 
-    worker.on("exit", (code) => {
-      if (code !== 0) {
-        console.warn(`[cap] instrumentation worker ${index} exited with code ${code}, respawning`);
-        this._spawnWorker(index);
-      }
-    });
+    if (child.stderr) {
+      child.stderr.on("data", (chunk) => {
+        process.stderr.write(chunk);
+      });
+    }
+
+    return child;
   }
 
   run(keyConfig) {
@@ -51,93 +38,99 @@ class InstrumentationWorkerPool {
         return reject(new Error("Instrumentation queue is full, try again later"));
       }
 
-      const task = { keyConfig, resolve, reject, queuedAt: Date.now() };
+      const task = { keyConfig, resolve, reject, ttlTimer: null };
 
-      if (this._available.length > 0) {
-        this._dispatch(task);
-      } else {
-        const ttlTimer = setTimeout(() => {
-          const idx = this._queue.indexOf(task);
-          if (idx !== -1) {
-            this._queue.splice(idx, 1);
-          }
-          reject(new Error("Instrumentation task expired while waiting in queue"));
-        }, QUEUE_ITEM_TTL);
+      task.ttlTimer = setTimeout(() => {
+        const idx = this._queue.indexOf(task);
+        if (idx !== -1) this._queue.splice(idx, 1);
+        reject(new Error("Instrumentation task expired while waiting in queue"));
+      }, QUEUE_ITEM_TTL);
+      if (task.ttlTimer.unref) task.ttlTimer.unref();
 
-        if (ttlTimer.unref) ttlTimer.unref();
-
-        task.ttlTimer = ttlTimer;
-        this._queue.push(task);
-      }
+      this._queue.push(task);
+      this._drain();
     });
   }
 
-  _dispatch(task) {
-    const index = this._available.shift();
-    const worker = this._workers[index];
+  _drain() {
+    while (this._queue.length > 0 && this._busy < this._maxSize) {
+      const task = this._queue.shift();
 
-    const timeout = setTimeout(() => {
-      cleanup();
-      try {
-        worker.terminate();
-      } catch {}
-      this._spawnWorker(index);
-      task.reject(new Error("Instrumentation worker timed out"));
-    }, WORKER_TIMEOUT);
-
-    const onMessage = (msg) => {
-      cleanup();
-      this._release(index);
-
-      if (msg.ok) {
-        task.resolve(msg.result);
-      } else {
-        task.reject(new Error(msg.error || "Worker generation failed"));
+      if (task.ttlTimer) {
+        clearTimeout(task.ttlTimer);
+        task.ttlTimer = null;
       }
-    };
 
-    const onError = (err) => {
-      cleanup();
-      this._release(index);
+      this._busy++;
+      this._runTask(task);
+    }
+  }
+
+  _runTask(task) {
+    let child;
+    try {
+      child = this._spawnOne();
+    } catch (err) {
+      this._busy = Math.max(0, this._busy - 1);
       task.reject(err);
-    };
+      this._drain();
+      return;
+    }
+
+    let settled = false;
 
     const cleanup = () => {
       clearTimeout(timeout);
-      worker.removeListener("message", onMessage);
-      worker.removeListener("error", onError);
+      child.removeAllListeners("message");
+      child.removeAllListeners("error");
+      child.removeAllListeners("exit");
     };
 
-    worker.on("message", onMessage);
-    worker.on("error", onError);
-    worker.postMessage({ keyConfig: task.keyConfig });
-  }
+    const finish = (err, result) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
 
-  _release(index) {
-    this._available.push(index);
+      try {
+        child.kill("SIGTERM");
+      } catch {}
 
-    if (this._queue.length > 0) {
-      const next = this._queue.shift();
+      this._busy = Math.max(0, this._busy - 1);
 
-      if (next.ttlTimer) {
-        clearTimeout(next.ttlTimer);
-        next.ttlTimer = null;
+      if (err) task.reject(err);
+      else task.resolve(result);
+
+      this._drain();
+    };
+
+    const timeout = setTimeout(() => {
+      finish(new Error("Instrumentation worker timed out"), null);
+    }, WORKER_TIMEOUT);
+
+    child.on("message", (msg) => {
+      if (msg.ok) {
+        finish(null, msg.result);
+      } else {
+        finish(new Error(msg.error || "Worker generation failed"), null);
       }
+    });
 
-      this._dispatch(next);
-    }
+    child.on("error", (err) => {
+      console.error("[cap] instrumentation child error:", err);
+      finish(err, null);
+    });
+
+    child.on("exit", (code) => {
+      if (!settled) {
+        finish(new Error(`Instrumentation child exited unexpectedly with code ${code}`), null);
+      }
+    });
+
+    child.send({ keyConfig: task.keyConfig });
   }
 
   async terminate() {
-    for (const w of this._workers) {
-      if (w) {
-        try {
-          await w.terminate();
-        } catch {}
-      }
-    }
-    this._workers = [];
-    this._available = [];
+    this._busy = 0;
     for (const task of this._queue) {
       if (task.ttlTimer) {
         clearTimeout(task.ttlTimer);
@@ -149,10 +142,86 @@ class InstrumentationWorkerPool {
   }
 }
 
-const pool = new InstrumentationWorkerPool(POOL_SIZE);
+const pool = new InstrumentationProcessPool(POOL_MAX);
+
+const PREWARM_SIZE = 2;
+
+function _configFingerprint(keyConfig) {
+  return JSON.stringify({
+    b: keyConfig.blockAutomatedBrowsers === true,
+  });
+}
+
+class InstrumentationChallengeCache {
+  constructor() {
+    this._buckets = new Map();
+  }
+
+  _bucket(fp) {
+    if (!this._buckets.has(fp)) {
+      this._buckets.set(fp, { ready: [], filling: 0 });
+    }
+    return this._buckets.get(fp);
+  }
+
+  fill(keyConfig) {
+    const fp = _configFingerprint(keyConfig);
+    const bucket = this._bucket(fp);
+
+    if (bucket.ready.length + bucket.filling >= PREWARM_SIZE) return;
+    if (bucket.filling >= 1) return;
+
+    bucket.filling++;
+    const p = pool
+      .run(keyConfig)
+      .then((result) => result)
+      .catch((err) => {
+        console.warn("[cap] instrumentation pre-warm failed:", err);
+        return null;
+      })
+      .finally(() => {
+        bucket.filling--;
+        this.fill(keyConfig);
+      });
+    bucket.ready.push(p);
+  }
+
+  async get(keyConfig) {
+    const fp = _configFingerprint(keyConfig);
+    const bucket = this._bucket(fp);
+
+    this.fill(keyConfig);
+
+    while (bucket.ready.length > 0) {
+      const p = bucket.ready.shift();
+      this.fill(keyConfig);
+
+      let result;
+      try {
+        result = await p;
+      } catch {
+        result = null;
+      }
+
+      if (result !== null) {
+        return result;
+      }
+    }
+
+    return pool.run(keyConfig);
+  }
+}
+
+const challengeCache = new InstrumentationChallengeCache();
+
+export function warmForConfigs(keyConfigs) {
+  for (const kc of keyConfigs) {
+    challengeCache.fill(kc);
+  }
+}
 
 export async function generateInstrumentationChallenge(keyConfig = {}) {
-  return pool.run(keyConfig);
+  return challengeCache.get(keyConfig);
 }
 
 export function verifyInstrumentationResult(challengeMeta, payload) {

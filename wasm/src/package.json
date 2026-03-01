@@ -2,56 +2,56 @@
   "name": "@cap.js/wasm",
   "version": "0.0.6",
   "description": "WASM solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
-  "main": "./node/cap_wasm.js",
   "keywords": [
-    "security",
-    "detection",
-    "prevention",
-    "defense",
-    "protection",
+    "algorithm",
     "anti-abuse",
     "anti-automation",
     "anti-bot",
     "anti-ddos",
     "anti-dos",
     "anti-exploitation",
-    "anti-spam",
     "anti-scraping",
+    "anti-spam",
     "attack-mitigation",
-    "protocol",
+    "bots",
+    "captcha-alternative",
     "client-server",
-    "computational-puzzle",
     "complexity",
-    "puzzle",
+    "computational-puzzle",
     "crypto",
     "cryptographic",
-    "algorithm",
     "cybersecurity",
     "ddos",
+    "defense",
+    "detection",
+    "filtering",
     "hashcash",
     "hcaptcha",
-    "captcha-alternative",
-    "verification",
     "invisible",
     "pow",
+    "prevention",
     "proof-of-work",
+    "protection",
+    "protocol",
+    "puzzle",
     "recaptcha",
+    "security",
     "spam",
-    "bots",
-    "filtering",
-    "turing-test"
+    "turing-test",
+    "verification"
   ],
-  "author": "Tiago",
+  "homepage": "https://github.com/tiagozip/cap#readme",
+  "bugs": {
+    "url": "https://github.com/tiagozip/cap/issues"
+  },
   "license": "Apache-2.0",
+  "author": "Tiago",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tiagozip/cap.git"
   },
-  "bugs": {
-    "url": "https://github.com/tiagozip/cap/issues"
-  },
+  "main": "./node/cap_wasm.js",
   "scripts": {
     "npm:publish": "bun publish --access public"
-  },
-  "homepage": "https://github.com/tiagozip/cap#readme"
+  }
 }
