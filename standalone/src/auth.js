@@ -16,7 +16,7 @@ export const auth = new Elysia({
   .use(
     rateLimit({
       duration: 30_000,
-      max: 20_000,
+      max: 200, // this is intentionally permissive 
       scoping: "scoped",
       generator: ratelimitGenerator,
     }),
