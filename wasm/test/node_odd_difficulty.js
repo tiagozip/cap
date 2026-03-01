@@ -18,6 +18,4 @@ sha256(${salt}${nonce})
 should start with ${target}
 is                ${actualHash.slice(0, target.length)} (${actualHash})
 
-${
-	actualHash.slice(0, target.length) === target ? "✅ success!" : "❌ invalid"
-}`);
+${actualHash.slice(0, target.length) === target ? "✅ success!" : "❌ invalid"}`);

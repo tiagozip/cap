@@ -111,24 +111,6 @@ You can change the text on each label of the widget by setting the `data-cap-i18
 
 ## Customizing the widget
 
-### fetch function
-
-You can override the default browser fetch implementation by setting `window.CAP_CUSTOM_FETCH` to a custom function. This function will receive the URL and options as arguments and should return a promise that resolves to the response.
-
-```js
-window.CAP_CUSTOM_FETCH = function (url, options) {
-  // … add your custom fetch implementation
-
-  return fetch(url, options);
-};
-```
-
-## WASM URL
-
-You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js`
-
-## Customizing
-
 You can fully change how the widget looks by setting various CSS variables on the `cap-widget` element. The following CSS variables are supported:
 
 ```css
@@ -158,6 +140,26 @@ cap-widget {
 ```
 
 <small>Note: you _can_ technically hide the "Cap" label, but we kindly ask you to leave it visible. It's unobtrusive, doesn't track users, lightweight, and helps Cap grow.</small>
+
+### fetch function
+
+You can override the default browser fetch implementation by setting `window.CAP_CUSTOM_FETCH` to a custom function. This function will receive the URL and options as arguments and should return a promise that resolves to the response.
+
+```js
+window.CAP_CUSTOM_FETCH = function (url, options) {
+  // … add your custom fetch implementation
+
+  return fetch(url, options);
+};
+```
+
+### Speculative challenges
+
+By default, Cap will sometimes automatically generate, solve and redeem a challenge while the user is active to make solving significantly faster. This is intentionally much slower than the normal solving speed and is designed to not impact user experience while still providing a significant speed boost.
+
+### WASM URL
+
+You can override the default WASM URL by setting `window.CAP_CUSTOM_WASM_URL` to a custom URL. This URL will be used to load the WASM module. This defaults to `https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js`
 
 ## Types
 

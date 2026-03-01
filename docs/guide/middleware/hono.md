@@ -21,11 +21,8 @@ app.use(
     token_validity_hours: 32, // how long the token is valid for
     tokens_store_path: ".data/tokensList.json",
     token_size: 16, // token size in bytes
-    verification_template_path: join(
-      dirname(fileURLToPath(import.meta.url)),
-      "./index.html"
-    ),
-  })
+    verification_template_path: join(dirname(fileURLToPath(import.meta.url)), "./index.html"),
+  }),
 );
 
 app.get("/", (c) => c.text("Hello Hono!"));

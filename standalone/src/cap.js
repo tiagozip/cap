@@ -1,4 +1,4 @@
-import Cap from "@cap.js/server";
+import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { rateLimit } from "elysia-rate-limit";
@@ -7,8 +7,147 @@ import { db } from "./db.js";
 import {
   generateInstrumentationChallenge,
   verifyInstrumentationResult,
+  warmForConfigs,
 } from "./instrumentation.js";
 import { ratelimitGenerator } from "./ratelimit.js";
+
+const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
+const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
+
+// ── JWT helpers (HMAC-SHA256, compact JWS) ──────────────────────────────
+
+const b64url = (buf) =>
+  (buf instanceof Uint8Array ? Buffer.from(buf) : Buffer.from(buf, "utf8")).toString("base64url");
+
+const b64urlDecode = (str) => Buffer.from(str, "base64url");
+
+function jwtSign(payload, secret) {
+  const header = b64url('{"alg":"HS256","typ":"JWT"}');
+  const body = b64url(JSON.stringify(payload));
+  const sigInput = `${header}.${body}`;
+  const sig = createHmac("sha256", secret).update(sigInput).digest();
+  return `${sigInput}.${b64url(sig)}`;
+}
+
+function jwtVerify(token, secret) {
+  if (!token || typeof token !== "string") return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+
+  const [header, body, sig] = parts;
+  const sigInput = `${header}.${body}`;
+  const expected = createHmac("sha256", secret).update(sigInput).digest();
+  const actual = b64urlDecode(sig);
+
+  if (actual.length !== expected.length) return null;
+
+  // Constant-time comparison
+  const a = new Uint8Array(expected);
+  const b = new Uint8Array(actual);
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  if (diff !== 0) return null;
+
+  try {
+    return JSON.parse(b64urlDecode(body).toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/** Return the raw signature bytes (last segment) for blocklisting */
+function jwtSigHex(token) {
+  const lastDot = token.lastIndexOf(".");
+  if (lastDot === -1) return null;
+  return b64urlDecode(token.slice(lastDot + 1)).toString("hex");
+}
+
+// ── AES-256-GCM helpers ─────────────────────────────────────────────────
+// Used to encrypt instrumentation metadata inside the JWT so that the
+// expected answers are completely opaque to the client.
+
+/**
+ * Derive a 32-byte encryption key from the site's jwtSecret.
+ * We HMAC the secret with a fixed context label so the signing key
+ * and the encryption key are always distinct even though they share
+ * the same root secret.
+ */
+function deriveEncKey(jwtSecret) {
+  return createHmac("sha256", jwtSecret).update("cap:instr-enc-v1").digest();
+}
+
+/**
+ * Encrypt arbitrary JSON-serialisable data with AES-256-GCM.
+ * Returns a base64url string: iv (12 B) || authTag (16 B) || ciphertext
+ */
+function encrypt(data, jwtSecret) {
+  const key = deriveEncKey(jwtSecret);
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const plaintext = Buffer.from(JSON.stringify(data), "utf8");
+  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const tag = cipher.getAuthTag(); // 16 bytes
+  return Buffer.concat([iv, tag, encrypted]).toString("base64url");
+}
+
+/**
+ * Decrypt a blob produced by encrypt().  Returns the parsed object, or
+ * null if decryption / authentication fails.
+ */
+function decrypt(blob, jwtSecret) {
+  try {
+    const buf = Buffer.from(blob, "base64url");
+    if (buf.length < 28) return null; // iv(12) + tag(16)
+    const iv = buf.subarray(0, 12);
+    const tag = buf.subarray(12, 28);
+    const ciphertext = buf.subarray(28);
+    const key = deriveEncKey(jwtSecret);
+    const decipher = createDecipheriv("aes-256-gcm", key, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    return JSON.parse(decrypted.toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+// ── prng (must match @cap.js/server and the widget) ─────────────────────
+
+function prng(seed, length) {
+  function fnv1a(str) {
+    let hash = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+    }
+    return hash >>> 0;
+  }
+
+  let state = fnv1a(seed);
+  let result = "";
+
+  function next() {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state >>> 0;
+  }
+
+  while (result.length < length) {
+    const rnd = next();
+    result += rnd.toString(16).padStart(8, "0");
+  }
+
+  return result.substring(0, length);
+}
+
+// ── sha256 ──────────────────────────────────────────────────────────────
+
+async function sha256(str) {
+  return new Bun.CryptoHasher("sha256").update(str).digest("hex");
+}
+
+// ── Route definitions ───────────────────────────────────────────────────
 
 export const capServer = new Elysia({
   detail: {
@@ -29,168 +168,279 @@ export const capServer = new Elysia({
       methods: ["POST"],
     }),
   )
-  .post("/:siteKey/challenge", async ({ set, params }) => {
-    const cap = new Cap({
-      noFSState: true,
-    });
-    const [_keyConfig] = await db`SELECT (config) FROM keys WHERE siteKey = ${params.siteKey}`;
 
-    if (!_keyConfig) {
+  // ── POST /:siteKey/challenge ────────────────────────────────────────
+  // No DB writes — the challenge token IS a JWT signed with the site's
+  // jwtSecret.  The JWT payload carries all data needed by /redeem.
+  // Instrumentation metadata is AES-256-GCM encrypted so the expected
+  // answers are never visible to the client.
+  .post("/:siteKey/challenge", async ({ set, params }) => {
+    const [keyRow] = await db`SELECT config, jwtSecret FROM keys WHERE siteKey = ${params.siteKey}`;
+
+    if (!keyRow) {
       set.status = 404;
       return { error: "Invalid site key or secret" };
     }
 
-    const keyConfig = JSON.parse(_keyConfig.config);
+    const keyConfig = JSON.parse(keyRow.config);
+    const jwtSecret = keyRow.jwtsecret ?? keyRow.jwtSecret;
 
-    const challenge = await cap.createChallenge({
-      challengeCount: keyConfig.challengeCount,
-      challengeSize: keyConfig.saltSize,
-      challengeDifficulty: keyConfig.difficulty,
-    });
+    if (!jwtSecret) {
+      set.status = 500;
+      return { error: "Site key is not configured for JWT challenges" };
+    }
 
-    await db`
-			INSERT INTO challenges (siteKey, token, data, expires)
-			VALUES (${params.siteKey}, ${challenge.token}, ${`${challenge.challenge.c},${challenge.challenge.s},${challenge.challenge.d}`}, ${challenge.expires})
-		`;
+    const c = keyConfig.challengeCount ?? 80;
+    const s = keyConfig.saltSize ?? 32;
+    const d = keyConfig.difficulty ?? 4;
+    const expires = Date.now() + CHALLENGE_TTL_MS;
 
+    // A random nonce for JWT uniqueness
+    const nonce = randomBytes(25).toString("hex");
+
+    const jwtPayload = {
+      sk: params.siteKey,
+      n: nonce,
+      c,
+      s,
+      d,
+      exp: expires,
+    };
+
+    // If instrumentation is enabled, encrypt its verification metadata
+    // and embed the opaque ciphertext in the JWT.  The cleartext
+    // instrumentation script (what the browser executes) is returned
+    // separately — outside the JWT — so the widget can run it.
+    let instrBytes = null;
     if (keyConfig.instrumentation) {
       const instr = await generateInstrumentationChallenge(keyConfig);
 
-      const instrMeta = JSON.stringify({
-        id: instr.id,
-        validStates: instr.validStates,
-        vars: instr.vars,
-        blockAutomatedBrowsers: instr.blockAutomatedBrowsers,
-        expires: instr.expires,
-      });
+      // This is the sensitive part: expected states, variable names, etc.
+      // Encrypt it so the JWT payload doesn't leak the answers.
+      jwtPayload.ei = encrypt(
+        {
+          id: instr.id,
+          validStates: instr.validStates,
+          vars: instr.vars,
+          blockAutomatedBrowsers: instr.blockAutomatedBrowsers,
+          expires: instr.expires,
+        },
+        jwtSecret,
+      );
 
-      await db`
-				INSERT INTO challenges (siteKey, token, data, expires)
-				VALUES (
-					${params.siteKey},
-					${"instr_" + challenge.token},
-					${instrMeta},
-					${challenge.expires}
-				)
-			`;
+      instrBytes = instr.instrumentation;
 
-      return {
-        ...challenge,
-        instrumentation: instr.instrumentation,
-      };
+      // Keep the cache hot
+      warmForConfigs([keyConfig]);
     }
 
-    return challenge;
+    const token = jwtSign(jwtPayload, jwtSecret);
+
+    const response = {
+      challenge: { c, s, d },
+      token,
+      expires,
+    };
+
+    if (instrBytes) {
+      response.instrumentation = instrBytes;
+    }
+
+    return response;
   })
+
+  // ── POST /:siteKey/redeem ──────────────────────────────────────────
+  // Verifies the JWT, checks PoW solutions, blocklists the JWT sig,
+  // then generates a redemption token and inserts it into the DB.
   .post("/:siteKey/redeem", async ({ body, set, params }) => {
     if (!body || !body.token || !body.solutions) {
       set.status = 400;
       return { error: "Missing required fields" };
     }
 
-    const instrTokenKey = "instr_" + body.token;
+    // ── look up site key & jwt secret ───────────────────────────────
+    const [keyRow] = await db`SELECT jwtSecret FROM keys WHERE siteKey = ${params.siteKey}`;
 
-    const deleted = await db`
-			DELETE FROM challenges
-			WHERE siteKey = ${params.siteKey}
-			  AND token IN (${body.token}, ${instrTokenKey})
-			RETURNING *
-		`;
-
-    const challenge = deleted.find((r) => r.token === body.token);
-    const instrRow = deleted.find((r) => r.token === instrTokenKey);
-
-    if (!challenge) {
+    if (!keyRow) {
       set.status = 404;
-      return { error: "Challenge not found" };
+      return { error: "Invalid site key" };
     }
 
-    if (challenge.expires < Date.now()) {
+    const jwtSecret = keyRow.jwtsecret ?? keyRow.jwtSecret;
+
+    if (!jwtSecret) {
+      set.status = 500;
+      return { error: "Site key is not configured for JWT challenges" };
+    }
+
+    // ── verify JWT ──────────────────────────────────────────────────
+    const payload = jwtVerify(body.token, jwtSecret);
+
+    if (!payload) {
+      set.status = 403;
+      return { error: "Invalid challenge token" };
+    }
+
+    if (payload.sk !== params.siteKey) {
+      set.status = 403;
+      return { error: "Challenge token does not match site key" };
+    }
+
+    if (!payload.exp || payload.exp < Date.now()) {
       set.status = 403;
       return { error: "Challenge expired" };
     }
 
-    const cap = new Cap({
-      noFSState: true,
-      state: {
-        challengesList: {
-          [challenge.token]: {
-            challenge: {
-              c: Number(challenge.data.split(",")[0]),
-              s: Number(challenge.data.split(",")[1]),
-              d: Number(challenge.data.split(",")[2]),
-            },
-            expires: challenge.expires,
-          },
-        },
-      },
+    // ── replay protection: check blocklist ──────────────────────────
+    const sig = jwtSigHex(body.token);
+    if (!sig) {
+      set.status = 403;
+      return { error: "Malformed challenge token" };
+    }
+
+    const [existing] = await db`SELECT 1 FROM challenge_blocklist WHERE sig = ${sig}`;
+    if (existing) {
+      set.status = 403;
+      return { error: "Challenge already redeemed" };
+    }
+
+    // ── verify PoW solutions ────────────────────────────────────────
+    const { c, s: size, d: difficulty } = payload;
+    const solutions = body.solutions;
+
+    if (
+      !Array.isArray(solutions) ||
+      solutions.length !== c ||
+      solutions.some((v) => typeof v !== "number")
+    ) {
+      set.status = 400;
+      return { error: "Invalid solutions" };
+    }
+
+    // The widget uses the full token string (the JWT) as the PRNG seed,
+    // so the server must do the same to regenerate identical challenges.
+    const prngSeed = body.token;
+
+    let idx = 0;
+    const challenges = Array.from({ length: c }, () => {
+      idx++;
+      return [prng(`${prngSeed}${idx}`, size), prng(`${prngSeed}${idx}d`, difficulty)];
     });
 
-    const { success, token, expires } = await cap.redeemChallenge(body);
+    const hashes = await Promise.all(
+      challenges.map(([salt, target], i) => sha256(salt + solutions[i]).then((h) => [h, target])),
+    );
 
-    if (!success) {
+    const isValid = hashes.every(([h, target]) => h.startsWith(target));
+
+    if (!isValid) {
       set.status = 403;
       return { error: "Invalid solution" };
     }
 
-    let instrResult = null;
-
-    if (instrRow) {
-      let challengeMeta;
-      try {
-        challengeMeta = JSON.parse(instrRow.data);
-      } catch {
-        challengeMeta = null;
-      }
-
-      if (challengeMeta && body.instr_blocked === true) {
-        if (challengeMeta.blockAutomatedBrowsers) {
-          set.status = 403;
-          return { instr_error: true, error: "Blocked by instrumentation" };
-        }
-
+    // ── instrumentation verification ────────────────────────────────
+    // The `ei` field in the JWT is AES-256-GCM encrypted; decrypt it
+    // to recover the expected instrumentation state.
+    let instrMeta = null;
+    if (payload.ei) {
+      instrMeta = decrypt(payload.ei, jwtSecret);
+      if (!instrMeta) {
         set.status = 403;
-        return { instr_error: true, error: "Blocked by instrumentation" };
-      } else if (challengeMeta && body.instr) {
-        if (challengeMeta.expires && Date.now() > challengeMeta.expires) {
+        return {
+          instr_error: true,
+          error: "Blocked by instrumentation",
+          reason: "corrupted_instrumentation_data",
+        };
+      }
+    }
+
+    if (instrMeta) {
+      if (body.instr_blocked === true) {
+        if (instrMeta.blockAutomatedBrowsers) {
+          set.status = 403;
+          return {
+            instr_error: true,
+            error: "Blocked by instrumentation",
+            reason: "automated_browser_detected",
+          };
+        }
+        // blockAutomatedBrowsers is disabled — allow through
+      } else if (body.instr) {
+        let instrResult;
+        if (instrMeta.expires && Date.now() > instrMeta.expires) {
           instrResult = { valid: false, env: null, reason: "expired" };
         } else {
-          instrResult = verifyInstrumentationResult(challengeMeta, body.instr);
+          instrResult = verifyInstrumentationResult(instrMeta, body.instr);
         }
 
         if (!instrResult.valid) {
           set.status = 403;
-          return { instr_error: true, error: "Blocked by instrumentation" };
+          return {
+            instr_error: true,
+            error: "Blocked by instrumentation",
+            reason: instrResult.reason || "failed_challenge",
+          };
         }
-      } else if (challengeMeta && body.instr_timeout === true) {
+      } else if (body.instr_timeout === true) {
         set.status = 429;
-        return { instr_error: true, error: "Instrumentation timeout" };
-      } else if (challengeMeta && !body.instr && !body.instr_blocked) {
+        return { instr_error: true, error: "Instrumentation timeout", reason: "timeout" };
+      } else {
         set.status = 403;
-        return { instr_error: true, error: "Blocked by instrumentation" };
-      } else if (!challengeMeta) {
-        set.status = 403;
-        return { instr_error: true, error: "Blocked by instrumentation" };
+        return {
+          instr_error: true,
+          error: "Blocked by instrumentation",
+          reason: "missing_instrumentation_response",
+        };
       }
     }
 
+    // ── blocklist the JWT signature so it cannot be replayed ─────────
     await db`
-			INSERT INTO tokens (siteKey, token, expires)
-			VALUES (${params.siteKey}, ${token}, ${expires})
-		`;
+      INSERT INTO challenge_blocklist (sig, expires)
+      VALUES (${sig}, ${payload.exp})
+    `;
+
+    // ── generate redemption token (NOT a JWT — opaque, DB-backed) ───
+    const redeemId = randomBytes(8).toString("hex");
+    const redeemSecret = randomBytes(15).toString("hex");
+    const redeemToken = `${redeemId}:${redeemSecret}`;
+    const tokenExpires = Date.now() + TOKEN_TTL_MS;
+
+    await db`
+      INSERT INTO tokens (siteKey, token, expires)
+      VALUES (${params.siteKey}, ${redeemToken}, ${tokenExpires})
+    `;
 
     const now = Math.floor(Date.now() / 1000);
     const hourlyBucket = Math.floor(now / 3600) * 3600;
     await db`
-			INSERT INTO solutions (siteKey, bucket, count)
-			VALUES (${params.siteKey}, ${hourlyBucket}, 1)
-			ON CONFLICT (siteKey, bucket)
-			DO UPDATE SET count = count + 1
-		`;
+      INSERT INTO solutions (siteKey, bucket, count)
+      VALUES (${params.siteKey}, ${hourlyBucket}, 1)
+      ON CONFLICT (siteKey, bucket)
+      DO UPDATE SET count = count + 1
+    `;
 
     return {
       success: true,
-      token,
-      expires,
+      token: redeemToken,
+      expires: tokenExpires,
     };
   });
+
+export async function prewarmInstrumentation() {
+  try {
+    const keys = await db`SELECT config FROM keys`;
+    const instrConfigs = keys
+      .map((k) => {
+        try {
+          return JSON.parse(k.config);
+        } catch {
+          return null;
+        }
+      })
+      .filter((c) => c?.instrumentation === true);
+    if (instrConfigs.length > 0) warmForConfigs(instrConfigs);
+  } catch (e) {
+    console.warn("[cap] prewarmInstrumentation failed:", e);
+  }
+}

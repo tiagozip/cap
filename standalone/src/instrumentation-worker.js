@@ -1,4 +1,3 @@
-import { parentPort } from "node:worker_threads";
 import { randomBytes, randomInt } from "node:crypto";
 import { deflateRawSync } from "node:zlib";
 import JavaScriptObfuscator from "javascript-obfuscator";
@@ -66,79 +65,38 @@ function buildClientScript({ id, vars, initVals, clientEqs, blockAutomatedBrowse
 `
     : "";
 
-  return `(function(){
+  return `    (function(){
 'use strict';
 
-var doVerification = function() {
-  if (navigator.toString() !== '[object Navigator]' || window.toString() !== '[object Window]' || document.toString() !== '[object HTMLDocument]' || typeof process !== 'undefined' || navigator.mimeTypes["application/pdf"].type !== "application/pdf") {
-    return -1
+var doVerification = async function() {
+  if (navigator.toString() !== '[object Navigator]' || window.toString() !== '[object Window]' || document.toString() !== '[object HTMLDocument]' || typeof process !== 'undefined') {
+    return null
   }
-  
-  if (window.chrome) {
-    if (JSON.stringify(window.chrome.csi()).length < 70) {
-      return -1
-    }
-    if (typeof window.chrome.app.isInstalled !== "boolean") {
-      return -1
-    }
-    if (window.chrome.app.getDetails.toString() !== 'function getDetails() { [native code] }') {
-      return -1
-    }
-  } else if (window.Mozilla) {
-    if (JSON.stringify(window.Mozilla).length < 300) {
-      return -1
-    }
-    if (typeof window.Mozilla.dntEnabled() !== "boolean") {
-      return -1
-    }
-  } else {
-    throw new Error("Unsupported browser")
-  }
-  
-  if (
-      !navigator.userAgent || 
-      !navigator.platform
-    ) return -1
-  
-    if (
-      navigator.plugins.length === 0 || 
-      !navigator.mimeTypes.length
-    ) return -1
-  
-    const nativeFns = ['alert','confirm','prompt','fetch']
+
+  if (!navigator.userAgent) return null
+
+  try {
+    const nativeFns = ['fetch']
     for (const fn of nativeFns) {
-      if (!window[fn] || window[fn].toString().indexOf('[native code]') === -1) return -1
+      if (!window[fn] || window[fn].toString().indexOf('[native code]') === -1) return null
     }
-  
-    try {
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')
-      ctx.fillText('1', 10, 10)
-      const data = canvas.toDataURL()
-      if (data.length < 50) return -1
-    } catch {
-      return -1
-    }
-  
-    try {
-      const gl = document.createElement('canvas').getContext('webgl') || document.createElement('canvas').getContext('experimental-webgl')
-      const renderer = gl?.getParameter(gl.RENDERER) || ''
-      if (!renderer || renderer.toLowerCase().includes('swiftshader') || renderer.toLowerCase().includes('llvmpipe')) return -1
-    } catch {
-      return -1
-    }
-  
-    try {
-      const AudioContext = window.OfflineAudioContext || window.webkitOfflineAudioContext
-      let ctx
-      if (AudioContext.length === 0) {
-        ctx = new AudioContext()
-      } else {
-        ctx = new AudioContext(1, 44100, 44100)
-      }
-    } catch {
-      return -1
-    }
+  } catch { return null }
+
+  try {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    ctx.fillText('1', 10, 10)
+    const data = canvas.toDataURL()
+    if (data.length < 50) return null
+  } catch {
+    return null
+  }
+
+  try {
+    const gl = document.createElement('canvas').getContext('webgl') || document.createElement('canvas').getContext('experimental-webgl')
+    const renderer = gl?.getParameter(gl.RENDERER) || ''
+    if (renderer && (renderer.toLowerCase().includes('swiftshader') || renderer.toLowerCase().includes('llvmpipe'))) return null
+  } catch {}
 
   ${blockChecks}
   var ${vars[0]} = ${initVals[0]};
@@ -156,20 +114,19 @@ var doVerification = function() {
   return res;
 };
 
-window.onload = function() {
+window.onload = async function() {
   try {
-    var result = doVerification();
-    if (!result) return;
+    var result = await doVerification();
+    if (!result || typeof result !== 'object') return;
     parent.postMessage({ type: 'cap:instr', nonce: ${JSON.stringify(id)}, result: { i: ${JSON.stringify(id)}, state: result, ts: Date.now() } }, '*');
   } catch(e) {
     parent.postMessage({ type: 'cap:error', reason: String(e) }, '*');
   }
 };
-
 })();`;
 }
 
-const TTL = 90_000;
+const TTL = 5 * 60 * 1000;
 
 function generateInstrumentationChallenge(keyConfig = {}) {
   const id = rHex(32);
@@ -181,7 +138,7 @@ function generateInstrumentationChallenge(keyConfig = {}) {
   for (let attempt = 0; attempt < 20; attempt++) {
     initVals = Array.from({ length: 4 }, () => rnd(10, 250));
 
-    let wdTrueKey = rnd(1000, 9000);
+    const wdTrueKey = rnd(1000, 9000);
     let wdFalseKey = rnd(1000, 9000);
     while (wdFalseKey === wdTrueKey) {
       wdFalseKey = rnd(1000, 9000);
@@ -236,17 +193,22 @@ function generateInstrumentationChallenge(keyConfig = {}) {
     if (!states[0].vals.every((v, i) => v === states[1].vals[i])) break;
   }
 
-  const script = buildClientScript({ id, vars, initVals, clientEqs, blockAutomatedBrowsers });
+  const script = buildClientScript({
+    id,
+    vars,
+    initVals,
+    clientEqs,
+    blockAutomatedBrowsers,
+  });
 
   const obfuscated = JavaScriptObfuscator.obfuscate(script, {
     compact: true,
-    controlFlowFlattening: true,
-    controlFlowFlatteningThreshold: 0.6,
-    deadCodeInjection: true,
-    deadCodeInjectionThreshold: 0.4,
+    controlFlowFlattening: false,
+    controlFlowFlatteningThreshold: 0,
+    deadCodeInjection: false,
     stringArray: true,
-    stringArrayEncoding: ["rc4"],
-    stringArrayThreshold: 0.8,
+    stringArrayEncoding: [],
+    stringArrayThreshold: 0.5,
     identifierNamesGenerator: "mangled-shuffled",
     splitStrings: true,
     splitStringsChunkLength: randomInt(5, 26),
@@ -256,7 +218,9 @@ function generateInstrumentationChallenge(keyConfig = {}) {
     ignoreRequireImports: true,
   }).getObfuscatedCode();
 
-  const compressed = deflateRawSync(Buffer.from(obfuscated, "utf8"), { level: 1 });
+  const compressed = deflateRawSync(Buffer.from(obfuscated, "utf8"), {
+    level: 1,
+  });
 
   return {
     id,
@@ -268,11 +232,11 @@ function generateInstrumentationChallenge(keyConfig = {}) {
   };
 }
 
-parentPort.on("message", (msg) => {
+process.on("message", (msg) => {
   try {
     const result = generateInstrumentationChallenge(msg.keyConfig || {});
-    parentPort.postMessage({ ok: true, result });
+    process.send({ ok: true, result });
   } catch (err) {
-    parentPort.postMessage({ ok: false, error: String(err) });
+    process.send({ ok: false, error: String(err) });
   }
 });

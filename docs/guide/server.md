@@ -66,9 +66,7 @@ const cap = new Cap({
           LIMIT 1
         `;
 
-        return row
-          ? { challenge: row.data, expires: Number(row.expires) }
-          : null;
+        return row ? { challenge: row.data, expires: Number(row.expires) } : null;
       },
 
       delete: async (token) => {
@@ -237,7 +235,7 @@ if (!success) throw new Error("invalid cap token");
   "state": {
     "challengesList": {},
     "tokensList": {}
-  },
+  }
 
   // deprecated:
 

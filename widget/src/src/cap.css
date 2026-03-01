@@ -47,6 +47,10 @@
   color: var(--cap-color, #212121);
 }
 
+.captcha:not([data-state]):active {
+  transform: scale(0.97);
+}
+
 .captcha:hover {
   filter: brightness(98%);
 }

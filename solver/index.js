@@ -6,8 +6,7 @@ function prng(seed, length) {
     let hash = 2166136261;
     for (let i = 0; i < str.length; i++) {
       hash ^= str.charCodeAt(i);
-      hash +=
-        (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
     }
     return hash >>> 0;
   }
@@ -75,16 +74,12 @@ export default function solve(challenge, config = {}) {
     challenges = Array.from({ length: config.c }, () => {
       i = i + 1;
 
-      return [
-        prng(`${challenges}${i}`, config.s),
-        prng(`${challenges}${i}d`, config.d),
-      ];
+      return [prng(`${challenges}${i}`, config.s), prng(`${challenges}${i}d`, config.d)];
     });
   }
 
   const totalChallenges = challenges.length;
-  const numWorkers =
-    config?.workerCount || Math.min(totalChallenges, os.cpus().length);
+  const numWorkers = config?.workerCount || Math.min(totalChallenges, os.cpus().length);
 
   let challengesProcessed = 0;
   let nextChallengeIndex = 0;
@@ -112,10 +107,7 @@ export default function solve(challenge, config = {}) {
           activeWorkers--;
 
           if (result.error) {
-            console.error(
-              `Error in worker for challenge ${currentChallengeIndex}:`,
-              result.error,
-            );
+            console.error(`Error in worker for challenge ${currentChallengeIndex}:`, result.error);
             reject(new Error(`Worker error: ${result.error}`));
             return;
           }
@@ -125,9 +117,7 @@ export default function solve(challenge, config = {}) {
 
           if (config?.onProgress) {
             config.onProgress({
-              progress: Math.floor(
-                (challengesProcessed / totalChallenges) * 100,
-              ),
+              progress: Math.floor((challengesProcessed / totalChallenges) * 100),
               currentChallenge: currentChallengeIndex,
               challengesProcessed,
               totalChallenges,

@@ -95,10 +95,11 @@ export const server = new Elysia({
         .replace(/\+/g, "")
         .replace(/\//g, "")
         .replace(/=+$/, "");
+      const jwtSecret = randomBytes(32).toString("base64url");
 
       await db`
-        INSERT INTO keys (siteKey, name, secretHash, config, created)
-        VALUES (${siteKey}, ${body?.name || siteKey}, ${await Bun.password.hash(secretKey)}, ${JSON.stringify(keyDefaults)}, ${Date.now()})
+        INSERT INTO keys (siteKey, name, secretHash, jwtSecret, config, created)
+        VALUES (${siteKey}, ${body?.name || siteKey}, ${await Bun.password.hash(secretKey)}, ${jwtSecret}, ${JSON.stringify(keyDefaults)}, ${Date.now()})
       `;
 
       return {

@@ -29,12 +29,12 @@ volumes:
 
 ::: tip Tips
 
-* Make sure to add an admin key to log into the web UI. It should be at least 12 characters long.
+- Make sure to add an admin key to log into the web UI. It should be at least 12 characters long.
 
-* If your port 3000 is already in use, feel free to change it to something else.
+- If your port 3000 is already in use, feel free to change it to something else.
 
-* If you're having trouble accessing the dashboard, add `network_mode: "host"` under the Cap service.
-:::
+- If you're having trouble accessing the dashboard, add `network_mode: "host"` under the Cap service.
+  :::
 
 Start the container:
 
@@ -66,9 +66,7 @@ Make sure to replace:
 Example:
 
 ```html
-<cap-widget
-  data-cap-api-endpoint="https://cap.example.com/d9256640cb53/"
-></cap-widget>
+<cap-widget data-cap-api-endpoint="https://cap.example.com/d9256640cb53/"></cap-widget>
 ```
 
 ### Server-side

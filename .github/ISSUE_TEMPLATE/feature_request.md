@@ -1,10 +1,9 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: ''
-labels: ''
+title: ""
+labels: ""
 assignees: tiagozip
-
 ---
 
 **what problem would this feature solve, if any?**

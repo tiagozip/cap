@@ -62,6 +62,8 @@ Cap is free, self-hosted, and open-source, while GeeTest is a paid service. Cap 
 
 Arkose's CAPTCHA is known for being hard, slow, and annoying for humans to solve. It is also a paid, closed-source service mostly available to big enterprises.
 
+They also only operate in the US, Canada, Argentina, India, Israel and a small set of other countries, excluding many EU countries.
+
 ### Anubis
 
 While Anubis is a great scraper deterrent and uses the same proof-of-work concept as Cap, it uses a low difficulty by default (which is easier for bots to solve) and does not provide a standalone CAPTCHA server.

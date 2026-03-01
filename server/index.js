@@ -116,10 +116,7 @@ async function randomHex(bytesCount) {
 async function sha256(str) {
   if (crypto.webcrypto?.subtle) {
     const enc = new TextEncoder();
-    const hash = await crypto.webcrypto.subtle.digest(
-      "SHA-256",
-      enc.encode(str)
-    );
+    const hash = await crypto.webcrypto.subtle.digest("SHA-256", enc.encode(str));
     return Buffer.from(hash).toString("hex");
   }
 
@@ -141,8 +138,7 @@ function prng(seed, length) {
     let hash = 2166136261;
     for (let i = 0; i < str.length; i++) {
       hash ^= str.charCodeAt(i);
-      hash +=
-        (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
     }
     return hash >>> 0;
   }
@@ -332,7 +328,7 @@ class Cap extends EventEmitter {
       challenges.map(([salt, target], i) => {
         if (typeof solutions[i] !== "number") return null;
         return sha256(salt + solutions[i]).then((h) => [h, target]);
-      })
+      }),
     );
 
     const isValid = hashes.every((pair) => pair?.[0].startsWith(pair[1]));
@@ -356,7 +352,7 @@ class Cap extends EventEmitter {
         await fs.writeFile(
           this.config.tokens_store_path,
           JSON.stringify(this.config.state.tokensList),
-          "utf8"
+          "utf8",
         );
       }
     }
@@ -394,7 +390,7 @@ class Cap extends EventEmitter {
         await fs.writeFile(
           this.config.tokens_store_path,
           JSON.stringify(this.config.state.tokensList),
-          "utf8"
+          "utf8",
         );
       }
     }
@@ -445,10 +441,7 @@ class Cap extends EventEmitter {
     if (this.config.noFSState || this.config.storage?.tokens) return;
 
     try {
-      const dirPath = this.config.tokens_store_path
-        .split("/")
-        .slice(0, -1)
-        .join("/");
+      const dirPath = this.config.tokens_store_path.split("/").slice(0, -1).join("/");
 
       if (dirPath) {
         await fs.mkdir(dirPath, { recursive: true });
@@ -465,9 +458,7 @@ class Cap extends EventEmitter {
         this.config.state.tokensList = {};
       }
     } catch {
-      console.warn(
-        `[cap] Couldn't load or write tokens file, using empty state`
-      );
+      console.warn(`[cap] Couldn't load or write tokens file, using empty state`);
       this.config.state.tokensList = {};
     }
   }
@@ -491,11 +482,11 @@ class Cap extends EventEmitter {
       await Promise.all(
         expired.map(async (k) => {
           await this._deleteChallenge(k);
-        })
+        }),
       );
     } else {
       console.warn(
-        "[cap] challenge storage hooks provided but no deleteExpired, couldn't delete expired challenges"
+        "[cap] challenge storage hooks provided but no deleteExpired, couldn't delete expired challenges",
       );
     }
 
@@ -510,7 +501,7 @@ class Cap extends EventEmitter {
       }
     } else {
       console.warn(
-        "[cap] token storage hooks provided but no deleteExpired, couldn't delete expired tokens"
+        "[cap] token storage hooks provided but no deleteExpired, couldn't delete expired tokens",
       );
     }
 
@@ -548,15 +539,11 @@ class Cap extends EventEmitter {
     this._cleanupPromise = (async () => {
       const tokensChanged = await this._cleanExpiredTokens();
 
-      if (
-        tokensChanged &&
-        !this.config.noFSState &&
-        !this.config.storage?.tokens?.store
-      ) {
+      if (tokensChanged && !this.config.noFSState && !this.config.storage?.tokens?.store) {
         await fs.writeFile(
           this.config.tokens_store_path,
           JSON.stringify(this.config.state.tokensList),
-          "utf8"
+          "utf8",
         );
       }
     })();
