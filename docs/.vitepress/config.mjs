@@ -167,7 +167,7 @@ export default withMermaid({
         collapsed: false,
         items: [
           { text: "Usage", link: "/guide/widget.md" },
-          { text: "Invisible mode", link: "/guide/invisible.md" },
+          { text: "Programmatic mode", link: "/guide/programmatic.md" },
           { text: "Floating mode", link: "/guide/floating.md" },
         ],
       },

@@ -1,4 +1,4 @@
-# Invisible mode
+# Programmatic mode
 
 You can use `new Cap({ ... })` in your client-side JavaScript to create a new Cap instance and use the `solve()` method to solve the challenge.
 
@@ -19,7 +19,6 @@ const cap = new Cap({
 });
 
 cap.addEventListener("progress", (event) => {
-  // [!code focus]
   console.log(`Solving... ${event.detail.progress}% done`);
 });
 ```
