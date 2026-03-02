@@ -1,4 +1,4 @@
-# How does cap work?
+# How does Cap work?
 
 By the way, this is a more technical explanation of how Cap works. If you're looking for a more general overview, check out the [Effectiveness](./effectiveness.md) page.
 
