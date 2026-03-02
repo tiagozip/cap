@@ -31,7 +31,7 @@ You can either run it on any JavaScript runtime, or use the standalone mode with
 - **Standalone mode**  
    Run Cap anywhere with a Docker container with analytics & more
 
-- **Invisible**  
+- **Programmatic**  
    Hide Cap's widget and solve challenges in the background
 
 - **M2M**  
