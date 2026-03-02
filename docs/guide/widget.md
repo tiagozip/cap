@@ -4,7 +4,7 @@ outline: [2, 3, 4]
 
 # Widget
 
-Cap's client-side widget handles requesting, solving and displaying challenges using a native web component and rust-flavoured WASM. It also includes the [invisible mode](./invisible).
+Cap's client-side widget handles requesting, solving and displaying challenges using a native web component and rust-flavoured WASM. It also includes the [programmatic mode](./programmatic).
 
 ## Installation
 
@@ -228,9 +228,9 @@ export default component$(() => {
 });
 ```
 
-## Invisible mode
+## Programmatic mode
 
-If you don't want a visible widget, for example when protecting a background action like a post submission, use the [programmatic API](./invisible):
+If you don't want a visible widget, for example when protecting a background action like a post submission, use the [programmatic mode](./programmatic):
 
 ```js
 import Cap from "@cap.js/widget";

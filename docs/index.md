@@ -37,7 +37,7 @@ features:
     title: Standalone mode
     details: Run Cap anywhere with a Docker container with analytics & more
   - icon: 💨
-    title: Invisible
+    title: Programmatic
     details: Hide Cap's widget and solve challenges in the background
   - icon: 🤖
     title: M2M
