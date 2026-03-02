@@ -4,7 +4,8 @@ export const ratelimitGenerator = (req, server) => {
     const ip = req.headers.get(header) || req.headers.get(header.toLowerCase());
 
     if (ip) {
-      return ip.split(",")[0].trim();
+      const parts = ip.split(",").filter((e) => !!e.trim());
+      return (parts[parts.length - 1] || parts[0]).trim();
     }
 
     console.error(
