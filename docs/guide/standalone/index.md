@@ -1,6 +1,6 @@
 # Cap Standalone
 
-Cap Standalone is the recommended way to self-host Cap's backend. It runs on Bun and keeps idle memory usage around 50mb. It ships with built-in support for instrumentation challenges, which significantly raise the bar for bots, a siteverify API compatible with reCAPTCHA, and a web dashboard for managing multiple site keys.
+Cap Standalone is the recommended way to self-host Cap's backend. It runs on Bun and keeps idle memory usage around 50 MB. It ships with built-in support for instrumentation challenges, which significantly raise the bar for bots, a siteverify API compatible with reCAPTCHA, and a web dashboard for managing multiple site keys.
 
 We recommend using [Docker](https://docs.docker.com/get-docker/) to run Cap Standalone.
 

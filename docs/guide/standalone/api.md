@@ -1,6 +1,6 @@
 # API
 
-Standalone mode offers a simple API for creating, viewing, and managing keys and sessions. First, login to your Cap Standalone dashboard and get an API key from **Settings** → **API Keys**. Give it a name and tap "Create".
+Standalone mode offers a simple API for creating, viewing, and managing keys and sessions. First, log in to your Cap Standalone dashboard and get an API key from **Settings** → **API Keys**. Give it a name and tap "Create".
 
 Once your key is created, save it somewhere safe, as you won't be able to see it again.
 

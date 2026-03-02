@@ -6,7 +6,7 @@ Want to use Cap without the standalone server and with a different language? Her
 
 ## Widgets
 
-These are wrappers around Cap's widget. They're usually not required as the default widget should work everywhere but can result in better development experience.
+These are wrappers around Cap's widget. They're usually not required as the default widget should work everywhere but can result in a better development experience.
 
 ### React
 

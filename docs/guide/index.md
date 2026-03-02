@@ -6,7 +6,7 @@ outline: deep
 
 Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using SHA-256 proof-of-work and instrumentation challenges.
 
-Unlike traditional CAPTCHAs, Cap's fast, unobtrusive, has no telemetry or tracking, and uses accessible proof-of-work instead of annoying visual puzzles.
+Unlike traditional CAPTCHAs, Cap is fast and unobtrusive, has no telemetry or tracking, and uses accessible proof-of-work instead of annoying visual puzzles.
 
 We've found that Cap offers a better balance for site admins than big-tech alternatives because **it puts the levers of control in your hands, not a third party.** You decide the difficulty, you own the data, and you never pay per-request fees.
 
@@ -16,7 +16,7 @@ Cap consists of a client-side widget, which solves challenges and displays the c
 
 ## 1. Setting up your server
 
-We recommend starting with Cap Standalone. You're gonna need [Docker](https://docs.docker.com/get-docker/) and about 100mb of free memory (it uses about 50mb idle). It supports multiple site keys and is compatible with reCAPTCHA's siteverify API, so you can even run it alongside reCAPTCHA and switch over gradually.
+We recommend starting with Cap Standalone. You're gonna need [Docker](https://docs.docker.com/get-docker/) and about 100 MB of free memory (it uses about 50 MB idle). It supports multiple site keys and is compatible with reCAPTCHA's siteverify API, so you can even run it alongside reCAPTCHA and switch over gradually.
 
 Start by creating a `docker-compose.yml` file:
 
