@@ -242,7 +242,7 @@ if (!success) throw new Error("invalid cap token");
   // used for json keyval storage
   // "tokens_store_path": ".data/tokensList.json",
 
-  // disables all filesystem operations, usually used along editing the state
+  // disables all filesystem operations, usually used alongside editing the state
   // "noFSState": false,
 }
 ```
