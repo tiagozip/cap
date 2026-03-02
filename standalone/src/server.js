@@ -295,6 +295,7 @@ export const server = new Elysia({
         instrumentation,
         blockAutomatedBrowsers,
       } = body;
+
       const config = {
         ...keyDefaults,
         ...existingConfig,
@@ -313,10 +314,10 @@ export const server = new Elysia({
     },
     {
       body: t.Object({
-        name: t.Optional(t.String()),
-        difficulty: t.Optional(t.Number()),
-        challengeCount: t.Optional(t.Number()),
-        saltSize: t.Optional(t.Number()),
+        name: t.Optional(t.String({ maxLength: 600 })),
+        difficulty: t.Optional(t.Number({ minimum: 1, maximum: 8 })),
+        challengeCount: t.Optional(t.Number({ minimum: 1, maximum: 500 })),
+        saltSize: t.Optional(t.Number({ minimum: 7, maximum: 1_001 })),
         instrumentation: t.Optional(t.Boolean()),
         blockAutomatedBrowsers: t.Optional(t.Boolean()),
       }),

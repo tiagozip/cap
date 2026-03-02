@@ -8,7 +8,12 @@ const welcomeScreen = document.getElementById("welcomeScreen");
 const keyDetail = document.getElementById("keyDetail");
 
 const escapeHtml = (s) => {
-  return s.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 };
 
 const api = async (method, path, body) => {
@@ -508,7 +513,7 @@ async function saveConfig() {
 
   if (!name || difficulty < 2 || challengeCount < 1 || saltSize < 7) {
     showModal(
-      "Validation Error",
+      "Validation error",
       `<div class="modal-body"><p>Please check your input values. Difficulty must be ≥2, challenge count ≥1, and salt size ≥7.</p></div>`,
     );
     btn.disabled = false;

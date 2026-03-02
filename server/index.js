@@ -331,7 +331,7 @@ class Cap extends EventEmitter {
       }),
     );
 
-    const isValid = hashes.every((pair) => pair?.[0].startsWith(pair[1]));
+    const isValid = hashes.every((pair) => pair?.[0]?.startsWith?.(pair[1]));
 
     if (!isValid) return { success: false, message: "Invalid solution" };
 
