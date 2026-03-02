@@ -6,7 +6,7 @@ The main principle behind implementing a proof-of-work CAPTCHA like Cap includes
 
 ## Privacy & security
 
-Cap doesn't use cookies or telemetry by default. No data is collected or stored in our servers as it's fully self-hosted.
+Cap doesn't use cookies or any type of telemetry by default. No data is collected or stored on any central servers as it's fully self-hosted.
 
 ## Why proof-of-work?
 
