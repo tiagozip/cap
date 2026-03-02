@@ -9,13 +9,13 @@ By the way, this is a more technical explanation of how Cap works. If you're loo
 
 #### Requesting the challenge
 
-3. When a solution is requested, the widget sends a request to the server. The server will return a token and the configuration for the challenges to solve.
+3. When a solution is requested, the widget sends a request to the server. The server will return a token, the configuration for the challenges to solve and optionally compressed instrumentation data.
 
-4. The widget then generates multiple challenges using a set seed (the challenge token) and the configuration provided by the server.
+4. The widget then generates multiple challenges using a set seed (the challenge token) and the configuration provided by the server. If instrumentation data is provided, it's decompressed and solved in a sandboxed iframe.
 
 #### Computing the solution
 
-5. The widget uses WASM and Web Workers to solve the challenges in parallel:
+5. The widget uses Rust-flavoured WASM and Web Workers to solve the challenges in parallel:
    - Each worker attempts to find a valid nonce by repeatedly:
      - Combining the salt with different nonce values
      - Computing the SHA-256 hash of this combination
