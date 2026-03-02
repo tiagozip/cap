@@ -53,7 +53,7 @@ If you would like the data to be stored in a custom path inside the container, y
 
 If you would like to use a different database, you can set the `DB_URL` environment variable to the URL of the database you want to use.
 
-We recommend keeping this to the default value, which is `sqlite://./.data/db.sqlite.`. However, using Postgres, MySQL, or any other database supported by Bun SQL might be possible, even though not officially supported or tested:
+We recommend keeping this to the default value, which is `sqlite://./.data/db.sqlite`. However, using Postgres, MySQL, or any other database supported by Bun SQL might be possible, even though not officially supported or tested:
 
 - `postgres://user:pass@localhost:5432/mydb`
 - `mysql://user:password@localhost:3306/database`

@@ -93,7 +93,7 @@ widget.addEventListener("solve", function (e) {
 
 Alternatively, you can wrap the widget in a `<form></form>` and Cap will automatically submit the token alongside other form data as `cap-token`.
 
-You can also use get a token programmatically without displaying the widget by using the [programmatic mode](./programmatic.md).
+You can also get a token programmatically without displaying the widget by using the [programmatic mode](./programmatic.md).
 
 ## 3. Verifying tokens
 
