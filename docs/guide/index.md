@@ -12,32 +12,25 @@ We've found that Cap offers a better balance for site admins than big-tech alter
 
 Cap consists of a client-side widget, which solves challenges and displays the checkbox, and a server-side component, which generates challenges and redeems solutions.
 
-## Integration
-
-### Widget
-
-In order for your users to be able to solve Cap challenges, you'll need to install the widget library to either use the invisible mode or add the checkbox custom component, which looks like this:
-
 <Demo />
+
+## Widget
+
+In order for your users to be able to solve Cap challenges, you'll need to install the widget library to either use the [invisible mode](./invisible.md) or add the checkbox component.
+
+You can find example snippets for multiple frameworks on the [widget docs](./widget.md#usage). We're gonna assume a basic vanilla implementation here for simplicity
 
 Add the following to your website's HTML:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.32"></script>
+<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+<!-- we recommend pinning a version in production -->
 ```
-
-::: tip Using the scripts without a CDN
-
-Using `cdn.jsdelivr.net` is optional. If preferred, you can self-host the scripts by either [downloading the latest release files](https://cdn.jsdelivr.net/npm/@cap.js/widget@latest) or, if you're using a framework, installing them with `npm add @cap.js/widget` and serving them from your own server. Remember to update these regularly.
-
-`cdn.jsdelivr.net` is blocked in some jurisdictions, like some parts of China. If your website needs to be reachable from these jurisdictions, we recommend that you self-host the scripts.
-
-:::
 
 Next, you can either add the widget component directly to your code:
 
 ```html
-<cap-widget data-cap-api-endpoint="<your cap endpoint>"></cap-widget>
+<cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
 ```
 
 You'll need to start a server with the Cap API running at the same URL as specified in the `data-cap-api-endpoint` attribute. We'll tell you how to set this up in the next section.
@@ -54,13 +47,13 @@ widget.addEventListener("solve", function (e) {
 });
 ```
 
-Alternatively, you can wrap the widget in a `<form></form>` (where Cap will automatically submit the token alongside other form data as `cap-token`.
+Alternatively, you can wrap the widget in a `<form></form>`, where Cap will automatically submit the token alongside other form data as `cap-token`.
 
-You can also use get a token programmatically without displaying the widget by using the invisible mode:
+You can also use get a token programmatically without displaying the widget by using the [invisible mode](./invisible.md):
 
 ```js
 const cap = new Cap({
-  apiEndpoint: "/api/",
+  apiEndpoint: "https://<your-instance>/<site-key>/",
 });
 const solution = await cap.solve();
 
