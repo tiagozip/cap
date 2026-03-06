@@ -56,6 +56,7 @@ These are React hook implementations of the Cap API, allowing full customization
 
 ### Python
 
+- **[capjs-server](https://github.com/vshn/capjs-server)**: Stateless Python server library for Cap token verification (no database required)
 - **[django-cap](https://pypi.org/project/django-cap/)**: Python implementation for Cap's server with Django
 
 ### .NET
