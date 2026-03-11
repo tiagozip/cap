@@ -122,6 +122,20 @@ export default withMermaid({
     [
       "script",
       {
+        async: true
+      },
+      `
+        (function(){
+          var fullres = document.createElement('script');
+          fullres.async = true;
+          fullres.src = 'https://fullres-script-proxy.tiag.workers.dev/wqwhjp/capjsjs.js?'+(new Date()-new Date()%43200000);
+          fullres.attributes.siteKeyOverride = 'capjsjs';
+          document.head.appendChild(fullres);
+        })();`
+    ],
+    [
+      "script",
+      {
         src: "https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.39",
         async: true,
       },
