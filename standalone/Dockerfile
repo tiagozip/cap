@@ -19,9 +19,7 @@ FROM base AS release
 COPY --from=prod /temp/prod/node_modules node_modules
 COPY --from=prerelease /usr/src/app .
 WORKDIR /usr/src/app
-
-ENV DATA_PATH=/usr/src/app/.data
-RUN mkdir -p ${DATA_PATH} && chown -R 1000:bun ${DATA_PATH} && chmod -R 770 ${DATA_PATH}
+RUN mkdir -p data && chown bun:bun data
 
 EXPOSE 3000/tcp
 

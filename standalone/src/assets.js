@@ -1,7 +1,6 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { cors } from "@elysiajs/cors";
-import { Elysia, file } from "elysia";
+import { Elysia } from "elysia";
+import { db } from "./db.js";
 
 if (
   process.env.ENABLE_ASSETS_SERVER === "true" &&
@@ -12,26 +11,13 @@ if (
   );
 }
 
-const dataDir = process.env.DATA_PATH || "./.data";
-
-const writeAtomic = async (filename, content) => {
-  const finalPath = path.join(dataDir, filename);
-  const tempPath = `${finalPath}.tmp`;
-
-  await fs.writeFile(tempPath, content);
-
-  await fs.rename(tempPath, finalPath);
-};
-
 const updateCache = async () => {
   if (process.env.ENABLE_ASSETS_SERVER !== "true") return;
 
-  const cacheConfigPath = path.join(dataDir, "assets-cache.json");
   let cacheConfig = {};
-
   try {
-    cacheConfig = JSON.parse(await fs.readFile(cacheConfigPath, "utf-8"));
-  } catch {}
+    cacheConfig = JSON.parse((await db.get("asset:cache-config")) || "{}");
+  } catch { }
 
   const lastUpdate = cacheConfig.lastUpdate || 0;
   const currentTime = Date.now();
@@ -67,12 +53,13 @@ const updateCache = async () => {
     cacheConfig.versions.widget = WIDGET_VERSION;
     cacheConfig.versions.wasm = WASM_VERSION;
 
-    await writeAtomic("assets-cache.json", JSON.stringify(cacheConfig));
-
-    await writeAtomic("assets-widget.js", widgetSource);
-    await writeAtomic("assets-floating.js", floatingSource);
-    await writeAtomic("assets-cap_wasm_bg.wasm", Buffer.from(wasmSource));
-    await writeAtomic("assets-cap_wasm.js", wasmLoaderSource);
+    await Promise.all([
+      db.set("asset:cache-config", JSON.stringify(cacheConfig)),
+      db.set("asset:widget.js", widgetSource),
+      db.set("asset:floating.js", floatingSource),
+      db.set("asset:cap_wasm_bg.wasm", Buffer.from(wasmSource)),
+      db.set("asset:cap_wasm.js", wasmLoaderSource),
+    ]);
   } catch (e) {
     console.error("📦 [asset server] failed to update assets cache:", e);
   }
@@ -87,26 +74,46 @@ export const assetsServer = new Elysia({
 })
   .use(
     cors({
-      origin: process.env.CORS_ORIGIN?.split(",") || true,
+      origin: true,
       methods: ["GET"],
     }),
   )
   .onBeforeHandle(({ set }) => {
     set.headers["Cache-Control"] = "max-age=31536000, immutable";
   })
-  .get("/widget.js", ({ set }) => {
+  .get("/widget.js", async ({ set }) => {
     set.headers["Content-Type"] = "text/javascript";
-    return file(path.join(dataDir, "assets-widget.js"));
+    const content = await db.get("asset:widget.js");
+    if (!content) {
+      set.status = 503;
+      return "Asset not cached yet";
+    }
+    return content;
   })
-  .get("/floating.js", ({ set }) => {
+  .get("/floating.js", async ({ set }) => {
     set.headers["Content-Type"] = "text/javascript";
-    return file(path.join(dataDir, "assets-floating.js"));
+    const content = await db.get("asset:floating.js");
+    if (!content) {
+      set.status = 503;
+      return "Asset not cached yet";
+    }
+    return content;
   })
-  .get("/cap_wasm_bg.wasm", ({ set }) => {
+  .get("/cap_wasm_bg.wasm", async ({ set }) => {
     set.headers["Content-Type"] = "application/wasm";
-    return file(path.join(dataDir, "assets-cap_wasm_bg.wasm"));
+    const content = await db.getBuffer("asset:cap_wasm_bg.wasm");
+    if (!content) {
+      set.status = 503;
+      return "Asset not cached yet";
+    }
+    return content;
   })
-  .get("/cap_wasm.js", ({ set }) => {
+  .get("/cap_wasm.js", async ({ set }) => {
     set.headers["Content-Type"] = "text/javascript";
-    return file(path.join(dataDir, "assets-cap_wasm.js"));
+    const content = await db.get("asset:cap_wasm.js");
+    if (!content) {
+      set.status = 503;
+      return "Asset not cached yet";
+    }
+    return content;
   });

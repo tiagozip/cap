@@ -3,8 +3,11 @@ import { swagger } from "@elysiajs/swagger";
 import { Elysia, file } from "elysia";
 import { assetsServer } from "./assets.js";
 import { auth } from "./auth.js";
-import { capServer, prewarmInstrumentation } from "./cap.js";
+import { capServer } from "./cap.js";
+import { isDemoMode } from "./demo.js";
+import { loadIPDB } from "./ipdb.js";
 import { server } from "./server.js";
+import { loadHeaders, loadRatelimit, loadCorsDefault, loadFiltering } from "./settings-cache.js";
 import { siteverifyServer } from "./siteverify.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
@@ -99,6 +102,7 @@ new Elysia({
   })
   .use(staticPlugin())
   .get("/", async ({ cookie }) => {
+    if (isDemoMode()) return file("./public/index.html");
     return file(cookie.cap_authed?.value === "yes" ? "./public/index.html" : "./public/login.html");
   })
   .use(auth)
@@ -110,4 +114,8 @@ new Elysia({
 
 console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}`);
 
-prewarmInstrumentation();
+await loadHeaders();
+await loadRatelimit();
+await loadCorsDefault();
+await loadFiltering();
+loadIPDB().catch((e) => console.warn("[cap] IP DB load:", e.message));
