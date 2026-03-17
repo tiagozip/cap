@@ -64,10 +64,10 @@
   <body>
     <main>
       <label for="keyIdInput">Key ID:</label>
-      <input type="text" id="keyIdInput" placeholder="e.g. 19d7e51172" value="9a42f69c25" />
+      <input type="text" id="keyIdInput" placeholder="e.g. 19d7e51172" />
 
       <label for="secretKeyInput">Secret key:</label>
-      <input type="password" id="secretKeyInput" placeholder="e.g. eOAdXZvmQecVrvh..." value="mCge83PaqDf86p7W0hxykvAkYwAU1r1izAALFvUPinbO7gX4fDRA" />
+      <input type="password" id="secretKeyInput" placeholder="e.g. sk-eOAdXZvmQecVrvh..." />
 
       <button id="startButton">Start</button>
 
@@ -117,12 +117,15 @@
         cap.widget.style.display = "block";
 
         cap.addEventListener("progress", (e) => log(`Solving... ${e.detail.progress}%`));
-        cap.addEventListener("error", (e) => log(`ERROR: ${e.detail.error}`));
+        cap.addEventListener("error", (e) => log(`ERROR: ${e.detail.message || e.detail.error}`));
 
         try {
           const result = await cap.solve();
           log(`Solved in ${Date.now() - startTime}ms`);
-          console.log(result)
+          if (!result || !result.token) {
+            log(`Solve returned no token (instrumentation may have failed)`);
+            return;
+          }
           await validateToken(keyId, secretKey, result.token);
         } catch (err) {
           log(`Error during solve: ${err}`);

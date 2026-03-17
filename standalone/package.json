@@ -1,6 +1,6 @@
 {
   "name": "cap-standalone",
-  "version": "2.2.1",
+  "version": "3.0.0",
   "keywords": [
     "algorithm",
     "anti-abuse",
@@ -45,13 +45,12 @@
     "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:latest . --push"
   },
   "dependencies": {
-    "@cap.js/server": "^4.0.3",
-    "@elysiajs/cors": "^1.4.0",
-    "@elysiajs/static": "^1.4.4",
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/static": "^1.4.7",
     "@elysiajs/swagger": "^1.3.1",
-    "elysia": "^1.4.12",
-    "elysia-rate-limit": "4.4.0",
-    "javascript-obfuscator": "^4.1.1"
+    "elysia": "^1.4.27",
+    "javascript-obfuscator": "^4.2.2",
+    "maxmind": "^5.0.5"
   },
   "devDependencies": {
     "bun-types": "latest"
