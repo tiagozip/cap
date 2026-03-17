@@ -1,24 +1,25 @@
 import { randomBytes } from "node:crypto";
 import { Elysia } from "elysia";
-import { rateLimit } from "elysia-rate-limit";
 import { db } from "./db.js";
-import { ratelimitGenerator } from "./ratelimit.js";
+import valkeyRateLimit from "./ratelimit.js";
 
-const { ADMIN_KEY } = process.env;
+const { ADMIN_KEY, DEMO_MODE } = process.env;
 
-if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
-if (ADMIN_KEY.length < 12)
-  throw new Error("auth: Admin key too short. Please use one that's at least 12 characters");
+if (DEMO_MODE !== "true") {
+  if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
+  if (ADMIN_KEY.length < 12)
+    throw new Error(
+      "auth: Admin key too short. Please use one that's at least 12 characters",
+    );
+}
 
 export const auth = new Elysia({
   prefix: "/auth",
 })
   .use(
-    rateLimit({
-      duration: 30_000,
-      max: 200, // this is intentionally permissive 
-      scoping: "scoped",
-      generator: ratelimitGenerator,
+    valkeyRateLimit({
+      duration: 20_000,
+      max: 200, // this is intentionally permissive
     }),
   )
   .post("/login", async ({ body, set, cookie }) => {
@@ -36,11 +37,14 @@ export const auth = new Elysia({
     const created = Date.now();
 
     const hashedToken = await Bun.password.hash(session_token);
+    const ttlSeconds = Math.ceil((expires - Date.now()) / 1000);
 
-    await db`
-      INSERT INTO sessions (token, created, expires)
-      VALUES (${hashedToken}, ${created}, ${expires})
-    `;
+    await db.set(
+      `session:${hashedToken}`,
+      JSON.stringify({ created, expires }),
+    );
+    await db.expire(`session:${hashedToken}`, ttlSeconds);
+    await db.sadd("sessions", hashedToken);
 
     cookie.cap_authed.set({
       value: "yes",
@@ -66,9 +70,10 @@ export const authBeforeHandle = async ({ set, headers }) => {
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
 
-    const apiKey = await db`SELECT * FROM api_keys WHERE id = ${id}`.then((rows) => rows[0]);
+    const fields = await db.hmget(`apikey:${id}`, ["tokenHash"]);
+    const tokenHash = fields?.[0];
 
-    if (!apiKey || !apiKey.tokenHash) {
+    if (!tokenHash) {
       set.status = 401;
       return {
         success: false,
@@ -76,7 +81,7 @@ export const authBeforeHandle = async ({ set, headers }) => {
       };
     }
 
-    if (!(await Bun.password.verify(token, apiKey.tokenHash))) {
+    if (!(await Bun.password.verify(token, tokenHash))) {
       set.status = 401;
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
@@ -88,17 +93,24 @@ export const authBeforeHandle = async ({ set, headers }) => {
     set.status = 401;
     return {
       success: false,
-      error: "Unauthorized. An API key or session token is required to use this endpoint.",
+      error:
+        "Unauthorized. An API key or session token is required to use this endpoint.",
     };
   }
 
-  const { token, hash } = JSON.parse(atob(authorization.replace("Bearer ", "").trim()));
+  let token, hash;
+  try {
+    ({ token, hash } = JSON.parse(
+      atob(authorization.replace("Bearer ", "").trim()),
+    ));
+  } catch {
+    set.status = 401;
+    return { success: false, error: "Unauthorized. Malformed session token." };
+  }
 
-  const [validToken] = await db`
-    SELECT * FROM sessions WHERE token = ${hash} AND expires > ${Date.now()} LIMIT 1
-  `;
+  const sessionData = await db.get(`session:${hash}`);
 
-  if (!validToken) {
+  if (!sessionData) {
     set.status = 401;
     return {
       success: false,
@@ -106,7 +118,19 @@ export const authBeforeHandle = async ({ set, headers }) => {
     };
   }
 
-  if (!(await Bun.password.verify(token, validToken.token))) {
+  const session = JSON.parse(sessionData);
+
+  if (session.expires <= Date.now()) {
+    await db.del(`session:${hash}`);
+    await db.srem("sessions", hash);
+    set.status = 401;
+    return {
+      success: false,
+      error: "Unauthorized. An invalid session token was used.",
+    };
+  }
+
+  if (!(await Bun.password.verify(token, hash))) {
     set.status = 401;
     return {
       success: false,

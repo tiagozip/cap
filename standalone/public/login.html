@@ -3,87 +3,95 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login to Cap</title>
+    <title>Cap</title>
     <link rel="icon" href="./public/logo-small.webp" />
     <style>
       * {
         box-sizing: border-box;
         font-family:
-          InterVariable,
+          "IBM Plex Sans",
+          system-ui,
           -apple-system,
-          BlinkMacSystemFont,
-          Segoe UI,
-          Roboto,
-          Oxygen-Sans,
-          Ubuntu,
-          Cantarell,
-          Helvetica Neue,
           sans-serif;
+        margin: 0;
+        padding: 0;
       }
+
+      :root {
+        --bg: #0d1016;
+        --surface: #0e1015;
+        --border: #1f2127;
+        --text: #fafafa;
+        --text-secondary: #a0a0a8;
+        --text-muted: #5c6773;
+        --blue: #89b4fa;
+      }
+
       body {
-        text-align: center;
-        margin: 0px;
-        padding: 0px;
-        margin-top: 14vh;
-        background-color: #181825;
-        color: #e8e8ea;
+        background-color: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-font-smoothing: antialiased;
       }
+
+      .login-container {
+        width: 100%;
+        margin: 0 auto;
+        max-width: 446px;
+        padding: 40px;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .info-side h1 {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .info-side p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+      }
+
+      .info-side a {
+        color: var(--text);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        font-size: inherit;
+      }
+
+      .info-side a:hover {
+        color: var(--blue);
+      }
+
       form {
-        max-width: 300px;
-        margin: 0px auto;
         display: flex;
         flex-direction: column;
         width: 100%;
-        text-align: left;
       }
-      form h1 {
-        font-size: 24px;
-        font-weight: 500;
-        text-align: center;
-        margin-bottom: 28px;
-        margin-top: 0;
-        user-select: none;
 
-        animation: title-in 0.6s both;
-        animation-delay: 0.1s;
-      }
-      @keyframes title-in {
-        0% {
-          opacity: 0;
-          translate: 0 50px;
-          filter: blur(10px);
-        }
-
-        to {
-          opacity: 1;
-        }
-      }
-      img {
-        width: 60px;
-      }
       label {
-        font-size: 14px;
-        line-height: 1.5;
+        font-size: 13px;
         font-weight: 500;
         display: block;
         margin-bottom: 8px;
-        color: #eee;
+        color: var(--text-secondary);
         user-select: none;
-        will-change: transform, filter, opacity;
-        animation: title-in 0.5s both;
-        animation-delay: 0.2s;
       }
 
       .password-wrapper {
-        box-shadow: inset 0 0 0 1px rgba(186, 194, 222, 0.3);
+        border: 1px solid var(--border);
         color: #eee;
-        border: none;
         display: flex;
-        border-radius: calc(0.8rem - 2px);
+        border-radius: 8px;
         margin-bottom: 16px;
-        will-change: transform, filter, opacity;
-        animation: title-in 0.5s both;
-        animation-delay: 0.3s;
       }
 
       .showhide-password {
@@ -92,12 +100,12 @@
         background-color: transparent;
         padding: 0;
         margin-right: 10px;
-        color: rgba(186, 194, 222);
+        color: var(--text-muted);
       }
 
       .password {
         font-size: 24px;
-        line-height: 1.33333333;
+        line-height: 1.33;
         background-color: transparent;
         border: none;
         width: 100%;
@@ -106,8 +114,7 @@
         color: inherit;
         font-weight: 400;
         letter-spacing: -2px;
-        margin: 0px;
-        caret-color: #89b4fa;
+        caret-color: var(--blue);
       }
 
       .password.show-password {
@@ -120,51 +127,43 @@
       }
 
       .password::placeholder {
-        color: rgba(186, 194, 222, 0.5);
+        color: rgba(186, 194, 222, 0.4);
         user-select: none;
       }
 
-      .password-wrapper:has(.password:focus) {
-        box-shadow:
-          inset 0 0 0 1px rgba(137, 180, 250, 1),
-          0px 0px 0px 2px rgba(137, 180, 250, 1);
-        transition: box-shadow 0.12s;
+      .password-wrapper:focus-within {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 1px var(--blue);
+        transition:
+          border-color 0.12s,
+          box-shadow 0.12s;
       }
 
       .submit {
         padding: 6px 10px;
-        border-radius: calc(0.8rem - 2px);
+        border-radius: 8px;
         height: 40px;
         display: flex;
         align-items: center;
         gap: 6px;
         justify-content: center;
-        text-align: center;
         font-weight: 500;
         border: none;
         color: black;
-        background: #89b4fa;
-        background-origin: border-box;
+        background: var(--blue);
         user-select: none;
-        -webkit-user-select: none;
-        touch-action: manipulation;
         cursor: pointer;
         font-size: 14px;
-        z-index: 12;
-        transition:
-          box-shadow 0.13s,
-          opacity 0.2s;
+        font-family: inherit;
+        transition: opacity 0.15s;
+      }
 
-        will-change: transform, filter, opacity;
-        animation: title-in 0.5s both;
-        animation-delay: 0.4s;
+      .submit:hover {
+        opacity: 0.88;
       }
 
       .submit:focus {
-        box-shadow:
-          inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2),
-          0px 0.5px 1.5px rgba(137, 180, 250, 0.25),
-          0px 0px 0px 3.5px rgba(137, 180, 250, 0.5);
+        box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.4);
         outline: 0;
       }
 
@@ -173,134 +172,103 @@
         opacity: 0.4;
       }
 
-      p.bottom {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        margin-top: 24px;
-
-        will-change: transform, filter, opacity;
-        animation: title-in 0.5s both;
-        animation-delay: 0.5s;
-      }
-      p.bottom .poweredby {
-        margin-left: auto;
-      }
-
       p.err {
-        background-color: rgba(137, 180, 250, 0.2);
+        background-color: rgba(137, 180, 250, 0.15);
         color: rgb(228 238 255);
         display: none;
-        margin: 0px;
         margin-top: -10px;
-        z-index: 10;
         padding: 4px;
         padding-top: 18px;
         padding-bottom: 8px;
         font-size: 13px;
-        border-bottom-left-radius: calc(0.8rem - 2px);
-        border-bottom-right-radius: calc(0.8rem - 2px);
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
         text-align: center;
         user-select: none;
-        transition:
-          opacity 0.2s,
-          margin-top 0.2s,
-          color 0.2s;
       }
 
-      @starting-style {
-        p.err {
-          opacity: 0.9;
-          color: rgba(228, 238, 255, 0.1);
-          margin-top: -40px;
-        }
+      p.bottom {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 20px;
+      }
+
+      p.bottom .poweredby {
+        margin-left: auto;
       }
 
       a {
-        color: #bac2de;
-        font-size: 14px;
+        color: var(--text-muted);
+        font-size: 13px;
         text-underline-offset: 2px;
         text-decoration: none;
-        opacity: 0.6;
         user-select: none;
+        transition: color 0.15s;
       }
 
       a:hover {
-        opacity: 1;
+        color: var(--text-secondary);
         text-decoration: underline;
       }
 
       @font-face {
-        font-family: InterVariable;
-        src: url("./assets/InterVariable.woff2");
+        font-family: "IBM Plex Sans";
+        src: url("/public/assets/ibm-plex-sans.woff2") format("woff2");
+        font-weight: 100 700;
+        font-style: normal;
+        font-display: swap;
       }
     </style>
   </head>
   <body>
-    <form action="javascript:void(0)">
-      <h1>Continue to your Standalone instance</h1>
-      <label for="password">Admin key</label>
-      <div class="password-wrapper">
-        <input
-          type="password"
-          name="password"
-          placeholder="•••••••••••••••••••••"
-          class="password"
-        />
-        <button title="Show/hide password" class="showhide-password" type="button">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-eye-icon lucide-eye"
-          >
-            <path
-              d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
-            />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        </button>
+    <div class="login-container">
+      <div class="info-side">
+        <h1>The self-hosted CAPTCHA for the modern web.</h1>
       </div>
 
-      <button type="submit" class="submit">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="lucide lucide-log-in me-2 h-4 w-4"
-        >
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-          <polyline points="10 17 15 12 10 7"></polyline>
-          <line x1="15" x2="3" y1="12" y2="12"></line>
-        </svg>
-        Sign in
-      </button>
-      <p class="err"></p>
-      <p class="bottom">
-        <!-- prettier-ignore -->
-        <a href="https://github.com/tiagozip/cap" target="_blank" rel="follow noopener" style="position: absolute;top:-999px;">GitHub</a>
-        <a
-          href="https://github.com/tiagozip/cap/issues/new/choose"
-          target="_blank"
-          rel="follow noopener"
-        >
-          Report issues
-        </a>
-        <a href="https://capjs.js.org/" target="_blank" class="poweredby"> Powered by Cap </a>
-      </p>
-    </form>
+        <form action="javascript:void(0)">
+          <label>Admin key</label>
+          <div class="password-wrapper">
+            <input
+              type="password"
+              name="password"
+              placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"
+              class="password"
+            />
+            <button title="Show/hide password" class="showhide-password" type="button">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+                />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+
+          <button type="submit" class="submit">Continue to Cap</button>
+          <p class="err"></p>
+          <p class="bottom">
+            <a
+              href="https://github.com/tiagozip/cap/issues/new/choose"
+              target="_blank"
+              rel="noopener"
+              >Report issues</a
+            >
+            <a href="https://capjs.js.org/" target="_blank" class="poweredby">Powered by Cap</a>
+          </p>
+        </form>
+    </div>
   </body>
   <script>
     document.querySelector("input").focus();
@@ -358,11 +326,12 @@
       if (passwordInput.type === "password") {
         passwordInput.type = "text";
         passwordInput.placeholder = "correct horse battery staple";
-        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
+        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
       } else {
         passwordInput.type = "password";
-        passwordInput.placeholder = "•••••••••••••••••••••";
-        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+        passwordInput.placeholder =
+          "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022";
+        showhideButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
       }
     });
   </script>
