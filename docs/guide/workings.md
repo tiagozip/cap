@@ -22,8 +22,10 @@ By the way, this is a more technical explanation of how Cap works. If you're loo
      - Checking if the resulting hash begins with the target prefix
    - The WASM increments the nonce until a matching hash is found
 
+6. Instrumentation challenges are decompressed and executed, if present.
+
 #### Redeeming the solution for a token
 
-6. Once a valid solution is found, the widget sends the result back to the server for validation.
-7. The server itself then also generates the same challenges using the provided token and configuration, and verifies the solutions submitted by the widget.
-8. Upon successful verification, the server redeems the solution and issues a token that can be used to authenticate the request.
+7. Once a valid solution is found, the widget sends the result back to the server for validation.
+8. The server itself then also generates the same challenges using the provided token and configuration, and verifies the solutions submitted by the widget.
+9. Upon successful verification, the server redeems the solution and issues a token that can be used to authenticate the request.
