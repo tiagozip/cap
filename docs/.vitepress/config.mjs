@@ -5,9 +5,9 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
   lang: "en-US",
-  title: "Cap — Modern, lightning-quick PoW captcha",
+  title: "Cap: Self-hosted CAPTCHA for the modern web.",
   description:
-    "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work",
+    "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work and instrumentation challenges",
   lastUpdated: true,
   vite: {
     plugins: [llmstxt()],
@@ -195,11 +195,12 @@ export default withMermaid({
         ],
       },
       {
-        text: "Proof-of-work",
+        text: "Details",
         collapsed: true,
         items: [
           { text: "Effectiveness", link: "/guide/effectiveness.md" },
-          { text: "How does it work", link: "/guide/workings.md" },
+          { text: "Instrumentation", link: "/guide/instrumentation.md" },
+          { text: "How does Cap work?", link: "/guide/workings.md" },
         ],
       },
       { text: "Benchmark", link: "/guide/benchmark.md" },
