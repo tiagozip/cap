@@ -1,6 +1,6 @@
 (() => {
   const WASM_VERSION = "0.0.6";
-  const hasHaptics =
+  const _browserHasHaptics =
     "vibrate" in navigator && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   if (typeof window === "undefined") {
@@ -310,6 +310,10 @@
     #speculativeTimer = null;
     #speculativePool = null;
     #interactionHandler = null;
+
+    get #hasHaptics() {
+      return _browserHasHaptics && !window.CAP_DISABLE_HAPTICS && !this.hasAttribute("data-cap-disable-haptics");
+    }
 
     #makeSpeculativeState() {
       return {
@@ -694,7 +698,7 @@
                 "We have verified you're a human, you may now continue",
               ),
             );
-            if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
+            if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
             this.#resetSpeculativeState();
             this.#solving = false;
@@ -774,7 +778,7 @@
                   "We have verified you're a human, you may now continue",
                 ),
               );
-              if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
+              if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
               this.#resetSpeculativeState();
               this.#solving = false;
@@ -881,7 +885,7 @@
               "We have verified you're a human, you may now continue",
             ),
           );
-          if (hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
+          if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
           return { success: true, token: this.token };
         } catch (err) {
@@ -1004,7 +1008,7 @@
         if (!this.#div.hasAttribute("disabled")) this.solve();
       });
       this.#div.addEventListener("mousedown", () => {
-        if (!this.#div.hasAttribute("disabled") && hasHaptics) {
+        if (!this.#div.hasAttribute("disabled") && this.#hasHaptics) {
           navigator.vibrate(5);
         }
       });
@@ -1144,7 +1148,7 @@
       this.updateUI("error", this.getI18nText("error-label", "Error. Try again."));
       this.executeAttributeCode("onerror", event);
 
-      if (hasHaptics) navigator.vibrate([10, 40, 10]);
+      if (this.#hasHaptics) navigator.vibrate([10, 40, 10]);
     }
 
     handleReset(event) {
@@ -1255,6 +1259,10 @@
 
       if (config.apiEndpoint) {
         widget.setAttribute("data-cap-api-endpoint", config.apiEndpoint);
+      }
+
+      if (!el && !widget.hasAttribute("data-cap-disable-haptics")) {
+        widget.setAttribute("data-cap-disable-haptics", "");
       }
 
       this.widget = widget;
