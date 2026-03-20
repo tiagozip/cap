@@ -261,7 +261,19 @@ You can also specify a custom fetch function with `window.CAP_CUSTOM_FETCH`:
 window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
 ```
 
-You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL` or set a nonce for the CSS with `window.CAP_CSS_NONCE`
+You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL` or set a nonce for the CSS with `window.CAP_CSS_NONCE`.
+
+To disable haptic feedback (vibrations on mobile devices), set `window.CAP_DISABLE_HAPTICS = true` globally or add the `data-cap-disable-haptics` attribute to individual widgets:
+
+```js
+window.CAP_DISABLE_HAPTICS = true;
+```
+
+```html
+<cap-widget data-cap-disable-haptics data-cap-api-endpoint="..."></cap-widget>
+```
+
+Haptic feedback is automatically disabled in [programmatic mode](./programmatic) since there is no visible widget for the user to interact with
 
 ### Attributes
 
@@ -271,6 +283,7 @@ You can also set a custom WASM url (for example the Standalone asset server's) w
 | `data-cap-worker-count`        | Number of solver workers (defaults to `navigator.hardwareConcurrency \|\| 8`) |
 | `data-cap-hidden-field-name`   | Name of the hidden token input in a `<form>` (default: `cap-token`)           |
 | `data-cap-troubleshooting-url` | Custom URL for the "Troubleshooting" link shown when a user is blocked        |
+| `data-cap-disable-haptics`     | Disable haptic feedback (vibrations) on this widget                           |
 
 #### i18n
 
