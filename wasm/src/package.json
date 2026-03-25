@@ -52,6 +52,7 @@
   },
   "main": "./node/cap_wasm.js",
   "scripts": {
+    "test": "node ./c/test-parity.cjs",
     "npm:publish": "bun publish --access public"
   }
 }
