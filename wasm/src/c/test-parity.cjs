@@ -60,7 +60,7 @@ async function main() {
   const actual = loadSolvePow(path.join("..", "node", "cap_wasm.js"));
   const referenceModule = await import(pathToFileURL(path.join(__dirname, "..", "browser", "cap_wasm.js")).href);
   referenceModule.initSync({
-    module: fs.readFileSync(path.join(__dirname, "reference", "rust_cap_wasm_bg.wasm")),
+    module: fs.readFileSync(path.join(__dirname, "..", "browser", "cap_wasm_bg.wasm")),
   });
   const reference = referenceModule.solve_pow;
 

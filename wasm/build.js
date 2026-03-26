@@ -3,38 +3,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { minify } from "terser";
 
-const rustSrcDir = path.join(process.cwd(), "./src/rust");
+const cSrcDir = path.join(process.cwd(), "./src/c");
 const nodeOutDir = path.join(process.cwd(), "./src/node");
 const browserOutDir = path.join(process.cwd(), "./src/browser");
-const packageName = "cap_wasm";
+const wasmOutPath = path.join(cSrcDir, "build", "cap_wasm.wasm");
 
-console.log(`Cleaning old build directories...`);
-try {
-  fs.rmdirSync(nodeOutDir);
-} catch {}
-try {
-  fs.rmdirSync(browserOutDir);
-} catch {}
+console.log(`Building C wasm...`);
+execSync(`make -C "${cSrcDir}" clean`, { stdio: "inherit" });
+execSync(`make -C "${cSrcDir}"`, { stdio: "inherit" });
 
-console.log(`\n  Building for Node...`);
-execSync(
-  `wasm-pack build "${rustSrcDir}" --target nodejs --out-dir "${nodeOutDir}" --out-name "${packageName}"`,
-  { stdio: "inherit" },
-);
-
-console.log(`\n  Building for web...`);
-execSync(
-  `wasm-pack build "${rustSrcDir}" --target web --out-dir "${browserOutDir}" --out-name "${packageName}"`,
-  { stdio: "inherit" },
-);
-
-console.log(`\n  Removing .gitignore...`);
-
-[browserOutDir, nodeOutDir].forEach((dir) => {
-  try {
-    fs.rmSync(path.join(dir, ".gitignore"));
-  } catch {}
-});
+console.log(`\n  Syncing wasm binary to package outputs...`);
+fs.copyFileSync(wasmOutPath, path.join(nodeOutDir, "cap_wasm_bg.wasm"));
+fs.copyFileSync(wasmOutPath, path.join(browserOutDir, "cap_wasm_bg.wasm"));
 
 console.log(`\n  Minifing loaders...`);
 
