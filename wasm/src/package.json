@@ -52,7 +52,7 @@
   },
   "main": "./node/cap_wasm.js",
   "scripts": {
-    "test": "node ./c/test-parity.cjs",
+    "test": "node ./c/test-regression.cjs",
     "npm:publish": "bun publish --access public"
   }
 }
