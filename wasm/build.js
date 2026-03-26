@@ -36,6 +36,10 @@ if (!doTest) {
 }
 
 console.log(`\n  test...`);
+execSync(`node ${path.join("c", "test-regression.cjs")}`, {
+  stdio: "inherit",
+  cwd: "./src",
+});
 execSync(`bun ${path.join("test", "node.js")}`, { stdio: "inherit" });
 
 console.log(`\n  testing odd difficulty...`);
