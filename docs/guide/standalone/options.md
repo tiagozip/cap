@@ -45,18 +45,11 @@ If so, you can change the IP extraction logic to simply read from a header set i
 
 The `/siteverify` endpoint is intended for server-to-server use, so it's not ratelimited by default.
 
-## Custom data path
+## Redis / Valkey
 
-If you would like the data to be stored in a custom path inside the container, you can set the `DATA_PATH` environment variable to the desired path. Note that this only works in Standalone 2.0.9 or above.
+Cap Standalone uses Redis (or Valkey) for all data storage. Set the `REDIS_URL` environment variable to your Redis connection string. This defaults to `redis://localhost:6379`.
 
-## Custom DB URLs
-
-If you would like to use a different database, you can set the `DB_URL` environment variable to the URL of the database you want to use.
-
-We recommend keeping this to the default value, which is `sqlite://./.data/db.sqlite`. However, using Postgres, MySQL, or any other database supported by Bun SQL might be possible, even though not officially supported or tested:
-
-- `postgres://user:pass@localhost:5432/mydb`
-- `mysql://user:password@localhost:3306/database`
+The recommended setup uses Valkey (a Redis-compatible store) via the docker-compose file provided in the [quickstart guide](/guide/standalone/).
 
 ## Error messages
 
@@ -64,6 +57,6 @@ Error messages are redacted by default and instead logged to the console. To dis
 
 ## Instrumentation challenges
 
-Cap standalone supports our JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to try stop headless browsers from solving them.
+Cap Standalone supports JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to block headless browsers from solving them. Instrumentation challenges are enabled by default when creating new site keys.
 
-You can turn on instrumentation challenges by toggling them on in your site key config. To block headless browsers, turn on "Attempt to block headless browsers"
+You can toggle instrumentation challenges on or off in your site key config. To block headless browsers, turn on "Attempt to block headless browsers" in the key settings.

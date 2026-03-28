@@ -484,20 +484,23 @@ export const server = new Elysia({
         return { success: false, error: "Key not found" };
       }
 
-      await db.del(`key:${params.siteKey}`);
-      await db.del(`solutions:${params.siteKey}`);
-      await db.del(`metrics:challenges:${params.siteKey}`);
-      await db.del(`metrics:verified:${params.siteKey}`);
-      await db.del(`metrics:failed:${params.siteKey}`);
-      await db.del(`metrics:ratelimited:${params.siteKey}`);
-      await db.del(`metrics:latency_sum:${params.siteKey}`);
-      await db.del(`metrics:latency_count:${params.siteKey}`);
-      await db.del(`metrics:country:${params.siteKey}`);
-      await db.del(`metrics:asn:${params.siteKey}`);
-      await db.del(`metrics:platform:${params.siteKey}`);
-      await db.del(`metrics:os:${params.siteKey}`);
-      await db.del(`blocked:${params.siteKey}`);
-      await db.srem("keys", params.siteKey);
+      const sk = params.siteKey;
+      await Promise.all([
+        db.del(`key:${sk}`),
+        db.del(`solutions:${sk}`),
+        db.del(`metrics:challenges:${sk}`),
+        db.del(`metrics:verified:${sk}`),
+        db.del(`metrics:failed:${sk}`),
+        db.del(`metrics:ratelimited:${sk}`),
+        db.del(`metrics:latency_sum:${sk}`),
+        db.del(`metrics:latency_count:${sk}`),
+        db.del(`metrics:country:${sk}`),
+        db.del(`metrics:asn:${sk}`),
+        db.del(`metrics:platform:${sk}`),
+        db.del(`metrics:os:${sk}`),
+        db.del(`blocked:${sk}`),
+        db.srem("keys", sk),
+      ]);
       invalidateBlockCache(params.siteKey);
 
       return { success: true };
