@@ -31,7 +31,11 @@ function readIntParam(name, fallback) {
     return fallback;
   }
 
-  const parsed = Number.parseInt(value, 10);
+  if (!/^\d+$/.test(value)) {
+    throw new Error(`${name} must be a non-negative integer`);
+  }
+
+  const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0) {
     throw new Error(`${name} must be a non-negative integer`);
   }
