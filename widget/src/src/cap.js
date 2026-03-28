@@ -730,19 +730,19 @@
             }
 
             const progressInterval = setInterval(() => {
-              if (
-                this.#speculative.state !== "solving" &&
-                this.#speculative.state !== "redeeming"
-              ) {
+              const st = this.#speculative.state;
+              if (st === "done" || st === "error") {
                 clearInterval(progressInterval);
                 return;
               }
               const total = this.#speculative.challenges ? this.#speculative.challenges.length : 1;
               const done = this.#speculative.completedCount;
               const visual =
-                this.#speculative.state === "redeeming"
+                st === "redeeming"
                   ? 99
-                  : Math.min(98, Math.round((done / total) * 100));
+                  : st === "fetching" || st === "waiting"
+                    ? 0
+                    : Math.min(98, Math.round((done / total) * 100));
               this.dispatchEvent("progress", { progress: visual });
             }, 150);
 
