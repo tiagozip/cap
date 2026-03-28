@@ -21,6 +21,18 @@ Optional environment variables:
 - `BENCH_ITERATIONS` controls the timed loops, default `10`
 - `BENCH_WARMUP` controls warmup rounds, default `2`
 
+## Browser version
+
+This repo also includes a browser-hosted version that loads the wasm modules in a real browser
+context.
+
+```bash
+bun --cwd benchmark run bench:browser
+```
+
+Then open the printed local URL. You can override the browser benchmark loop counts with query
+parameters like `?iterations=20&warmup=3`.
+
 ## Requirements
 
 - `make`
