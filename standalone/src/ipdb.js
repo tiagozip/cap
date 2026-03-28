@@ -274,7 +274,7 @@ export async function lookup(ip) {
   const isPrivate =
     lookupIp.startsWith("10.") ||
     lookupIp.startsWith("192.168.") ||
-    lookupIp.startsWith("172.") ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(lookupIp) ||
     lookupIp === "127.0.0.1" ||
     lookupIp === "::1";
 
@@ -349,10 +349,11 @@ async function ipinfoLookup(ip) {
     }
 
     if (ipinfoCache.size >= IPINFO_CACHE_MAX) {
-      const entries = [...ipinfoCache.entries()].sort((a, b) => a[1].ts - b[1].ts);
-      for (let i = 0; i < entries.length / 2; i++) {
-        ipinfoCache.delete(entries[i][0]);
+      let oldest = Infinity, oldestKey = null;
+      for (const [k, v] of ipinfoCache) {
+        if (v.ts < oldest) { oldest = v.ts; oldestKey = k; }
       }
+      if (oldestKey) ipinfoCache.delete(oldestKey);
     }
     ipinfoCache.set(ip, { ts: Date.now(), data: result });
   } catch {
