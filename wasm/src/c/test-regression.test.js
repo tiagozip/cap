@@ -9,7 +9,7 @@ const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function build() {
-  execFileSync("make", ["-C", "c"], { stdio: "inherit" });
+  execFileSync("make", ["-C", __dirname], { stdio: "inherit" });
 }
 
 function loadSolvePow(modulePath) {
