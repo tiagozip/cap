@@ -1,12 +1,27 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 export const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const rootDir = path.join(__dirname, "..");
-export const rustupBin = path.join(process.env.HOME ?? "", ".cargo", "bin", "rustup");
-export const rustcBin = path.join(process.env.HOME ?? "", ".cargo", "bin", "rustc");
+const hardcodedRustupBin = path.join(process.env.HOME ?? "", ".cargo", "bin", "rustup");
+const hardcodedRustcBin = path.join(process.env.HOME ?? "", ".cargo", "bin", "rustc");
+
+function resolveExecutableFromPath(name, fallback) {
+  const result = spawnSync("which", [name], { encoding: "utf8" });
+  if (result.status === 0) {
+    const resolved = result.stdout.trim();
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return fallback;
+}
+
+export const rustupBin = resolveExecutableFromPath("rustup", hardcodedRustupBin);
+export const rustcBin = resolveExecutableFromPath("rustc", hardcodedRustcBin);
 export const rustBaselineCommit = "da725dba93f61099d264bc597d22ff388d09d2ad";
 export const outDir = path.join(__dirname, "out");
 export const headDir = path.join(outDir, "head");
@@ -23,6 +38,77 @@ export const rustSrcDir = path.join(__dirname, "rust");
 function resetDir(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
+}
+
+function commitExistsLocally(commit) {
+  return (
+    spawnSync("git", ["cat-file", "-e", `${commit}^{commit}`], {
+      cwd: rootDir,
+    }).status === 0
+  );
+}
+
+function ensureBaselineCommitAvailable() {
+  if (commitExistsLocally(rustBaselineCommit)) {
+    return;
+  }
+
+  const fetchAttempts = [
+    ["fetch", "origin", rustBaselineCommit],
+    ["fetch", "--deepen=1000", "origin"],
+    ["fetch", "--unshallow", "origin"],
+  ];
+
+  for (const args of fetchAttempts) {
+    const result = spawnSync("git", args, {
+      cwd: rootDir,
+      stdio: "inherit",
+    });
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    if (result.status === 0 && commitExistsLocally(rustBaselineCommit)) {
+      return;
+    }
+  }
+
+  if (!commitExistsLocally(rustBaselineCommit)) {
+    throw new Error(
+      `Baseline commit ${rustBaselineCommit} is not available locally after git fetch attempts.`,
+    );
+  }
+}
+
+function buildRustWithToolchain(rustupPath, rustcPath) {
+  execFileSync(
+    rustupPath,
+    [
+      "run",
+      "stable",
+      "cargo",
+      "build",
+      "--manifest-path",
+      path.join(rustSrcDir, "Cargo.toml"),
+      "--target",
+      "wasm32-unknown-unknown",
+      "--release",
+    ],
+    {
+      cwd: rootDir,
+      env: {
+        ...process.env,
+        CARGO_TARGET_DIR: path.join(rustDir, "target"),
+        RUSTC: rustcPath,
+      },
+      stdio: "inherit",
+    },
+  );
+}
+
+function isNonZeroExitError(error) {
+  return typeof error?.status === "number" && error.status !== 0;
 }
 
 export function buildHead() {
@@ -53,29 +139,19 @@ export function buildRust() {
   resetDir(rustDir);
   fs.mkdirSync(rustBrowserDir, { recursive: true });
 
-  execFileSync(
-    rustupBin,
-    [
-      "run",
-      "stable",
-      "cargo",
-      "build",
-      "--manifest-path",
-      path.join(rustSrcDir, "Cargo.toml"),
-      "--target",
-      "wasm32-unknown-unknown",
-      "--release",
-    ],
-    {
-      cwd: rootDir,
-      env: {
-        ...process.env,
-        CARGO_TARGET_DIR: path.join(rustDir, "target"),
-        RUSTC: rustcBin,
-      },
-      stdio: "inherit",
-    },
-  );
+  try {
+    buildRustWithToolchain(rustupBin, rustcBin);
+  } catch (error) {
+    const shouldRetryWithHardcoded =
+      isNonZeroExitError(error) &&
+      (rustupBin !== hardcodedRustupBin || rustcBin !== hardcodedRustcBin);
+
+    if (!shouldRetryWithHardcoded) {
+      throw error;
+    }
+
+    buildRustWithToolchain(hardcodedRustupBin, hardcodedRustcBin);
+  }
 
   const rustWasmSource = path.join(
     rustDir,
@@ -85,7 +161,9 @@ export function buildRust() {
     "cap_wasm.wasm",
   );
 
-  const rustNodeLoader = execFileSync(
+  ensureBaselineCommitAvailable();
+
+  const rustNodeLoaderResult = spawnSync(
     "git",
     ["show", `${rustBaselineCommit}:wasm/src/node/cap_wasm.js`],
     {
@@ -94,6 +172,18 @@ export function buildRust() {
       maxBuffer: 16 * 1024 * 1024,
     },
   );
+
+  if (rustNodeLoaderResult.error) {
+    throw rustNodeLoaderResult.error;
+  }
+
+  if (rustNodeLoaderResult.status !== 0) {
+    throw new Error(
+      `git show failed for ${rustBaselineCommit}: ${rustNodeLoaderResult.stderr || `exit code ${rustNodeLoaderResult.status}`}`,
+    );
+  }
+
+  const rustNodeLoader = rustNodeLoaderResult.stdout;
 
   const rustNodeLoaderWithStubs = rustNodeLoader
     .replace(
