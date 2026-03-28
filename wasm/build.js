@@ -36,14 +36,14 @@ if (!doTest) {
 }
 
 console.log(`\n  test...`);
-execSync(`node ${path.join("c", "test-regression.cjs")}`, {
+execSync(`bun test ${path.join("c", "test-regression.test.js")}`, {
   stdio: "inherit",
   cwd: "./src",
 });
-execSync(`bun ${path.join("test", "node.js")}`, { stdio: "inherit" });
+execSync(`bun test ${path.join("test", "node.test.js")}`, { stdio: "inherit" });
 
 console.log(`\n  testing odd difficulty...`);
-execSync(`bun ${path.join("test", "node_odd_difficulty.js")}`, {
+execSync(`bun test ${path.join("test", "node_odd_difficulty.test.js")}`, {
   stdio: "inherit",
 });
 
