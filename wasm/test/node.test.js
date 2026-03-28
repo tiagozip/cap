@@ -1,5 +1,5 @@
 import { performance } from "node:perf_hooks";
-import assert from "node:assert/strict";
+import { test, expect } from "bun:test";
 import { solve_pow } from "../src/node/cap_wasm.js";
 
 const challenges = [
@@ -23,13 +23,13 @@ const challenges = [
   ["0c21ade6e63a4e37b13cb8b087f31863", "65c9", 190704],
 ];
 
-async function runSolverTest() {
+test("node solver regression cases", () => {
   const startTime = performance.now();
 
   for (let i = 0; i < challenges.length; i++) {
     const [salt, target, expectedNonce] = challenges[i];
     const nonce = solve_pow(salt, target);
-    assert.equal(nonce.toString(), String(expectedNonce), `${salt}:${target}`);
+    expect(nonce.toString()).toBe(String(expectedNonce));
 
     console.log(`[${i + 1}/${challenges.length}] ${salt}:${target}:${nonce}`);
   }
@@ -38,6 +38,4 @@ async function runSolverTest() {
   const totalTime = (endTime - startTime) / 1000;
 
   console.log(`Solved challenges in ${totalTime.toFixed(3)}s`);
-}
-
-runSolverTest();
+});
