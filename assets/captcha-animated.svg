@@ -1,0 +1,305 @@
+<svg
+  width="578"
+  height="130"
+  viewBox="0 0 578 130"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-label="Human verification widget animation"
+>
+  <defs>
+    <linearGradient id="label-fade-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="black" stop-opacity="0"/>
+      <stop offset="14%" stop-color="white" stop-opacity="1"/>
+      <stop offset="86%" stop-color="white" stop-opacity="1"/>
+      <stop offset="100%" stop-color="black" stop-opacity="0"/>
+    </linearGradient>
+
+    <mask id="label-mask" maskUnits="userSpaceOnUse">
+      <rect x="108" y="12" width="350" height="96" fill="url(#label-fade-grad)"/>
+    </mask>
+  </defs>
+
+  <style>
+    .ui-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      fill: #000;
+      text-rendering: geometricPrecision;
+    }
+    .label {
+      font-size: 34.2857px;
+      font-weight: 500;
+      letter-spacing: 0.025em;
+    }
+    .brand {
+      font-size: 26.8489px;
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      fill: #212121;
+    }
+  </style>
+
+  <g transform="translate(289 65)">
+    <g>
+      <!-- whole widget press -->
+      <animateTransform
+        attributeName="transform"
+        type="scale"
+        begin="1s"
+        dur="0.2s"
+        from="1"
+        to="0.985"
+        fill="freeze"
+        calcMode="spline"
+        keyTimes="0;1"
+        keySplines="0.22 1 0.36 1"
+      />
+      <animateTransform
+        attributeName="transform"
+        type="scale"
+        begin="1.2s"
+        dur="0.2s"
+        from="0.985"
+        to="1"
+        fill="freeze"
+        calcMode="spline"
+        keyTimes="0;1"
+        keySplines="0.22 1 0.36 1"
+      />
+
+      <g transform="translate(-289 -65)">
+        <!-- card -->
+        <rect width="578" height="130" rx="33" fill="#FDFDFD"/>
+        <rect
+          x="0.75"
+          y="0.75"
+          width="576.5"
+          height="128.5"
+          rx="32.25"
+          fill="none"
+          stroke="#DDDDDD"
+          stroke-opacity="0.560784"
+          stroke-width="1.5"
+        />
+
+        <!-- brand -->
+        <text class="ui-text brand" x="502" y="87.5439">Cap</text>
+        <rect x="501" y="92" width="50" height="2" fill="#212121"/>
+
+        <!-- icon -->
+        <g transform="translate(61.5 64.5)">
+          <!-- idle checkbox -->
+          <g opacity="1">
+            <animate
+              attributeName="opacity"
+              begin="1.2s"
+              dur="0.001s"
+              from="1"
+              to="0"
+              fill="freeze"
+            />
+            <rect
+              x="-26.5"
+              y="-26.5"
+              width="53"
+              height="53"
+              rx="12"
+              fill="none"
+              stroke="#AAAAAA"
+              stroke-opacity="0.819608"
+              stroke-width="2"
+            />
+          </g>
+
+          <!-- verifying ring -->
+          <g opacity="0">
+            <animate
+              attributeName="opacity"
+              begin="1.2s"
+              dur="0.001s"
+              from="0"
+              to="1"
+              fill="freeze"
+            />
+            <animate
+              attributeName="opacity"
+              begin="2.4s"
+              dur="0.001s"
+              from="1"
+              to="0"
+              fill="freeze"
+            />
+
+            <g transform="scale(1.72) rotate(-90)">
+              <circle
+                cx="0"
+                cy="0"
+                r="14"
+                fill="none"
+                stroke="#eee"
+                stroke-width="3"
+              />
+              <circle
+                cx="0"
+                cy="0"
+                r="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-dasharray="87.9646"
+                stroke-dashoffset="87.9646"
+              >
+                <animate
+                  attributeName="stroke-dashoffset"
+                  begin="1.2s"
+                  dur="1.2s"
+                  from="87.9646"
+                  to="0"
+                  fill="freeze"
+                  calcMode="spline"
+                  keyTimes="0;1"
+                  keySplines="0.16 1 0.3 1"
+                />
+              </circle>
+            </g>
+          </g>
+
+          <!-- final check -->
+          <g opacity="0">
+            <animate
+              attributeName="opacity"
+              begin="2.4s"
+              dur="0.001s"
+              from="0"
+              to="1"
+              fill="freeze"
+            />
+            <path
+              d="M-16.043 0.001L-4.5846 11.46L18.332 -11.457"
+              fill="none"
+              stroke="#00A67D"
+              stroke-width="4.58333"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              pathLength="100"
+              stroke-dasharray="100"
+              stroke-dashoffset="100"
+            >
+              <animate
+                attributeName="stroke-dashoffset"
+                begin="2.4s"
+                dur="0.34s"
+                from="100"
+                to="0"
+                fill="freeze"
+                calcMode="spline"
+                keyTimes="0;1"
+                keySplines="0.16 1 0.3 1"
+              />
+            </path>
+          </g>
+        </g>
+
+        <!-- labels -->
+        <g class="ui-text label" mask="url(#label-mask)">
+          <!-- current: initial -->
+          <g opacity="1">
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              begin="1.2s"
+              dur="0.17s"
+              from="0 0"
+              to="0 -20"
+              fill="freeze"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="0.25 1 0.35 1"
+            />
+            <animate
+              attributeName="opacity"
+              begin="1.2s"
+              dur="0.17s"
+              from="1"
+              to="0"
+              fill="freeze"
+            />
+            <text x="123" y="77.6875">Verify you’re human</text>
+          </g>
+
+          <!-- next: verifying (starts slightly after current exits) -->
+          <g opacity="0" transform="translate(0 20)">
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              begin="1.27s"
+              dur="0.17s"
+              from="0 20"
+              to="0 0"
+              fill="freeze"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="0.25 1 0.35 1"
+            />
+            <animate
+              attributeName="opacity"
+              begin="1.27s"
+              dur="0.17s"
+              from="0"
+              to="1"
+              fill="freeze"
+            />
+
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              begin="2.4s"
+              dur="0.15s"
+              additive="sum"
+              from="0 0"
+              to="0 -20"
+              fill="freeze"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="0.25 1 0.35 1"
+            />
+            <animate
+              attributeName="opacity"
+              begin="2.4s"
+              dur="0.15s"
+              from="1"
+              to="0"
+              fill="freeze"
+            />
+            <text x="123" y="77.6875">Verifying...</text>
+          </g>
+
+          <!-- next: solved -->
+          <g opacity="0" transform="translate(0 20)">
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              begin="2.47s"
+              dur="0.17s"
+              from="0 20"
+              to="0 0"
+              fill="freeze"
+              calcMode="spline"
+              keyTimes="0;1"
+              keySplines="0.25 1 0.35 1"
+            />
+            <animate
+              attributeName="opacity"
+              begin="2.47s"
+              dur="0.17s"
+              from="0"
+              to="1"
+              fill="freeze"
+            />
+            <text x="123" y="77.6875">You’re a human</text>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
