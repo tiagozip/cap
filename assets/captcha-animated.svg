@@ -25,49 +25,150 @@
       fill: #000;
       text-rendering: geometricPrecision;
     }
+
     .label {
       font-size: 34.2857px;
       font-weight: 500;
       letter-spacing: 0.025em;
     }
+
     .brand {
       font-size: 26.8489px;
       font-weight: 400;
       letter-spacing: 0.03em;
       fill: #212121;
     }
+
+    .widget-scale {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: widget-scale 15s infinite;
+      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .idle-box {
+      animation: idle-box-opacity 15s linear infinite;
+    }
+
+    .verifying-ring {
+      animation: verifying-ring-opacity 15s linear infinite;
+    }
+
+    .ring-progress {
+      animation: ring-progress 15s infinite;
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .final-check {
+      animation: final-check-opacity 15s linear infinite;
+    }
+
+    .final-check path {
+      animation: check-draw 15s infinite;
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .label-initial,
+    .label-verifying,
+    .label-solved {
+      animation-duration: 15s;
+      animation-iteration-count: infinite;
+      animation-timing-function: cubic-bezier(0.25, 1, 0.35, 1);
+    }
+
+    .label-initial { animation-name: label-initial; }
+    .label-verifying { animation-name: label-verifying; }
+    .label-solved { animation-name: label-solved; }
+
+    @keyframes widget-scale {
+      0%, 13.3333% { transform: scale(1); }
+      14.6667% { transform: scale(0.985); }
+      16%, 100% { transform: scale(1); }
+    }
+
+    @keyframes idle-box-opacity {
+      0%, 14.6666% { opacity: 1; }
+      14.6667%, 99.999% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes verifying-ring-opacity {
+      0%, 14.6666% { opacity: 0; }
+      14.6667%, 21.3332% { opacity: 1; }
+      21.3333%, 100% { opacity: 0; }
+    }
+
+    @keyframes ring-progress {
+      0%, 14.6666% { stroke-dashoffset: 87.9646; }
+      21.3333%, 99.999% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 87.9646; }
+    }
+
+    @keyframes final-check-opacity {
+      0%, 21.3332% { opacity: 0; }
+      21.3333%, 99.999% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes check-draw {
+      0%, 21.3332% { stroke-dashoffset: 100; }
+      23.6%, 99.999% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: 100; }
+    }
+
+    @keyframes label-initial {
+      0%, 14.6666% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      15.8%, 98.1999% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      98.2% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      99.3333%, 100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes label-verifying {
+      0%, 15.1332% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      16.2667%, 21.3332% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      22.3333%, 100% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
+
+    @keyframes label-solved {
+      0%, 21.7999% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      22.9333%, 97.7333% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      98.8667%, 100% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+    }
   </style>
 
   <g transform="translate(289 65)">
-    <g>
-      <!-- whole widget press -->
-      <animateTransform
-        attributeName="transform"
-        type="scale"
-        begin="1s"
-        dur="0.2s"
-        from="1"
-        to="0.985"
-        fill="freeze"
-        calcMode="spline"
-        keyTimes="0;1"
-        keySplines="0.22 1 0.36 1"
-      />
-      <animateTransform
-        attributeName="transform"
-        type="scale"
-        begin="1.2s"
-        dur="0.2s"
-        from="0.985"
-        to="1"
-        fill="freeze"
-        calcMode="spline"
-        keyTimes="0;1"
-        keySplines="0.22 1 0.36 1"
-      />
-
+    <g class="widget-scale">
       <g transform="translate(-289 -65)">
-        <!-- card -->
         <rect width="578" height="130" rx="33" fill="#FDFDFD"/>
         <rect
           x="0.75"
@@ -81,22 +182,11 @@
           stroke-width="1.5"
         />
 
-        <!-- brand -->
         <text class="ui-text brand" x="502" y="87.5439">Cap</text>
         <rect x="501" y="92" width="50" height="2" fill="#212121"/>
 
-        <!-- icon -->
         <g transform="translate(61.5 64.5)">
-          <!-- idle checkbox -->
-          <g opacity="1">
-            <animate
-              attributeName="opacity"
-              begin="1.2s"
-              dur="0.001s"
-              from="1"
-              to="0"
-              fill="freeze"
-            />
+          <g class="idle-box">
             <rect
               x="-26.5"
               y="-26.5"
@@ -110,25 +200,7 @@
             />
           </g>
 
-          <!-- verifying ring -->
-          <g opacity="0">
-            <animate
-              attributeName="opacity"
-              begin="1.2s"
-              dur="0.001s"
-              from="0"
-              to="1"
-              fill="freeze"
-            />
-            <animate
-              attributeName="opacity"
-              begin="2.4s"
-              dur="0.001s"
-              from="1"
-              to="0"
-              fill="freeze"
-            />
-
+          <g class="verifying-ring">
             <g transform="scale(1.72) rotate(-90)">
               <circle
                 cx="0"
@@ -139,6 +211,7 @@
                 stroke-width="3"
               />
               <circle
+                class="ring-progress"
                 cx="0"
                 cy="0"
                 r="14"
@@ -148,32 +221,11 @@
                 stroke-linecap="round"
                 stroke-dasharray="87.9646"
                 stroke-dashoffset="87.9646"
-              >
-                <animate
-                  attributeName="stroke-dashoffset"
-                  begin="1.2s"
-                  dur="1.2s"
-                  from="87.9646"
-                  to="0"
-                  fill="freeze"
-                  calcMode="spline"
-                  keyTimes="0;1"
-                  keySplines="0.16 1 0.3 1"
-                />
-              </circle>
+              />
             </g>
           </g>
 
-          <!-- final check -->
-          <g opacity="0">
-            <animate
-              attributeName="opacity"
-              begin="2.4s"
-              dur="0.001s"
-              from="0"
-              to="1"
-              fill="freeze"
-            />
+          <g class="final-check">
             <path
               d="M-16.043 0.001L-4.5846 11.46L18.332 -11.457"
               fill="none"
@@ -184,118 +236,20 @@
               pathLength="100"
               stroke-dasharray="100"
               stroke-dashoffset="100"
-            >
-              <animate
-                attributeName="stroke-dashoffset"
-                begin="2.4s"
-                dur="0.34s"
-                from="100"
-                to="0"
-                fill="freeze"
-                calcMode="spline"
-                keyTimes="0;1"
-                keySplines="0.16 1 0.3 1"
-              />
-            </path>
+            />
           </g>
         </g>
 
-        <!-- labels -->
         <g class="ui-text label" mask="url(#label-mask)">
-          <!-- current: initial -->
-          <g opacity="1">
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              begin="1.2s"
-              dur="0.17s"
-              from="0 0"
-              to="0 -20"
-              fill="freeze"
-              calcMode="spline"
-              keyTimes="0;1"
-              keySplines="0.25 1 0.35 1"
-            />
-            <animate
-              attributeName="opacity"
-              begin="1.2s"
-              dur="0.17s"
-              from="1"
-              to="0"
-              fill="freeze"
-            />
+          <g class="label-initial">
             <text x="123" y="77.6875">Verify you’re human</text>
           </g>
 
-          <!-- next: verifying (starts slightly after current exits) -->
-          <g opacity="0" transform="translate(0 20)">
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              begin="1.27s"
-              dur="0.17s"
-              from="0 20"
-              to="0 0"
-              fill="freeze"
-              calcMode="spline"
-              keyTimes="0;1"
-              keySplines="0.25 1 0.35 1"
-            />
-            <animate
-              attributeName="opacity"
-              begin="1.27s"
-              dur="0.17s"
-              from="0"
-              to="1"
-              fill="freeze"
-            />
-
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              begin="2.4s"
-              dur="0.15s"
-              additive="sum"
-              from="0 0"
-              to="0 -20"
-              fill="freeze"
-              calcMode="spline"
-              keyTimes="0;1"
-              keySplines="0.25 1 0.35 1"
-            />
-            <animate
-              attributeName="opacity"
-              begin="2.4s"
-              dur="0.15s"
-              from="1"
-              to="0"
-              fill="freeze"
-            />
+          <g class="label-verifying">
             <text x="123" y="77.6875">Verifying...</text>
           </g>
 
-          <!-- next: solved -->
-          <g opacity="0" transform="translate(0 20)">
-            <animateTransform
-              attributeName="transform"
-              type="translate"
-              begin="2.47s"
-              dur="0.17s"
-              from="0 20"
-              to="0 0"
-              fill="freeze"
-              calcMode="spline"
-              keyTimes="0;1"
-              keySplines="0.25 1 0.35 1"
-            />
-            <animate
-              attributeName="opacity"
-              begin="2.47s"
-              dur="0.17s"
-              from="0"
-              to="1"
-              fill="freeze"
-            />
+          <g class="label-solved">
             <text x="123" y="77.6875">You’re a human</text>
           </g>
         </g>
