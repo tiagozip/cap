@@ -9,7 +9,6 @@ We recommend using [Docker](https://docs.docker.com/get-docker/) to run Cap Stan
 Create a `docker-compose.yml` file:
 
 ```yaml
-version: "3.8"
 services:
   cap:
     image: tiago2/cap:latest
@@ -18,11 +17,27 @@ services:
       - "3000:3000"
     environment:
       ADMIN_KEY: your_secret_password
-    volumes:
-      - cap-data:/usr/src/app/.data
+      REDIS_URL: redis://valkey:6379
+    depends_on:
+      valkey:
+        condition: service_healthy
     restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: cap-valkey
+    volumes:
+      - valkey-data:/data
+    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
-  cap-data:
+  valkey-data:
 ```
 
 ::: tip Tips
@@ -40,7 +55,7 @@ docker compose up -d
 
 Open `http://localhost:3000` (or your server's IP/domain on port 3000) to access the dashboard. Log in with your admin key, create a site key, and note down both the **site key** and its **secret key**, you'll need both.
 
-If you want the best protection and can handle higher memory usage, we also recommend turning on instrumentation challenges and potentially headless browser detection.
+Instrumentation challenges are enabled by default when creating new site keys. We recommend keeping them on, as they significantly raise the bar for bots. You can also enable headless browser detection for additional protection.
 
 Your Cap Standalone instance must be publicly reachable from the internet so the widget can communicate with it. If you're using a reverse proxy, review the [options guide](/guide/standalone/options.md) to configure rate-limiting correctly.
 
