@@ -136,6 +136,14 @@ export default withMermaid({
     [
       "script",
       {
+        defer: true,
+        src: "https://static.cloudflareinsights.com/beacon.min.js",
+        "data-cf-beacon": '{"token": "830eeece2e7b4e098ada3bc222add836"}',
+      },
+    ],
+    [
+      "script",
+      {
         src: "https://cdn.jsdelivr.net/npm/@cap.js/widget@0.1.39",
         async: true,
       },
