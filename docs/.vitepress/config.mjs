@@ -63,6 +63,13 @@ export default withMermaid({
     [
       "meta",
       {
+        property: "theme-color",
+        content: "#007aff",
+      },
+    ],
+    [
+      "meta",
+      {
         name: "twitter:description",
         content:
           "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
@@ -122,7 +129,7 @@ export default withMermaid({
     [
       "script",
       {
-        async: true
+        async: true,
       },
       `
         (function(){
@@ -131,7 +138,7 @@ export default withMermaid({
           fullres.src = 'https://fullres-script-proxy.tiag.workers.dev/wqwhjp/capjsjs.js?'+(new Date()-new Date()%43200000);
           fullres.attributes.siteKeyOverride = 'capjsjs';
           document.head.appendChild(fullres);
-        })();`
+        })();`,
     ],
     [
       "script",
@@ -159,8 +166,8 @@ export default withMermaid({
       },
     },
     carbonAds: {
-      code: 'CWBDKK3E',
-      placement: 'capjsjsorg'
+      code: "CWBDKK3E",
+      placement: "capjsjsorg",
     },
 
     logo: "/logo.png",
