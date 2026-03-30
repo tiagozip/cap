@@ -51,13 +51,13 @@ export default withMermaid({
       },
     ],
     ["meta", { property: "og:url", content: "https://capjs.js.org" }],
-    ["meta", { property: "og:image", content: "https://capjs.js.org/logo.png" }],
+    ["meta", { property: "og:image", content: "https://capjs.js.org/og-image.png" }],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
     [
       "meta",
       {
         name: "twitter:title",
-        content: "Cap is the self-hosted CAPTCHA for the modern web.",
+        content: "Cap: The self-hosted CAPTCHA for the modern web",
       },
     ],
     [
@@ -68,7 +68,7 @@ export default withMermaid({
           "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
       },
     ],
-    ["meta", { name: "twitter:image", content: "https://capjs.js.org/logo.png" }],
+    ["meta", { name: "twitter:image", content: "https://capjs.js.org/og-image.png" }],
     [
       "meta",
       {
