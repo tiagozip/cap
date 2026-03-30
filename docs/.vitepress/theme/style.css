@@ -8,7 +8,7 @@
  *
  * Each colors have exact same color scale system with 3 levels of solid
  * colors with different brightness, and 1 soft color.
- * 
+ *
  * - `XXX-1`: The most solid color used mainly for colored text. It must
  *   satisfy the contrast ratio against when used on top of `XXX-soft`.
  *
@@ -204,4 +204,38 @@ img {
 html,
 body {
   scrollbar-gutter: stable;
+}
+
+.VPCarbonAds {
+  --vp-carbon-ads-bg-color: transparent !important;
+  transition: transform 0.2s;
+  animation: carbon-in .6s;
+}
+@keyframes carbon-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+.VPCarbonAds:hover {
+  transform: scale(1.05);
+}
+.VPCarbonAds .carbon-poweredby {
+  text-transform: none !important;
+  opacity: 0.3;
+  font-weight: 400;
+  font-size: 10px;
+}
+.VPCarbonAds img {
+  transition: filter 0.2s;
+}
+.VPCarbonAds .carbon-text {
+  font-weight: 400;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.VPCarbonAds:not(:hover) img {
+  filter: grayscale(1) opacity(0.75);
 }

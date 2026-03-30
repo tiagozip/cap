@@ -150,6 +150,10 @@ export default withMermaid({
         indexName: "cap-tiagorangel",
       },
     },
+    carbonAds: {
+      code: 'CWBDKK3E',
+      placement: 'capjsjsorg'
+    },
 
     logo: "/logo.png",
     siteTitle: "Cap",
