@@ -51,6 +51,27 @@ Cap Standalone uses Redis (or Valkey) for all data storage. Set the `REDIS_URL` 
 
 The recommended setup uses Valkey (a Redis-compatible store) via the docker-compose file provided in the [quickstart guide](/guide/standalone/).
 
+## Challenge expiration
+
+Configure how long challenges remain valid. The widget will also abort solving if the challenge expires, so shorter values act as a solve timeout. Defaults to 15 minutes.
+
+**Global default** via environment variable:
+
+```bash
+CHALLENGE_TTL_MS=60000  # 60 seconds
+```
+
+**Per-key config** via the API (overrides the global default):
+
+```bash
+curl -X PUT https://<server>/server/keys/<siteKey>/config \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{"expiresMs": 60000}'
+```
+
+Set to `null` to use the global default. The `expires` timestamp is sent in the challenge response and the widget respects it automatically.
+
 ## Error messages
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.

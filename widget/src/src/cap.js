@@ -310,9 +310,53 @@
     #speculativeTimer = null;
     #speculativePool = null;
     #interactionHandler = null;
+    #activePool = null;
+    #solveTimeoutTimer = null;
+    #timedOut = false;
 
     get #hasHaptics() {
       return _browserHasHaptics && !window.CAP_DISABLE_HAPTICS && !this.hasAttribute("data-cap-disable-haptics");
+    }
+
+    #createSolveTimeout(challengeExpires) {
+      let timeoutMs = 0;
+      if (challengeExpires != null) {
+        timeoutMs = new Date(challengeExpires).getTime() - Date.now();
+      }
+      if (Number.isNaN(timeoutMs) || timeoutMs <= 0) timeoutMs = 0;
+
+      if (timeoutMs <= 0) {
+        return { promise: new Promise(() => {}), cancel: () => {} };
+      }
+
+      let timer;
+      const promise = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          if (this.#activePool) {
+            this.#activePool.terminate();
+            this.#activePool = null;
+          }
+          if (this.#speculativePool) {
+            this.#speculativePool.terminate();
+            this.#speculativePool = null;
+          }
+          if (this.#speculative && this.#speculative.state !== "done" && this.#speculative.state !== "error") {
+            this.#speculative.state = "error";
+            this.#speculative.notify();
+          }
+          this.#timedOut = true;
+          reject(new Error(this.getI18nText("timeout-label", "Timed out. Try again.")));
+        }, timeoutMs);
+        this.#solveTimeoutTimer = timer;
+      });
+
+      const cancel = () => {
+        clearTimeout(timer);
+        this.#solveTimeoutTimer = null;
+        this.#timedOut = false;
+      };
+
+      return { promise, cancel };
     }
 
     #makeSpeculativeState() {
@@ -328,6 +372,7 @@
         pendingPromotion: null,
         token: null,
         tokenExpires: null,
+        _onChallengeResp: null,
 
         notify() {
           for (const fn of this._listeners) fn();
@@ -413,6 +458,11 @@
 
         resp._apiEndpoint = apiEndpoint;
         this.#speculative.challengeResp = resp;
+
+        if (this.#speculative._onChallengeResp) {
+          this.#speculative._onChallengeResp(resp);
+          this.#speculative._onChallengeResp = null;
+        }
 
         const { challenge, token } = resp;
         let challenges = challenge;
@@ -705,6 +755,8 @@
             return { success: true, token: this.token };
           }
 
+          let timeout = { promise: new Promise(() => {}), cancel: () => {} };
+
           if (this.#speculative.state === "done") {
             solutions = this.#speculative.results;
             challengeResp = this.#speculative.challengeResp;
@@ -729,6 +781,16 @@
               this.#speculative.promoteFn(this.#workersCount);
             }
 
+            if (this.#speculative.challengeResp) {
+              timeout = this.#createSolveTimeout(this.#speculative.challengeResp.expires);
+            } else {
+              this.#speculative._onChallengeResp = (resp) => {
+                const t = this.#createSolveTimeout(resp.expires);
+                t.promise.catch(() => {});
+                timeout.cancel = t.cancel;
+              };
+            }
+
             const progressInterval = setInterval(() => {
               const st = this.#speculative.state;
               if (st === "done" || st === "error") {
@@ -746,9 +808,18 @@
               this.dispatchEvent("progress", { progress: visual });
             }, 150);
 
-            await new Promise((resolve) => this.#speculative.onSettled(resolve));
-            clearInterval(progressInterval);
+            try {
+              await Promise.race([
+                new Promise((resolve) => this.#speculative.onSettled(resolve)),
+                timeout.promise,
+              ]);
+            } finally {
+              clearInterval(progressInterval);
+            }
 
+            if (this.#speculative.state === "error" && this.#timedOut) {
+              throw new Error(this.getI18nText("timeout-label", "Timed out. Try again."));
+            }
             if (this.#speculative.state !== "done") {
               throw new Error("Speculative solve failed – please try again");
             }
@@ -782,6 +853,7 @@
 
               this.#resetSpeculativeState();
               this.#solving = false;
+              timeout.cancel();
               return { success: true, token: this.token };
             }
 
@@ -799,6 +871,8 @@
             }
             if (challengeResp.error) throw new Error(challengeResp.error);
 
+            timeout = this.#createSolveTimeout(challengeResp.expires);
+
             const { challenge, token } = challengeResp;
             let challenges = challenge;
             if (!Array.isArray(challenges)) {
@@ -809,8 +883,13 @@
               });
             }
 
-            solutions = await this.solveChallenges(challenges);
+            solutions = await Promise.race([
+              this.solveChallenges(challenges),
+              timeout.promise,
+            ]);
           }
+
+          timeout.cancel();
 
           const instrPromise = challengeResp.instrumentation
             ? runInstrumentationChallenge(challengeResp.instrumentation)
@@ -898,6 +977,11 @@
         }
       } finally {
         this.#solving = false;
+        this.#timedOut = false;
+        if (this.#solveTimeoutTimer) {
+          clearTimeout(this.#solveTimeoutTimer);
+          this.#solveTimeoutTimer = null;
+        }
       }
     }
 
@@ -939,6 +1023,7 @@
       const pool = new WorkerPool(this.#workersCount);
       pool.setWasm(wasmModule);
       pool._ensureSize(this.#workersCount);
+      this.#activePool = pool;
 
       const results = [];
       try {
@@ -961,6 +1046,7 @@
         }
       } finally {
         pool.terminate();
+        this.#activePool = null;
       }
 
       return results;
@@ -1220,6 +1306,15 @@
     }
 
     cleanup() {
+      this.#timedOut = false;
+      if (this.#solveTimeoutTimer) {
+        clearTimeout(this.#solveTimeoutTimer);
+        this.#solveTimeoutTimer = null;
+      }
+      if (this.#activePool) {
+        this.#activePool.terminate();
+        this.#activePool = null;
+      }
       if (this.#resetTimer) {
         clearTimeout(this.#resetTimer);
         this.#resetTimer = null;

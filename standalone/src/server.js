@@ -405,6 +405,7 @@ export const server = new Elysia({
         instrumentation,
         obfuscationLevel,
         blockAutomatedBrowsers,
+        expiresMs,
         ratelimitMax,
         ratelimitDuration,
         corsOrigins,
@@ -423,6 +424,8 @@ export const server = new Elysia({
         obfuscationLevel: obfuscationLevel ?? existingConfig.obfuscationLevel ?? 3,
         blockAutomatedBrowsers:
           blockAutomatedBrowsers ?? existingConfig.blockAutomatedBrowsers ?? false,
+        expiresMs:
+          expiresMs !== undefined ? expiresMs : (existingConfig.expiresMs ?? null),
         ratelimitMax:
           ratelimitMax !== undefined ? ratelimitMax : (existingConfig.ratelimitMax ?? null),
         ratelimitDuration:
@@ -461,6 +464,7 @@ export const server = new Elysia({
         instrumentation: t.Optional(t.Boolean()),
         obfuscationLevel: t.Optional(t.Number({ minimum: 1, maximum: 10 })),
         blockAutomatedBrowsers: t.Optional(t.Boolean()),
+        expiresMs: t.Optional(t.Union([t.Number({ minimum: 5000, maximum: 900000 }), t.Null()])),
         ratelimitMax: t.Optional(t.Union([t.Number({ minimum: 1, maximum: 10000 }), t.Null()])),
         ratelimitDuration: t.Optional(
           t.Union([t.Number({ minimum: 1000, maximum: 3600000 }), t.Null()]),

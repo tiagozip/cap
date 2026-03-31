@@ -57,7 +57,7 @@ function getClientIp(request, srv) {
   return srv?.requestIP(request)?.address || null;
 }
 
-const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
+const CHALLENGE_TTL_MS = process.env.CHALLENGE_TTL_MS ? parseInt(process.env.CHALLENGE_TTL_MS, 10) : 15 * 60 * 1000;
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
 
 const b64url = (buf) =>
@@ -438,7 +438,7 @@ export const capServer = new Elysia({
     const c = keyConfig.challengeCount ?? 80;
     const s = keyConfig.saltSize ?? 32;
     const d = keyConfig.difficulty ?? 4;
-    const expires = Date.now() + CHALLENGE_TTL_MS;
+    const expires = Date.now() + (keyConfig.expiresMs ?? CHALLENGE_TTL_MS);
 
     const nonce = randomBytes(25).toString("hex");
 
