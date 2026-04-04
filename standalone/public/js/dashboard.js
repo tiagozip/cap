@@ -22,6 +22,11 @@ const escapeHtml = (s) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+const serverUrl = (path) => {
+  const normalizedPath = String(path).replace(/^\/+/, "");
+  return new URL(`server/${normalizedPath}`, window.location.href).toString();
+};
+
 const api = async (method, path, body) => {
   try {
     const auth = JSON.parse(localStorage.getItem("cap_auth"));
@@ -34,7 +39,7 @@ const api = async (method, path, body) => {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    return await (await fetch(`/server${path}`, opts)).json();
+    return await (await fetch(serverUrl(path), opts)).json();
   } catch (e) {
     console.error("standalone:", e);
     return { error: e.message };
@@ -123,7 +128,7 @@ const randKey = () => {
 
 async function init() {
   try {
-    const aboutRes = await fetch("/server/about");
+    const aboutRes = await fetch(serverUrl("about"));
     const aboutData = await aboutRes.json();
     if (aboutData.demo) demoMode = true;
   } catch {}
