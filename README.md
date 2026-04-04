@@ -2,7 +2,7 @@
 
 Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://capjs.js.org/guide/effectiveness.html">SHA-256 proof-of-work</a> and JavaScript instrumentation challenges. It's fast, private, and extremely simple to integrate.
 
-<a href="https://capjs.js.org" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
+<a href="https://capjs.js.org/guide" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
 
 ## Documentation
 
@@ -59,4 +59,4 @@ Cap's free instance is supported by DigitalOcean for open-source. <a href="https
 
 ---
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge)](https://www.bestpractices.dev/projects/9920) [![](https://data.jsdelivr.com/v1/package/npm/@cap.js/wasm/badge)](https://www.jsdelivr.com/package/npm/@cap.js/wasm)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge?v=gold)](https://www.bestpractices.dev/projects/9920) [![](https://data.jsdelivr.com/v1/package/npm/@cap.js/wasm/badge)](https://www.jsdelivr.com/package/npm/@cap.js/wasm)
