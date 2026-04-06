@@ -233,8 +233,8 @@ export default withMermaid({
     ],
 
     footer: {
-      message: "Built in Europe 🇪🇺<br>Released under the Apache 2.0 License.",
-      copyright: "Copyright © 2025-present <a href='https://tiago.zip' target='_blank'>Tiago</a>",
+      message: "Released under the Apache 2.0 License.",
+      copyright: "<a href='https://tiago.zip' target='_blank'>made by tiago.zip</a>",
     },
   },
   markdown: {
