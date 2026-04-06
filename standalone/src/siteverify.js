@@ -29,6 +29,8 @@ export const siteverifyServer = new Elysia({
     }
     if (sitekeyraw) {
       sitekey = sitekeyraw; //Overwrite if given as a parameter
+    } else {
+      sitekey = response.split(":")[0]
     }
     if (sitekeyraw && !response.startsWith(sitekeyraw)) {
       set.status = 404;
