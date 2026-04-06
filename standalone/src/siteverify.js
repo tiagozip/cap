@@ -19,11 +19,22 @@ export const siteverifyServer = new Elysia({
       methods: ["POST"],
     }),
   )
-  .post("/:siteKey/siteverify", async ({ body, set, params }) => {
-    const sitekey = params.siteKey;
+  .post("/:siteKey?/siteverify", async ({ body, set, params }) => {
+    const sitekeyraw = params.siteKey || false;
     const { secret, response } = body;
-
-    if (!sitekey || !secret || !response) {
+    let sitekey = false;
+    if (response.split(":").length != 3) {
+      set.status = 400;
+      return { success: false, error: "Missing required parameters" };
+    }
+    if (sitekeyraw) {
+      sitekey = sitekeyraw; //Overwrite if given as a parameter
+    }
+    if (sitekeyraw && !response.startsWith(sitekeyraw)) {
+      set.status = 404;
+      return { success: false, error: "Invalid site key or secret" };
+    }
+    if (!secret || !response) {
       set.status = 400;
       return { success: false, error: "Missing required parameters" };
     }
@@ -42,8 +53,8 @@ export const siteverifyServer = new Elysia({
       return { success: false, error: "Invalid site key or secret" };
     }
 
-    const tokenKey = `token:${params.siteKey}:${response}`;
-    const expires = await db.send("GETDEL", [tokenKey]);
+    const tokenKey = `token:${response}`;
+    const expires = await db.getdel(tokenKey);
 
     if (!expires) {
       set.status = 404;
