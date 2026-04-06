@@ -34,7 +34,7 @@ const api = async (method, path, body) => {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    return await (await fetch(`server${path}`, opts)).json();
+    return await (await fetch(`/server${path}`, opts)).json();
   } catch (e) {
     console.error("standalone:", e);
     return { error: e.message };
