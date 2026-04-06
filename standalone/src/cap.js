@@ -235,7 +235,7 @@ async function loadBlockRules(siteKey) {
   const cached = _blockCache.get(siteKey);
   if (cached && Date.now() - cached.ts < BLOCK_CACHE_TTL) return cached.entries;
 
-  const blockedHash = await db.send("HGETALL", [`blocked:${siteKey}`]);
+  const blockedHash = await db.hgetall(`blocked:${siteKey}`);
   let entries;
   if (!blockedHash) {
     entries = [];
@@ -621,12 +621,11 @@ export const capServer = new Elysia({
 
     const redeemId = randomBytes(8).toString("hex");
     const redeemSecret = randomBytes(15).toString("hex");
-    const redeemToken = `${redeemId}:${redeemSecret}`;
+    const redeemToken = `${params.siteKey}:${redeemId}:${redeemSecret}`;
     const tokenExpires = Date.now() + TOKEN_TTL_MS;
     const tokenTtlSecs = Math.ceil(TOKEN_TTL_MS / 1000);
-
-    await db.set(`token:${params.siteKey}:${redeemToken}`, String(tokenExpires));
-    await db.expire(`token:${params.siteKey}:${redeemToken}`, tokenTtlSecs);
+    await db.set(`token:${redeemToken}`, String(tokenExpires));
+    await db.expire(`token:${redeemToken}`, tokenTtlSecs);
 
     await db.hincrby(`solutions:${params.siteKey}`, bucket, 1);
 
@@ -635,7 +634,6 @@ export const capServer = new Elysia({
       await db.hincrby(`metrics:latency_sum:${params.siteKey}`, bucket, latencyMs);
       await db.hincrby(`metrics:latency_count:${params.siteKey}`, bucket, 1);
     }
-
     return {
       success: true,
       token: redeemToken,
