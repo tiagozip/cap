@@ -286,7 +286,7 @@
       document.querySelector("button[type=submit]").disabled = true;
 
       const { success, session_token, hashed_token, expires } = await (
-        await fetch("auth/login", {
+        await fetch("/auth/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
