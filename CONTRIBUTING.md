@@ -4,7 +4,7 @@
 
 - you need to have the latest version of [Bun](https://bun.com/) installed for building the widget, server, standalone, solver and docs, and Rust for WASM
 
-- zed is the recommended IDE for working on Cap, but VSCode also works well.
+- we recommend vs code or zed for working on Cap.
 
 - for writing docs, make sure to place them inside of `docs/guide` and make sure to update the sidebar in `docs/.vitepress/config.mjs`.
 
