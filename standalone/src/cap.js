@@ -60,6 +60,63 @@ function getClientIp(request, srv) {
 const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
 
+function matchTier(count, tiers) {
+  const sorted = [...tiers].sort((a, b) => b.minRequests - a.minRequests);
+  for (const tier of sorted) {
+    if (count >= tier.minRequests) {
+      return Math.min(tier.challengeCount, 500);
+    }
+  }
+  return null;
+}
+
+async function getAdaptiveChallengeCount(ip, siteKey, baseCount, adaptiveConfig) {
+  if (!adaptiveConfig?.enabled) return baseCount;
+
+  const windowMs = adaptiveConfig.windowMs || 60_000;
+  const window = Math.floor(Date.now() / windowMs);
+
+  let perIpResult = null;
+  if (ip && adaptiveConfig.tiers?.length) {
+    const ipKey = `ac:${siteKey}:${ip}:${window}`;
+    const ipCount = Number(await db.get(ipKey)) || 0;
+    perIpResult = matchTier(ipCount, adaptiveConfig.tiers);
+  }
+
+  let globalResult = null;
+  if (adaptiveConfig.globalTiers?.length) {
+    const globalKey = `ac:global:${siteKey}:${window}`;
+    const globalCount = Number(await db.get(globalKey)) || 0;
+    globalResult = matchTier(globalCount, adaptiveConfig.globalTiers);
+  }
+
+  return Math.max(baseCount, perIpResult ?? baseCount, globalResult ?? baseCount);
+}
+
+async function trackAdaptiveRequest(ip, siteKey, adaptiveConfig) {
+  if (!adaptiveConfig?.enabled) return;
+
+  const windowMs = adaptiveConfig.windowMs || 60_000;
+  const windowSecs = Math.ceil(windowMs / 1000);
+  const window = Math.floor(Date.now() / windowMs);
+
+  if (ip && adaptiveConfig.tiers?.length) {
+    const ipKey = `ac:${siteKey}:${ip}:${window}`;
+    const count = await db.incr(ipKey);
+    if (count === 1) {
+      await db.expire(ipKey, windowSecs + 1);
+    }
+  }
+
+  if (adaptiveConfig.globalTiers?.length) {
+    const globalKey = `ac:global:${siteKey}:${window}`;
+    const count = await db.incr(globalKey);
+    if (count === 1) {
+      await db.expire(globalKey, windowSecs + 1);
+    }
+  }
+}
+
 const b64url = (buf) =>
   (buf instanceof Uint8Array ? Buffer.from(buf) : Buffer.from(buf, "utf8")).toString("base64url");
 
@@ -435,7 +492,11 @@ export const capServer = new Elysia({
       }
     }
 
-    const c = keyConfig.challengeCount ?? 80;
+    const baseCount = keyConfig.challengeCount ?? 80;
+    const adaptiveConfig = keyConfig.adaptiveChallengeCount ?? null;
+
+    await trackAdaptiveRequest(ip, params.siteKey, adaptiveConfig);
+    const c = await getAdaptiveChallengeCount(ip, params.siteKey, baseCount, adaptiveConfig);
     const s = keyConfig.saltSize ?? 32;
     const d = keyConfig.difficulty ?? 4;
     const expires = Date.now() + CHALLENGE_TTL_MS;

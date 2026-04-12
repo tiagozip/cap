@@ -410,6 +410,7 @@ export const server = new Elysia({
         corsOrigins,
         blockNonBrowserUA,
         requiredHeaders,
+        adaptiveChallengeCount,
       } = body;
 
       const config = {
@@ -438,6 +439,10 @@ export const server = new Elysia({
           requiredHeaders !== undefined
             ? requiredHeaders
             : (existingConfig.requiredHeaders ?? null),
+        adaptiveChallengeCount:
+          adaptiveChallengeCount !== undefined
+            ? adaptiveChallengeCount
+            : (existingConfig.adaptiveChallengeCount ?? null),
       };
 
       const currentName = await db.hget(`key:${params.siteKey}`, "name");
@@ -468,6 +473,31 @@ export const server = new Elysia({
         corsOrigins: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
         blockNonBrowserUA: t.Optional(t.Union([t.Boolean(), t.Null()])),
         requiredHeaders: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
+        adaptiveChallengeCount: t.Optional(
+          t.Union([
+            t.Object({
+              enabled: t.Boolean(),
+              windowMs: t.Number({ minimum: 60000, maximum: 3600000 }),
+              tiers: t.Array(
+                t.Object({
+                  minRequests: t.Number({ minimum: 1, maximum: 100000 }),
+                  challengeCount: t.Number({ minimum: 1, maximum: 500 }),
+                }),
+                { minItems: 0, maxItems: 20 },
+              ),
+              globalTiers: t.Optional(
+                t.Array(
+                  t.Object({
+                    minRequests: t.Number({ minimum: 1, maximum: 10000000 }),
+                    challengeCount: t.Number({ minimum: 1, maximum: 500 }),
+                  }),
+                  { minItems: 0, maxItems: 20 },
+                ),
+              ),
+            }),
+            t.Null(),
+          ]),
+        ),
       }),
       detail: {
         tags: ["Keys"],
