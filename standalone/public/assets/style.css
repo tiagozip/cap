@@ -2445,6 +2445,32 @@ input[type="range"]::-moz-range-progress {
   opacity: 1;
 }
 
+.adaptive-tier-row {
+  align-items: flex-end;
+}
+
+.adaptive-tier-row .origin-remove-btn {
+  margin-bottom: 8px;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.add-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
 .header-checks {
   display: flex;
   flex-wrap: wrap;
