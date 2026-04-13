@@ -460,7 +460,7 @@ function renderKeyDetail() {
                   <label>Challenge count</label>
                   <input type="number" class="adaptive-tier-count" value="${tier.challengeCount}" min="1" max="500">
                 </div>
-                <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier">&times;</button>
+                <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
               </div>`).join("")}
             </div>
             <button class="add-btn" id="addAdaptiveGlobalTierBtn" style="margin-top:8px">
@@ -480,7 +480,7 @@ function renderKeyDetail() {
                   <label>Challenge count</label>
                   <input type="number" class="adaptive-tier-count" value="${tier.challengeCount}" min="1" max="500">
                 </div>
-                <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier">&times;</button>
+                <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
               </div>`).join("")}
             </div>
             <button class="add-btn" id="addAdaptiveTierBtn" style="margin-top:8px">
@@ -795,7 +795,7 @@ function renderKeyDetail() {
         <label>Challenge count</label>
         <input type="number" class="adaptive-tier-count" value="${challengeCount}" min="1" max="500" placeholder="e.g. 150">
       </div>
-      <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier">&times;</button>`;
+      <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
     div.querySelector(".adaptive-tier-remove").addEventListener("click", () => {
       div.remove();
       checkMainDirty();
@@ -833,7 +833,7 @@ function renderKeyDetail() {
         <label>Challenge count</label>
         <input type="number" class="adaptive-tier-count" value="${challengeCount}" min="1" max="500" placeholder="e.g. 200">
       </div>
-      <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier">&times;</button>`;
+      <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
     div.querySelector(".adaptive-tier-remove").addEventListener("click", () => {
       div.remove();
       checkMainDirty();
