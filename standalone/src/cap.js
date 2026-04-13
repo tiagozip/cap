@@ -70,51 +70,39 @@ function matchTier(count, tiers) {
   return null;
 }
 
-async function getAdaptiveChallengeCount(ip, siteKey, baseCount, adaptiveConfig) {
-  if (!adaptiveConfig?.enabled) return baseCount;
-
-  const windowMs = adaptiveConfig.windowMs || 60_000;
-  const window = Math.floor(Date.now() / windowMs);
-
-  let perIpResult = null;
-  if (ip && adaptiveConfig.tiers?.length) {
-    const ipKey = `ac:${siteKey}:${ip}:${window}`;
-    const ipCount = Number(await db.get(ipKey)) || 0;
-    perIpResult = matchTier(ipCount, adaptiveConfig.tiers);
-  }
-
-  let globalResult = null;
-  if (adaptiveConfig.globalTiers?.length) {
-    const globalKey = `ac:global:${siteKey}:${window}`;
-    const globalCount = Number(await db.get(globalKey)) || 0;
-    globalResult = matchTier(globalCount, adaptiveConfig.globalTiers);
-  }
-
-  return Math.max(baseCount, perIpResult ?? baseCount, globalResult ?? baseCount);
+function hashIp(ip, siteKey) {
+  return createHmac("sha256", siteKey).update(ip).digest("hex").slice(0, 16);
 }
 
-async function trackAdaptiveRequest(ip, siteKey, adaptiveConfig) {
-  if (!adaptiveConfig?.enabled) return;
+async function adaptiveChallengeCount(ip, siteKey, baseCount, adaptiveConfig) {
+  if (!adaptiveConfig?.enabled) return baseCount;
 
   const windowMs = adaptiveConfig.windowMs || 60_000;
   const windowSecs = Math.ceil(windowMs / 1000);
   const window = Math.floor(Date.now() / windowMs);
 
+  let perIpResult = null;
   if (ip && adaptiveConfig.tiers?.length) {
-    const ipKey = `ac:${siteKey}:${ip}:${window}`;
-    const count = await db.incr(ipKey);
-    if (count === 1) {
+    const ipHash = hashIp(ip, siteKey);
+    const ipKey = `ac:${siteKey}:${ipHash}:${window}`;
+    const ipCount = Number(await db.incr(ipKey));
+    if (ipCount === 1) {
       await db.expire(ipKey, windowSecs + 1);
     }
+    perIpResult = matchTier(ipCount, adaptiveConfig.tiers);
   }
 
+  let globalResult = null;
   if (adaptiveConfig.globalTiers?.length) {
-    const globalKey = `ac:global:${siteKey}:${window}`;
-    const count = await db.incr(globalKey);
-    if (count === 1) {
+    const globalKey = `ac:g:${siteKey}:${window}`;
+    const globalCount = Number(await db.incr(globalKey));
+    if (globalCount === 1) {
       await db.expire(globalKey, windowSecs + 1);
     }
+    globalResult = matchTier(globalCount, adaptiveConfig.globalTiers);
   }
+
+  return Math.max(baseCount, perIpResult ?? baseCount, globalResult ?? baseCount);
 }
 
 const b64url = (buf) =>
@@ -495,8 +483,7 @@ export const capServer = new Elysia({
     const baseCount = keyConfig.challengeCount ?? 80;
     const adaptiveConfig = keyConfig.adaptiveChallengeCount ?? null;
 
-    await trackAdaptiveRequest(ip, params.siteKey, adaptiveConfig);
-    const c = await getAdaptiveChallengeCount(ip, params.siteKey, baseCount, adaptiveConfig);
+    const c = await adaptiveChallengeCount(ip, params.siteKey, baseCount, adaptiveConfig);
     const s = keyConfig.saltSize ?? 32;
     const d = keyConfig.difficulty ?? 4;
     const expires = Date.now() + CHALLENGE_TTL_MS;
