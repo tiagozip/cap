@@ -22,6 +22,21 @@ const escapeHtml = (s) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
+function normalizeOrigin(val) {
+  val = (val || "").trim();
+  if (!val) return "";
+  let withScheme = val;
+  if (!/^https?:\/\//i.test(val)) {
+    const isLocal = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|0\.0\.0\.0)(:|\/|$)/i.test(val);
+    withScheme = (isLocal ? "http://" : "https://") + val;
+  }
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    return "";
+  }
+}
+
 const api = async (method, path, body) => {
   try {
     const auth = JSON.parse(localStorage.getItem("cap_auth"));
@@ -107,18 +122,6 @@ const getDateRange = (chartData) => {
   const fmt = (d) =>
     d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   return `${fmt(first)} <span>\u2014</span> ${fmt(last)}`;
-};
-
-const randKey = () => {
-  const left =
-    "admiring adoring affectionate agitated amazing angry awesome beautiful blissful bold boring brave busy charming clever compassionate competent condescending confident cool cranky crazy dazzling determined distracted dreamy eager ecstatic elastic elated elegant eloquent epic exciting fervent festive flamboyant focused friendly frosty funny gallant gifted goofy gracious great happy hardcore heuristic hopeful hungry infallible inspiring intelligent interesting jolly jovial keen kind laughing loving lucid magical modest musing mystifying naughty nervous nice nifty nostalgic objective optimistic peaceful pedantic pensive practical priceless quirky quizzical recursing relaxed reverent romantic sad serene sharp silly sleepy stoic strange stupefied suspicious sweet tender thirsty trusting unruffled upbeat vibrant vigilant vigorous wizardly wonderful xenodochial youthful zealous zen".split(
-      " ",
-    );
-  const right =
-    "agnesi albattani allen almeida antonelli archimedes ardinghelli aryabhata austin babbage banach banzai bardeen bartik bassi beaver bell benz bhabha bhaskara black blackburn blackwell bohr booth borg bose bouman boyd brahmagupta brattain brown buck burnell cannon carson cartwright carver cerf chandrasekhar chaplygin chatelet chatterjee chaum chebyshev clarke cohen colden cori cray curie curran darwin davinci dewdney dhawan diffie dijkstra dirac driscoll dubinsky easley edison einstein elbakyan elgamal elion ellis engelbart euclid euler faraday feistel fermat fermi feynman franklin gagarin galileo galois ganguly gates gauss germain goldberg goldstine goldwasser golick goodall gould greider grothendieck haibt hamilton haslett hawking heisenberg hellman hermann herschel hertz heyrovsky hodgkin hofstadter hoover hopper hugle hypatia ishizaka jackson jang jemison jennings jepsen johnson joliot jones kalam kapitsa kare keldysh keller kepler khayyam khorana kilby kirch knuth kowalevski lalande lamarr lamport leakey leavitt lederberg lehmann lewin lichterman liskov lovelace lumiere mahavira margulis matsumoto maxwell mayer mccarthy mcclintock mclaren mclean mcnulty meitner mendel mendeleev meninsky merkle mestorf mirzakhani montalcini moore morse moser murdock napier nash neumann newton nightingale nobel noether northcutt noyce panini pare pascal pasteur payne perlman pike poincare poitras proskuriakova ptolemy raman ramanujan rhodes ride ritchie robinson roentgen rosalind rubin saha sammet sanderson satoshi shamir shannon shaw shirley shockley shtern sinoussi snyder solomon spence stonebraker sutherland swanson swartz swirles taussig tesla tharp thompson torvalds tu turing varahamihira vaughan villani visvesvaraya volhard wescoff wilbur wiles williams williamson wilson wing wozniak wright wu yalow yonath zhukovsky".split(
-      " ",
-    );
-  return `${left[Math.floor(Math.random() * left.length)]}-${right[Math.floor(Math.random() * right.length)]}`;
 };
 
 async function init() {
@@ -599,18 +602,9 @@ function renderKeyDetail() {
 
   if (currentTab === "configuration") loadBlockedIps();
 
-  function stripOriginVal(val) {
-    val = val.trim();
-    if (!val) return "";
-    try {
-      val = new URL(val.includes("://") ? val : "https://" + val).host;
-    } catch {}
-    return val.replace(/\/+$/, "");
-  }
-
   function getKeyCorsEntries() {
     return [...document.querySelectorAll("#keyCorsOriginsList .key-cors-origin-input")]
-      .map((i) => stripOriginVal(i.value))
+      .map((i) => normalizeOrigin(i.value))
       .filter(Boolean);
   }
 
@@ -704,8 +698,8 @@ function renderKeyDetail() {
       checkSecurityDirty();
     });
     input.addEventListener("blur", () => {
-      const stripped = stripOriginVal(input.value);
-      if (stripped !== input.value.trim()) input.value = stripped;
+      const normalized = normalizeOrigin(input.value);
+      if (normalized && normalized !== input.value.trim()) input.value = normalized;
     });
     document.getElementById("keyCorsOriginsList").appendChild(div);
     return input;
@@ -724,8 +718,8 @@ function renderKeyDetail() {
       checkSecurityDirty();
     });
     input.addEventListener("blur", () => {
-      const stripped = stripOriginVal(input.value);
-      if (stripped !== input.value.trim()) input.value = stripped;
+      const normalized = normalizeOrigin(input.value);
+      if (normalized && normalized !== input.value.trim()) input.value = normalized;
     });
   });
   ensureKeyCorsEmptyRow();
@@ -2342,13 +2336,12 @@ function showConfirmModal(title, message, confirmText, onConfirm, isDanger = fal
 }
 
 function openCreateKeyModal(prefill = "") {
-  const placeholder = randKey();
   const modal = createModal(
     "Create key",
     `
     <div class="modal-body">
       <div class="modal-field"><label for="newKeyName">Key name</label>
-      <input type="text" id="newKeyName" placeholder="${placeholder}" value="${escapeHtml(prefill || placeholder)}" autofocus></div>
+      <input type="text" id="newKeyName" placeholder="${escapeHtml(prefill || "")}" value="${escapeHtml(prefill || "")}" autofocus></div>
       <div class="switch-field" style="margin-top:8px">
         <label class="switch">
           <input type="checkbox" id="newKeyInstrumentation">
@@ -2363,6 +2356,21 @@ function openCreateKeyModal(prefill = "") {
         </label>
         <label for="newKeyBlockBots" class="switch-label">Attempt to block headless browsers</label>
       </div>
+      <div class="switch-field">
+        <label class="switch">
+          <input type="checkbox" id="newKeyCorsEnabled">
+          <span class="switch-track"></span>
+        </label>
+        <label for="newKeyCorsEnabled" class="switch-label">
+          Restrict allowed origins
+          <span class="hint">Only these origins will be able to request challenges for this key.</span>
+        </label>
+      </div>
+      <div id="newKeyCorsPanel" style="display:none">
+        <div id="newKeyCorsOriginsList" class="origin-list">
+          <div class="origin-entry"><input type="text" class="new-key-cors-origin-input" placeholder="example.com"><button class="origin-remove-btn" title="Remove">&times;</button></div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
@@ -2375,12 +2383,70 @@ function openCreateKeyModal(prefill = "") {
   const instrToggle = modal.querySelector("#newKeyInstrumentation");
   const blockBotsField = modal.querySelector("#newKeyBlockBotsField");
   const blockBotsToggle = modal.querySelector("#newKeyBlockBots");
+  const corsToggle = modal.querySelector("#newKeyCorsEnabled");
+  const corsPanel = modal.querySelector("#newKeyCorsPanel");
+  const corsList = modal.querySelector("#newKeyCorsOriginsList");
 
   instrToggle.click();
 
   instrToggle.addEventListener("change", () => {
     blockBotsField.style.display = instrToggle.checked ? "flex" : "none";
     if (!instrToggle.checked) blockBotsToggle.checked = false;
+  });
+
+  function ensureNewKeyCorsEmptyRow() {
+    const entries = [...corsList.querySelectorAll(".origin-entry")];
+    const empties = entries.filter((e) => !e.querySelector(".new-key-cors-origin-input").value.trim());
+    if (empties.length === 0) addNewKeyCorsRow();
+    while (empties.length > 1) empties.pop().remove();
+  }
+
+  function attachOriginInput(inp) {
+    inp.addEventListener("input", () => {
+      ensureNewKeyCorsEmptyRow();
+      inp.classList.remove("invalid");
+    });
+    inp.addEventListener("blur", () => {
+      const raw = inp.value.trim();
+      if (!raw) return;
+      const normalized = normalizeOrigin(raw);
+      if (!normalized) {
+        inp.classList.add("invalid");
+        return;
+      }
+      inp.classList.remove("invalid");
+      if (normalized !== raw) inp.value = normalized;
+    });
+  }
+
+  function addNewKeyCorsRow(value = "") {
+    const div = document.createElement("div");
+    div.className = "origin-entry";
+    div.innerHTML = `<input type="text" class="new-key-cors-origin-input" value="${escapeHtml(value)}" placeholder="example.com"><button class="origin-remove-btn" title="Remove">&times;</button>`;
+    const inp = div.querySelector(".new-key-cors-origin-input");
+    div.querySelector(".origin-remove-btn").addEventListener("click", () => {
+      div.remove();
+      ensureNewKeyCorsEmptyRow();
+    });
+    attachOriginInput(inp);
+    corsList.appendChild(div);
+    return inp;
+  }
+
+  corsList.querySelectorAll(".origin-remove-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btn.parentElement.remove();
+      ensureNewKeyCorsEmptyRow();
+    });
+  });
+  corsList.querySelectorAll(".new-key-cors-origin-input").forEach(attachOriginInput);
+
+  corsToggle.addEventListener("change", () => {
+    corsPanel.style.display = corsToggle.checked ? "block" : "none";
+    if (corsToggle.checked) {
+      const firstInput = corsList.querySelector(".new-key-cors-origin-input");
+      firstInput?.focus();
+    }
   });
 
   input.select();
@@ -2397,6 +2463,12 @@ function openCreateKeyModal(prefill = "") {
     const body = { name: input.value.trim() };
     if (instrToggle.checked) body.instrumentation = true;
     if (blockBotsToggle.checked) body.blockAutomatedBrowsers = true;
+    if (corsToggle.checked) {
+      const origins = [...corsList.querySelectorAll(".new-key-cors-origin-input")]
+        .map((i) => normalizeOrigin(i.value))
+        .filter(Boolean);
+      if (origins.length) body.corsOrigins = origins;
+    }
     const res = await api("POST", "/keys", body);
     if (res.siteKey && res.secretKey) {
       closeModal();
@@ -2726,18 +2798,9 @@ async function openSettings() {
     }
   });
 
-  function stripOrigin(val) {
-    val = val.trim();
-    if (!val) return "";
-    try {
-      val = new URL(val.includes("://") ? val : "https://" + val).host;
-    } catch {}
-    return val.replace(/\/+$/, "");
-  }
-
   function getCorsEntries() {
     return [...document.querySelectorAll("#globalCorsOrigins .cors-origin-input")]
-      .map((i) => stripOrigin(i.value))
+      .map((i) => normalizeOrigin(i.value))
       .filter(Boolean);
   }
 
@@ -2776,8 +2839,8 @@ async function openSettings() {
       checkCorsDirty();
     });
     input.addEventListener("blur", () => {
-      const stripped = stripOrigin(input.value);
-      if (stripped !== input.value.trim()) input.value = stripped;
+      const normalized = normalizeOrigin(input.value);
+      if (normalized && normalized !== input.value.trim()) input.value = normalized;
     });
     document.getElementById("globalCorsOrigins").appendChild(div);
     return input;
@@ -2796,8 +2859,8 @@ async function openSettings() {
       checkCorsDirty();
     });
     input.addEventListener("blur", () => {
-      const stripped = stripOrigin(input.value);
-      if (stripped !== input.value.trim()) input.value = stripped;
+      const normalized = normalizeOrigin(input.value);
+      if (normalized && normalized !== input.value.trim()) input.value = normalized;
     });
   });
   ensureGlobalCorsEmptyRow();
@@ -2815,8 +2878,8 @@ async function openSettings() {
     const enabled = document.getElementById("cfgGlobalCorsEnabled").checked;
     const origins = enabled ? getCorsEntries() : [];
     document.querySelectorAll("#globalCorsOrigins .cors-origin-input").forEach((input) => {
-      const stripped = stripOrigin(input.value);
-      if (stripped !== input.value.trim()) input.value = stripped;
+      const normalized = normalizeOrigin(input.value);
+      if (normalized && normalized !== input.value.trim()) input.value = normalized;
     });
     const res = await api("PUT", "/settings/cors", { origins: origins.length ? origins : null });
     if (res.success) {
@@ -2960,13 +3023,12 @@ async function openSettings() {
 }
 
 function openCreateApiKeyModal() {
-  const placeholder = randKey();
   const modal = createModal(
     "Create API Key",
     `
     <div class="modal-body">
       <div class="modal-field"><label for="apiKeyName">Key name</label>
-      <input type="text" id="apiKeyName" placeholder="${placeholder}" value="${placeholder}"></div>
+      <input type="text" id="apiKeyName"></div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn secondary" onclick="closeModal(); openSettings()">Cancel</button>

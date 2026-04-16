@@ -2427,6 +2427,10 @@ input[type="range"]::-moz-range-progress {
   border-color: var(--blue);
 }
 
+.origin-entry input.invalid {
+  border-color: #f38ba8;
+}
+
 .origin-remove-btn {
   background: none;
   border: none;

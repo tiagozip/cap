@@ -85,7 +85,13 @@ export function checkCorsOrigin(request) {
   if (!origins || !origins.length) return true;
 
   const from = request.headers.get("Origin") || "";
-  return origins.includes(from);
+  if (origins.includes(from)) return true;
+
+  try {
+    const host = new URL(from).host;
+    if (host && origins.includes(host)) return true;
+  } catch {}
+  return false;
 }
 
 function populateCorsCache(siteKey) {
