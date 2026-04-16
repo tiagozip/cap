@@ -358,48 +358,49 @@ export const capServer = new Elysia({
     }
 
     const bucket = hourlyBucket();
-    await db.hincrby(`metrics:challenges:${params.siteKey}`, bucket, 1);
+    const fnf = (p) => { p.catch(() => {}); };
 
-    try {
-      if (ip) {
-        const cachedHeaders = getHeaders();
-        const hs = cachedHeaders || {};
-        let country = null,
-          asnValue = null;
+    fnf(db.hincrby(`metrics:challenges:${params.siteKey}`, bucket, 1));
 
-        if (hs.countryHeader) {
-          country =
-            request.headers.get(hs.countryHeader) ||
-            request.headers.get(hs.countryHeader.toLowerCase());
-        }
-        if (hs.asnHeader) {
-          asnValue =
-            request.headers.get(hs.asnHeader) || request.headers.get(hs.asnHeader.toLowerCase());
-        }
+    (async () => {
+      if (!ip) return;
+      const cachedHeaders = getHeaders();
+      const hs = cachedHeaders || {};
+      let country = null,
+        asnValue = null;
 
-        if ((!country || !asnValue) && ipdbIsLoaded()) {
-          const geo = await ipLookup(ip);
-          if (!country && geo.country) country = geo.country;
-          if (!asnValue && geo.asn) asnValue = geo.org ? `${geo.asn} ${geo.org}` : geo.asn;
-        }
-
-        if (country) {
-          await db.hincrby(`metrics:country:${params.siteKey}`, country.toUpperCase(), 1);
-        }
-        if (asnValue) {
-          await db.hincrby(`metrics:asn:${params.siteKey}`, asnValue, 1);
-        }
+      if (hs.countryHeader) {
+        country =
+          request.headers.get(hs.countryHeader) ||
+          request.headers.get(hs.countryHeader.toLowerCase());
       }
-    } catch {}
+      if (hs.asnHeader) {
+        asnValue =
+          request.headers.get(hs.asnHeader) || request.headers.get(hs.asnHeader.toLowerCase());
+      }
+
+      if ((!country || !asnValue) && ipdbIsLoaded()) {
+        const geo = await ipLookup(ip);
+        if (!country && geo.country) country = geo.country;
+        if (!asnValue && geo.asn) asnValue = geo.org ? `${geo.asn} ${geo.org}` : geo.asn;
+      }
+
+      if (country) {
+        fnf(db.hincrby(`metrics:country:${params.siteKey}`, country.toUpperCase(), 1));
+      }
+      if (asnValue) {
+        fnf(db.hincrby(`metrics:asn:${params.siteKey}`, asnValue, 1));
+      }
+    })().catch(() => {});
 
     try {
       const ua = request.headers.get("user-agent");
       const { platform, os } = parseUA(ua);
       if (platform) {
-        await db.hincrby(`metrics:platform:${params.siteKey}`, platform, 1);
+        fnf(db.hincrby(`metrics:platform:${params.siteKey}`, platform, 1));
       }
       if (os) {
-        await db.hincrby(`metrics:os:${params.siteKey}`, os, 1);
+        fnf(db.hincrby(`metrics:os:${params.siteKey}`, os, 1));
       }
     } catch {}
 
@@ -529,8 +530,10 @@ export const capServer = new Elysia({
       return failAndTrack(403, { error: "Malformed challenge token" });
     }
 
-    const existing = await db.exists(`blocklist:${sig}`);
-    if (existing) {
+    const ttlMs = payload.exp - Date.now();
+    const ttlSecs = Math.max(1, Math.ceil(ttlMs / 1000));
+    const claim = await db.send("SET", [`blocklist:${sig}`, "1", "NX", "EX", String(ttlSecs)]);
+    if (claim !== "OK") {
       return failAndTrack(403, { error: "Challenge already redeemed" });
     }
 
@@ -613,11 +616,6 @@ export const capServer = new Elysia({
         });
       }
     }
-
-    const ttlMs = payload.exp - Date.now();
-    const ttlSecs = Math.max(1, Math.ceil(ttlMs / 1000));
-    await db.set(`blocklist:${sig}`, "1");
-    await db.expire(`blocklist:${sig}`, ttlSecs);
 
     const redeemId = randomBytes(8).toString("hex");
     const redeemSecret = randomBytes(15).toString("hex");

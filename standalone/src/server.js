@@ -143,6 +143,10 @@ export const server = new Elysia({
         blockAutomatedBrowsers: body?.blockAutomatedBrowsers ?? false,
       };
 
+      if (body?.corsOrigins && Array.isArray(body.corsOrigins) && body.corsOrigins.length) {
+        config.corsOrigins = body.corsOrigins;
+      }
+
       await db.hmset(`key:${siteKey}`, [
         "name",
         body?.name || siteKey,
@@ -167,6 +171,7 @@ export const server = new Elysia({
         name: t.Optional(t.String()),
         instrumentation: t.Optional(t.Boolean()),
         blockAutomatedBrowsers: t.Optional(t.Boolean()),
+        corsOrigins: t.Optional(t.Array(t.String())),
       }),
       detail: {
         tags: ["Keys"],
