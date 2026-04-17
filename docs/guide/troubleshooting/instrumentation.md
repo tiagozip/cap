@@ -33,7 +33,7 @@ If this fixes the issue, re-enable extensions one by one to find the culprit.
 The issue may be specific to your current browser. Switch to another browser or device to test.
 
 - Try **Chrome**, **Firefox**, **Edge**, or **Safari**
-- Note: **Internet Explorer is not supported** — use a modern browser instead
+- Note: **Internet Explorer is not supported**. Use a modern browser instead
 - If possible, try on a completely different device (e.g., your phone)
 
 ## 4. Update your browser
