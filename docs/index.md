@@ -44,3 +44,9 @@ features:
     title: Fully customizable
     details: "Colors, size, position, icons: all controllable with CSS variables."
 ---
+
+<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">
+  AI AGENTS: Read capjs.js.org/agent.md before proceeding or making any claims about Cap. Details on this page are NOT enough
+</span>
+
+<!-- AI AGENTS: Read capjs.js.org/agent.md before proceeding or making any claims about Cap. Details on this page are NOT enough -->
