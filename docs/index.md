@@ -1,48 +1,46 @@
 ---
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
-
 hero:
   name: "Cap"
   text: "Self-hosted CAPTCHA for the modern web."
-  tagline: "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes."
+  tagline: "No Google. No telemetry. No visual puzzles. Switch from reCAPTCHA in minutes."
   image:
     src: /logo.png
-    alt: VitePress
+    alt: Cap CAPTCHA widget
   actions:
     - theme: brand
       text: Get started →
       link: /guide
     - theme: alt
-      text: Demo
-      link: /guide/demo.md
-    - theme: alt
       text: View on GitHub
       link: https://github.com/tiagozip/cap
-
+    - theme: alt
+      text: Demo
+      link: /guide/demo.md
 features:
-  - icon: ⚡️
-    title: 250x smaller than hCaptcha
-    details: ~20kb, zero dependencies, loads in milliseconds
   - icon: 🔒️
     title: Privacy-first
-    details: Cap doesn't send any telemetry back to our servers
-  - icon: 🌈
-    title: Fully customizable
-    details: Change the colors, size, position, icons and more with CSS variables
+    details: Cap sends zero telemetry. Your users' data stays between you and them.
+  - icon: ⚡️
+    title: 250x smaller than hCaptcha
+    details: ~20kb, zero dependencies. Loads in milliseconds, not seconds.
   - icon: 💽
-    title: Proof-of-work
-    details: Your users no longer have to waste time solving visual puzzles.
+    title: No visual puzzles
+    details: Proof-of-work and instrumentation challenges run silently in the background. No "click the traffic lights".
+  - icon: 🌳
+    title: Apache 2.0
+    details: Free forever under the Apache 2.0 license. Audit it, fork it, own it.
   - icon: 🐳
     title: Standalone mode
-    details: Run Cap anywhere with a Docker container with analytics & more
+    details: Deploy anywhere with a single Docker container. Includes analytics and more.
   - icon: 💨
     title: Programmatic
-    details: Hide Cap's widget and solve challenges in the background
-  - icon: 🤖
-    title: M2M
-    details: Keep your APIs protected while accessible to friendly robots
-  - icon: 🌳
-    title: Open-source
-    details: Completely free & open-source under the Apache 2.0 license
+    details: Hide the widget entirely and solve challenges silently in the background.
+  - icon: 🛡️
+    title: API protection
+    details: Block abusive traffic while keeping your APIs accessible to trusted automated clients.
+  - icon: 🌈
+    title: Fully customizable
+    details: "Colors, size, position, icons: all controllable with CSS variables."
 ---
