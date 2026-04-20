@@ -4,6 +4,7 @@ import DefaultTheme from "vitepress/theme";
 import { h } from "vue";
 import Benchmark from "./components/Benchmark.vue";
 import Demo from "./components/Demo.vue";
+import EthicalAd from "./components/EthicalAd.vue";
 import HomeV2 from "./components/HomeV2.vue";
 import "./style.css";
 
@@ -12,12 +13,14 @@ export default {
   extends: DefaultTheme,
   Layout: () => {
     return h(DefaultTheme.Layout, null, {
-      // https://vitepress.dev/guide/extending-default-theme#layout-slots
+      "aside-ads-before": () => h(EthicalAd, { variant: "sidebar" }),
+      "doc-footer-before": () => h(EthicalAd, { variant: "docbottom" }),
     });
   },
   enhanceApp({ app }) {
     app.component("Benchmark", Benchmark);
     app.component("Demo", Demo);
     app.component("HomeV2", HomeV2);
+    app.component("EthicalAd", EthicalAd);
   },
 };

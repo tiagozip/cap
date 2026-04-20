@@ -886,6 +886,10 @@ onBeforeUnmount(() => {
       </section>
     </main>
 
+    <div class="wrap home-ad-wrap">
+      <EthicalAd variant="docbottom" />
+    </div>
+
     <footer>
       <div class="wrap">
         <div class="inner">
