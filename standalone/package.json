@@ -1,6 +1,6 @@
 {
   "name": "cap-standalone",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "keywords": [
     "algorithm",
     "anti-abuse",
@@ -46,7 +46,6 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
-    "@elysiajs/static": "^1.4.9",
     "@elysiajs/swagger": "^1.3.1",
     "elysia": "^1.4.28",
     "javascript-obfuscator": "^4.2.2",
