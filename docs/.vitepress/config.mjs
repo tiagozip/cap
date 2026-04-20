@@ -156,6 +156,13 @@ export default withMermaid({
         async: true,
       },
     ],
+    [
+      "script",
+      {
+        async: true,
+        src: "https://media.ethicalads.io/media/client/ethicalads.min.js",
+      },
+    ],
   ],
   themeConfig: {
     search: {
@@ -166,11 +173,6 @@ export default withMermaid({
         indexName: "cap-tiagorangel",
       },
     },
-    carbonAds: {
-      code: "CWBDKK3E",
-      placement: "capjsjsorg",
-    },
-
     logo: "/logo.png",
     siteTitle: "Cap",
 
