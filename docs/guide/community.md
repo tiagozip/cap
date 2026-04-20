@@ -66,3 +66,4 @@ These are React hook implementations of the Cap API, allowing full customization
 ### PHP
 
 - **[clysss/capito](https://github.com/clysss/capito)**: Capito Cap PHP Server
+- **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)**: PHP port of the Cap proof-of-work captcha server
