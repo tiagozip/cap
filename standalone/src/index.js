@@ -1,4 +1,3 @@
-import { staticPlugin } from "@elysiajs/static";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia, file } from "elysia";
 import { assetsServer } from "./assets.js";
@@ -7,8 +6,9 @@ import { capServer } from "./cap.js";
 import { isDemoMode } from "./demo.js";
 import { loadIPDB } from "./ipdb.js";
 import { server } from "./server.js";
-import { loadHeaders, loadRatelimit, loadCorsDefault, loadFiltering } from "./settings-cache.js";
+import { loadCorsDefault, loadFiltering, loadHeaders, loadRatelimit } from "./settings-cache.js";
 import { siteverifyServer } from "./siteverify.js";
+import { publicStatic } from "./static.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
@@ -100,7 +100,7 @@ new Elysia({
             },
     };
   })
-  .use(staticPlugin())
+  .use(publicStatic)
   .get("/", async ({ cookie }) => {
     if (isDemoMode()) return file("./public/index.html");
     return file(cookie.cap_authed?.value === "yes" ? "./public/index.html" : "./public/login.html");
