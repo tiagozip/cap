@@ -9,6 +9,7 @@ export default withMermaid({
   description:
     "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work and instrumentation challenges",
   lastUpdated: true,
+  appearance: "force-dark",
   vite: {
     plugins: [llmstxt()],
   },

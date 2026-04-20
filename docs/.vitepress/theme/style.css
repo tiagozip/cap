@@ -1,3 +1,15 @@
+@font-face {
+  font-family: "Inter";
+  src: url("/assets/inter.woff2") format("woff2");
+  font-display: swap;
+}
+
+html:has(.Layout.home-v2-page),
+html:has(.Layout.home-v2-page) body {
+  background: #11111b;
+  color: #e8e8e8;
+}
+
 /**
  * Customize default theme styling by overriding CSS variables:
  * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
@@ -49,10 +61,12 @@
   --vp-c-default-3: var(--vp-c-gray-3);
   --vp-c-default-soft: var(--vp-c-gray-soft);
 
-  --vp-c-brand-1: #26b5fa;
-  --vp-c-brand-2: #0688e5;
-  --vp-c-brand-3: #007aff;
+  --vp-c-brand-1: #89b4fa;
+  --vp-c-brand-2: #74a6f4;
+  --vp-c-brand-3: #5d8ff3;
   --vp-c-brand-soft: var(--vp-c-indigo-soft);
+
+  --vp-font-family-base: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, sans-serif;
 
   --vp-c-tip-1: var(--vp-c-brand-1);
   --vp-c-tip-2: var(--vp-c-brand-2);
