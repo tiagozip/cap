@@ -297,6 +297,7 @@
   }
 
   class CapWidget extends HTMLElement {
+    static formAssociated = true;
     #resetTimer = null;
     #workersCount = navigator.hardwareConcurrency || 8;
     token = null;
@@ -305,6 +306,7 @@
     #host;
     #solving = false;
     #eventHandlers;
+    #internals;
 
     #speculative = null;
     #speculativeTimer = null;
@@ -564,6 +566,7 @@
         "onerror",
         "data-cap-worker-count",
         "data-cap-i18n-initial-state",
+        "required",
       ];
     }
 
@@ -580,6 +583,23 @@
       this.boundHandleSolve = this.handleSolve.bind(this);
       this.boundHandleError = this.handleError.bind(this);
       this.boundHandleReset = this.handleReset.bind(this);
+
+      try {
+        this.#internals = this.attachInternals();
+      } catch {}
+    }
+
+    #updateValidity() {
+      if (!this.#internals?.setValidity) return;
+      if (this.hasAttribute("required") && !this.token) {
+        this.#internals.setValidity(
+          { valueMissing: true },
+          this.getI18nText("required-label", "Please verify you're human"),
+          this.#div || this,
+        );
+      } else {
+        this.#internals.setValidity({});
+      }
     }
 
     initialize() {
@@ -624,6 +644,10 @@
       ) {
         this.animateLabel(this.getI18nText("initial-state", "Verify you're human"));
       }
+
+      if (name === "required") {
+        this.#updateValidity();
+      }
     }
 
     async connectedCallback() {
@@ -642,7 +666,23 @@
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
 
       this.#attachInteractionListeners();
+      this.#updateValidity();
+
+      this.addEventListener("invalid", this.#handleInvalid);
     }
+
+    #handleInvalid = () => {
+      if (!this.#div) return;
+      try {
+        this.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch {
+        this.scrollIntoView();
+      }
+      this.#div.classList.remove("invalid");
+      void this.#div.offsetWidth;
+      this.#div.classList.add("invalid");
+      setTimeout(() => this.#div?.classList.remove("invalid"), 1500);
+    };
 
     async solve() {
       if (this.#solving) {
@@ -1142,6 +1182,8 @@
     handleSolve(event) {
       this.updateUI("done", this.getI18nText("solved-label", "You're a human"), true);
       this.executeAttributeCode("onsolve", event);
+      this.#internals?.setValidity?.({});
+      this.#div?.classList.remove("invalid");
     }
 
     handleError(event) {
@@ -1154,6 +1196,7 @@
     handleReset(event) {
       this.updateUI("", this.getI18nText("initial-state", "I'm a human"));
       this.executeAttributeCode("onreset", event);
+      this.#updateValidity();
     }
 
     executeAttributeCode(attributeName, event) {
@@ -1188,8 +1231,8 @@
         clearTimeout(this.#resetTimer);
         this.#resetTimer = null;
       }
-      this.dispatchEvent("reset");
       this.token = null;
+      this.dispatchEvent("reset");
       const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       if (this.querySelector(`input[name='${fieldName}']`)) {
         this.querySelector(`input[name='${fieldName}']`).value = "";

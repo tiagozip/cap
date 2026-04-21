@@ -56,7 +56,9 @@ interface CapConfig {
   "data-cap-i18n-verified-aria-label"?: string;
   "data-cap-i18n-error-aria-label"?: string;
   "data-cap-i18n-wasm-disabled"?: string;
+  "data-cap-i18n-required-label"?: string;
   "data-cap-troubleshooting-url"?: string;
+  required?: boolean | "";
   onsolve?: string;
   onprogress?: string;
   onreset?: string;
