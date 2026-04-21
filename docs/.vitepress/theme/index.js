@@ -13,7 +13,9 @@ export default {
   extends: DefaultTheme,
   Layout: () => {
     return h(DefaultTheme.Layout, null, {
-      "doc-footer-before": () => h(EthicalAd, { variant: "docbottom" }),
+      "doc-before": () => h(EthicalAd, { variant: "doctop", position: "top" }),
+      "doc-footer-before": () =>
+        h(EthicalAd, { variant: "docbottom", position: "bottom" }),
     });
   },
   enhanceApp({ app }) {

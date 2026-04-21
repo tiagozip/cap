@@ -1,14 +1,25 @@
 <script setup>
 import { useRoute } from "vitepress";
-import { nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 
 const props = defineProps({
   variant: { type: String, default: "sidebar" },
+  position: { type: String, default: "bottom" },
   placement: { type: String, default: "capjsjsorg" },
 });
 
 const route = useRoute();
 const nonce = ref(0);
+
+const isQuickstart = computed(() => {
+  const p = route.path.replace(/\/+$/, "/");
+  return p === "/guide/" || p === "/guide/index.html";
+});
+
+const shouldRender = computed(() => {
+  if (props.position === "top" && isQuickstart.value) return false;
+  return true;
+});
 
 const tryLoad = (attempt = 0) => {
   if (typeof window === "undefined") return;
@@ -38,7 +49,7 @@ watch(
 </script>
 
 <template>
-  <div :class="['ea-wrap', `ea-wrap--${variant}`]">
+  <div v-if="shouldRender" :class="['ea-wrap', `ea-wrap--${variant}`]">
     <div
       :key="route.path + '-' + nonce"
       :data-ea-publisher="placement"
