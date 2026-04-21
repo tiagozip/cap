@@ -53,6 +53,7 @@ export const publicStatic = new Elysia().get(
       ? "public, max-age=86400"
       : "private, max-age=3600";
     set.headers["X-Content-Type-Options"] = "nosniff";
+    set.headers["Content-Type"] = f.type || "application/octet-stream";
 
     return new Response(f);
   },
