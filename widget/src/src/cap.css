@@ -210,6 +210,25 @@
   display: none;
 }
 
+.captcha.invalid {
+  animation: cap-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  border-color: var(--cap-invalid-border-color, #f55b50);
+  box-shadow: 0 0 0 3px var(--cap-invalid-ring-color, rgba(245, 91, 80, 0.2));
+}
+
+@keyframes cap-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .captcha.invalid {
+    animation: none !important;
+  }
+}
+
 .captcha[disabled] {
   cursor: not-allowed;
 }
