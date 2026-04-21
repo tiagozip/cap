@@ -43,6 +43,7 @@ watch(
       :key="route.path + '-' + nonce"
       :data-ea-publisher="placement"
       data-ea-type="image"
+      class="adaptive-css"
     ></div>
   </div>
 </template>

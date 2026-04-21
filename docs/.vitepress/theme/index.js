@@ -13,7 +13,6 @@ export default {
   extends: DefaultTheme,
   Layout: () => {
     return h(DefaultTheme.Layout, null, {
-      "aside-ads-before": () => h(EthicalAd, { variant: "sidebar" }),
       "doc-footer-before": () => h(EthicalAd, { variant: "docbottom" }),
     });
   },
