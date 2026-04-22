@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   valkey:
-    image: valkey/valkey:8-alpine
+    image: valkey/valkey:9-alpine
     container_name: cap-valkey
     volumes:
       - valkey-data:/data
