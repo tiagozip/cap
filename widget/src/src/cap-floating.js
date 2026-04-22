@@ -1,22 +1,5 @@
 (() => {
-  const handleClick = (evt, element, capWidget, handlers) => {
-    const trigger = () => {
-      handlers.forEach((h) => {
-        element.addEventListener("click", h);
-        h.call(element, evt);
-      });
-
-      setTimeout(() => {
-        element.onclick = null;
-        handlers.forEach((h) => {
-          return element.removeEventListener("click", h);
-        });
-        element.onclick = (e) => handleClick(e, element, capWidget, handlers);
-      }, 50);
-    };
-
-    element.onclick = null;
-
+  const showWidget = (element, capWidget) => {
     const offset = parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
     const position = element.getAttribute("data-cap-floating-position") || "top";
 
@@ -43,12 +26,10 @@
     const triggerRect = element.getBoundingClientRect();
     const containerRect = (capWidget.offsetParent ?? document.documentElement).getBoundingClientRect();
 
-    // Horizontally center the popup under the trigger button.
     const centeredLeft = triggerRect.left + (triggerRect.width - capWidget.offsetWidth) / 2;
     const clampedLeft = Math.max(2, Math.min(centeredLeft, window.innerWidth - capWidget.offsetWidth));
     capWidget.style.left = `${clampedLeft - containerRect.left}px`;
 
-    // Place the popup above or below the trigger, clamped to the visible area.
     if (position === "top") {
       const idealTop = triggerRect.top - capWidget.offsetHeight - offset;
       const clampedTop = Math.max(0, idealTop);
@@ -60,24 +41,18 @@
     }
 
     capWidget.solve();
+  };
 
-    capWidget.addEventListener("solve", ({ detail }) => {
-      element.setAttribute("data-cap-token", detail.token);
-      element.setAttribute("data-cap-progress", "done");
-      setTimeout(() => {
-        trigger();
-      }, 500);
+  const hideWidget = (capWidget) => {
+    setTimeout(() => {
+      capWidget.style.transform = "scale(0.98)";
+      capWidget.style.opacity = "0";
+      capWidget.style.marginTop = "-4px";
+    }, 500);
 
-      setTimeout(() => {
-        capWidget.style.transform = "scale(0.98)";
-        capWidget.style.opacity = "0";
-        capWidget.style.marginTop = "-4px";
-      }, 500);
-
-      setTimeout(() => {
-        capWidget.style.display = "none";
-      }, 700);
-    });
+    setTimeout(() => {
+      capWidget.style.display = "none";
+    }, 700);
   };
 
   const setupElement = (element) => {
@@ -90,24 +65,38 @@
     }
 
     capWidget.style.display = "none";
-    const handlers = [element.onclick].filter(Boolean);
+    let bypass = false;
 
-    if (typeof getEventListeners === "function") {
-      handlers.push(...(getEventListeners(element).click || []).map((l) => l.listener));
-    }
+    element.addEventListener(
+      "click",
+      (e) => {
+        if (bypass) {
+          bypass = false;
+          return;
+        }
 
-    if (handlers.length) {
-      element.onclick = null;
-      handlers.forEach((h) => {
-        return element.removeEventListener("click", h);
-      });
-    }
+        e.stopImmediatePropagation();
+        e.preventDefault();
 
-    element.addEventListener("click", (e) => {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      handleClick(e, element, capWidget, handlers);
-    });
+        showWidget(element, capWidget);
+
+        const onSolve = ({ detail }) => {
+          capWidget.removeEventListener("solve", onSolve);
+          element.setAttribute("data-cap-token", detail.token);
+          element.setAttribute("data-cap-progress", "done");
+
+          setTimeout(() => {
+            bypass = true;
+            element.click();
+          }, 500);
+
+          hideWidget(capWidget);
+        };
+
+        capWidget.addEventListener("solve", onSolve);
+      },
+      true,
+    );
   };
 
   const init = (root) => {
