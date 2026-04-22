@@ -92,7 +92,7 @@ export const server = new Elysia({
 
       return await Promise.all(
         keys.map(async (key) => {
-          const data = await hgetall(`solutions:${key.siteKey}`);
+          const data = await hgetall(`metrics:verified:${key.siteKey}`);
           const current = sumSolutions(data, currentStart);
           const previous = sumSolutions(data, previousStart, currentStart);
 
@@ -249,9 +249,9 @@ export const server = new Elysia({
         prevStartTime = startTime - periodLen;
       }
 
-      const [challengesH, verifiedH, ratelimitedH, latSumH, latCountH] = await Promise.all([
-        hgetall(`metrics:challenges:${sk}`),
+      const [verifiedH, failedH, ratelimitedH, latSumH, latCountH] = await Promise.all([
         hgetall(`metrics:verified:${sk}`),
+        hgetall(`metrics:failed:${sk}`),
         hgetall(`metrics:ratelimited:${sk}`),
         hgetall(`metrics:latency_sum:${sk}`),
         hgetall(`metrics:latency_count:${sk}`),
@@ -280,8 +280,8 @@ export const server = new Elysia({
 
       const chartData = [];
       if (bucketSize === day) {
-        const chM = aggregateDaily(challengesH, startTime, endTime);
         const veM = aggregateDaily(verifiedH, startTime, endTime);
+        const faM = aggregateDaily(failedH, startTime, endTime);
         const rlM = aggregateDaily(ratelimitedH, startTime, endTime);
 
         const numDays =
@@ -296,20 +296,26 @@ export const server = new Elysia({
           const currentDayStart = Math.floor(now / day) * day;
           for (let i = 0; i < numDays; i++) {
             const b = currentDayStart - (numDays - 1 - i) * day;
+            const verified = veM.get(b) || 0;
+            const failed = faM.get(b) || 0;
             chartData.push({
               bucket: b,
-              challenges: chM.get(b) || 0,
-              verified: veM.get(b) || 0,
+              challenges: verified + failed,
+              verified,
+              failed,
               rateLimited: rlM.get(b) || 0,
             });
           }
         } else {
-          const allBuckets = new Set([...chM.keys(), ...veM.keys(), ...rlM.keys()]);
+          const allBuckets = new Set([...veM.keys(), ...faM.keys(), ...rlM.keys()]);
           for (const b of [...allBuckets].sort((a, c) => a - c)) {
+            const verified = veM.get(b) || 0;
+            const failed = faM.get(b) || 0;
             chartData.push({
               bucket: b,
-              challenges: chM.get(b) || 0,
-              verified: veM.get(b) || 0,
+              challenges: verified + failed,
+              verified,
+              failed,
               rateLimited: rlM.get(b) || 0,
             });
           }
@@ -320,17 +326,20 @@ export const server = new Elysia({
         for (let h = startHour; h <= endHour; h++) {
           const b = h * 3600;
           const bs = String(b);
+          const verified = Number(verifiedH[bs] || 0);
+          const failed = Number(failedH[bs] || 0);
           chartData.push({
             bucket: b,
-            challenges: Number(challengesH[bs] || 0),
-            verified: Number(verifiedH[bs] || 0),
+            challenges: verified + failed,
+            verified,
+            failed,
             rateLimited: Number(ratelimitedH[bs] || 0),
           });
         }
       }
 
-      const totalChallenges = sumRange(challengesH, startTime, endTime);
       const totalVerified = sumRange(verifiedH, startTime, endTime);
+      const totalFailed = sumRange(failedH, startTime, endTime);
       const totalRateLimited = sumRange(ratelimitedH, startTime, endTime);
       const totalLatSum = sumRange(latSumH, startTime, endTime);
       const totalLatCount = sumRange(latCountH, startTime, endTime);
@@ -338,14 +347,15 @@ export const server = new Elysia({
 
       let prevStats = null;
       if (prevStartTime !== null) {
-        const pChallenges = sumRange(challengesH, prevStartTime, prevEndTime);
         const pVerified = sumRange(verifiedH, prevStartTime, prevEndTime);
+        const pFailed = sumRange(failedH, prevStartTime, prevEndTime);
         const pRateLimited = sumRange(ratelimitedH, prevStartTime, prevEndTime);
         const pLatSum = sumRange(latSumH, prevStartTime, prevEndTime);
         const pLatCount = sumRange(latCountH, prevStartTime, prevEndTime);
         prevStats = {
-          challenges: pChallenges,
+          challenges: pVerified + pFailed,
           verified: pVerified,
+          failed: pFailed,
           avgLatency: pLatCount > 0 ? Math.round(pLatSum / pLatCount) : 0,
           rateLimited: pRateLimited,
         };
@@ -359,8 +369,9 @@ export const server = new Elysia({
           config: JSON.parse(key.config),
         },
         stats: {
-          challenges: totalChallenges,
+          challenges: totalVerified + totalFailed,
           verified: totalVerified,
+          failed: totalFailed,
           avgLatency,
           rateLimited: totalRateLimited,
         },
@@ -492,8 +503,6 @@ export const server = new Elysia({
       const sk = params.siteKey;
       await Promise.all([
         db.del(`key:${sk}`),
-        db.del(`solutions:${sk}`),
-        db.del(`metrics:challenges:${sk}`),
         db.del(`metrics:verified:${sk}`),
         db.del(`metrics:failed:${sk}`),
         db.del(`metrics:ratelimited:${sk}`),
