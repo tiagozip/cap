@@ -4,10 +4,6 @@ import { Elysia } from "elysia";
 import { db } from "./db.js";
 import { checkCorsOrigin } from "./settings-cache.js";
 
-function hourlyBucket() {
-  return String(Math.floor(Date.now() / 1000 / 3600) * 3600);
-}
-
 export const siteverifyServer = new Elysia({
   detail: {
     tags: ["Challenges"],
@@ -60,16 +56,13 @@ export const siteverifyServer = new Elysia({
 
     if (!expires) {
       set.status = 404;
-      await db.hincrby(`metrics:failed:${sitekey}`, hourlyBucket(), 1);
       return { success: false, error: "Token not found" };
     }
 
     if (Number(expires) < Date.now()) {
       set.status = 403;
-      await db.hincrby(`metrics:failed:${sitekey}`, hourlyBucket(), 1);
       return { success: false, error: "Token expired" };
     }
 
-    await db.hincrby(`metrics:verified:${sitekey}`, hourlyBucket(), 1);
     return { success: true };
   });

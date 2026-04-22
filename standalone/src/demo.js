@@ -302,6 +302,7 @@ function generateChartData(rng, key, duration) {
 
   let totalChallenges = 0;
   let totalVerified = 0;
+  let totalFailed = 0;
   let totalLatSum = 0;
   let totalLatCount = 0;
   let totalRateLimited = 0;
@@ -323,24 +324,27 @@ function generateChartData(rng, key, duration) {
     const challenges = Math.max(0, Math.round(base * jitter));
     const failRate = key.failRate * (1 + (rng() - 0.5) * 0.6);
     const verified = Math.max(0, Math.round(challenges * (1 - failRate)));
+    const failed = Math.max(0, challenges - verified);
     const rateLimited = Math.round(challenges * (0.005 + rng() * 0.015));
     const avgLatency = Math.round(2000 + rng() * 6000);
 
     totalChallenges += challenges;
     totalVerified += verified;
+    totalFailed += failed;
     totalRateLimited += rateLimited;
     if (challenges > 0) {
       totalLatSum += avgLatency * challenges;
       totalLatCount += challenges;
     }
 
-    data.push({ bucket, challenges, verified, rateLimited });
+    data.push({ bucket, challenges, verified, failed, rateLimited });
   }
 
   return {
     stats: {
       challenges: totalChallenges,
       verified: totalVerified,
+      failed: totalFailed,
       rateLimited: totalRateLimited,
       avgLatency: totalLatCount > 0 ? Math.round(totalLatSum / totalLatCount) : 0,
     },
@@ -426,6 +430,7 @@ export function demoGetKey(siteKey, chartDuration = "today") {
     prevStats = {
       challenges: Math.round(stats.challenges * (0.7 + prevRng() * 0.6)),
       verified: Math.round(stats.verified * (0.7 + prevRng() * 0.6)),
+      failed: Math.round(stats.failed * (0.7 + prevRng() * 0.6)),
       avgLatency: Math.round(stats.avgLatency * (0.8 + prevRng() * 0.4)),
       rateLimited: Math.round(stats.rateLimited * (0.5 + prevRng() * 1.0)),
     };

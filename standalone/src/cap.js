@@ -360,8 +360,6 @@ export const capServer = new Elysia({
     const bucket = hourlyBucket();
     const fnf = (p) => { p.catch(() => {}); };
 
-    fnf(db.hincrby(`metrics:challenges:${params.siteKey}`, bucket, 1));
-
     (async () => {
       if (!ip) return;
       const cachedHeaders = getHeaders();
@@ -625,7 +623,7 @@ export const capServer = new Elysia({
     await db.set(`token:${redeemToken}`, String(tokenExpires));
     await db.expire(`token:${redeemToken}`, tokenTtlSecs);
 
-    await db.hincrby(`solutions:${params.siteKey}`, bucket, 1);
+    await db.hincrby(`metrics:verified:${params.siteKey}`, bucket, 1);
 
     if (payload.iat) {
       const latencyMs = Date.now() - payload.iat;
