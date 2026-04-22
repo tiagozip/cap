@@ -223,17 +223,13 @@ body {
   width: 100%;
 }
 
-.ea-wrap [data-ea-publisher],
 .ea-wrap .ea-content {
   width: 100% !important;
   max-width: 100% !important;
-  background: transparent !important;
   box-shadow: none !important;
   margin: 0 !important;
-  border: none !important;
-}
-
-.ea-wrap .ea-content {
+  
+  border: 1px solid var(--vp-c-border) !important;
   display: block !important;
   padding: 12px 14px !important;
   background: var(--vp-c-bg-soft) !important;
@@ -256,7 +252,7 @@ body {
   width: auto !important;
   background: transparent !important;
   text-align: left !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
   color: var(--vp-c-text-2) !important;
 }
@@ -294,22 +290,24 @@ body {
 .ea-wrap strong.ea-cta,
 .ea-wrap .ea-text a strong.ea-cta {
   all: unset !important;
-  display: inline !important;
   font-weight: 500 !important;
   font-size: inherit !important;
-  color: var(--vp-c-brand-1) !important;
-  background: transparent !important;
-  padding: 0 !important;
   margin: 0 0 0 4px !important;
   text-align: left !important;
   cursor: pointer !important;
   transition: color 0.15s ease;
+  
+  color: var(--vp-c-brand-1) !important;
+  text-decoration: underline !important;
+  width: fit-content !important;
+  display: inline-block !important;
+  margin-left: 3px !important;
+  text-underline-offset: 3px!important;
 }
 
 .ea-wrap .ea-content:hover strong.ea-cta,
 .ea-wrap .ea-text a:hover strong.ea-cta {
-  color: var(--vp-c-brand-2) !important;
-  text-decoration: underline !important;
+  text-decoration: none !important;
 }
 
 .ea-wrap .ea-content .ea-domain,
@@ -358,31 +356,6 @@ body {
 .ea-wrap--docbottom {
   margin: 40px 0 12px;
   width: 100%;
-}
-
-.ea-wrap--sidebar {
-  width: 100%;
-}
-
-.ea-wrap--sidebar .ea-content {
-  padding: 10px 12px !important;
-  border-radius: 6px !important;
-}
-
-.ea-wrap--sidebar .ea-text {
-  font-size: 12px !important;
-  line-height: 1.45 !important;
-}
-
-.ea-wrap--sidebar strong.ea-cta,
-.ea-wrap--sidebar .ea-text a strong.ea-cta {
-  font-size: 11px !important;
-  margin-top: 4px !important;
-}
-
-.ea-wrap--sidebar .ea-content .ea-domain,
-.ea-wrap--sidebar .ea-callout {
-  font-size: 10px !important;
 }
 
 .ea-wrap--landing {
