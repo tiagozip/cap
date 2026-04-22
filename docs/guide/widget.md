@@ -47,7 +47,7 @@ https://<your-instance>/<site-key>/
 
 ```html
 <form>
-  <cap-widget id="cap" data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
+  <cap-widget id="cap" required data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
   <button type="submit">Submit</button>
 </form>
 
@@ -301,6 +301,7 @@ All widget labels can be overridden with `data-cap-i18n-*` attributes. These def
   data-cap-i18n-verify-aria-label="Click to verify you're a human"
   data-cap-i18n-verifying-aria-label="Verifying, please wait"
   data-cap-i18n-verified-aria-label="Verified"
+  data-cap-i18n-required-label="Please verify you're human"
   data-cap-i18n-error-aria-label="An error occurred, please try again"
 ></cap-widget>
 ```
