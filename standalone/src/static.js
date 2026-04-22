@@ -18,7 +18,7 @@ const resolveSafePath = (rel) => {
 
 export const publicStatic = new Elysia().get(
   "/public/*",
-  async ({ cookie, set, request, redirect }) => {
+  async ({ cookie, set, request, redirect, headers }) => {
     const rawPath = new URL(request.url).pathname.replace(/^\/public\/?/, "");
     let rel;
     try {
@@ -39,7 +39,7 @@ export const publicStatic = new Elysia().get(
 
     if (!allowUnauthed && !authed) {
       set.status = 401;
-      redirect("/")
+      redirect("/");
       return { success: false, error: "Unauthorized" };
     }
 
@@ -49,12 +49,10 @@ export const publicStatic = new Elysia().get(
       return { success: false, error: "Not found" };
     }
 
-    set.headers["Cache-Control"] = allowUnauthed
-      ? "public, max-age=86400"
-      : "private, max-age=3600";
-    set.headers["X-Content-Type-Options"] = "nosniff";
-    set.headers["Content-Type"] = f.type || "application/octet-stream";
+    headers["content-type"] = f.type || "application/octet-stream";
+    headers["cache-control"] = allowUnauthed ? "public, max-age=86400" : "private, max-age=3600";
+    headers["x-content-type-options"] = "nosniff";
 
-    return new Response(f);
+    return f;
   },
 );

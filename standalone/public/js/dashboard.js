@@ -319,8 +319,8 @@ function renderKeyDetail() {
             <div class="stat-item">
               <div class="stat-bar red"></div>
               <div class="stat-label">Failed</div>
-              <div class="stat-value" id="statFailed">${formatCompact(Math.max(0, (s.challenges || 0) - (s.verified || 0)))}</div>
-              <div id="trendFailed">${trendHtml(Math.max(0, (s.challenges || 0) - (s.verified || 0)), key.prevStats ? Math.max(0, (key.prevStats.challenges || 0) - (key.prevStats.verified || 0)) : null)}</div>
+              <div class="stat-value" id="statFailed">${formatCompact(s.failed || 0)}</div>
+              <div id="trendFailed">${trendHtml(s.failed, key.prevStats?.failed)}</div>
             </div>
             <div class="stat-item">
               <div class="stat-bar purple"></div>
@@ -903,7 +903,7 @@ function renderChart(chartData) {
       datasets: [
         mkDataset("Challenges", "challenges", "#89b4fa"),
         mkDataset("Verified", "verified", "#a6e3a1"),
-        mkDataset("Failed", (d) => Math.max(0, (d.challenges || 0) - (d.verified || 0)), "#f38ba8"),
+        mkDataset("Failed", "failed", "#f38ba8"),
       ],
     },
     options: {
