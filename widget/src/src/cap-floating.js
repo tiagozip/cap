@@ -19,7 +19,6 @@
 
     const offset = parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
     const position = element.getAttribute("data-cap-floating-position") || "top";
-    const rect = element.getBoundingClientRect();
 
     Object.assign(capWidget.style, {
       display: "block",
@@ -39,22 +38,27 @@
       capWidget.style.marginTop = "0";
     }, 5);
 
-    const centerX = rect.left + (rect.width - capWidget.offsetWidth) / 2;
-    const safeX = Math.min(centerX, window.innerWidth - capWidget.offsetWidth);
+    // `position: absolute` is resolved against the nearest positioned ancestor (capWidget.offsetParent),
+    // but getBoundingClientRect() returns viewport-relative coords, convert to container-relative coords.
+    const triggerRect = element.getBoundingClientRect();
+    const containerRect = (capWidget.offsetParent ?? document.documentElement).getBoundingClientRect();
 
+    // Horizontally center the popup under the trigger button.
+    const centeredLeft = triggerRect.left + (triggerRect.width - capWidget.offsetWidth) / 2;
+    const clampedLeft = Math.max(2, Math.min(centeredLeft, window.innerWidth - capWidget.offsetWidth));
+    capWidget.style.left = `${clampedLeft - containerRect.left}px`;
+
+    // Place the popup above or below the trigger, clamped to the visible area.
     if (position === "top") {
-      capWidget.style.top = `${Math.max(
-        window.scrollY,
-        rect.top - capWidget.offsetHeight - offset + window.scrollY,
-      )}px`;
+      const idealTop = triggerRect.top - capWidget.offsetHeight - offset;
+      const clampedTop = Math.max(0, idealTop);
+      capWidget.style.top = `${clampedTop - containerRect.top}px`;
     } else {
-      capWidget.style.top = `${Math.min(
-        rect.bottom + offset + window.scrollY,
-        window.innerHeight - capWidget.offsetHeight + window.scrollY,
-      )}px`;
+      const idealTop = triggerRect.bottom + offset;
+      const clampedTop = Math.min(idealTop, window.innerHeight - capWidget.offsetHeight);
+      capWidget.style.top = `${clampedTop - containerRect.top}px`;
     }
 
-    capWidget.style.left = `${Math.max(safeX, 2)}px`;
     capWidget.solve();
 
     capWidget.addEventListener("solve", ({ detail }) => {
