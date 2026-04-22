@@ -260,6 +260,91 @@ async function selectKey(siteKey) {
   });
 }
 
+const HL_KEYWORDS = new Set([
+  "const", "let", "var", "import", "export", "from", "await", "new", "return",
+  "async", "function", "if", "else", "for", "while", "try", "catch", "throw",
+  "true", "false", "null", "undefined", "void", "typeof", "in", "of",
+]);
+const HL_BUILTINS = new Set(["fetch", "JSON", "console", "document", "window", "Math", "Promise"]);
+
+function highlight(text) {
+  const esc = text.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]);
+  const re = new RegExp(
+    [
+      "(&lt;!--[\\s\\S]*?--&gt;)",
+      "(\\/\\/[^\\n]*)",
+      "(#[^\\n]*)",
+      "(\"[^\"\\n]*\"|'[^'\\n]*'|`[^`]*`)",
+      "(&lt;\\/?[a-zA-Z][\\w-]*)",
+      "([a-zA-Z][\\w-]*)(?==)",
+      "\\b([A-Za-z_$][\\w$]*)\\b",
+      "\\b(\\d+(?:\\.\\d+)?)\\b",
+    ].join("|"),
+    "g",
+  );
+  return esc.replace(re, (m, htmlC, slashC, hashC, str, tag, attr, word, num) => {
+    if (htmlC) return `<span class="c">${htmlC}</span>`;
+    if (slashC) return `<span class="c">${slashC}</span>`;
+    if (hashC) return `<span class="c">${hashC}</span>`;
+    if (str) return `<span class="s">${str}</span>`;
+    if (tag) return `<span class="t">${tag}</span>`;
+    if (attr) return `<span class="a">${attr}</span>`;
+    if (word) {
+      if (HL_KEYWORDS.has(word)) return `<span class="k">${word}</span>`;
+      if (HL_BUILTINS.has(word)) return `<span class="p">${word}</span>`;
+      return word;
+    }
+    if (num) return `<span class="n">${num}</span>`;
+    return m;
+  });
+}
+
+function renderIntegrationTab(key) {
+  const sk = key.siteKey;
+  const origin = location.origin;
+  const endpoint = `${origin}/${sk}/`;
+  const widget = `<scr` + `ipt src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></scr` + `ipt>
+<!-- pin a version in production, e.g. @cap.js/widget@3 -->
+
+<cap-widget data-cap-api-endpoint="${endpoint}"></cap-widget>`;
+  const nodeSnippet = `const res = await fetch("${origin}/siteverify", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ secret: process.env.CAP_SECRET, response: token }),
+});
+const { success } = await res.json();`;
+  return `
+    <div class="integration-layout">
+      <h3 class="config-section-title">Frontend</h3>
+      <p class="integration-hint">Check our <a href="https://capjs.js.org/guide/widget.html#usage" style="color:var(--blue)" target="_blank">documentation</a> for more frameworks and details.</p>
+      <div class="code-block" data-raw="${escapeHtml(widget)}">
+        <button class="code-copy">Copy</button>
+        <pre><code class="hl">${highlight(widget)}</code></pre>
+      </div>
+
+      <h3 class="config-section-title" style="margin-top: 24px;">Server verification</h3>
+      <div class="code-block" data-raw="${escapeHtml(nodeSnippet)}" style="margin-top: 12px;">
+        <button class="code-copy">Copy</button>
+        <pre><code class="hl">${highlight(nodeSnippet)}</code></pre>
+      </div>
+    </div>
+  `;
+}
+
+function wireIntegrationCopy(root) {
+  root.querySelectorAll(".code-copy").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const block = btn.closest(".code-block");
+      const text = block.dataset.raw || block.querySelector("pre")?.textContent || "";
+      navigator.clipboard.writeText(text).then(() => {
+        const prev = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(() => (btn.textContent = prev), 1200);
+      });
+    });
+  });
+}
+
 function renderKeyDetail() {
   welcomeScreen.style.display = "none";
   keyDetail.style.display = "flex";
@@ -273,6 +358,10 @@ function renderKeyDetail() {
         <button class="detail-tab ${currentTab === "activity" ? "active" : ""}" data-tab="activity">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           Activity
+        </button>
+        <button class="detail-tab ${currentTab === "integration" ? "active" : ""}" data-tab="integration">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Integration
         </button>
         <button class="detail-tab ${currentTab === "configuration" ? "active" : ""}" data-tab="configuration">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37 1 .608 2.296.07 2.572-1.065"/><circle cx="12" cy="12" r="3"/></svg>
@@ -387,6 +476,10 @@ function renderKeyDetail() {
 
         </div>
       </div>
+    </div>
+
+    <div class="tab-content ${currentTab === "integration" ? "active" : ""}" id="integrationTab">
+      ${renderIntegrationTab(key)}
     </div>
 
     <div class="tab-content ${currentTab === "configuration" ? "active" : ""}" id="configurationTab">
@@ -566,8 +659,14 @@ function renderKeyDetail() {
         }
       });
       if (currentTab === "configuration") loadBlockedIps();
+      if (currentTab === "integration") {
+        const t = document.getElementById("integrationTab");
+        if (t) wireIntegrationCopy(t);
+      }
     });
   });
+  const _intTab = document.getElementById("integrationTab");
+  if (_intTab && currentTab === "integration") wireIntegrationCopy(_intTab);
 
   document.getElementById("copyKeyBtn").addEventListener("click", async () => {
     try {
