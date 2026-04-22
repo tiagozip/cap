@@ -10,6 +10,7 @@ import {
 import { isLoaded as ipdbIsLoaded, lookup as ipLookup } from "./ipdb.js";
 import valkeyRateLimit from "./ratelimit.js";
 import { checkCorsOrigin, getFiltering, getHeaders, getRatelimit } from "./settings-cache.js";
+import { getClientIp } from "./ip_extraction.js";
 
 function hourlyBucket() {
   return String(Math.floor(Date.now() / 1000 / 3600) * 3600);
@@ -34,28 +35,7 @@ function parseUA(ua) {
   return { platform, os };
 }
 
-const DEFAULT_IP_HEADERS = ["X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP"];
 
-function getClientIp(request, srv) {
-  const cachedHeaders = getHeaders();
-  const headerName = cachedHeaders?.ipHeader || process.env.RATELIMIT_IP_HEADER;
-  if (headerName) {
-    const ip = request.headers.get(headerName) || request.headers.get(headerName.toLowerCase());
-    if (ip) {
-      const parts = ip.split(",").filter((e) => !!e.trim());
-      return parts[0].trim();
-    }
-  }
-
-  for (const h of DEFAULT_IP_HEADERS) {
-    const val = request.headers.get(h);
-    if (val) {
-      const parts = val.split(",").filter((e) => !!e.trim());
-      return parts[0].trim();
-    }
-  }
-  return srv?.requestIP(request)?.address || null;
-}
 
 const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
