@@ -66,7 +66,7 @@ const browser = await chromium.launch({ headless: false });
 const page = await browser.newPage();
 
 const server = Bun.serve({
-  port: 3006,
+  port: 3007,
   routes: {
     "/": () => {
       return new Response(Bun.file("./test.html"));
@@ -104,4 +104,4 @@ const server = Bun.serve({
   },
 });
 
-page.goto(`http://localhost:3006/`);
+page.goto(`http://localhost:3007/`);
