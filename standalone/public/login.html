@@ -27,6 +27,10 @@
         --blue: #89b4fa;
       }
 
+      a {
+        text-underline-offset: 2px;
+      }
+
       body {
         background-color: var(--bg);
         color: var(--text);
@@ -63,7 +67,6 @@
       .info-side a {
         color: var(--text);
         text-decoration: underline;
-        text-underline-offset: 2px;
         font-size: inherit;
       }
 
@@ -200,7 +203,6 @@
       a {
         color: var(--text-muted);
         font-size: 13px;
-        text-underline-offset: 2px;
         text-decoration: none;
         user-select: none;
         transition: color 0.15s;
@@ -226,47 +228,44 @@
         <h1>The self-hosted CAPTCHA for the modern web.</h1>
       </div>
 
-        <form action="javascript:void(0)">
-          <label>Admin key</label>
-          <div class="password-wrapper">
-            <input
-              type="password"
-              name="password"
-              placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"
-              class="password"
-            />
-            <button title="Show/hide password" class="showhide-password" type="button">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
-                />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button>
-          </div>
-
-          <button type="submit" class="submit">Continue to Cap</button>
-          <p class="err"></p>
-          <p class="bottom">
-            <a
-              href="https://github.com/tiagozip/cap/issues/new/choose"
-              target="_blank"
-              rel="noopener"
-              >Report issues</a
+      <form action="javascript:void(0)">
+        <label>Admin key</label>
+        <div class="password-wrapper">
+          <input
+            type="password"
+            name="password"
+            placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"
+            class="password"
+          />
+          <button title="Show/hide password" class="showhide-password" type="button">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-            <a href="https://capjs.js.org/" target="_blank" class="poweredby">Powered by Cap</a>
-          </p>
-        </form>
+              <path
+                d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"
+              />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+        </div>
+
+        <button type="submit" class="submit">Continue to Cap</button>
+        <p class="err"></p>
+        <p class="bottom">
+          <a href="https://github.com/tiagozip/cap/issues/new/choose" target="_blank" rel="noopener"
+            >Report issues</a
+          >
+          <a href="https://capjs.js.org/" target="_blank" class="poweredby">Powered by Cap</a>
+        </p>
+      </form>
     </div>
   </body>
   <script>
