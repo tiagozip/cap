@@ -85,7 +85,7 @@ We recommend reading our [widget documentation](../widget.md) for more details a
 Once a user completes the CAPTCHA, your backend must verify the token before trusting it. Send a `POST` request to your instance's `/siteverify` endpoint with the following JSON body:
 
 ```bash
-curl "https://<instance_url>/<site_key>/siteverify" \
+curl "https://<instance_url>/siteverify" \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{ "secret": "<key_secret>", "response": "<captcha_token>" }'

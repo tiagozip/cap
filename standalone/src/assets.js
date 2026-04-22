@@ -33,18 +33,18 @@ const updateCache = async () => {
 
   if (!intervalExceeded && !versionsChanged) return;
 
-  const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
+  const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net/npm/@cap.js/widget@${WIDGET_VERSION}";
 
   try {
     const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = await Promise.all([
-      fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`).then((r) => r.text()),
-      fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`).then((r) =>
+      fetch(`${CACHE_HOST}`).then((r) => r.text()),
+      fetch(`${CACHE_HOST}/cap-floating.min.js`).then((r) =>
         r.text(),
       ),
-      fetch(`${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`).then((r) =>
+      fetch(`${CACHE_HOST}/browser/cap_wasm_bg.wasm`).then((r) =>
         r.arrayBuffer(),
       ),
-      fetch(`${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`).then((r) =>
+      fetch(`${CACHE_HOST}/browser/cap_wasm.min.js`).then((r) =>
         r.text(),
       ),
     ]);

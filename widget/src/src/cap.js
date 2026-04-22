@@ -165,7 +165,7 @@
   };
 
   if (typeof WebAssembly === "object" && typeof WebAssembly.compile === "function") {
-    getWasmModule().catch(() => {});
+    getWasmModule().catch(() => { });
   }
 
   const prefersReducedMotion = () =>
@@ -217,7 +217,7 @@
 
       try {
         deadWorker.terminate();
-      } catch {}
+      } catch { }
 
       this._spawnFailures++;
       if (this._spawnFailures > 3) {
@@ -288,7 +288,7 @@
       for (const w of this._workers) {
         try {
           w.terminate();
-        } catch {}
+        } catch { }
       }
       this._workers = [];
       this._idle = [];
@@ -442,7 +442,7 @@
       let wasmModule = null;
       try {
         wasmModule = await getWasmModule();
-      } catch {}
+      } catch { }
 
       if (!this.#speculativePool) {
         this.#speculativePool = new WorkerPool(1);
@@ -586,16 +586,17 @@
 
       try {
         this.#internals = this.attachInternals();
-      } catch {}
+      } catch { }
     }
 
     #updateValidity() {
       if (!this.#internals?.setValidity) return;
       if (this.hasAttribute("required") && !this.token) {
+        console.log(this.#div);
         this.#internals.setValidity(
           { valueMissing: true },
           this.getI18nText("required-label", "Please verify you're human"),
-          this.#div || this,
+          this.#div,
         );
       } else {
         this.#internals.setValidity({});
@@ -933,7 +934,7 @@
             "aria-label",
             this.getI18nText("error-aria-label", "An error occurred, please try again"),
           );
-          this.error(err.message);
+          this.error(err.message || "Solving failed");
           throw err;
         }
       } finally {
@@ -959,7 +960,7 @@
         }
       }
 
-      if (!wasmSupported) {
+      if (!wasmModule) {
         if (!this.#shadow.querySelector(".warning")) {
           const warningEl = document.createElement("div");
           warningEl.className = "warning";
@@ -1025,23 +1026,31 @@
       );
       this.#div.setAttribute("aria-live", "polite");
       this.#div.setAttribute("disabled", "true");
-      this.#div.innerHTML = `<div class="checkbox" part="checkbox"><svg class="progress-ring" viewBox="0 0 32 32"><circle class="progress-ring-bg" cx="16" cy="16" r="14"></circle><circle class="progress-ring-circle" cx="16" cy="16" r="14"></circle></svg></div><p part="label" class="label-wrapper"><span class="label active">${this.getI18nText(
+      this.#div.innerHTML = `<div class="checkbox" part="checkbox"><svg class="progress-ring" viewBox="0 0 32 32"><circle class="progress-ring-bg" cx="16" cy="16" r="14"></circle><circle class="progress-ring-circle" cx="16" cy="16" r="14"></circle></svg></div><img class="captcha-logo" title="logo" aria-label="logo of captcha host"></img><p part="label" class="label-wrapper"><span class="label active">${this.getI18nText(
         "initial-state",
         "Verify you're human",
       )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener" title="Secured by Cap: Self-hosted CAPTCHA for the modern web.">Cap</a>`;
-
       this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
-
+      if (this.getAttribute("data-cap-nologo")) {
+        this.#div.querySelector(".captcha-logo").src = "";
+        this.#div.querySelector(".captcha-logo").style.display = "none";
+      } else {
+        this.#div.querySelector(".captcha-logo").src = this.getAttribute("data-cap-logo") || "/public/logo-small.webp";
+      }
       this.#shadow.appendChild(this.#div);
     }
 
     addEventListeners() {
       if (!this.#div) return;
 
+      this.#div.querySelector(".captcha-logo").addEventListener("onerror", function () {
+        this.#div.querySelector(".captcha-logo").src = "";
+        this.#div.querySelector(".captcha-logo").style.display = "none";
+      });
       this.#div.querySelector("a").addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        window.open("https://capjs.js.org", "_blank");
+        window.open("https://capjs.js.org", "_blank", "no-referrer=true");
       });
 
       this.#div.addEventListener("click", () => {

@@ -52,6 +52,8 @@ interface CapConfig {
   "data-cap-i18n-solved-label"?: string;
   "data-cap-i18n-error-label"?: string;
   "data-cap-i18n-verify-aria-label"?: string;
+  "data-cap-logo"?: string;
+  "data-cap-nologo"?: boolean;
   "data-cap-i18n-verifying-aria-label"?: string;
   "data-cap-i18n-verified-aria-label"?: string;
   "data-cap-i18n-error-aria-label"?: string;

@@ -117,7 +117,7 @@ Once a user completes the CAPTCHA, your backend must verify the token before pro
 ::: code-group
 
 ```sh [curl]
-curl "https://<your-instance>/<site-key>/siteverify" \
+curl "https://<your-instance>/siteverify" \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{ "secret": "<key_secret>", "response": "<captcha_token>" }'
@@ -125,7 +125,7 @@ curl "https://<your-instance>/<site-key>/siteverify" \
 
 ```js [fetch]
 const { success } = await (
-  await fetch("https://<your-instance>/<site-key>/siteverify", {
+  await fetch("https://<your-instance>/siteverify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ secret: "<key_secret>", response: "<captcha_token>" }),
@@ -136,7 +136,7 @@ const { success } = await (
 ```py [python]
 import requests
 success = requests.post(
-  "https://<your-instance>/<site-key>/siteverify",
+  "https://<your-instance>/siteverify",
   json={"secret": "<key_secret>", "response": "<captcha_token>"}
 ).json().get("success")
 
@@ -145,7 +145,7 @@ print(success)
 
 ```php [php]
 <?php
-$data = json_decode(file_get_contents("https://<your-instance>/<site-key>/siteverify",
+$data = json_decode(file_get_contents("https://<your-instance>/siteverify",
   false, stream_context_create([
     "http" => [
       "method" => "POST",

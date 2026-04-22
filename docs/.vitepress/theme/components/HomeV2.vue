@@ -14,7 +14,7 @@ const SNIPPETS = {
   onerror={(e) => console.error(e.detail.message)}
 />`,
   docker: `# self-host in one command\ndocker run -p 3000:3000 \\\n  -e ADMIN_KEY=$(openssl rand -hex 32) \\\n  tiago2/standalone:latest\n\n# includes analytics + multi-site-key support`,
-  verify: `// server-side\nconst res = await fetch("https://your.server/<site_key>/siteverify", {\n  method: "POST",\n  body: JSON.stringify({ secret, response: token })\n});\nconst { success } = await res.json();`,
+  verify: `// server-side\nconst res = await fetch("https://your.server/siteverify", {\n  method: "POST",\n  body: JSON.stringify({ secret, response: token })\n});\nconst { success } = await res.json();`,
 };
 
 const cleanups = [];
@@ -312,7 +312,7 @@ function initLiveArchitecture() {
       "0x0000fffe…",
       "0x0000fff8…",
       "0x0000fffd…",
-      "0x00010000…",
+      "0x00010000…"
     ];
     let i = 0;
     ids.push(setInterval(() => {
@@ -492,9 +492,20 @@ onBeforeUnmount(() => {
           <div class="feat-grid">
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z" />
-                </svg>
+                <svg width="24px" height="24px" stroke="none" fill="currentColor" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 512 512"  xml:space="preserve">
+<g>
+	<path class="st0" d="M510.831,167.648c-2.954-20.666-2.954-35.432-14.767-26.572c-11.81,8.86-84.65,27.247-162.402,35.433
+		c-36.479,3.844-61.048,14.564-77.663,27.262c-16.616-12.697-41.18-23.418-77.663-27.262
+		c-77.752-8.186-150.594-26.573-162.403-35.433C4.12,132.216,4.12,146.982,1.17,167.648c-5.43,38.006,5.902,144.691,79.724,183.076
+		c77.892,40.502,132.874,17.712,159.45,2.954c5.852-3.256,11.003-6.581,15.654-9.891c4.651,3.31,9.801,6.635,15.654,9.891
+		c26.577,14.758,81.562,37.548,159.454-2.954C504.924,312.339,516.257,205.654,510.831,167.648z M159.24,306.471
+		c-33.266-2.566-66.535-35.836-66.535-63.981c0,0,51.184,2.557,74.213,5.116c23.03,2.558,40.948,20.472,40.948,30.711
+		C207.865,288.549,192.509,309.021,159.24,306.471z M352.757,306.471c-33.266,2.55-48.622-17.922-48.622-28.154
+		c0-10.239,17.914-28.154,40.944-30.711c23.03-2.558,74.213-5.116,74.213-5.116C419.292,270.635,386.027,303.905,352.757,306.471z"
+		/>
+</g>
+</svg>
               </div>
               <h3>Privacy-first</h3>
               <p>
@@ -531,10 +542,21 @@ onBeforeUnmount(() => {
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
-                  <path d="M14 3v6h6" />
-                </svg>
+                <svg width="24px" height="24px" stroke="none" fill="currentColor" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+	 viewBox="0 0 512 512"  xml:space="preserve">
+<g>
+	<path class="st0" d="M404.234,197.867H179.418v-79.809c0.014-21.222,8.542-40.23,22.434-54.159
+		c13.921-13.891,32.937-22.412,54.145-22.426c21.215,0.014,40.231,8.542,54.159,22.426c13.885,13.929,22.412,32.937,22.427,54.159
+		v31.834h41.472v-31.834c0.014-32.537-13.246-62.179-34.578-83.481C318.176,13.246,288.534-0.015,255.997,0
+		c-32.531-0.015-62.172,13.246-83.474,34.577c-21.331,21.302-34.584,50.944-34.577,83.481v79.809h-30.178
+		c-19.48,0-35.267,15.793-35.267,35.266V345.03C72.5,437.243,154.66,512,256.004,512C357.347,512,439.5,437.243,439.5,345.03
+		V233.134C439.5,213.66,423.714,197.867,404.234,197.867z M406.324,345.03c0,73.77-67.434,133.794-150.32,133.794
+		c-82.887,0-150.328-60.024-150.328-133.794V233.134c0-1.154,0.944-2.09,2.091-2.09h296.467c1.154,0,2.09,0.936,2.09,2.09V345.03z"
+		/>
+	<path class="st0" d="M255.997,286.328c-19.843,0-35.941,16.09-35.941,35.941c0,15.118,9.348,28.038,22.572,33.343l-10.756,45.98
+		h48.259l-10.757-45.972c13.217-5.312,22.572-18.232,22.572-33.35C291.945,302.418,275.847,286.328,255.997,286.328z"/>
+</g>
+</svg>
               </div>
               <h3>Apache 2.0</h3>
               <p>Free forever. Audit it, fork it, own it. No vendor can pull the rug.</p>
@@ -624,10 +646,10 @@ onBeforeUnmount(() => {
                 <tr>
                   <td class="label">Open source</td>
                   <td><span class="yes">Apache 2.0</span></td>
-                  <td><span class="no">No</span></td>
-                  <td><span class="no">No</span></td>
-                  <td><span class="no">No</span></td>
-                  <td><span class="no">No</span></td>
+                  <td><span class="no">-</span></td>
+                  <td><span class="no">-</span></td>
+                  <td><span class="no">-</span></td>
+                  <td><span class="no">-</span></td>
                 </tr>
                 <tr>
                   <td class="label">No visual puzzles</td>
@@ -845,7 +867,7 @@ onBeforeUnmount(() => {
                 <dt>Can I migrate from reCAPTCHA / hCaptcha?</dt>
                 <dd>
                   Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll
-                  need to swap your client-side code to use Cap's widget.
+                  need to swap your client-side code to use Cap's widget and your server-side code to fetch Cap's siteverify endpoint.
                 </dd>
               </div>
               <div>

@@ -296,6 +296,8 @@ All widget labels can be overridden with `data-cap-i18n-*` attributes. These def
   data-cap-i18n-verifying-label="Verifying..."
   data-cap-i18n-solved-label="You're human"
   data-cap-i18n-error-label="Error"
+  data-cap-logo="/logo.png"
+  data-cap-nologo="false"
   data-cap-i18n-troubleshooting-label="Troubleshooting"
   data-cap-i18n-wasm-disabled="Enable WASM for significantly faster solving"
   data-cap-i18n-verify-aria-label="Click to verify you're a human"

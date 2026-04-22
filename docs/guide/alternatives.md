@@ -11,7 +11,7 @@
 | MTCaptcha            | ❌          | 🟨   | 🟨      | ❌            | ❌              | 🟨               | ❌          | ✅             | ✅                  | ❌           | ❌            | 🟨                |
 | GeeTest              | ❌          | ❌   | ❌      | 🟨            | 🟨              | 🟨               | ❌          | ✅             | ✅                  | ❌           | 🟨            | 🟨                |
 | Arkose Labs          | ❌          | ❌   | ❌      | ❌            | ❌              | ❌               | ❌          | ❌             | ✅                  | 🟨           | ❌            | 🟨                |
-
+| Anubis               | ✅          | ✅   | ✅      | ✅            | ✅             | ✅               | ❌          | ✅            | ✅                  | ✅           | 🟨            | 🟨    
 ::: tip Note
 
 "Hard for bots" for Cap refers to the combination of Proof-of-Work and [dynamic instrumentation challenges](./standalone/options.md#instrumentation-challenges). It does not consider commercial solvers like BrightData, as I cannot verify their legitimacy myself.
