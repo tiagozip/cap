@@ -198,15 +198,17 @@ class Cap extends EventEmitter {
       this._loadTokens().catch(() => {});
     }
 
-    process.on("beforeExit", () => this.cleanup());
+    if (!this.config.noFSState && !this.config.storage?.tokens) {
+      process.on("beforeExit", () => this.cleanup());
 
-    ["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) => {
-      process.once(signal, () => {
-        this.cleanup()
-          .then(() => process.exit(0))
-          .catch(() => process.exit(1));
+      ["SIGINT", "SIGTERM", "SIGQUIT"].forEach((signal) => {
+        process.once(signal, () => {
+          this.cleanup()
+            .then(() => process.exit(0))
+            .catch(() => process.exit(1));
+        });
       });
-    });
+    }
   }
 
   /**
