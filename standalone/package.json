@@ -1,6 +1,6 @@
 {
   "name": "cap-standalone",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "keywords": [
     "algorithm",
     "anti-abuse",
@@ -42,7 +42,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.js",
-    "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:3.0.3 -t tiago2/cap:3.0 -t tiago2/cap:3 -t tiago2/cap:latest . --push"
+    "docker:publish": "docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:3.0.5 -t tiago2/cap:3.0 -t tiago2/cap:3 -t tiago2/cap:latest . --push"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",

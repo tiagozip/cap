@@ -130,10 +130,6 @@ function buildBlockChecks(b, id) {
   );
 
   checks.push(
-    `if (!${b}) { if (navigator.plugins && navigator.plugins.length === 0 && !/Firefox/.test(navigator.userAgent)) ${b} = true; try { if (navigator.plugins && window.PluginArray && !(navigator.plugins instanceof PluginArray)) ${b} = true; } catch {} if (navigator.languages && navigator.languages.length === 0) ${b} = true; }`,
-  );
-
-  checks.push(
     `if (!${b}) { try { if (/HeadlessChrome|PhantomJS|SlimerJS/i.test(navigator.userAgent)) ${b} = true; if (/headless/i.test(navigator.appVersion || '')) ${b} = true; } catch {} }`,
   );
 
