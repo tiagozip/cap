@@ -1,4 +1,5 @@
 @media (prefers-reduced-motion: reduce) {
+
   .captcha,
   .captcha * {
     transition: none !important;
@@ -63,21 +64,19 @@
 }
 
 .captcha * {
-  font-family: var(
-    --cap-font,
-    system,
-    -apple-system,
-    "BlinkMacSystemFont",
-    ".SFNSText-Regular",
-    "San Francisco",
-    "Roboto",
-    "Segoe UI",
-    "Helvetica Neue",
-    "Lucida Grande",
-    "Ubuntu",
-    "arial",
-    sans-serif
-  );
+  font-family: var(--cap-font,
+      system,
+      -apple-system,
+      "BlinkMacSystemFont",
+      ".SFNSText-Regular",
+      "San Francisco",
+      "Roboto",
+      "Segoe UI",
+      "Helvetica Neue",
+      "Lucida Grande",
+      "Ubuntu",
+      "arial",
+      sans-serif);
 }
 
 .checkbox {
@@ -194,10 +193,8 @@
 
 .captcha[data-state="done"] .checkbox {
   border: 1px solid transparent;
-  background-image: var(
-    --cap-checkmark,
-    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%2300a67d%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E")
-  );
+  background-image: var(--cap-checkmark,
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cstyle%3E%40keyframes%20anim%7B0%25%7Bstroke-dashoffset%3A23.21320343017578px%7Dto%7Bstroke-dashoffset%3A0%7D%7D%3C%2Fstyle%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%2300a67d%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22m5%2012%205%205L20%207%22%20style%3D%22stroke-dashoffset%3A0%3Bstroke-dasharray%3A23.21320343017578px%3Banimation%3Aanim%20.5s%20ease%22%2F%3E%3C%2Fsvg%3E"));
   background-size: cover;
 }
 
@@ -207,10 +204,8 @@
 
 .captcha[data-state="error"] .checkbox {
   border: 1px solid transparent;
-  background-image: var(
-    --cap-error-cross,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%23f55b50' d='M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8'/%3E%3C%2Fsvg%3E")
-  );
+  background-image: var(--cap-error-cross,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%23f55b50' d='M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10a10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 0 1-8-8a8 8 0 0 1 8-8a8 8 0 0 1 8 8a8 8 0 0 1-8 8'/%3E%3C%2Fsvg%3E"));
   background-size: cover;
 }
 
@@ -225,10 +220,27 @@
 }
 
 @keyframes cap-shake {
-  10%, 90% { transform: translateX(-1px); }
-  20%, 80% { transform: translateX(2px); }
-  30%, 50%, 70% { transform: translateX(-4px); }
-  40%, 60% { transform: translateX(4px); }
+
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -256,7 +268,7 @@
   font-size: 12px !important;
   font-style: italic;
   color: var(--cap-color, #212121);
-  opacity: 0.8;
+  opacity: 0.8 !important;
   text-underline-offset: 0.18em;
   text-decoration-thickness: 0.08em;
   z-index: 6;
@@ -271,6 +283,7 @@
   font-weight: 500;
   font-size: inherit;
 }
+
 .cap-troubleshoot-link:hover {
   opacity: 0.8;
 }

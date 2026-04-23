@@ -867,7 +867,7 @@ onBeforeUnmount(() => {
                 <dt>Can I migrate from reCAPTCHA / hCaptcha?</dt>
                 <dd>
                   Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll
-                  need to swap your client-side code to use Cap's widget and your server-side code to fetch Cap's siteverify endpoint.
+                  need to swap your client-side code to use Cap's widget.
                 </dd>
               </div>
               <div>
