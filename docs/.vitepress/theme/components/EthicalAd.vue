@@ -120,9 +120,7 @@ const isUsCarbonRoll = () => {
 const schedule = () => {
   nextTick(() =>
     requestAnimationFrame(() => {
-      if (usingCarbon.value) loadCarbon();
-      else if (isUsCarbonRoll()) loadCarbon();
-      else tryLoad();
+      tryLoad();
     }),
   );
 };
