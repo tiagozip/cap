@@ -132,7 +132,7 @@
       window.addEventListener("message", handler);
 
       iframe.srcdoc =
-        '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>' +
+        `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>` +
         scriptText +
         "\n</scr" +
         "ipt></body></html>";
