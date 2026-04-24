@@ -590,6 +590,14 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
+      <section class="block home-ad-block">
+        <div class="wrap-wide">
+          <div class="home-ad-slot">
+            <EthicalAd variant="homemid" position="top" />
+          </div>
+        </div>
+      </section>
+
       <section class="block" id="compare">
         <div class="wrap-wide">
           <div class="head">
@@ -1289,6 +1297,27 @@ html.home-v2-active main.main {
 
 #homev2 section.block {
   padding: 80px 0 0;
+}
+#homev2 section.home-ad-block {
+  padding: 56px 0 0;
+}
+#homev2 .home-ad-slot {
+  max-width: 520px;
+  margin: 0 auto;
+  --vp-c-bg-soft: var(--surface);
+  --vp-c-bg-alt: var(--bg);
+  --vp-c-border: var(--line);
+  --vp-c-text-1: var(--fg);
+  --vp-c-text-2: var(--fg-dim);
+  --vp-c-text-3: var(--fg-mute);
+  --vp-c-brand-1: var(--accent);
+  --carbon-bg-primary: var(--surface);
+  --carbon-bg-secondary: var(--bg);
+  --carbon-text-color: var(--fg);
+}
+#homev2 .home-ad-slot .ea-wrap--homemid {
+  width: 100%;
+  margin: 0;
 }
 #homev2 section.block.cta-block {
   padding: 120px 0 80px;
