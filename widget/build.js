@@ -58,7 +58,7 @@ await fs.writeFile(
   await minifyJS(await fs.readFile("./src/src/cap-floating.js", "utf-8")),
 );
 
-/* console.timeEnd("build");
+console.timeEnd("build");
 
 console.time("test");
 
@@ -104,4 +104,4 @@ const server = Bun.serve({
   },
 });
 
-page.goto(`http://localhost:3007/`); */
+page.goto(`http://localhost:3007/`);
