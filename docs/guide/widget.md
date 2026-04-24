@@ -283,6 +283,8 @@ Haptic feedback is automatically disabled in [programmatic mode](./programmatic)
 | `data-cap-worker-count`        | Number of solver workers (defaults to `navigator.hardwareConcurrency \|\| 8`) |
 | `data-cap-hidden-field-name`   | Name of the hidden token input in a `<form>` (default: `cap-token`)           |
 | `data-cap-troubleshooting-url` | Custom URL for the "Troubleshooting" link shown when a user is blocked        |
+| `data-cap-logo`                | URL of the logo        |
+| `data-cap-nologo`              | Disable logo        |
 | `data-cap-disable-haptics`     | Disable haptic feedback (vibrations) on this widget                           |
 
 #### i18n

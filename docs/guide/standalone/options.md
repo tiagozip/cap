@@ -35,7 +35,19 @@ And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm.js` fil
 window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm.js";
 ```
 
-By default, these fetch from `process.env.CACHE_HOST` (which defaults to `https://cdn.jsdelivr.net`). You can change this by setting the `CACHE_HOST` env variable when running the server.
+By default, these fetch from `process.env.CACHE_HOST` (which defaults to `https://cdn.jsdelivr.net`). You can change this by setting the `CACHE_HOST` env variable when running the server. The syntax of the files should be:
+
+- `/npm/@cap.js/widget@${WIDGET_VERSION}` for `cap.min.js`
+- `/npm/@cap.js/widget@${WIDGET_VERSION}/floating.js`
+- `/npm/@cap.js/widget@${WIDGET_VERSION}/assets/cap_wasm_bg.wasm`
+- `/npm/@cap.js/widget@${WIDGET_VERSION}/assets/cap_wasm.js`
+
+You can also use `process.env.LOCAL_CACHE` to set a local/remote cache will the following syntax:
+
+- `cap.min.js`
+- `floating.js`
+- `cap_wasm_bg.wasm`
+- `cap_wasm.js`
 
 ## Rate-limiting
 
@@ -60,3 +72,21 @@ Error messages are redacted by default and instead logged to the console. To dis
 Cap Standalone supports JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to block headless browsers from solving them. Instrumentation challenges are enabled by default when creating new site keys.
 
 You can toggle instrumentation challenges on or off in your site key config. To block headless browsers, turn on "Attempt to block headless browsers" in the key settings.
+
+## Environment variables
+
+The following environment variables can be used:
+
+- `ENABLE_ASSETS_SERVER` (boolean) to activate [assets](#asset-server).
+- `LOCAL_CACHE` or `CACHE_HOST` (string) to set [another local/CDN server](#asset-server).
+- `WIDGET_VERSION` and `WASM_VERSION` (string) to set version for those files [in the assets](#asset-server).
+- `ADMIN_KEY` (**Compulsory**, string) is the admin dashboard key, we recommend using a 32-character password that can be generated with `openssl rand -base64 32`, must be at least 12 characters long. Can also be hashed.
+- `RATELIMIT_IP_HEADER` (string) is the IP Header, would be overwritten by global and local settings.
+- `REDIS_URL` (or `VALKEY_URL`) (string) is the url of the redis database.
+- `DEMO_MODE` (boolean) set a demo mode for CapJS dashboard. ***Must not be used in production!***
+- `SERVER_PORT` (int) set the server port, must match docker ports.
+- `SERVER_HOSTNAME` (string) set binding ip for listening to connections.
+- `DISABLE_ERROR_LOGGING` (boolean) activates [redaction of error messages](#error-messages).
+- `INSTRUMENTATION_MAX_POOL` (int) set maximum number for instrumentation workers.
+- `INSTRUMENTATION_MAX_QUEUE` (int) set maximum number for instrumentation queues.
+- `RATELIMIT_IP_WARNING` (boolean) activates the warning if rate limit is not configured.

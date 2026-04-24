@@ -11,6 +11,10 @@ if (DEMO_MODE !== "true") {
     throw new Error(
       "auth: Admin key too short. Please use one that's at least 12 characters",
     );
+  const PLAIN_ADMIN = !ADMIN_KEY.startsWith("$") || ADMIN_KEY.split("$").length != 6
+  if (PLAIN_ADMIN) {
+    console.warn("ADMIN_KEY seems in plain format. Consider hashing the password.")
+  }
 }
 
 export const auth = new Elysia({
@@ -26,10 +30,16 @@ export const auth = new Elysia({
     const { admin_key } = body;
 
     const hash = (v) => new Bun.CryptoHasher("sha256").update(v).digest();
-
-    if (!crypto.timingSafeEqual(hash(admin_key), hash(ADMIN_KEY))) {
-      set.status = 401;
-      return { success: false };
+    if (PLAIN_ADMIN) {
+      if (!crypto.timingSafeEqual(hash(admin_key), hash(ADMIN_KEY))) {
+        set.status = 401;
+        return { success: false };
+      }
+    } else {
+      if (!Bun.password.verify(admin_key, ADMIN_KEY)) {
+        set.status = 401;
+        return { success: false };
+      }
     }
 
     const session_token = randomBytes(30).toString("hex");

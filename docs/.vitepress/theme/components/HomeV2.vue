@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
           <div class="feat-grid">
             <div class="feat-cell">
               <div class="icon">
-                <svg width="24px" height="24px" stroke="none" fill="currentColor" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+                <svg width="24px" stroke-width="1.6" height="24px" stroke="none" fill="currentColor" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
 	 viewBox="0 0 512 512"  xml:space="preserve">
 <g>
 	<path class="st0" d="M510.831,167.648c-2.954-20.666-2.954-35.432-14.767-26.572c-11.81,8.86-84.65,27.247-162.402,35.433
@@ -537,12 +537,12 @@ onBeforeUnmount(() => {
               <h3>No visual puzzles</h3>
               <p>
                 PoW and instrumentation run silently in the background. No "click the traffic
-                lights."
+                lights".
               </p>
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg width="24px" height="24px" stroke="none" fill="currentColor" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+                <svg width="24px" stroke-width="1.6" height="24px" stroke="none" fill="currentColor" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
 	 viewBox="0 0 512 512"  xml:space="preserve">
 <g>
 	<path class="st0" d="M404.234,197.867H179.418v-79.809c0.014-21.222,8.542-40.23,22.434-54.159

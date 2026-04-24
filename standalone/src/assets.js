@@ -32,23 +32,41 @@ const updateCache = async () => {
     cacheConfig.versions.widget !== WIDGET_VERSION || cacheConfig.versions.wasm !== WASM_VERSION;
 
   if (!intervalExceeded && !versionsChanged) return;
-
-  const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
+  const LOCAL_CACHE = process.env.LOCAL_CACHE || false;
+  const CACHE_HOST = (process.env.CACHE_HOST || "https://cdn.jsdelivr.net");
 
   try {
-    const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = await Promise.all([
-      fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`).then((r) => r.text()),
-      fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`).then((r) =>
-        r.text(),
-      ),
-      fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/browser/cap_wasm_bg.wasm`).then((r) =>
-        r.arrayBuffer(),
-      ),
-      fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/browser/cap_wasm.min.js`).then((r) =>
-        r.text(),
-      ),
-    ]);
-
+    let [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = [null, null, null, null];
+    if (LOCAL_CACHE) {
+      [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = await Promise.all([
+        fetch(`${LOCAL_CACHE}/cap.min.js`).then((r) => r.text()),
+        fetch(`${LOCAL_CACHE}/cap-floating.min.js`).then((r) =>
+          r.text(),
+        ),
+        fetch(`${LOCAL_CACHE}/cap_wasm_bg.wasm`).then((r) =>
+          r.arrayBuffer(),
+        ),
+        fetch(`${LOCAL_CACHE}/cap_wasm.min.js`).then((r) =>
+          r.text(),
+        ),
+      ]);
+    } else {
+      [widgetSource, floatingSource, wasmSource, wasmLoaderSource] = await Promise.all([
+        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`).then((r) => r.text()),
+        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`).then((r) =>
+          r.text(),
+        ),
+        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/browser/cap_wasm_bg.wasm`).then((r) =>
+          r.arrayBuffer(),
+        ),
+        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/browser/cap_wasm.min.js`).then((r) =>
+          r.text(),
+        ),
+      ]);
+    }
+    if (!widgetSource || !floatingSource || !wasmSource || !wasmLoaderSource) {
+      throw new Error("Cannot load all assets");
+    }
     cacheConfig.lastUpdate = currentTime;
     cacheConfig.versions.widget = WIDGET_VERSION;
     cacheConfig.versions.wasm = WASM_VERSION;
@@ -60,6 +78,10 @@ const updateCache = async () => {
       db.set("asset:cap_wasm_bg.wasm", Buffer.from(wasmSource)),
       db.set("asset:cap_wasm.js", wasmLoaderSource),
     ]);
+    console.debug("📦 [asset server] assets reloaded at:", new Intl.DateTimeFormat("en", {
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(currentTime));
   } catch (e) {
     console.error("📦 [asset server] failed to update assets cache:", e);
   }

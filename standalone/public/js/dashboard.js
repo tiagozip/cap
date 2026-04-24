@@ -49,7 +49,7 @@ const api = async (method, path, body) => {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    return await (await fetch(`/server${path}`, opts)).json();
+    return await (await fetch(`server${path}`, opts)).json();
   } catch (e) {
     console.error("standalone:", e);
     return { error: e.message };
@@ -126,7 +126,7 @@ const getDateRange = (chartData) => {
 
 async function init() {
   try {
-    const aboutRes = await fetch("/server/about");
+    const aboutRes = await api("GET","/about");
     const aboutData = await aboutRes.json();
     if (aboutData.demo) demoMode = true;
   } catch {}
@@ -301,6 +301,7 @@ function highlight(text) {
 
 function renderIntegrationTab(key) {
   const sk = key.siteKey;
+  const pf = "secret-to-change";
   const origin = location.origin;
   const endpoint = `${origin}/${sk}/`;
   const widget = `<scr` + `ipt src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></scr` + `ipt>
@@ -310,9 +311,14 @@ function renderIntegrationTab(key) {
   const nodeSnippet = `const res = await fetch("${origin}/siteverify", {
   method: "POST",
   headers: { "content-type": "application/json" },
-  body: JSON.stringify({ secret: process.env.CAP_SECRET, response: token }),
+  body: JSON.stringify({ secret: "${pf}", response: "token" }),
 });
-const { success } = await res.json();`;
+const { success } = await res.json();
+if (success) {
+  console.log("Validated");
+} else {
+  console.warn("Error");
+}`;
   return `
     <div class="integration-layout">
       <h3 class="config-section-title">Frontend</h3>
