@@ -366,3 +366,22 @@ body {
 .ea-wrap--landing .ea-content {
   background: rgba(255, 255, 255, 0.02) !important;
 }
+
+* {
+  --carbon-bg-primary: #f6f6f7;
+  --carbon-bg-secondary: #ffffff;
+  --carbon-text-color: #213547;
+}
+
+.dark * {
+  --carbon-bg-primary: #202127;
+  --carbon-bg-secondary: #161618;
+  --carbon-text-color: rgba(255, 255, 255, 0.87);
+}
+
+#carbon-cover .carbon-footer button,
+#carbon-cover .carbon-footer button * {
+  background: var(--carbon-bg-secondary) !important;
+  color: var(--carbon-text-color) !important;
+}
+
