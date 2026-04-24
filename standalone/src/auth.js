@@ -4,14 +4,13 @@ import { db } from "./db.js";
 import valkeyRateLimit from "./ratelimit.js";
 
 const { ADMIN_KEY, DEMO_MODE } = process.env;
-
+const PLAIN_ADMIN = !(ADMIN_KEY || "").startsWith("$") || (ADMIN_KEY || "").split("$").length != 6
 if (DEMO_MODE !== "true") {
   if (!ADMIN_KEY) throw new Error("auth: Admin key missing. Please add one");
   if (ADMIN_KEY.length < 12)
     throw new Error(
       "auth: Admin key too short. Please use one that's at least 12 characters",
     );
-  const PLAIN_ADMIN = !ADMIN_KEY.startsWith("$") || ADMIN_KEY.split("$").length != 6
   if (PLAIN_ADMIN) {
     console.warn("ADMIN_KEY seems in plain format. Consider hashing the password.")
   }
