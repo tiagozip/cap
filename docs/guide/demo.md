@@ -61,17 +61,28 @@
   pointer-events: none;
   filter: grayscale(1);
 }
+
+.signin-button.active {
+  animation: signin-button-pulse 1.6s ease-out 0s 2;
+}
+
+@keyframes signin-button-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--vp-c-brand-1) 65%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--vp-c-brand-1) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--vp-c-brand-1) 0%, transparent);
+  }
+}
 </style>
 
 <div class="login-form">
-  <div class="input" style="border-top-left-radius:8px;border-top-right-radius:8px;border-bottom:1px solid var(--vp-c-divider);">
-    <label for="username">Username</label>
-    <input id="username" placeholder="example" autocomplete="off" />
-  </div>
-
-  <div class="input" style="border-bottom-left-radius:8px;border-bottom-right-radius:8px;">
-    <label for="password">Password</label>
-    <input type="password" id="pass" autocomplete="off" readonly="" value="Password123!" />
+  <div class="input" style="border-radius:8px;">
+    <label for="comment">Comment</label>
+    <textarea id="comment" rows="3" placeholder="Write a reply…" style="font-size:16px;padding:.375rem .75rem;padding-top:0;font-family:inherit;background:transparent;border:none;outline:none;resize:vertical;">Looks great, thanks for sharing!</textarea>
   </div>
 </div>
 
@@ -79,6 +90,6 @@
   <Demo />
 </div>
 
-<button class="signin-button" onclick="alert('Success!')">Sign in</button>
+<DemoReply />
 
 You can find more demos [in the GitHub repo](https://github.com/tiagozip/cap/tree/main/demo). Note that this demo is not a full implementation of Cap and uses a placeholder server.
