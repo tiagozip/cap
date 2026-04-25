@@ -60,3 +60,33 @@ Error messages are redacted by default and instead logged to the console. To dis
 Cap Standalone supports JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to block headless browsers from solving them. Instrumentation challenges are enabled by default when creating new site keys.
 
 You can toggle instrumentation challenges on or off in your site key config. To block headless browsers, turn on "Attempt to block headless browsers" in the key settings.
+
+## IP database
+
+Country and ASN lookups can use one of three providers, configured under `Settings > IP Data > Country & ASN data` in the dashboard: DB-IP Lite, MaxMind GeoLite2 and IPInfo's API.
+
+For DB-IP and MaxMind, the `.mmdb` files are downloaded into `/usr/src/app/data/` inside the container.
+
+### Docker volume permissions
+
+The container runs as the unprivileged `bun` user (UID 1000). If you bind-mount a host directory onto `/usr/src/app/data`, the host directory must be writable by UID 1000, otherwise the download will fail with `EACCES: permission denied`.
+
+```bash
+mkdir -p ./cap-data
+sudo chown 1000:1000 ./cap-data
+```
+
+```yaml
+services:
+  cap:
+    image: tiago2/cap:latest
+    volumes:
+      - ./cap-data:/usr/src/app/data
+    # ...
+```
+
+If you can't change ownership on your host (some platforms like Coolify make this awkward), the simplest alternatives are:
+
+- Skip the bind mount entirely and let Docker manage the data directory — the image already creates it with the correct ownership.
+- Use a named volume instead of a bind mount.
+- Switch to an IP Data provider that doesn't require any local files.

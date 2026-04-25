@@ -3166,6 +3166,8 @@ function openCreateApiKeyModal() {
   });
 }
 
+const IPDB_SPINNER_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="ipdb-btn-spinner" style="vertical-align:-2px;margin-right:6px"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9"/></svg>`;
+
 async function loadIPDBSettings() {
   const container = document.getElementById("ipdbStatus");
   if (!container) return;
@@ -3180,8 +3182,14 @@ async function loadIPDBSettings() {
 
   const hasDB = data.country?.exists || data.asn?.exists;
   const isActive = data.mode && data.mode !== "";
+  const errorMsg = data.error || data.progress?.error || "";
 
   container.innerHTML = `
+    ${
+      errorMsg
+        ? `<div class="ipdb-error">${escapeHtml(errorMsg)}</div>`
+        : ""
+    }
     ${
       isActive
         ? `
@@ -3251,17 +3259,21 @@ async function loadIPDBSettings() {
       if (mode === "ipinfo")
         body.ipinfoToken = container.querySelector("#ipdbIpinfoToken").value.trim();
 
-      container.querySelector("#ipdbDownloadBtn").disabled = true;
+      const downloadBtn = container.querySelector("#ipdbDownloadBtn");
+      downloadBtn.disabled = true;
+      downloadBtn.innerHTML = `${IPDB_SPINNER_SVG} Starting download...`;
       const res = await api("POST", "/settings/ipdb/download", body);
       if (!res.success) {
         showModal(
           "Error",
           `<div class="modal-body"><p>${escapeHtml(res.error || "Download failed")}</p></div>`,
         );
-        container.querySelector("#ipdbDownloadBtn").disabled = false;
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = "Download & activate";
         return;
       }
 
+      downloadBtn.innerHTML = `${IPDB_SPINNER_SVG} Downloading...`;
       const progressEl = container.querySelector("#ipdbProgress");
       progressEl.style.display = "";
       const pollFn = async () => {
@@ -3269,18 +3281,21 @@ async function loadIPDBSettings() {
         const fill = container.querySelector("#ipdbProgressFill");
         const text = container.querySelector("#ipdbProgressText");
         if (p.active) {
+          let label;
           if (p.total > 0) {
             const pct = Math.round((p.downloaded / p.total) * 100);
             if (fill) fill.style.width = `${pct}%`;
-            if (text) text.textContent = `Downloading ${p.file}... ${pct}%`;
+            label = `Downloading ${p.file}... ${pct}%`;
           } else {
             if (fill) {
               fill.style.width = "100%";
               fill.style.opacity = "0.4";
             }
             const kb = (p.downloaded / 1024).toFixed(0);
-            if (text) text.textContent = `Downloading ${p.file}... ${kb} KB`;
+            label = `Downloading ${p.file}... ${kb} KB`;
           }
+          if (text) text.textContent = label;
+          downloadBtn.innerHTML = `${IPDB_SPINNER_SVG} ${escapeHtml(label)}`;
         } else {
           clearInterval(poll);
           loadIPDBSettings();
@@ -3298,6 +3313,12 @@ async function loadIPDBSettings() {
       } else if (data.mode === "maxmind" && !body.maxmindKey) return;
       else if (data.mode === "ipinfo" && !body.ipinfoToken) return;
 
+      const updateBtn = container.querySelector("#ipdbUpdateBtn");
+      updateBtn.disabled = true;
+      updateBtn.innerHTML = `${IPDB_SPINNER_SVG} Updating...`;
+      const deleteBtn = container.querySelector("#ipdbDeleteBtn");
+      if (deleteBtn) deleteBtn.disabled = true;
+
       await api("POST", "/settings/ipdb/download", body);
       const progressEl = container.querySelector("#ipdbProgress");
       if (progressEl) progressEl.style.display = "";
@@ -3309,16 +3330,19 @@ async function loadIPDBSettings() {
         } else {
           const fill = container.querySelector("#ipdbProgressFill");
           const text = container.querySelector("#ipdbProgressText");
+          let label;
           if (p.total > 0) {
             const pct = Math.round((p.downloaded / p.total) * 100);
             if (fill) fill.style.width = `${pct}%`;
-            if (text) text.textContent = `Downloading ${p.file}... ${pct}%`;
+            label = `Downloading ${p.file}... ${pct}%`;
           } else {
             if (fill) fill.style.width = "100%";
             if (fill) fill.style.opacity = "0.4";
             const kb = (p.downloaded / 1024).toFixed(0);
-            if (text) text.textContent = `Downloading ${p.file}... ${kb} KB`;
+            label = `Downloading ${p.file}... ${kb} KB`;
           }
+          if (text) text.textContent = label;
+          updateBtn.innerHTML = `${IPDB_SPINNER_SVG} ${escapeHtml(label)}`;
         }
       }, 500);
     });
