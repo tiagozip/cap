@@ -593,10 +593,11 @@ onBeforeUnmount(() => {
       <section class="block home-ad-block">
         <div class="wrap-wide">
           <div class="home-ad-slot">
-            <EthicalAd variant="homemid" position="top" />
+            <EthicalAd variant="homemid" position="top" :skip-on-mobile="true" />
           </div>
         </div>
       </section>
+      <HomeStickyAd />
 
       <section class="block" id="compare">
         <div class="wrap-wide">
@@ -1318,6 +1319,11 @@ html.home-v2-active main.main {
 #homev2 .home-ad-slot .ea-wrap--homemid {
   width: 100%;
   margin: 0;
+}
+@media (max-width: 768px) {
+  #homev2 section.home-ad-block {
+    display: none;
+  }
 }
 #homev2 section.block.cta-block {
   padding: 120px 0 80px;
