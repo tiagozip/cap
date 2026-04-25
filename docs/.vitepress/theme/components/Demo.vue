@@ -37,6 +37,10 @@ onMounted(() => {
         document.querySelector(".signin-button").classList.add("active");
       }
 
+      try {
+        plausible("demo-solved");
+      } catch {}
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -57,10 +61,31 @@ onMounted(() => {
 <template>
   <ClientOnly>
     <div style="margin-top: 0.6em"></div>
-    <cap-widget data-cap-api-endpoint="/api/"></cap-widget>
+    <cap-widget class="demo-widget-highlight" data-cap-api-endpoint="/api/"></cap-widget>
 
     <template #fallback>
       <div>Loading widget...</div>
     </template>
   </ClientOnly>
 </template>
+
+<style>
+cap-widget.demo-widget-highlight {
+  display: block;
+  width: fit-content !important;
+  border-radius: 14px;
+  animation: demo-widget-pulse 1.6s ease-out 0.4s 2;
+}
+
+@keyframes demo-widget-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--vp-c-brand-1) 65%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--vp-c-brand-1) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--vp-c-brand-1) 0%, transparent);
+  }
+}
+</style>
