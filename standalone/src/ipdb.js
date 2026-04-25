@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, statSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import maxmind from "maxmind";
 import { db } from "./db.js";
@@ -11,12 +11,25 @@ let countryReader = null;
 let asnReader = null;
 let ipdbSettings = null;
 let downloadProgress = { active: false, file: "", downloaded: 0, total: 0 };
+let lastDownloadError = null;
 let reloadTimer = null;
 const RELOAD_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours
 
 const ipinfoCache = new Map();
 const IPINFO_CACHE_TTL = 3600000;
 const IPINFO_CACHE_MAX = 10000;
+
+function checkDataDirWritable() {
+  try {
+    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+    const testPath = join(DATA_DIR, ".write-test");
+    writeFileSync(testPath, "");
+    unlinkSync(testPath);
+    return null;
+  } catch (e) {
+    return `Cannot write to data directory (${DATA_DIR}): ${e.message}. If you're running in Docker with a bind-mounted volume, ensure the host directory is writable by UID 1000 (the bun user) — e.g. chown 1000:1000 ./data.`;
+  }
+}
 
 export async function loadIPDB() {
   try {
@@ -31,6 +44,12 @@ export async function loadIPDB() {
   const filesExist = existsSync(COUNTRY_PATH) || existsSync(ASN_PATH);
 
   if (!filesExist) {
+    const writeError = checkDataDirWritable();
+    if (writeError) {
+      lastDownloadError = writeError;
+      console.warn("[ipdb]", writeError);
+      return;
+    }
     try {
       await downloadDB(ipdbSettings.mode, {
         maxmindKey: ipdbSettings.maxmindKey || "",
@@ -70,7 +89,14 @@ async function openReaders() {
 export async function downloadDB(mode, credentials) {
   if (downloadProgress.active) throw new Error("Download already in progress");
 
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+  lastDownloadError = null;
+
+  try {
+    if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    lastDownloadError = `Cannot create data directory (${DATA_DIR}): ${e.message}`;
+    throw e;
+  }
 
   try {
     if (mode === "ipinfo") {
@@ -85,19 +111,31 @@ export async function downloadDB(mode, credentials) {
     }
 
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const dbipMonths = [];
+    for (let i = 0; i < 3; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      dbipMonths.push({
+        year: d.getFullYear(),
+        month: String(d.getMonth() + 1).padStart(2, "0"),
+      });
+    }
 
     let files;
     if (mode === "dbip") {
       files = [
         {
-          url: `https://download.db-ip.com/free/dbip-country-lite-${year}-${month}.mmdb.gz`,
+          urls: dbipMonths.map(
+            ({ year, month }) =>
+              `https://download.db-ip.com/free/dbip-country-lite-${year}-${month}.mmdb.gz`,
+          ),
           path: COUNTRY_PATH,
           name: "country",
         },
         {
-          url: `https://download.db-ip.com/free/dbip-asn-lite-${year}-${month}.mmdb.gz`,
+          urls: dbipMonths.map(
+            ({ year, month }) =>
+              `https://download.db-ip.com/free/dbip-asn-lite-${year}-${month}.mmdb.gz`,
+          ),
           path: ASN_PATH,
           name: "asn",
         },
@@ -107,13 +145,17 @@ export async function downloadDB(mode, credentials) {
       if (!key) throw new Error("MaxMind license key required");
       files = [
         {
-          url: `https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=${encodeURIComponent(key)}&suffix=tar.gz`,
+          urls: [
+            `https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=${encodeURIComponent(key)}&suffix=tar.gz`,
+          ],
           path: COUNTRY_PATH,
           name: "country",
           isTarGz: true,
         },
         {
-          url: `https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-ASN&license_key=${encodeURIComponent(key)}&suffix=tar.gz`,
+          urls: [
+            `https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-ASN&license_key=${encodeURIComponent(key)}&suffix=tar.gz`,
+          ],
           path: ASN_PATH,
           name: "asn",
           isTarGz: true,
@@ -131,9 +173,23 @@ export async function downloadDB(mode, credentials) {
         total: 0,
       };
 
-      const response = await fetch(file.url);
-      if (!response.ok) {
-        throw new Error(`Failed to download ${file.name}: HTTP ${response.status}`);
+      let response = null;
+      let lastUrlError = null;
+      for (const url of file.urls) {
+        try {
+          const r = await fetch(url);
+          if (r.ok) {
+            response = r;
+            break;
+          }
+          lastUrlError = `HTTP ${r.status} ${r.statusText || ""}`.trim();
+          try { await r.body?.cancel(); } catch {}
+        } catch (e) {
+          lastUrlError = `Network error (${new URL(url).host}): ${e.message}`;
+        }
+      }
+      if (!response) {
+        throw new Error(`Failed to download ${file.name} database: ${lastUrlError || "no URLs succeeded"}`);
       }
 
       const contentLength = Number(response.headers.get("content-length")) || 0;
@@ -180,6 +236,9 @@ export async function downloadDB(mode, credentials) {
     countryReader = null;
     asnReader = null;
     await loadIPDB();
+  } catch (e) {
+    lastDownloadError = e?.message || String(e);
+    throw e;
   } finally {
     downloadProgress = { active: false, file: "", downloaded: 0, total: 0 };
   }
@@ -223,7 +282,11 @@ function extractMMDBFromTar(tarData) {
 }
 
 export function getDownloadProgress() {
-  return { ...downloadProgress };
+  return { ...downloadProgress, error: lastDownloadError };
+}
+
+export function clearDownloadError() {
+  lastDownloadError = null;
 }
 
 export function getStatus() {
@@ -239,6 +302,7 @@ export function getStatus() {
       : { exists: false },
     asn: asnExists ? { exists: true, size: statSync(ASN_PATH).size } : { exists: false },
     loaded: { country: !!countryReader, asn: !!asnReader },
+    error: lastDownloadError,
   };
 }
 
