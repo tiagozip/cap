@@ -1,18 +1,18 @@
 # <img src="https://github.com/tiagozip/cap/blob/main/docs/public/logo-small.webp?raw=true" alt="" align="left" width="40" height="40"> Cap
 
-Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://trycap.dev/guide/effectiveness">SHA-256 proof-of-work</a> and JavaScript instrumentation challenges. It's fast, private, and extremely simple to integrate.
+Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://trycap.dev/guide/effectiveness?utm_source=github&utm_campaign=pow_link" target="_blank">SHA-256 proof-of-work</a> and JavaScript instrumentation challenges. It's fast, private, and extremely simple to integrate.
 
-<a href="https://trycap.dev/guide" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
+<a href="https://trycap.dev/guide/demo?utm_source=github&utm_campaign=captcha_animated" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
 
 ## Documentation
 
-**[Read the docs](https://trycap.dev)**, try the [demo](https://trycap.dev/guide/demo.html) or read the [feature comparison](https://trycap.dev/guide/alternatives.html)
+**[Read the docs](https://trycap.dev/?utm_source=github&utm_campaign=read_docs)**, try the [demo](https://trycap.dev/guide/demo.html?utm_source=github&utm_campaign=demo_link) or read the [feature comparison](https://trycap.dev/guide/alternatives.html?utm_source=github&utm_campaign=features_link)
 
 ## What is Cap?
 
 Cap replaces visual captchas with modern, accessible and privacy-preserving <a href="https://trycap.dev/guide/effectiveness.html">proof-of-work challenges</a>. No images, no tracking, no dependencies, works everywhere.
 
-You can either run it on any JavaScript runtime, or use the standalone mode with Docker. [Learn more about how Cap works](https://trycap.dev/guide/)
+You can either run it on any JavaScript runtime, or use the standalone mode with Docker. [Learn more about how Cap works](https://trycap.dev/guide/?utm_source=github&utm_campaign=learn_more)
 
 ## Why Cap?
 

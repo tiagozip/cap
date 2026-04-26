@@ -314,7 +314,11 @@
     #interactionHandler = null;
 
     get #hasHaptics() {
-      return _browserHasHaptics && !window.CAP_DISABLE_HAPTICS && !this.hasAttribute("data-cap-disable-haptics");
+      return (
+        _browserHasHaptics &&
+        !window.CAP_DISABLE_HAPTICS &&
+        !this.hasAttribute("data-cap-disable-haptics")
+      );
     }
 
     #makeSpeculativeState() {
@@ -1028,7 +1032,18 @@
       this.#div.innerHTML = `<div class="checkbox" part="checkbox"><svg class="progress-ring" viewBox="0 0 32 32"><circle class="progress-ring-bg" cx="16" cy="16" r="14"></circle><circle class="progress-ring-circle" cx="16" cy="16" r="14"></circle></svg></div><p part="label" class="label-wrapper"><span class="label active">${this.getI18nText(
         "initial-state",
         "Verify you're human",
-      )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://trycap.dev/" class="credits" target="_blank" rel="follow noopener" title="Secured by Cap: Self-hosted CAPTCHA for the modern web.">Cap</a>`;
+      )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://trycap.dev/?${new URLSearchParams(
+        // this attribution is only for our plausible analytics
+        // instancee. no personal data is collected.
+        {
+          utm_source: "cap_widget",
+          utm_medium: "referral",
+          utm_campaign: "widget",
+          utm_content: "inline",
+          ref: window.CAP_DISABLE_WIDGET_REF ? "" : location.href || "",
+          sub: window.CAP_DISABLE_WIDGET_REF ? "" : document.referrer || "",
+        },
+      ).toString()}" class="credits" target="_blank" title="Secured by Cap: The self-hosted CAPTCHA for the modern web.">Cap</a>`;
 
       this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
 
