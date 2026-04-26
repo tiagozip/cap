@@ -6,11 +6,11 @@ They generate a unique JavaScript program on every request that is executed insi
 
 ## How they work
 
-When a challenge is issued, the server generates a self-contained JavaScript bundle that does a few browser APIs probes and evaluate a main computation chain, where multiple integer variables are initialised with random seed values and then mutated through randomised operations, including bitwise AND/OR/XOR/NAND, prototype-chain tricks, and DOM-based arithmetic that appends a tree of elements to the page, walks back up it accumulating values, and then removes them.
+When a challenge is issued, the server generates a self-contained JavaScript bundle that runs a few browser API probes and evaluates a main computation chain, where multiple integer variables are initialised with random seed values and then mutated through randomised operations, including bitwise AND/OR/XOR/NAND, prototype-chain tricks, and DOM-based arithmetic that appends a tree of elements to the page, walks back up it accumulating values, and then removes them.
 
 The server tracks the expected result of every operation in parallel, so it knows what the final four values must be.
 
-All of these checks run on an iframe, which will `postMessage` back to the parent the answer responses.
+All of these checks run inside an iframe, which `postMessage`s the answers back to the parent.
 
 ## Why DOM operations
 
@@ -26,4 +26,4 @@ Instrumentation challenges can also optionally attempt to block automated webdri
 
 Instrumentation challenges and proof-of-work are complementary, not redundant. Proof-of-work proves *effort*: the client had to burn CPU cycles to find a hash. Instrumentation proves *environment*: the computation happened inside a browser, not a script. Together they raise the cost of abuse on two independent axes - neither alone is sufficient against a determined attacker, but both together are substantially harder to defeat simultaneously.
 
-Instrumentation is not foolproof. While challenges like these are deployed at massive scale by platforms such as [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) and [Twitter](https://x.com/i/js_inst), I do not recommend using them as a replacement for proof-of-work. Without PoW and with a real browsers, attackers can cheaply mine these challenges.
+Instrumentation is not foolproof. While challenges like these are deployed at massive scale by platforms such as [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) and [Twitter](https://x.com/i/js_inst), I do not recommend using them as a replacement for proof-of-work. Without PoW and with real browsers, attackers can cheaply mine these challenges.
