@@ -5,7 +5,7 @@ User-agent: *
 Allow: /
 Disallow: /assets/
 
-Sitemap: https://capjs.js.org/sitemap.xml
+Sitemap: https://trycap.dev/sitemap.xml
 
 User-agent: Googlebot
 Allow: /

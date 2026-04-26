@@ -19,7 +19,7 @@ export default withMermaid({
       "link",
       {
         rel: "canonical",
-        href: `https://capjs.js.org/${pageData.relativePath}`
+        href: `https://trycap.dev/${pageData.relativePath}`
           .replace(/index\.md$/, "")
           .replace(/\.md$/, ".html"),
       },
@@ -51,8 +51,8 @@ export default withMermaid({
           "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
       },
     ],
-    ["meta", { property: "og:url", content: "https://capjs.js.org" }],
-    ["meta", { property: "og:image", content: "https://capjs.js.org/og-image.png" }],
+    ["meta", { property: "og:url", content: "https://trycap.dev" }],
+    ["meta", { property: "og:image", content: "https://trycap.dev/og-image.png" }],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
     [
       "meta",
@@ -76,7 +76,7 @@ export default withMermaid({
           "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
       },
     ],
-    ["meta", { name: "twitter:image", content: "https://capjs.js.org/og-image.png" }],
+    ["meta", { name: "twitter:image", content: "https://trycap.dev/og-image.png" }],
     [
       "meta",
       {
@@ -87,10 +87,14 @@ export default withMermaid({
     [
       "script",
       {
-        defer: true,
-        "data-domain": "capjs.js.org",
-        src: "https://a.tiago.zip/js/script.hash.outbound-links.pageview-props.tagged-events.js",
+        async: true,
+        src: "https://a.tiago.zip/js/pa-OVuEfw8R1rJ-iwahd3XGk.js",
       },
+    ],
+    [
+      "script",
+      {},
+      `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`
     ],
     [
       "script",
@@ -109,11 +113,11 @@ export default withMermaid({
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Cap",
-  "url": "https://capjs.js.org",
+  "url": "https://trycap.dev",
   "description": "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
   "applicationCategory": "SecurityApplication",
   "operatingSystem": "All",
-  "image": "https://capjs.js.org/logo.png",
+  "image": "https://trycap.dev/logo.png",
   "author": {
     "@type": "Person",
     "name": "tiago",
@@ -246,6 +250,6 @@ export default withMermaid({
     },
   },
   sitemap: {
-    hostname: "https://capjs.js.org",
+    hostname: "https://trycap.dev",
   },
 });
