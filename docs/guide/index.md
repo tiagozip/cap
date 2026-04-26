@@ -77,7 +77,7 @@ You can find example snippets for multiple frameworks on the [widget docs](./wid
 Add the widget script to your website's HTML:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
 <!-- we recommend pinning a version in production -->
 ```
 

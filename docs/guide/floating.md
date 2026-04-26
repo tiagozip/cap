@@ -17,8 +17,8 @@ Cap can automatically hide the CAPTCHA until a button is pressed. To use this, a
 You'll also need to import both the Cap library and the floating mode script from JSDelivr:
 
 ```html{2}
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
-<script src="https://cdn.jsdelivr.net/npm/@cap.js/widget/cap-floating.min.js"></script> <!-- [!code ++] -->
+<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js"></script> <!-- [!code ++] -->
 ```
 
 Or from the standalone server:

@@ -5,9 +5,9 @@ import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNav
 const SNIPPETS = {
   html:
     `<!-- drop in anywhere -->\n<scr` +
-    `ipt src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></scr` +
+    `ipt src="https://cdn.jsdelivr.net/npm/cap-widget"></scr` +
     `ipt>\n\n<cap-widget\n  data-cap-api-endpoint="https://your.server/<site-key>/">\n</cap-widget>`,
-  react: `import "@cap.js/widget";\n\n<cap-widget
+  react: `import "cap-widget";\n\n<cap-widget
   data-cap-api-endpoint="https://your.server/<site-key>/"
   onsolve={(e) => console.log("token:", e.detail.token)}
   onprogress={(e) => console.log(e.detail.progress)}

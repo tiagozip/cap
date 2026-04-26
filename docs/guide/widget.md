@@ -11,15 +11,15 @@ Cap's client-side widget handles requesting, solving and displaying challenges u
 ::: code-group
 
 ```sh [pnpm]
-pnpm add @cap.js/widget
+pnpm add cap-widget
 ```
 
 ```sh [npm]
-npm i @cap.js/widget
+npm i cap-widget
 ```
 
 ```sh [bun]
-bun add @cap.js/widget
+bun add cap-widget
 ```
 
 ```html [cdn]
@@ -30,7 +30,7 @@ bun add @cap.js/widget
 
 -->
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
 ```
 
 :::
@@ -52,7 +52,7 @@ https://<your-instance>/<site-key>/
 </form>
 
 <script type="module">
-  import "https://cdn.jsdelivr.net/npm/@cap.js/widget";
+  import "https://cdn.jsdelivr.net/npm/cap-widget";
 
   document.getElementById("cap").addEventListener("solve", (e) => {
     console.log("token:", e.detail.token);
@@ -69,7 +69,7 @@ When the widget lives inside a `<form>`, it automatically injects a hidden `cap-
 ### React
 
 ```jsx
-import "@cap.js/widget";
+import "cap-widget";
 
 export default function ContactForm() {
   return (
@@ -96,7 +96,7 @@ We recommend using React 19 or later as it improves custom element event handlin
 
 ```vue
 <script setup>
-import "@cap.js/widget";
+import "cap-widget";
 </script>
 
 <template>
@@ -130,7 +130,7 @@ export default defineConfig({
 
 ```svelte
 <script>
-  import "@cap.js/widget";
+  import "cap-widget";
 </script>
 
 <form>
@@ -147,7 +147,7 @@ export default defineConfig({
 ### SolidJS
 
 ```jsx
-import "@cap.js/widget";
+import "cap-widget";
 
 export default function ContactForm() {
   return (
@@ -177,7 +177,7 @@ export default function ContactForm() {
 </form>
 
 <script>
-  import "@cap.js/widget";
+  import "cap-widget";
 
   document.getElementById("cap").addEventListener("solve", (e) => {
     console.log("token:", e.detail.token);
@@ -190,7 +190,7 @@ If you're rendering a React/Vue/Svelte component inside Astro, follow that frame
 ### Preact
 
 ```jsx
-import "@cap.js/widget";
+import "cap-widget";
 
 export default function ContactForm() {
   return (
@@ -211,7 +211,7 @@ export default function ContactForm() {
 
 ```tsx
 import { component$ } from "@builder.io/qwik";
-import "@cap.js/widget";
+import "cap-widget";
 
 export default component$(() => {
   return (
@@ -233,7 +233,7 @@ export default component$(() => {
 If you don't want a visible widget, for example when protecting a background action like a post submission, use the [programmatic mode](./programmatic):
 
 ```js
-import Cap from "@cap.js/widget";
+import Cap from "cap-widget";
 
 const cap = new Cap({
   apiEndpoint: "https://<your-instance>/<site-key>/",
