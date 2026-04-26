@@ -5,6 +5,7 @@ import { h } from "vue";
 import Benchmark from "./components/Benchmark.vue";
 import Demo from "./components/Demo.vue";
 import DemoReply from "./components/DemoReply.vue";
+import DemoTabs from "./components/DemoTabs.vue";
 import EthicalAd from "./components/EthicalAd.vue";
 import HomeStickyAd from "./components/HomeStickyAd.vue";
 import HomeV2 from "./components/HomeV2.vue";
@@ -26,6 +27,7 @@ export default {
     app.component("Benchmark", Benchmark);
     app.component("Demo", Demo);
     app.component("DemoReply", DemoReply);
+    app.component("DemoTabs", DemoTabs);
     app.component("HomeV2", HomeV2);
     app.component("EthicalAd", EthicalAd);
     app.component("HomeStickyAd", HomeStickyAd);
