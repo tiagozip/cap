@@ -1,4 +1,4 @@
-# [@cap.js](https://capjs.js.org)/widget
+# [@cap.js](https://trycap.dev)/widget
 
 Client-side widget for Cap, the self-hosted CAPTCHA for the modern web.
 

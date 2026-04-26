@@ -1028,7 +1028,7 @@
       this.#div.innerHTML = `<div class="checkbox" part="checkbox"><svg class="progress-ring" viewBox="0 0 32 32"><circle class="progress-ring-bg" cx="16" cy="16" r="14"></circle><circle class="progress-ring-circle" cx="16" cy="16" r="14"></circle></svg></div><p part="label" class="label-wrapper"><span class="label active">${this.getI18nText(
         "initial-state",
         "Verify you're human",
-      )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://capjs.js.org/" class="credits" target="_blank" rel="follow noopener" title="Secured by Cap: Self-hosted CAPTCHA for the modern web.">Cap</a>`;
+      )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://trycap.dev/" class="credits" target="_blank" rel="follow noopener" title="Secured by Cap: Self-hosted CAPTCHA for the modern web.">Cap</a>`;
 
       this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
 
@@ -1041,7 +1041,7 @@
       this.#div.querySelector("a").addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        window.open("https://capjs.js.org", "_blank");
+        window.open("https://trycap.dev", "_blank");
       });
 
       this.#div.addEventListener("click", () => {
@@ -1129,7 +1129,7 @@
 
       const troubleshootingUrl =
         this.getAttribute("data-cap-troubleshooting-url") ||
-        "https://capjs.js.org/guide/troubleshooting/instrumentation.html";
+        "https://trycap.dev/guide/troubleshooting/instrumentation.html";
 
       const current = wrapper.querySelector(".label.active");
       const next = document.createElement("span");

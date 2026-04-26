@@ -49,7 +49,7 @@ new Elysia({
           title: "Cap Standalone",
           version: "3.0.1",
           description:
-            "API endpoints for Cap Standalone. Both Keys and Settings endpoints require an API key or session token.\n\n[Learn more](https://capjs.js.org)",
+            "API endpoints for Cap Standalone. Both Keys and Settings endpoints require an API key or session token.\n\n[Learn more](https://trycap.dev)",
         },
         securitySchemes: {
           apiKey: {
@@ -95,7 +95,7 @@ new Elysia({
         process.env.SHOW_ERRORS === "true"
           ? error
           : {
-              troubleshooting: "http://capjs.js.org/guide/standalone/options.html#error-messages",
+              troubleshooting: "http://trycap.dev/guide/standalone/options.html#error-messages",
               id: errorId,
             },
     };

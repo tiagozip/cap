@@ -1,18 +1,18 @@
 # <img src="https://github.com/tiagozip/cap/blob/main/docs/public/logo-small.webp?raw=true" alt="" align="left" width="40" height="40"> Cap
 
-Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://capjs.js.org/guide/effectiveness.html">SHA-256 proof-of-work</a> and JavaScript instrumentation challenges. It's fast, private, and extremely simple to integrate.
+Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://trycap.dev/guide/effectiveness">SHA-256 proof-of-work</a> and JavaScript instrumentation challenges. It's fast, private, and extremely simple to integrate.
 
-<a href="https://capjs.js.org/guide" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
+<a href="https://trycap.dev/guide" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
 
 ## Documentation
 
-**[Read the docs](https://capjs.js.org)**, try the [demo](https://capjs.js.org/guide/demo.html) or read the [feature comparison](https://capjs.js.org/guide/alternatives.html)
+**[Read the docs](https://trycap.dev)**, try the [demo](https://trycap.dev/guide/demo.html) or read the [feature comparison](https://trycap.dev/guide/alternatives.html)
 
 ## What is Cap?
 
-Cap replaces visual captchas with modern, accessible and privacy-preserving <a href="https://capjs.js.org/guide/effectiveness.html">proof-of-work challenges</a>. No images, no tracking, no dependencies, works everywhere.
+Cap replaces visual captchas with modern, accessible and privacy-preserving <a href="https://trycap.dev/guide/effectiveness.html">proof-of-work challenges</a>. No images, no tracking, no dependencies, works everywhere.
 
-You can either run it on any JavaScript runtime, or use the standalone mode with Docker. [Learn more about how Cap works](https://capjs.js.org/guide/)
+You can either run it on any JavaScript runtime, or use the standalone mode with Docker. [Learn more about how Cap works](https://trycap.dev/guide/)
 
 ## Why Cap?
 

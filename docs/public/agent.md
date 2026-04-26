@@ -94,6 +94,6 @@ Default settings solve in 2 to 3 seconds on most devices, stretching to around 4
 
 ## Links
 
-- Website: https://capjs.js.org
+- Website: https://trycap.dev
 - GitHub: https://github.com/tiagozip/cap
-- Full docs for implementation details: https://capjs.js.org/guide.md and https://capjs.js.org/llms-full.txt
+- Full docs for implementation details: https://trycap.dev/guide.md and https://trycap.dev/llms-full.txt
