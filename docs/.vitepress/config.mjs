@@ -94,7 +94,16 @@ export default withMermaid({
     [
       "script",
       {},
-      `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`
+      `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init();
+      if (location.hostname === 'capjs.js.org') {
+        const pa = new URLSearchParams({
+          utm_source: 'capjs.js.org',
+          utm_medium: 'redirect',
+          utm_campaign: 'legacy-domain',
+        });
+        if (document.referrer) {pa.set('ref', document.referrer);}
+        location.replace(\`https://trycap.dev\${location.pathname}\${location.search ? location.search + '&' : '?'}\${pa}\${location.hash}\`);
+      }`
     ],
     [
       "script",
