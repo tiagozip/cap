@@ -92,11 +92,31 @@ const server = Bun.serve({
       const publish = prompt("\npublish package to npm? (y/N)");
 
       if (publish === "y") {
-        Bun.spawn({
-          cmd: ["bun", "publish", "--access", "public"],
-          cwd: "./src",
-          stdout: "inherit",
-        });
+        const pkgPath = "./src/package.json";
+        const originalPkg = await fs.readFile(pkgPath, "utf-8");
+        const pkg = JSON.parse(originalPkg);
+
+        const publishAs = async (name) => {
+          pkg.name = name;
+          await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+          const proc = Bun.spawn({
+            cmd: ["bun", "publish", "--access", "public"],
+            cwd: "./src",
+            stdout: "inherit",
+            stderr: "inherit",
+          });
+          const code = await proc.exited;
+          if (code !== 0) {
+            throw new Error(`publish ${name} failed (exit ${code})`);
+          }
+        };
+
+        try {
+          await publishAs("@cap.js/widget");
+          await publishAs("cap-widget");
+        } finally {
+          await fs.writeFile(pkgPath, originalPkg);
+        }
       }
 
       process.exit(0);
