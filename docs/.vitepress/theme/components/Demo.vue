@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted } from "vue";
+import { demoMode } from "./demoMode";
 
 onMounted(() => {
   window.CAP_CUSTOM_FETCH = async (url, options) => {
@@ -55,13 +56,30 @@ onMounted(() => {
     }
     return await window.fetch(url, options);
   };
+
+  if (!document.querySelector("script[data-cap-floating-loaded]")) {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js";
+    s.async = true;
+    s.setAttribute("data-cap-floating-loaded", "");
+    document.head.appendChild(s);
+  }
 });
 </script>
 
 <template>
   <ClientOnly>
     <div style="margin-top: 0.6em"></div>
-    <cap-widget class="demo-widget-highlight" data-cap-api-endpoint="/api/"></cap-widget>
+    <cap-widget
+      v-if="demoMode === 'widget'"
+      class="demo-widget-highlight"
+      data-cap-api-endpoint="/api/"
+    ></cap-widget>
+    <cap-widget
+      id="demo-floating-widget"
+      data-cap-api-endpoint="/api/"
+      style="display: none"
+    ></cap-widget>
 
     <template #fallback>
       <div>Loading widget...</div>

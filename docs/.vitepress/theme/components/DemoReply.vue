@@ -1,11 +1,12 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from "vue";
+import { demoMode } from "./demoMode";
 
 const open = ref(false);
 
 const onReply = () => {
   try {
-    plausible("demo-reply");
+    plausible("demo-reply", { props: { mode: demoMode.value } });
   } catch (_) {}
   open.value = true;
 };
@@ -34,7 +35,31 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <button class="signin-button" @click="onReply">Reply</button>
+  <ClientOnly>
+    <button
+      v-if="demoMode === 'widget'"
+      type="button"
+      class="signin-button"
+      @click="onReply"
+    >
+      Reply
+    </button>
+    <button
+      v-else
+      type="button"
+      class="signin-button active"
+      data-cap-floating="#demo-floating-widget"
+      data-cap-floating-position="bottom"
+      data-cap-floating-offset="12"
+      @click="onReply"
+    >
+      Reply
+    </button>
+
+    <template #fallback>
+      <button type="button" class="signin-button">Reply</button>
+    </template>
+  </ClientOnly>
 
   <Teleport to="body">
     <Transition name="reply-modal">
@@ -74,8 +99,8 @@ onUnmounted(() => {
             It worked!
           </h2>
           <p class="reply-modal__body">
-            This was a demo, but Cap is real and open source. If you like what
-            you saw, a star on GitHub goes a long way.
+            This was a demo, but Cap is real and<br> open source. If you like what
+            you saw, a<br> star on GitHub goes a long way.
           </p>
           <div class="reply-modal__actions">
             <a

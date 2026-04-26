@@ -79,7 +79,9 @@
 }
 </style>
 
-<div class="login-form">
+<DemoTabs />
+
+<div class="login-form" style="margin-top: 0.6em;">
   <div class="input" style="border-radius:8px;">
     <label for="comment">Comment</label>
     <textarea id="comment" rows="3" placeholder="Write a reply…" style="font-size:16px;padding:.375rem .75rem;padding-top:0;font-family:inherit;background:transparent;border:none;outline:none;resize:vertical;">Looks great, thanks for sharing!</textarea>
