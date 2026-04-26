@@ -1039,7 +1039,7 @@
           utm_source: "cap_widget",
           utm_medium: "referral",
           utm_campaign: "widget",
-          utm_content: "inline",
+          utm_content: window.CAP_DISABLE_WIDGET_REF ? "" : location.hostname,
           ref: window.CAP_DISABLE_WIDGET_REF ? "" : location.href || "",
           sub: window.CAP_DISABLE_WIDGET_REF ? "" : document.referrer || "",
         },
