@@ -45,6 +45,31 @@ If so, you can change the IP extraction logic to simply read from a header set i
 
 The `/siteverify` endpoint is intended for server-to-server use, so it's not ratelimited by default.
 
+## Adaptive challenge count
+
+You can increase the number of proof-of-work challenges dynamically based on request frequency. This is configured per site key from the dashboard's **Configuration** tab under **Adaptive challenge count**.
+
+When enabled, you select a **time window** (1 minute to 1 hour) and define tiers at two levels:
+
+### Global tiers
+
+Increase the challenge count when the **total** number of challenge requests (across all IPs) exceeds a threshold within the time window. This is particularly effective against distributed attacks (botnets, proxy rotation) where each individual IP stays below per-IP limits.
+
+### Per-IP tiers
+
+Increase the challenge count when a **single IP** exceeds a request threshold within the time window. This targets repeat offenders without affecting legitimate users.
+
+When both global and per-IP tiers are configured, the **highest** resulting challenge count is used. The base challenge count (set in the **Main** section) is always the minimum.
+
+Example configuration:
+
+| Level   | Min requests | Challenge count |
+|---------|-------------|-----------------|
+| Global  | 100         | 150             |
+| Global  | 500         | 300             |
+| Per-IP  | 5           | 150             |
+| Per-IP  | 15          | 300             |
+
 ## Redis / Valkey
 
 Cap Standalone uses Redis (or Valkey) for all data storage. Set the `REDIS_URL` environment variable to your Redis connection string. This defaults to `redis://localhost:6379`.
