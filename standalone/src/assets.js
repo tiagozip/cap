@@ -76,6 +76,7 @@ export const assetsServer = new Elysia({
     cors({
       origin: true,
       methods: ["GET"],
+      exposeHeaders: [],
     }),
   )
   .onBeforeHandle(({ set }) => {
