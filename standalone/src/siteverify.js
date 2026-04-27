@@ -13,6 +13,8 @@ export const siteverifyServer = new Elysia({
     cors({
       origin: checkCorsOrigin,
       methods: ["POST"],
+      allowedHeaders: ["content-type"],
+      exposeHeaders: [],
     }),
   )
   .post("/:siteKey?/siteverify", async ({ body, set, params }) => {
