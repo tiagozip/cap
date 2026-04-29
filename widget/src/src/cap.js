@@ -656,8 +656,14 @@
 
     async connectedCallback() {
       this.#host = this;
-      this.#shadow = this.attachShadow({ mode: "open" });
-      this.#div = document.createElement("div");
+
+      if (!this.shadowRoot) {
+        this.#shadow = this.attachShadow({ mode: "open" });
+      } else {
+        this.#shadow = this.shadowRoot;
+      }
+
+      if (!this.#div) this.#div = document.createElement("div");
       this.createUI();
       this.addEventListeners();
       this.initialize();
