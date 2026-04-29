@@ -88,6 +88,11 @@ function initTabs() {
       b.classList.add("active");
       renderCode(b.dataset.tab);
       positionIndicator(b);
+      try {
+        if (typeof window !== "undefined" && typeof window.plausible === "function") {
+          window.plausible("install_tab_click", { props: { tab: b.dataset.tab } });
+        }
+      } catch {}
     };
     b.addEventListener("click", handler);
     handlers.push([b, handler]);
@@ -109,6 +114,11 @@ function initTabs() {
       await navigator.clipboard.writeText(SNIPPETS[currentSnippet]);
       copyBtn.classList.add("copied");
       copyBtn.querySelector(".copy-label").textContent = "Copied";
+      try {
+        if (typeof window !== "undefined" && typeof window.plausible === "function") {
+          window.plausible("install_snippet_copy", { props: { tab: currentSnippet } });
+        }
+      } catch {}
       clearTimeout(copyTimer);
       copyTimer = setTimeout(() => {
         copyBtn.classList.remove("copied");
@@ -375,12 +385,58 @@ function initLiveArchitecture() {
   });
 }
 
+function track(name, props) {
+  try {
+    if (typeof window !== "undefined" && typeof window.plausible === "function") {
+      window.plausible(name, props ? { props } : undefined);
+    }
+  } catch {}
+}
+
+function initCtaTracking() {
+  const handlers = [];
+  document.querySelectorAll("#homev2 [data-cta]").forEach((el) => {
+    const handler = () => {
+      track("cta_click", {
+        cta: el.getAttribute("data-cta"),
+        location: el.getAttribute("data-cta-location") || "unknown",
+      });
+    };
+    el.addEventListener("click", handler);
+    handlers.push([el, handler]);
+  });
+  registerCleanup(() => handlers.forEach(([el, h]) => el.removeEventListener("click", h)));
+}
+
+async function loadGithubStars() {
+  const el = document.getElementById("homev2-gh-stars");
+  if (!el) return;
+  try {
+    const cached = sessionStorage.getItem("cap-gh-stars");
+    if (cached) {
+      el.textContent = cached;
+    }
+    const res = await fetch("https://api.github.com/repos/tiagozip/cap", {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const n = data.stargazers_count;
+    if (typeof n !== "number") return;
+    const formatted = n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
+    el.textContent = formatted;
+    sessionStorage.setItem("cap-gh-stars", formatted);
+  } catch {}
+}
+
 onMounted(() => {
   document.documentElement.classList.add("home-v2-active");
   initTabs();
   loadStats();
   initCountUp();
   initLiveArchitecture();
+  initCtaTracking();
+  loadGithubStars();
 });
 
 onBeforeUnmount(() => {
@@ -404,12 +460,14 @@ onBeforeUnmount(() => {
             <VPNavBarSearch class="homev2-search" />
           </div>
           <nav>
-            <a href="/guide/">Docs</a>
-            <a href="#features">Features</a>
+            <a href="/guide/" data-cta="docs" data-cta-location="nav">Docs</a>
+            <a href="#features" data-cta="features" data-cta-location="nav">Features</a>
             <a
               class="gh-link"
               href="https://github.com/tiagozip/cap"
               aria-label="GitHub"
+              data-cta="github"
+              data-cta-location="nav"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -422,7 +480,7 @@ onBeforeUnmount(() => {
                   d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z"
                 />
               </svg>
-              <span>5.2k</span>
+              <span id="homev2-gh-stars">6.2k</span>
             </a>
           </nav>
         </div>
@@ -442,9 +500,9 @@ onBeforeUnmount(() => {
           </p>
 
           <div class="actions">
-            <a class="btn primary" href="/guide/">Read the docs <span class="arr">→</span></a>
-            <a class="btn" href="/guide/demo.html">Demo <span class="arr">↗</span></a>
-            <a class="btn" href="https://github.com/tiagozip/cap">GitHub</a>
+            <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="hero">Read the docs <span class="arr">→</span></a>
+            <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Demo <span class="arr">↗</span></a>
+            <a class="btn" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="hero">GitHub</a>
           </div>
         </div>
 
@@ -472,7 +530,7 @@ onBeforeUnmount(() => {
 
       <div class="wrap">
         <div class="trust">
-          <span class="trust-item">5k stars on GitHub</span><span class="trust-sep">·</span>
+          <span class="trust-item">6k stars on GitHub</span><span class="trust-sep">·</span>
           <span class="trust-item">Apache 2.0</span>
           <span class="trust-sep">·</span>
           <span class="trust-item">Zero dependencies</span>
@@ -886,9 +944,9 @@ onBeforeUnmount(() => {
               your users' traffic.
             </p>
             <div class="actions">
-              <a class="btn primary" href="/guide/">Read the docs <span class="arr">→</span></a>
-              <a class="btn" href="/guide/demo.html">Try the demo <span class="arr">↗</span></a>
-              <a class="btn" href="https://github.com/tiagozip/cap">Star on GitHub</a>
+              <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="cta_block">Read the docs <span class="arr">→</span></a>
+              <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="cta_block">Try the demo <span class="arr">↗</span></a>
+              <a class="btn" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="cta_block">Star on GitHub</a>
             </div>
           </div>
         </div>

@@ -10,7 +10,7 @@ Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="http
 
 ## What is Cap?
 
-Cap replaces visual captchas with modern, accessible and privacy-preserving <a href="https://trycap.dev/guide/effectiveness.html">proof-of-work challenges</a>. No images, no tracking, no dependencies, works everywhere.
+Cap replaces visual captchas with modern, accessible and privacy-preserving <a href="https://trycap.dev/guide/effectiveness.html">proof-of-work</a> and instrumentation challenges. No images, no tracking, no dependencies, works everywhere.
 
 You can either run it on any JavaScript runtime, or use the standalone mode with Docker. [Learn more about how Cap works](https://trycap.dev/guide/?utm_source=github&utm_campaign=learn_more)
 

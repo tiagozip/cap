@@ -199,49 +199,71 @@ export default withMermaid({
       { text: "GitHub", link: "https://github.com/tiagozip/cap" },
     ],
 
-    sidebar: [
-      { text: "Quickstart", link: "/guide/index.md" },
-      { text: "Feature comparison", link: "/guide/alternatives.md" },
-      {
-        text: "Standalone",
-        collapsed: false,
-        items: [
-          { text: "Quickstart", link: "/guide/standalone/index.md" },
-          { text: "API", link: "/guide/standalone/api.md" },
-          { text: "Options", link: "/guide/standalone/options.md" },
-        ],
-      },
-      {
-        text: "Widget",
-        collapsed: false,
-        items: [
-          { text: "Usage", link: "/guide/widget.md" },
-          { text: "Programmatic mode", link: "/guide/programmatic.md" },
-          { text: "Floating mode", link: "/guide/floating.md" },
-        ],
-      },
-      {
-        text: "Libraries",
-        collapsed: true,
-        items: [
-          { text: "Server", link: "/guide/server.md" },
-          { text: "M2M", link: "/guide/solver.md" },
-          { text: "Community libraries", link: "/guide/community.md" },
-        ],
-      },
-      {
-        text: "Details",
-        collapsed: true,
-        items: [
-          { text: "Effectiveness", link: "/guide/effectiveness.md" },
-          { text: "Instrumentation", link: "/guide/instrumentation.md" },
-          { text: "How does Cap work?", link: "/guide/workings.md" },
-        ],
-      },
-      { text: "Benchmark", link: "/guide/benchmark.md" },
-      { text: "Demo", link: "/guide/demo.md" },
-      { text: "GitHub", link: "https://github.com/tiagozip/cap" },
-    ],
+    sidebar: {
+      "/guide/alternatives/": [
+        {
+          text: "Compare Cap",
+          items: [
+            { text: "← Back to docs", link: "/guide/" },
+            { text: "Feature comparison", link: "/guide/alternatives.md" },
+          ],
+        },
+        {
+          text: "vs",
+          items: [
+            { text: "reCAPTCHA", link: "/guide/alternatives/recaptcha.md" },
+            { text: "Turnstile", link: "/guide/alternatives/turnstile.md" },
+            { text: "hCaptcha", link: "/guide/alternatives/hcaptcha.md" },
+            { text: "Altcha", link: "/guide/alternatives/altcha.md" },
+            { text: "FriendlyCaptcha", link: "/guide/alternatives/friendlycaptcha.md" },
+            { text: "Anubis", link: "/guide/alternatives/anubis.md" },
+          ],
+        },
+      ],
+      "/": [
+        { text: "Quickstart", link: "/guide/index.md" },
+        { text: "Feature comparison", link: "/guide/alternatives.md" },
+        {
+          text: "Standalone",
+          collapsed: false,
+          items: [
+            { text: "Quickstart", link: "/guide/standalone/index.md" },
+            { text: "API", link: "/guide/standalone/api.md" },
+            { text: "Options", link: "/guide/standalone/options.md" },
+          ],
+        },
+        {
+          text: "Widget",
+          collapsed: false,
+          items: [
+            { text: "Usage", link: "/guide/widget.md" },
+            { text: "Programmatic mode", link: "/guide/programmatic.md" },
+            { text: "Floating mode", link: "/guide/floating.md" },
+          ],
+        },
+        {
+          text: "Libraries",
+          collapsed: true,
+          items: [
+            { text: "Server", link: "/guide/server.md" },
+            { text: "M2M", link: "/guide/solver.md" },
+            { text: "Community libraries", link: "/guide/community.md" },
+          ],
+        },
+        {
+          text: "Details",
+          collapsed: true,
+          items: [
+            { text: "Effectiveness", link: "/guide/effectiveness.md" },
+            { text: "Instrumentation", link: "/guide/instrumentation.md" },
+            { text: "How does Cap work?", link: "/guide/workings.md" },
+          ],
+        },
+        { text: "Benchmark", link: "/guide/benchmark.md" },
+        { text: "Demo", link: "/guide/demo.md" },
+        { text: "GitHub", link: "https://github.com/tiagozip/cap" },
+      ],
+    },
 
     socialLinks: [
       { icon: "github", link: "https://github.com/tiagozip/cap" },
