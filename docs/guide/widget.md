@@ -4,7 +4,7 @@ outline: [2, 3, 4]
 
 # Widget
 
-Cap's client-side widget handles requesting, solving and displaying challenges using a native web component and rust-flavoured WASM. It also includes the [programmatic mode](./programmatic).
+Cap's client-side widget handles requesting, solving and displaying challenges using a native web component and a C-based WASM solver. It also includes the [programmatic mode](./programmatic).
 
 ## Installation
 
