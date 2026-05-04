@@ -1,0 +1,30 @@
+services:
+  cap:
+    build: .
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+    ports:
+      - "3067:3000"
+    environment:
+      ADMIN_KEY: test_admin_key_local_dev
+      REDIS_URL: redis://valkey:6379
+      SHOW_ERRORS: "true"
+      HIDE_RATELIMIT_IP_WARNING: "true"
+    depends_on:
+      valkey:
+        condition: service_healthy
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    ports:
+      - "6379:6379"
+    command: valkey-server --save 60 1 --loglevel notice --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
