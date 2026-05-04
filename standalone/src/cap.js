@@ -335,6 +335,8 @@ export const capServer = new Elysia({
     cors({
       origin: checkCorsOrigin,
       methods: ["POST"],
+      allowedHeaders: ["content-type"],
+      exposeHeaders: [],
     }),
   )
 
