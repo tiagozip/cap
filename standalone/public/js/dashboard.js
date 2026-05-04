@@ -525,6 +525,65 @@ function renderKeyDetail() {
               <input type="range" id="cfgObfuscationLevel" min="1" max="10" value="${key.config.obfuscationLevel ?? 5}">
             </div>
           </div>
+          <h3 class="config-section-title" style="margin-top:16px">Adaptive challenge count</h3>
+          <div class="switch-field">
+            <label class="switch">
+              <input type="checkbox" id="cfgAdaptiveEnabled" ${key.config.adaptiveChallengeCount?.enabled ? "checked" : ""}>
+              <span class="switch-track"></span>
+            </label>
+            <label for="cfgAdaptiveEnabled" class="switch-label">
+              Enable adaptive challenge count
+              <span class="hint">Increase the number of challenges based on request frequency globally or per IP address.</span>
+            </label>
+          </div>
+          <div id="adaptiveConfigFields" style="display:${key.config.adaptiveChallengeCount?.enabled ? "block" : "none"}">
+            <div class="edit-row">
+              <div class="edit-field">
+                <label>Time window (ms)</label>
+                <input type="number" id="cfgAdaptiveWindow" value="${key.config.adaptiveChallengeCount?.windowMs ?? 60000}" min="60000" max="3600000" step="1000">
+              </div>
+            </div>
+            <h4 class="config-subsection-title" style="margin-top:16px">Global tiers</h4>
+            <p class="headers-description" style="margin:-4px 0 8px">Increase challenge count when total requests across all IPs exceed the threshold. Useful against distributed attacks.</p>
+            <div id="adaptiveGlobalTiersList">
+              ${(key.config.adaptiveChallengeCount?.globalTiers || []).map((tier, i) => `
+              <div class="edit-row adaptive-tier-row" data-tier-index="${i}">
+                <div class="edit-field">
+                  <label>Min total requests</label>
+                  <input type="number" class="adaptive-tier-min" value="${tier.minRequests}" min="1" max="10000000">
+                </div>
+                <div class="edit-field">
+                  <label>Challenge count</label>
+                  <input type="number" class="adaptive-tier-count" value="${tier.challengeCount}" min="1" max="500">
+                </div>
+                <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+              </div>`).join("")}
+            </div>
+            <button class="add-btn" id="addAdaptiveGlobalTierBtn" style="margin-top:8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;margin-right:4px"><path d="M12 5v14M5 12h14"/></svg>
+              Add global tier
+            </button>
+            <h4 class="config-subsection-title" style="margin-top:12px">Per-IP tiers</h4>
+            <p class="headers-description" style="margin:-4px 0 8px">Increase challenge count when a single IP exceeds the request threshold within the time window.</p>
+            <div id="adaptiveTiersList">
+              ${(key.config.adaptiveChallengeCount?.tiers || []).map((tier, i) => `
+              <div class="edit-row adaptive-tier-row" data-tier-index="${i}">
+                <div class="edit-field">
+                  <label>Min requests</label>
+                  <input type="number" class="adaptive-tier-min" value="${tier.minRequests}" min="1" max="100000">
+                </div>
+                <div class="edit-field">
+                  <label>Challenge count</label>
+                  <input type="number" class="adaptive-tier-count" value="${tier.challengeCount}" min="1" max="500">
+                </div>
+                <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+              </div>`).join("")}
+            </div>
+            <button class="add-btn" id="addAdaptiveTierBtn" style="margin-top:8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;margin-right:4px"><path d="M12 5v14M5 12h14"/></svg>
+              Add per-IP tier
+            </button>
+          </div>
           <div class="config-save-row">
             <button class="save-btn" id="saveMainConfigBtn" disabled>Save</button>
           </div>
@@ -720,6 +779,41 @@ function renderKeyDetail() {
     ].map((c) => c.value);
   }
 
+  function getAdaptiveConfig() {
+    const enabled = document.getElementById("cfgAdaptiveEnabled").checked;
+    const windowMs = parseInt(document.getElementById("cfgAdaptiveWindow").value, 10);
+    const tierRows = [...document.querySelectorAll("#adaptiveTiersList .adaptive-tier-row")];
+    const tiers = tierRows.map((row) => ({
+      minRequests: parseInt(row.querySelector(".adaptive-tier-min").value, 10) || 1,
+      challengeCount: parseInt(row.querySelector(".adaptive-tier-count").value, 10) || 80,
+    }));
+    const globalTierRows = [...document.querySelectorAll("#adaptiveGlobalTiersList .adaptive-tier-row")];
+    const globalTiers = globalTierRows.map((row) => ({
+      minRequests: parseInt(row.querySelector(".adaptive-tier-min").value, 10) || 1,
+      challengeCount: parseInt(row.querySelector(".adaptive-tier-count").value, 10) || 80,
+    }));
+    return { enabled, windowMs, tiers, globalTiers };
+  }
+
+  function tiersEqual(a, b) {
+    if ((a?.length || 0) !== (b?.length || 0)) return false;
+    for (let i = 0; i < (a?.length || 0); i++) {
+      if (a[i].minRequests !== b[i].minRequests) return false;
+      if (a[i].challengeCount !== b[i].challengeCount) return false;
+    }
+    return true;
+  }
+
+  function adaptiveConfigEquals(a, b) {
+    if (!a && !b) return true;
+    if (!a || !b) return false;
+    if (a.enabled !== b.enabled) return false;
+    if (a.windowMs !== b.windowMs) return false;
+    if (!tiersEqual(a.tiers, b.tiers)) return false;
+    if (!tiersEqual(a.globalTiers, b.globalTiers)) return false;
+    return true;
+  }
+
   function checkMainDirty() {
     const name = document.getElementById("cfgName").value.trim();
     const difficulty = parseInt(document.getElementById("cfgDifficulty").value, 10);
@@ -727,13 +821,16 @@ function renderKeyDetail() {
     const instrumentation = document.getElementById("cfgInstrumentation").checked;
     const obfuscationLevel = parseInt(document.getElementById("cfgObfuscationLevel").value, 10);
     const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
+    const adaptiveCurrent = getAdaptiveConfig();
+    const adaptiveOriginal = key.config.adaptiveChallengeCount || { enabled: false, windowMs: 60000, tiers: [], globalTiers: [] };
     const dirty =
       name !== key.name ||
       difficulty !== key.config.difficulty ||
       challengeCount !== key.config.challengeCount ||
       instrumentation !== key.config.instrumentation ||
       obfuscationLevel !== (key.config.obfuscationLevel ?? 5) ||
-      blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers;
+      blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers ||
+      !adaptiveConfigEquals(adaptiveCurrent, adaptiveOriginal);
     document.getElementById("saveMainConfigBtn").disabled = !dirty;
   }
 
@@ -769,6 +866,88 @@ function renderKeyDetail() {
   for (const id of ["cfgRatelimitMax", "cfgRatelimitDuration"]) {
     document.getElementById(id)?.addEventListener("input", checkSecurityDirty);
   }
+
+  document.getElementById("cfgAdaptiveEnabled")?.addEventListener("change", function () {
+    document.getElementById("adaptiveConfigFields").style.display = this.checked ? "block" : "none";
+    checkMainDirty();
+  });
+  document.getElementById("cfgAdaptiveWindow")?.addEventListener("input", checkMainDirty);
+
+  function addAdaptiveTierRow(minRequests = "", challengeCount = "") {
+    const list = document.getElementById("adaptiveTiersList");
+    const idx = list.querySelectorAll(".adaptive-tier-row").length;
+    const div = document.createElement("div");
+    div.className = "edit-row adaptive-tier-row";
+    div.dataset.tierIndex = idx;
+    div.innerHTML = `
+      <div class="edit-field">
+        <label>Min requests</label>
+        <input type="number" class="adaptive-tier-min" value="${minRequests}" min="1" max="100000" placeholder="e.g. 5">
+      </div>
+      <div class="edit-field">
+        <label>Challenge count</label>
+        <input type="number" class="adaptive-tier-count" value="${challengeCount}" min="1" max="500" placeholder="e.g. 150">
+      </div>
+      <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+    div.querySelector(".adaptive-tier-remove").addEventListener("click", () => {
+      div.remove();
+      checkMainDirty();
+    });
+    div.querySelector(".adaptive-tier-min").addEventListener("input", checkMainDirty);
+    div.querySelector(".adaptive-tier-count").addEventListener("input", checkMainDirty);
+    list.appendChild(div);
+    checkMainDirty();
+  }
+
+  document.getElementById("addAdaptiveTierBtn")?.addEventListener("click", () => addAdaptiveTierRow());
+
+  document.querySelectorAll("#adaptiveTiersList .adaptive-tier-remove").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btn.closest(".adaptive-tier-row").remove();
+      checkMainDirty();
+    });
+  });
+  document.querySelectorAll("#adaptiveTiersList .adaptive-tier-min, #adaptiveTiersList .adaptive-tier-count").forEach((input) => {
+    input.addEventListener("input", checkMainDirty);
+  });
+
+  function addAdaptiveGlobalTierRow(minRequests = "", challengeCount = "") {
+    const list = document.getElementById("adaptiveGlobalTiersList");
+    const idx = list.querySelectorAll(".adaptive-tier-row").length;
+    const div = document.createElement("div");
+    div.className = "edit-row adaptive-tier-row";
+    div.dataset.tierIndex = idx;
+    div.innerHTML = `
+      <div class="edit-field">
+        <label>Min total requests</label>
+        <input type="number" class="adaptive-tier-min" value="${minRequests}" min="1" max="10000000" placeholder="e.g. 100">
+      </div>
+      <div class="edit-field">
+        <label>Challenge count</label>
+        <input type="number" class="adaptive-tier-count" value="${challengeCount}" min="1" max="500" placeholder="e.g. 200">
+      </div>
+      <button class="origin-remove-btn adaptive-tier-remove" title="Remove tier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+    div.querySelector(".adaptive-tier-remove").addEventListener("click", () => {
+      div.remove();
+      checkMainDirty();
+    });
+    div.querySelector(".adaptive-tier-min").addEventListener("input", checkMainDirty);
+    div.querySelector(".adaptive-tier-count").addEventListener("input", checkMainDirty);
+    list.appendChild(div);
+    checkMainDirty();
+  }
+
+  document.getElementById("addAdaptiveGlobalTierBtn")?.addEventListener("click", () => addAdaptiveGlobalTierRow());
+
+  document.querySelectorAll("#adaptiveGlobalTiersList .adaptive-tier-remove").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      btn.closest(".adaptive-tier-row").remove();
+      checkMainDirty();
+    });
+  });
+  document.querySelectorAll("#adaptiveGlobalTiersList .adaptive-tier-min, #adaptiveGlobalTiersList .adaptive-tier-count").forEach((input) => {
+    input.addEventListener("input", checkMainDirty);
+  });
 
   function ensureKeyCorsEmptyRow() {
     const entries = [...document.querySelectorAll("#keyCorsOriginsList .origin-entry")];
@@ -2245,10 +2424,39 @@ async function saveMainConfig() {
   const obfuscationLevel = parseInt(document.getElementById("cfgObfuscationLevel").value, 10);
   const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
 
+  const adaptiveEnabled = document.getElementById("cfgAdaptiveEnabled").checked;
+  const adaptiveWindowMs = parseInt(document.getElementById("cfgAdaptiveWindow").value, 10);
+  const adaptiveTierRows = [...document.querySelectorAll("#adaptiveTiersList .adaptive-tier-row")];
+  const adaptiveTiers = adaptiveTierRows
+    .map((row) => ({
+      minRequests: parseInt(row.querySelector(".adaptive-tier-min").value, 10),
+      challengeCount: parseInt(row.querySelector(".adaptive-tier-count").value, 10),
+    }))
+    .filter((t) => t.minRequests > 0 && t.challengeCount > 0);
+  const adaptiveGlobalTierRows = [...document.querySelectorAll("#adaptiveGlobalTiersList .adaptive-tier-row")];
+  const adaptiveGlobalTiers = adaptiveGlobalTierRows
+    .map((row) => ({
+      minRequests: parseInt(row.querySelector(".adaptive-tier-min").value, 10),
+      challengeCount: parseInt(row.querySelector(".adaptive-tier-count").value, 10),
+    }))
+    .filter((t) => t.minRequests > 0 && t.challengeCount > 0);
+  const adaptiveChallengeCount = adaptiveEnabled
+    ? { enabled: true, windowMs: adaptiveWindowMs, tiers: adaptiveTiers, globalTiers: adaptiveGlobalTiers }
+    : null;
+
   if (!name || difficulty < 1 || challengeCount < 1) {
     showModal(
       "Validation error",
       '<div class="modal-body"><p>Please check your input values.</p></div>',
+    );
+    btn.disabled = false;
+    return;
+  }
+
+  if (adaptiveEnabled && adaptiveTiers.length === 0 && adaptiveGlobalTiers.length === 0) {
+    showModal(
+      "Validation error",
+      '<div class="modal-body"><p>Please add at least one per-IP or global tier when adaptive challenge count is enabled.</p></div>',
     );
     btn.disabled = false;
     return;
@@ -2261,6 +2469,7 @@ async function saveMainConfig() {
     instrumentation,
     obfuscationLevel,
     blockAutomatedBrowsers,
+    adaptiveChallengeCount,
   });
 
   if (res.success) {
@@ -2273,6 +2482,7 @@ async function saveMainConfig() {
       instrumentation,
       obfuscationLevel,
       blockAutomatedBrowsers,
+      adaptiveChallengeCount,
     };
     renderKeysList(searchInput.value);
   } else {
