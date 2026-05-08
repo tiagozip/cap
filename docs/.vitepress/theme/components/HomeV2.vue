@@ -1,6 +1,33 @@
 <script setup>
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount, ref } from "vue";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
+
+const fromWidget = ref(false);
+const fromWidgetHost = ref("");
+
+function initFromWidgetBanner() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("utm_source") !== "cap_widget") return;
+    if (sessionStorage.getItem("cap-widget-banner-dismissed") === "1") return;
+    const host = (params.get("utm_content") || "").trim();
+    if (host && /^[a-z0-9.\-]+$/i.test(host) && host.length <= 80) {
+      fromWidgetHost.value = host;
+    }
+    fromWidget.value = true;
+    if (typeof window.plausible === "function") {
+      window.plausible("widget_banner_shown", { props: { host: fromWidgetHost.value || "(unknown)" } });
+    }
+  } catch {}
+}
+
+function dismissWidgetBanner() {
+  fromWidget.value = false;
+  try { sessionStorage.setItem("cap-widget-banner-dismissed", "1"); } catch {}
+  if (typeof window.plausible === "function") {
+    window.plausible("widget_banner_dismiss");
+  }
+}
 
 const SNIPPETS = {
   html:
@@ -431,6 +458,7 @@ async function loadGithubStars() {
 
 onMounted(() => {
   document.documentElement.classList.add("home-v2-active");
+  initFromWidgetBanner();
   initTabs();
   loadStats();
   initCountUp();
@@ -448,7 +476,27 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div id="homev2">
+  <div id="homev2" :class="{ 'has-widget-banner': fromWidget }">
+    <Transition name="widget-banner">
+      <aside v-if="fromWidget" class="widget-banner" role="region" aria-label="From the Cap widget">
+        <div class="wrap widget-banner-wrap">
+          <span class="widget-banner-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.5l4.2 4.2L19 7" />
+            </svg>
+          </span>
+          <p class="widget-banner-text">
+            <strong>You just verified you're human with Cap<template v-if="fromWidgetHost">&nbsp;on {{ fromWidgetHost }}</template>.</strong>
+            <span class="widget-banner-sub">You can close this tab. Or stick around if you're curious what Cap is.</span>
+          </p>
+          <button class="widget-banner-close" type="button" aria-label="Dismiss" @click="dismissWidgetBanner">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+    </Transition>
     <header class="top">
       <div class="wrap wrap-hero">
         <div class="inner">
@@ -973,6 +1021,73 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
+.widget-banner {
+  background: color-mix(in oklab, var(--accent) 11%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--accent) 26%, transparent);
+  color: var(--fg);
+  font-family: var(--font);
+}
+#homev2 .wrap.widget-banner-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 11px;
+}
+.widget-banner-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  color: var(--accent);
+}
+.widget-banner-text {
+  flex: 1;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--fg-dim);
+  min-width: 0;
+}
+.widget-banner-text strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.widget-banner-sub {
+  margin-left: 6px;
+}
+.widget-banner-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--fg-mute);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 120ms, color 120ms;
+}
+.widget-banner-close:hover { background: rgba(255, 255, 255, 0.06); color: var(--fg); }
+.widget-banner-enter-active,
+.widget-banner-leave-active { transition: max-height 260ms ease, opacity 180ms ease; overflow: hidden; }
+.widget-banner-enter-from,
+.widget-banner-leave-to { max-height: 0; opacity: 0; }
+.widget-banner-enter-to,
+.widget-banner-leave-from { max-height: 120px; opacity: 1; }
+
+@media (max-width: 720px) {
+  #homev2 .wrap.widget-banner-wrap { gap: 10px; align-items: flex-start; padding-block: 10px; }
+  .widget-banner-icon { margin-top: 2px; }
+  .widget-banner-text { font-size: 13px; }
+  .widget-banner-sub { display: block; margin-left: 0; margin-top: 2px; }
+}
+
 html.home-v2-active {
   --bg: #11111b;
   --surface: #181825;
