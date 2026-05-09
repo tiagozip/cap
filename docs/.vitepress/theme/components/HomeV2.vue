@@ -1397,11 +1397,14 @@ html.home-v2-active main.main {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, transform .15s;
 }
 #homev2 .btn:hover {
   border-color: rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.02);
+}
+#homev2 .btn:active {
+  transform: scale(.96);
 }
 #homev2 .btn.primary {
   background: var(--accent);
@@ -1413,6 +1416,7 @@ html.home-v2-active main.main {
   background: #fff;
   border-color: #fff;
 }
+
 #homev2 .btn .arr {
   opacity: 0.6;
   display: inline-block;
