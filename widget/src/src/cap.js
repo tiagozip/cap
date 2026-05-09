@@ -1,5 +1,5 @@
 (() => {
-  const WASM_VERSION = "0.0.6";
+  const WASM_VERSION = "0.0.7";
   const _browserHasHaptics =
     "vibrate" in navigator && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
