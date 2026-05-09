@@ -78,6 +78,8 @@
           "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako_inflate.min.js";
         const script = document.createElement("script");
         script.src = url;
+        const pakoNonce = window.CAP_SCRIPT_NONCE || window.CAP_CSS_NONCE;
+        if (pakoNonce) script.setAttribute("nonce", pakoNonce);
         script.onload = () => {
           if (window.pako?.inflateRaw) resolve(window.pako);
           else reject(new Error("[cap] pako loaded but inflateRaw is missing"));
@@ -148,8 +150,14 @@
 
       window.addEventListener("message", handler);
 
+      const scriptNonce = window.CAP_SCRIPT_NONCE || window.CAP_CSS_NONCE;
+      const nonceAttr = scriptNonce
+        ? ' nonce="' + String(scriptNonce).replace(/"/g, "&quot;") + '"'
+        : "";
       iframe.srcdoc =
-        '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>' +
+        '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script' +
+        nonceAttr +
+        ">" +
         scriptText +
         "\n</scr" +
         "ipt></body></html>";
@@ -320,6 +328,9 @@
     token = null;
     #shadow;
     #div;
+    #trigger;
+    #credits;
+    #troubleshootLink;
     #host;
     #solving = false;
     #eventHandlers;
@@ -684,7 +695,7 @@
       this.createUI();
       this.addEventListeners();
       this.initialize();
-      this.#div.removeAttribute("disabled");
+      this.#trigger.removeAttribute("disabled");
 
       const workers = this.getAttribute("data-cap-worker-count");
       const parsedWorkers = workers ? parseInt(workers, 10) : null;
@@ -719,7 +730,7 @@
       try {
         this.#solving = true;
         this.updateUI("verifying", this.getI18nText("verifying-label", "Verifying..."), true);
-        this.#div.setAttribute(
+        this.#trigger.setAttribute(
           "aria-label",
           this.getI18nText("verifying-aria-label", "Verifying you're a human, please wait"),
         );
@@ -758,7 +769,7 @@
             if (this.#resetTimer) clearTimeout(this.#resetTimer);
             this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
 
-            this.#div.setAttribute(
+            this.#trigger.setAttribute(
               "aria-label",
               this.getI18nText(
                 "verified-aria-label",
@@ -838,7 +849,7 @@
               if (this.#resetTimer) clearTimeout(this.#resetTimer);
               this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
 
-              this.#div.setAttribute(
+              this.#trigger.setAttribute(
                 "aria-label",
                 this.getI18nText(
                   "verified-aria-label",
@@ -887,7 +898,7 @@
 
           if (instrOut?.__timeout || instrOut?.__blocked) {
             this.updateUIBlocked(this.getI18nText("error-label", "Error"), instrOut?.__blocked);
-            this.#div.setAttribute(
+            this.#trigger.setAttribute(
               "aria-label",
               this.getI18nText("error-aria-label", "An error occurred, please try again"),
             );
@@ -945,7 +956,7 @@
             this.error("Invalid expiration time");
           }
 
-          this.#div.setAttribute(
+          this.#trigger.setAttribute(
             "aria-label",
             this.getI18nText(
               "verified-aria-label",
@@ -956,7 +967,7 @@
 
           return { success: true, token: this.token };
         } catch (err) {
-          this.#div.setAttribute(
+          this.#trigger.setAttribute(
             "aria-label",
             this.getI18nText("error-aria-label", "An error occurred, please try again"),
           );
@@ -1044,18 +1055,49 @@
 
     createUI() {
       this.#div.classList.add("captcha");
-      this.#div.setAttribute("role", "button");
-      this.#div.setAttribute("tabindex", "0");
+      this.#div.setAttribute("role", "group");
       this.#div.setAttribute(
+        "aria-label",
+        this.getI18nText("group-aria-label", "Cap verification"),
+      );
+
+      this.#trigger = document.createElement("div");
+      this.#trigger.className = "captcha-trigger";
+      this.#trigger.setAttribute("part", "trigger");
+      this.#trigger.setAttribute("role", "button");
+      this.#trigger.setAttribute("tabindex", "0");
+      this.#trigger.setAttribute(
         "aria-label",
         this.getI18nText("verify-aria-label", "Click to verify you're a human"),
       );
-      this.#div.setAttribute("aria-live", "polite");
-      this.#div.setAttribute("disabled", "true");
-      this.#div.innerHTML = `<div class="checkbox" part="checkbox"><svg class="progress-ring" viewBox="0 0 32 32"><circle class="progress-ring-bg" cx="16" cy="16" r="14"></circle><circle class="progress-ring-circle" cx="16" cy="16" r="14"></circle></svg></div><p part="label" class="label-wrapper"><span class="label active">${this.getI18nText(
+      this.#trigger.setAttribute("aria-live", "polite");
+      this.#trigger.setAttribute("disabled", "true");
+      this.#trigger.innerHTML = `<div class="checkbox" part="checkbox" aria-hidden="true"><svg class="progress-ring" viewBox="0 0 32 32" aria-hidden="true"><circle class="progress-ring-bg" cx="16" cy="16" r="14"></circle><circle class="progress-ring-circle" cx="16" cy="16" r="14"></circle></svg></div><p part="label" class="label-wrapper"><span class="label active">${this.getI18nText(
         "initial-state",
         "Verify you're human",
-      )}</span></p><a part="attribution" aria-label="Secured by Cap" href="https://trycap.dev" class="credits" target="_blank" tabindex="-1" title="Secured by Cap: The self-hosted CAPTCHA for the modern web.">Cap</a>`;
+      )}</span></p>`;
+      this.#div.appendChild(this.#trigger);
+
+      this.#troubleshootLink = document.createElement("a");
+      this.#troubleshootLink.className = "cap-troubleshoot-link";
+      this.#troubleshootLink.setAttribute("part", "troubleshoot");
+      this.#troubleshootLink.setAttribute("target", "_blank");
+      this.#troubleshootLink.setAttribute("rel", "noopener");
+      this.#troubleshootLink.hidden = true;
+      this.#div.appendChild(this.#troubleshootLink);
+
+      this.#credits = document.createElement("a");
+      this.#credits.className = "credits";
+      this.#credits.setAttribute("part", "attribution");
+      this.#credits.setAttribute("aria-label", "Secured by Cap");
+      this.#credits.setAttribute("href", "https://trycap.dev");
+      this.#credits.setAttribute("target", "_blank");
+      this.#credits.setAttribute(
+        "title",
+        "Secured by Cap: The self-hosted CAPTCHA for the modern web.",
+      );
+      this.#credits.textContent = "Cap";
+      this.#div.appendChild(this.#credits);
 
       this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
 
@@ -1063,10 +1105,9 @@
     }
 
     addEventListeners() {
-      if (!this.#div) return;
+      if (!this.#trigger) return;
 
-      this.#div.querySelector("a").addEventListener("click", (e) => {
-        e.stopPropagation();
+      this.#credits.addEventListener("click", (e) => {
         e.preventDefault();
         window.open(
           `https://trycap.dev/?${new URLSearchParams(
@@ -1085,17 +1126,18 @@
         );
       });
 
-      this.#div.addEventListener("click", () => {
-        if (!this.#div.hasAttribute("disabled")) this.solve();
+      this.#trigger.addEventListener("click", () => {
+        if (!this.#trigger.hasAttribute("disabled")) this.solve();
       });
-      this.#div.addEventListener("mousedown", () => {
-        if (!this.#div.hasAttribute("disabled") && this.#hasHaptics) {
+      this.#trigger.addEventListener("mousedown", () => {
+        if (!this.#trigger.hasAttribute("disabled") && this.#hasHaptics) {
           navigator.vibrate(5);
         }
       });
 
-      this.#div.addEventListener("keydown", (e) => {
-        if ((e.key === "Enter" || e.key === " ") && !this.#div.hasAttribute("disabled")) {
+      this.#trigger.addEventListener("keydown", (e) => {
+        if (e.target !== this.#trigger) return;
+        if ((e.key === "Enter" || e.key === " ") && !this.#trigger.hasAttribute("disabled")) {
           e.preventDefault();
           e.stopPropagation();
           this.solve();
@@ -1109,8 +1151,8 @@
     }
 
     animateLabel(text) {
-      if (!this.#div) return;
-      const wrapper = this.#div.querySelector(".label-wrapper");
+      if (!this.#trigger) return;
+      const wrapper = this.#trigger.querySelector(".label-wrapper");
       if (!wrapper) return;
 
       if (prefersReducedMotion()) {
@@ -1146,62 +1188,53 @@
     }
 
     updateUI(state, text, disabled = false) {
-      if (!this.#div) return;
+      if (!this.#div || !this.#trigger) return;
 
       this.#div.setAttribute("data-state", state);
+      this.#div.classList.remove("has-troubleshoot");
 
       this.animateLabel(text);
 
+      if (this.#troubleshootLink) this.#troubleshootLink.hidden = true;
+
       if (disabled) {
-        this.#div.setAttribute("disabled", "true");
+        this.#trigger.setAttribute("disabled", "true");
       } else {
-        this.#div.removeAttribute("disabled");
+        this.#trigger.removeAttribute("disabled");
       }
     }
 
     updateUIBlocked(label, showTroubleshooting = false) {
-      if (!this.#div) return;
+      if (!this.#div || !this.#trigger) return;
 
       this.#div.setAttribute("data-state", "error");
-      this.#div.removeAttribute("disabled");
+      this.#trigger.removeAttribute("disabled");
 
-      const wrapper = this.#div.querySelector(".label-wrapper");
-      if (!wrapper) return;
+      this.animateLabel(label);
 
-      const troubleshootingUrl =
-        this.getAttribute("data-cap-troubleshooting-url") ||
-        "https://trycap.dev/guide/troubleshooting/instrumentation.html";
-
-      const current = wrapper.querySelector(".label.active");
-      const next = document.createElement("span");
-      next.className = "label";
-      next.innerHTML = showTroubleshooting
-        ? `${label} · <a class="cap-troubleshoot-link" href="${troubleshootingUrl}" target="_blank" rel="noopener">${this.getI18nText("troubleshooting-label", "Troubleshoot")}</a>`
-        : label;
-      wrapper.appendChild(next);
-
-      void next.offsetWidth;
-      next.classList.add("active");
-      if (current) {
-        current.classList.remove("active");
-        current.classList.add("exit");
-        current.addEventListener("transitionend", () => current.remove(), {
-          once: true,
-        });
-      }
-
-      const link = next.querySelector(".cap-troubleshoot-link");
-      if (link) {
-        link.addEventListener("click", (e) => {
-          e.stopPropagation();
-        });
+      if (this.#troubleshootLink) {
+        if (showTroubleshooting) {
+          const troubleshootingUrl =
+            this.getAttribute("data-cap-troubleshooting-url") ||
+            "https://trycap.dev/guide/troubleshooting/instrumentation.html";
+          this.#troubleshootLink.setAttribute("href", troubleshootingUrl);
+          this.#troubleshootLink.textContent = this.getI18nText(
+            "troubleshooting-label",
+            "Troubleshoot",
+          );
+          this.#troubleshootLink.hidden = false;
+          this.#div.classList.add("has-troubleshoot");
+        } else {
+          this.#troubleshootLink.hidden = true;
+          this.#div.classList.remove("has-troubleshoot");
+        }
       }
     }
 
     handleProgress(event) {
-      if (!this.#div) return;
+      if (!this.#trigger) return;
 
-      const progressCircle = this.#div.querySelector(".progress-ring-circle");
+      const progressCircle = this.#trigger.querySelector(".progress-ring-circle");
 
       if (progressCircle) {
         const circumference = 2 * Math.PI * 14;
@@ -1209,7 +1242,7 @@
         progressCircle.style.strokeDashoffset = offset;
       }
 
-      const wrapper = this.#div.querySelector(".label-wrapper");
+      const wrapper = this.#trigger.querySelector(".label-wrapper");
       if (wrapper) {
         const activeLabel = wrapper.querySelector(".label.active");
         if (activeLabel) {

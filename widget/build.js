@@ -11,7 +11,7 @@ const minifyCSS = (input) => {
     targets: {
       chrome: 90 << 16,
       firefox: 90 << 16,
-      safari: 14 << 16,
+      safari: (14 << 16) | (1 << 8),
     },
   });
   return code.toString();
