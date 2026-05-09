@@ -1,7 +1,7 @@
 {
   "name": "@cap.js/widget",
-  "version": "0.1.47",
-  "description": "Client-side widget for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
+  "version": "0.1.48",
+  "description": "The self-hosted CAPTCHA for the modern web.",
   "keywords": [
     "algorithm",
     "anti-abuse",
