@@ -1,0 +1,9 @@
+{
+  "name": "@cap.js/wasm-benchmark",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "bun run bench.js",
+    "bench:browser": "bun run serve-browser.js"
+  }
+}

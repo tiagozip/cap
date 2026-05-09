@@ -15,7 +15,7 @@ By the way, this is a more technical explanation of how Cap works. If you're loo
 
 #### Computing the solution
 
-5. The widget uses Rust-flavoured WASM and Web Workers to solve the challenges in parallel:
+5. The widget uses a C-based WASM solver and Web Workers to solve the challenges in parallel:
    - Each worker attempts to find a valid nonce by repeatedly:
      - Combining the salt with different nonce values
      - Computing the SHA-256 hash of this combination
