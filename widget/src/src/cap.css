@@ -1,3 +1,7 @@
+:host {
+  display: inline-block;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .captcha,
   .captcha * {
@@ -27,35 +31,22 @@
 }
 
 .captcha {
+  position: relative;
+  display: inline-block;
+  width: var(--cap-widget-width, 260px);
+  height: var(--cap-widget-height, 58px);
   background-color: var(--cap-background, #fdfdfd);
   border: 1px solid var(--cap-border-color, #dddddd8f);
   border-radius: var(--cap-border-radius, 14px);
   user-select: none;
-  height: var(--cap-widget-height, 58px);
-  width: var(--cap-widget-width, 260px);
-  display: flex;
-  align-items: center;
-  padding: var(--cap-widget-padding, 14px);
-  gap: var(--cap-gap, 15px);
   cursor: pointer;
   transition:
     filter 0.2s,
-    transform 0.2s;
-  position: relative;
+    transform 0.2s,
+    height 0.2s;
   -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
   overflow: hidden;
   color: var(--cap-color, #212121);
-}
-
-.captcha:not([data-state]):active {
-  transform: scale(0.97);
-}
-
-.captcha:hover {
-  filter: brightness(98%);
-}
-
-.captcha * {
   font-family: var(
     --cap-font,
     system,
@@ -73,6 +64,38 @@
   );
 }
 
+.captcha.has-troubleshoot {
+  height: calc(var(--cap-widget-height, 58px) + 26px);
+}
+
+.captcha.has-troubleshoot .captcha-trigger {
+  inset-block-end: 26px;
+}
+
+.captcha:not([data-state]):active {
+  transform: scale(0.97);
+}
+
+.captcha:hover {
+  filter: brightness(98%);
+}
+
+.captcha-trigger {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: var(--cap-widget-padding, 14px);
+  gap: var(--cap-gap, 15px);
+  border-radius: inherit;
+  transition: inset 0.2s;
+}
+
+.captcha-trigger:focus-visible {
+  outline: 2px solid var(--cap-focus-ring, #0066cc);
+  outline-offset: -3px;
+}
+
 .checkbox {
   width: var(--cap-checkbox-size, 25px);
   height: var(--cap-checkbox-size, 25px);
@@ -82,6 +105,7 @@
   transition: opacity 0.2s;
   margin-top: var(--cap-checkbox-margin, 2px);
   margin-bottom: var(--cap-checkbox-margin, 2px);
+  flex-shrink: 0;
 }
 
 .captcha p {
@@ -106,7 +130,7 @@
   content: "";
   pointer-events: none;
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   width: 100%;
   height: 0.6em;
   z-index: 1;
@@ -229,40 +253,100 @@
   }
 }
 
-.captcha[disabled] {
+.captcha-trigger[disabled] {
   cursor: not-allowed;
 }
 
-.captcha[disabled][data-state="verifying"] {
+.captcha[data-state="verifying"] .captcha-trigger {
   cursor: progress;
 }
 
-.captcha[disabled][data-state="done"] {
+.captcha[data-state="done"] .captcha-trigger {
   cursor: default;
 }
 
-.captcha .credits {
+.credits {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  inset-block-end: 4px;
+  inset-inline-end: 4px;
   font-size: 12px !important;
   color: var(--cap-color, #212121);
   opacity: 0.8 !important;
   text-underline-offset: 0.18em;
   text-decoration-thickness: 0.08em;
-  z-index: 6;
-  display: block !important;
+  z-index: 2;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 4px 6px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-end;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+
+.credits:focus-visible {
+  outline: 2px solid var(--cap-focus-ring, #0066cc);
+  outline-offset: 2px;
+  opacity: 1 !important;
 }
 
 .cap-troubleshoot-link {
-  color: #0066cc;
+  position: absolute;
+  inset-block-end: 4px;
+  inset-inline-start: 14px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  min-width: 24px;
+  min-height: 24px;
+  color: var(--cap-troubleshoot-color, #0050a0);
   text-decoration: underline;
   text-underline-offset: 0.15em;
   text-decoration-thickness: 0.08em;
   cursor: pointer;
   font-weight: 500;
-  font-size: inherit;
+  font-size: 13px;
+  border-radius: 4px;
+  z-index: 2;
 }
+
+.cap-troubleshoot-link[hidden] {
+  display: none;
+}
+
 .cap-troubleshoot-link:hover {
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+.cap-troubleshoot-link:focus-visible {
+  outline: 2px solid var(--cap-focus-ring, #0066cc);
+  outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  .captcha {
+    border-color: CanvasText;
+  }
+  .checkbox {
+    border-color: CanvasText;
+  }
+  .captcha-trigger:focus-visible,
+  .credits:focus-visible,
+  .cap-troubleshoot-link:focus-visible {
+    outline-color: Highlight;
+  }
+  .progress-ring-bg {
+    stroke: GrayText;
+  }
+  .progress-ring-circle {
+    stroke: CanvasText;
+  }
+  .captcha.invalid {
+    border-color: Mark;
+    box-shadow: none;
+  }
+  .credits {
+    opacity: 1 !important;
+  }
 }

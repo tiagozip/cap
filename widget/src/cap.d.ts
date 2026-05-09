@@ -3,6 +3,7 @@ declare global {
     CAP_CUSTOM_FETCH?: typeof fetch;
     CAP_CUSTOM_WASM_URL?: string;
     CAP_CSS_NONCE?: string;
+    CAP_SCRIPT_NONCE?: string;
     CAP_DONT_SKIP_REDEFINE?: boolean;
     Cap: typeof Cap;
   }
