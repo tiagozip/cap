@@ -7,6 +7,17 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
-sha2 = "0.10"
-hex = "0.4"
+wasm-bindgen = "=0.2.100"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+# strip = true is intentionally off as strip+LTO mangles wasm-bindgen export names
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O3", "--enable-bulk-memory", "--enable-simd",
+            "--strip-producers", "--strip-target-features", "--strip-debug",
+            "--vacuum", "--remove-unused-module-elements",
+            "--duplicate-function-elimination"]
