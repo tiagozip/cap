@@ -1,7 +1,8 @@
 (() => {
   const WASM_VERSION = "0.0.7";
   const _browserHasHaptics =
-    "vibrate" in navigator && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    "vibrate" in navigator &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   if (typeof window === "undefined") {
     return;
@@ -20,7 +21,8 @@
       let hash = 2166136261;
       for (let i = 0; i < str.length; i++) {
         hash ^= str.charCodeAt(i);
-        hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+        hash +=
+          (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
       }
       return hash >>> 0;
     }
@@ -128,6 +130,7 @@
       }
 
       function handler(ev) {
+        if (!iframe.contentWindow || ev.source !== iframe.contentWindow) return;
         var d = ev.data;
         if (!d || typeof d !== "object") return;
         if (d.type === "cap:instr") {
@@ -152,7 +155,7 @@
 
       const scriptNonce = window.CAP_SCRIPT_NONCE || window.CAP_CSS_NONCE;
       const nonceAttr = scriptNonce
-        ? ' nonce="' + String(scriptNonce).replace(/"/g, "&quot;") + '"'
+        ? ` nonce="${String(scriptNonce).replace(/"/g, "&quot;")}"`
         : "";
       iframe.srcdoc =
         '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script' +
@@ -189,7 +192,10 @@
     return wasmModulePromise;
   };
 
-  if (typeof WebAssembly === "object" && typeof WebAssembly.compile === "function") {
+  if (
+    typeof WebAssembly === "object" &&
+    typeof WebAssembly.compile === "function"
+  ) {
     getWasmModule().catch(() => {});
   }
 
@@ -206,7 +212,7 @@
     if (_sharedWorkerUrl) return _sharedWorkerUrl;
 
     _sharedWorkerUrl = URL.createObjectURL(
-      new Blob([`%%workerScript%%`], { type: "application/javascript" }),
+      new Blob([%%workerScript%%], { type: "application/javascript" }),
     );
     return _sharedWorkerUrl;
   }
@@ -302,7 +308,10 @@
         worker.addEventListener("error", onError);
 
         if (this._wasmModule) {
-          worker.postMessage({ salt, target, wasmModule: this._wasmModule }, []);
+          worker.postMessage(
+            { salt, target, wasmModule: this._wasmModule },
+            [],
+          );
         } else {
           worker.postMessage({ salt, target });
         }
@@ -406,7 +415,10 @@
 
     #isVisible() {
       if (typeof this.checkVisibility === "function") {
-        return this.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+        return this.checkVisibility({
+          checkOpacity: true,
+          checkVisibilityCSS: true,
+        });
       }
       // Fallback: offsetParent is null for display:none; also check the style directly
       return !!(this.offsetParent || this.getClientRects().length > 0);
@@ -436,7 +448,9 @@
       if (!apiEndpoint.endsWith("/")) apiEndpoint += "/";
 
       try {
-        const raw = await capFetch(`${apiEndpoint}challenge`, { method: "POST" });
+        const raw = await capFetch(`${apiEndpoint}challenge`, {
+          method: "POST",
+        });
         let resp;
         try {
           resp = await raw.json();
@@ -454,7 +468,10 @@
           let i = 0;
           challenges = Array.from({ length: challenge.c }, () => {
             i++;
-            return [prng(`${token}${i}`, challenge.s), prng(`${token}${i}d`, challenge.d)];
+            return [
+              prng(`${token}${i}`, challenge.s),
+              prng(`${token}${i}d`, challenge.d),
+            ];
           });
         }
         this.#speculative.challenges = challenges;
@@ -518,10 +535,12 @@
 
         const batchResults = await Promise.all(
           batch.map((challenge) =>
-            this.#speculativePool.run(challenge[0], challenge[1]).then((nonce) => {
-              this.#speculative.completedCount++;
-              return nonce;
-            }),
+            this.#speculativePool
+              .run(challenge[0], challenge[1])
+              .then((nonce) => {
+                this.#speculative.completedCount++;
+                return nonce;
+              }),
           ),
         );
 
@@ -530,7 +549,9 @@
         }
 
         if (!promoted && nextIndex < total) {
-          await new Promise((resolve) => setTimeout(resolve, SPECULATIVE_YIELD_MS));
+          await new Promise((resolve) =>
+            setTimeout(resolve, SPECULATIVE_YIELD_MS),
+          );
         }
       }
 
@@ -544,11 +565,14 @@
       try {
         const challengeResp = this.#speculative.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
-        if (!apiEndpoint) throw new Error("[cap] speculative redeem: missing apiEndpoint");
+        if (!apiEndpoint)
+          throw new Error("[cap] speculative redeem: missing apiEndpoint");
 
         let instrOut = null;
         if (challengeResp.instrumentation) {
-          instrOut = await runInstrumentationChallenge(challengeResp.instrumentation);
+          instrOut = await runInstrumentationChallenge(
+            challengeResp.instrumentation,
+          );
           if (instrOut?.__timeout || instrOut?.__blocked) {
             this.#speculative.state = "done";
             this.#speculative.notify();
@@ -573,14 +597,18 @@
           throw new Error("Failed to parse speculative redeem response");
         }
 
-        if (!resp.success) throw new Error(resp.error || "Speculative redeem failed");
+        if (!resp.success)
+          throw new Error(resp.error || "Speculative redeem failed");
 
         this.#speculative.token = resp.token;
         this.#speculative.tokenExpires = new Date(resp.expires).getTime();
         this.#speculative.state = "done";
         this.#speculative.notify();
       } catch (e) {
-        console.warn("[cap] speculative redeem failed (will redo on click):", e);
+        console.warn(
+          "[cap] speculative redeem failed (will redo on click):",
+          e,
+        );
         this.#speculative.state = "done";
         this.#speculative.notify();
       }
@@ -674,7 +702,9 @@
         this.#div &&
         this.#div?.querySelector(".label.active")
       ) {
-        this.animateLabel(this.getI18nText("initial-state", "Verify you're human"));
+        this.animateLabel(
+          this.getI18nText("initial-state", "Verify you're human"),
+        );
       }
 
       if (name === "required") {
@@ -700,7 +730,8 @@
       const workers = this.getAttribute("data-cap-worker-count");
       const parsedWorkers = workers ? parseInt(workers, 10) : null;
       this.setWorkersCount(parsedWorkers || navigator.hardwareConcurrency || 8);
-      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName =
+        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
 
       this.#attachInteractionListeners();
@@ -729,10 +760,17 @@
 
       try {
         this.#solving = true;
-        this.updateUI("verifying", this.getI18nText("verifying-label", "Verifying..."), true);
+        this.updateUI(
+          "verifying",
+          this.getI18nText("verifying-label", "Verifying..."),
+          true,
+        );
         this.#trigger.setAttribute(
           "aria-label",
-          this.getI18nText("verifying-aria-label", "Verifying you're a human, please wait"),
+          this.getI18nText(
+            "verifying-aria-label",
+            "Verifying you're a human, please wait",
+          ),
         );
         this.dispatchEvent("progress", { progress: 0 });
 
@@ -758,9 +796,11 @@
           ) {
             this.dispatchEvent("progress", { progress: 100 });
 
-            const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+            const fieldName =
+              this.getAttribute("data-cap-hidden-field-name") || "cap-token";
             if (this.querySelector(`input[name='${fieldName}']`)) {
-              this.querySelector(`input[name='${fieldName}']`).value = this.#speculative.token;
+              this.querySelector(`input[name='${fieldName}']`).value =
+                this.#speculative.token;
             }
             this.dispatchEvent("solve", { token: this.#speculative.token });
             this.token = this.#speculative.token;
@@ -813,7 +853,9 @@
                 clearInterval(progressInterval);
                 return;
               }
-              const total = this.#speculative.challenges ? this.#speculative.challenges.length : 1;
+              const total = this.#speculative.challenges
+                ? this.#speculative.challenges.length
+                : 1;
               const done = this.#speculative.completedCount;
               const visual =
                 st === "redeeming"
@@ -824,7 +866,9 @@
               this.dispatchEvent("progress", { progress: visual });
             }, 150);
 
-            await new Promise((resolve) => this.#speculative.onSettled(resolve));
+            await new Promise((resolve) =>
+              this.#speculative.onSettled(resolve),
+            );
             clearInterval(progressInterval);
 
             if (this.#speculative.state !== "done") {
@@ -838,9 +882,11 @@
             ) {
               this.dispatchEvent("progress", { progress: 100 });
 
-              const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+              const fieldName =
+                this.getAttribute("data-cap-hidden-field-name") || "cap-token";
               if (this.querySelector(`input[name='${fieldName}']`)) {
-                this.querySelector(`input[name='${fieldName}']`).value = this.#speculative.token;
+                this.querySelector(`input[name='${fieldName}']`).value =
+                  this.#speculative.token;
               }
               this.dispatchEvent("solve", { token: this.#speculative.token });
               this.token = this.#speculative.token;
@@ -883,7 +929,10 @@
               let i = 0;
               challenges = Array.from({ length: challenge.c }, () => {
                 i++;
-                return [prng(`${token}${i}`, challenge.s), prng(`${token}${i}d`, challenge.d)];
+                return [
+                  prng(`${token}${i}`, challenge.s),
+                  prng(`${token}${i}d`, challenge.d),
+                ];
               });
             }
 
@@ -897,10 +946,16 @@
           const instrOut = await instrPromise;
 
           if (instrOut?.__timeout || instrOut?.__blocked) {
-            this.updateUIBlocked(this.getI18nText("error-label", "Error"), instrOut?.__blocked);
+            this.updateUIBlocked(
+              this.getI18nText("error-label", "Error"),
+              instrOut?.__blocked,
+            );
             this.#trigger.setAttribute(
               "aria-label",
-              this.getI18nText("error-aria-label", "An error occurred, please try again"),
+              this.getI18nText(
+                "error-aria-label",
+                "An error occurred, please try again",
+              ),
             );
             this.removeEventListener("error", this.boundHandleError);
             const errEvent = new CustomEvent("error", {
@@ -938,7 +993,8 @@
           this.dispatchEvent("progress", { progress: 100 });
           if (!resp.success) throw new Error(resp.error || "Invalid solution");
 
-          const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+          const fieldName =
+            this.getAttribute("data-cap-hidden-field-name") || "cap-token";
           if (this.querySelector(`input[name='${fieldName}']`)) {
             this.querySelector(`input[name='${fieldName}']`).value = resp.token;
           }
@@ -969,7 +1025,10 @@
         } catch (err) {
           this.#trigger.setAttribute(
             "aria-label",
-            this.getI18nText("error-aria-label", "An error occurred, please try again"),
+            this.getI18nText(
+              "error-aria-label",
+              "An error occurred, please try again",
+            ),
           );
           this.error(err.message);
           throw err;
@@ -987,7 +1046,8 @@
 
       let wasmModule = null;
       const wasmSupported =
-        typeof WebAssembly === "object" && typeof WebAssembly.instantiate === "function";
+        typeof WebAssembly === "object" &&
+        typeof WebAssembly.instantiate === "function";
 
       if (wasmSupported) {
         try {
@@ -1021,7 +1081,10 @@
       const results = [];
       try {
         for (let i = 0; i < challenges.length; i += this.#workersCount) {
-          const chunk = challenges.slice(i, Math.min(i + this.#workersCount, challenges.length));
+          const chunk = challenges.slice(
+            i,
+            Math.min(i + this.#workersCount, challenges.length),
+          );
           const chunkResults = await Promise.all(
             chunk.map(([salt, target]) =>
               pool.run(salt, target).then((nonce) => {
@@ -1048,7 +1111,9 @@
       const parsedWorkers = parseInt(workers, 10);
       const maxWorkers = Math.min(navigator.hardwareConcurrency || 8, 16);
       this.#workersCount =
-        !Number.isNaN(parsedWorkers) && parsedWorkers > 0 && parsedWorkers <= maxWorkers
+        !Number.isNaN(parsedWorkers) &&
+        parsedWorkers > 0 &&
+        parsedWorkers <= maxWorkers
           ? parsedWorkers
           : navigator.hardwareConcurrency || 8;
     }
@@ -1117,7 +1182,9 @@
               utm_source: "cap_widget",
               utm_medium: "referral",
               utm_campaign: "widget",
-              utm_content: window.CAP_DISABLE_WIDGET_REF ? "" : location.hostname,
+              utm_content: window.CAP_DISABLE_WIDGET_REF
+                ? ""
+                : location.hostname,
               ref: window.CAP_DISABLE_WIDGET_REF ? "" : location.href || "",
               sub: window.CAP_DISABLE_WIDGET_REF ? "" : document.referrer || "",
             },
@@ -1137,7 +1204,10 @@
 
       this.#trigger.addEventListener("keydown", (e) => {
         if (e.target !== this.#trigger) return;
-        if ((e.key === "Enter" || e.key === " ") && !this.#trigger.hasAttribute("disabled")) {
+        if (
+          (e.key === "Enter" || e.key === " ") &&
+          !this.#trigger.hasAttribute("disabled")
+        ) {
           e.preventDefault();
           e.stopPropagation();
           this.solve();
@@ -1234,11 +1304,14 @@
     handleProgress(event) {
       if (!this.#trigger) return;
 
-      const progressCircle = this.#trigger.querySelector(".progress-ring-circle");
+      const progressCircle = this.#trigger.querySelector(
+        ".progress-ring-circle",
+      );
 
       if (progressCircle) {
         const circumference = 2 * Math.PI * 14;
-        const offset = circumference - (event.detail.progress / 100) * circumference;
+        const offset =
+          circumference - (event.detail.progress / 100) * circumference;
         progressCircle.style.strokeDashoffset = offset;
       }
 
@@ -1254,14 +1327,21 @@
     }
 
     handleSolve(event) {
-      this.updateUI("done", this.getI18nText("solved-label", "You're a human"), true);
+      this.updateUI(
+        "done",
+        this.getI18nText("solved-label", "You're a human"),
+        true,
+      );
       this.executeAttributeCode("onsolve", event);
       this.#internals?.setValidity?.({});
       this.#div?.classList.remove("invalid");
     }
 
     handleError(event) {
-      this.updateUI("error", this.getI18nText("error-label", "Error. Try again."));
+      this.updateUI(
+        "error",
+        this.getI18nText("error-label", "Error. Try again."),
+      );
       this.executeAttributeCode("onerror", event);
 
       if (this.#hasHaptics) navigator.vibrate([10, 40, 10]);
@@ -1307,7 +1387,8 @@
       }
       this.token = null;
       this.dispatchEvent("reset");
-      const fieldName = this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+      const fieldName =
+        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       if (this.querySelector(`input[name='${fieldName}']`)) {
         this.querySelector(`input[name='${fieldName}']`).value = "";
       }

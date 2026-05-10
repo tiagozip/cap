@@ -57,6 +57,7 @@
       const numWorkers = navigator.hardwareConcurrency || 8;
 
       const workerCodeTemplate = (() => {
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: placeholder replaced at runtime
         const baseURL = "${baseURL}";
 
         // const relativeWasmWrapperPath = "https://cdn.jsdelivr.net/npm/@cap.js/wasm@0.0.4/browser/cap_wasm.min.js";
@@ -64,7 +65,7 @@
         const relativeWasmWrapperPath = "../src/browser/cap_wasm.js";
 
         let solve_pow_function = null;
-        let initError = null;
+        const _initError = null;
         let initPromise = null;
 
         const absoluteWasmWrapperUrl = new URL(relativeWasmWrapperPath, baseURL).href;
@@ -72,7 +73,7 @@
         initPromise = import(absoluteWasmWrapperUrl)
           .then((wasmModule) => {
             return wasmModule.default().then((instance) => {
-              solve_pow_function = (instance && instance.exports ? instance.exports : wasmModule)
+              solve_pow_function = (instance?.exports ? instance.exports : wasmModule)
                 .solve_pow;
             });
           })
@@ -162,7 +163,7 @@
       }
 
       function cleanupWorkers() {
-        workerPool.forEach((worker) => worker.terminate());
+        for (const worker of workerPool) worker.terminate();
         workerPool = [];
         if (workerBlobUrl) {
           URL.revokeObjectURL(workerBlobUrl);
@@ -188,7 +189,7 @@
         }
       }
 
-      function resetUI() {
+      function _resetUI() {
         resultsDiv.innerHTML = "";
         progressDiv.textContent = "Status: Idle";
         progressDiv.classList.remove("text-danger", "fw-bold");
