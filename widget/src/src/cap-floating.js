@@ -1,7 +1,9 @@
 (() => {
   const showWidget = (element, capWidget) => {
-    const offset = parseInt(element.getAttribute("data-cap-floating-offset")) || 8;
-    const position = element.getAttribute("data-cap-floating-position") || "top";
+    const offset =
+      parseInt(element.getAttribute("data-cap-floating-offset"), 10) || 8;
+    const position =
+      element.getAttribute("data-cap-floating-position") || "top";
 
     Object.assign(capWidget.style, {
       display: "block",
@@ -24,10 +26,16 @@
     // `position: absolute` is resolved against the nearest positioned ancestor (capWidget.offsetParent),
     // but getBoundingClientRect() returns viewport-relative coords, convert to container-relative coords.
     const triggerRect = element.getBoundingClientRect();
-    const containerRect = (capWidget.offsetParent ?? document.documentElement).getBoundingClientRect();
+    const containerRect = (
+      capWidget.offsetParent ?? document.documentElement
+    ).getBoundingClientRect();
 
-    const centeredLeft = triggerRect.left + (triggerRect.width - capWidget.offsetWidth) / 2;
-    const clampedLeft = Math.max(2, Math.min(centeredLeft, window.innerWidth - capWidget.offsetWidth));
+    const centeredLeft =
+      triggerRect.left + (triggerRect.width - capWidget.offsetWidth) / 2;
+    const clampedLeft = Math.max(
+      2,
+      Math.min(centeredLeft, window.innerWidth - capWidget.offsetWidth),
+    );
     capWidget.style.left = `${clampedLeft - containerRect.left}px`;
 
     if (position === "top") {
@@ -36,7 +44,10 @@
       capWidget.style.top = `${clampedTop - containerRect.top}px`;
     } else {
       const idealTop = triggerRect.bottom + offset;
-      const clampedTop = Math.min(idealTop, window.innerHeight - capWidget.offsetHeight);
+      const clampedTop = Math.min(
+        idealTop,
+        window.innerHeight - capWidget.offsetHeight,
+      );
       capWidget.style.top = `${clampedTop - containerRect.top}px`;
     }
 
@@ -61,7 +72,9 @@
 
     const capWidget = document.querySelector(capWidgetSelector);
     if (!document.contains(capWidget) && !capWidget.solve) {
-      throw new Error(`[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`);
+      throw new Error(
+        `[cap floating] "${capWidgetSelector}" doesn't exist or isn't a Cap widget`,
+      );
     }
 
     capWidget.style.display = "none";
@@ -106,11 +119,11 @@
 
   init(document.body);
 
-  new MutationObserver((mutations) =>
-    mutations.forEach((mutation) =>
-      mutation.addedNodes.forEach((node) => {
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) init(node);
-      }),
-    ),
-  ).observe(document.body, { childList: true, subtree: true });
+      }
+    }
+  }).observe(document.body, { childList: true, subtree: true });
 })();

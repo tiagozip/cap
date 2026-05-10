@@ -8,14 +8,15 @@
     const fullBytes = Math.floor(targetBits / 8);
     const remainingBits = targetBits % 8;
 
-    const paddedTarget = target.length % 2 === 0 ? target : target + "0";
+    const paddedTarget = target.length % 2 === 0 ? target : `${target}0`;
     const targetBytesLength = paddedTarget.length / 2;
     const targetBytes = new Uint8Array(targetBytesLength);
     for (let k = 0; k < targetBytesLength; k++) {
       targetBytes[k] = parseInt(paddedTarget.substring(k * 2, k * 2 + 2), 16);
     }
 
-    const partialMask = remainingBits > 0 ? (0xff << (8 - remainingBits)) & 0xff : 0;
+    const partialMask =
+      remainingBits > 0 ? (0xff << (8 - remainingBits)) & 0xff : 0;
 
     while (true) {
       try {
@@ -37,7 +38,10 @@
           }
 
           if (matches && remainingBits > 0) {
-            if ((hashBytes[fullBytes] & partialMask) !== (targetBytes[fullBytes] & partialMask)) {
+            if (
+              (hashBytes[fullBytes] & partialMask) !==
+              (targetBytes[fullBytes] & partialMask)
+            ) {
               matches = false;
             }
           }
@@ -60,7 +64,10 @@
     }
   };
 
-  if (typeof WebAssembly !== "object" || typeof WebAssembly?.instantiate !== "function") {
+  if (
+    typeof WebAssembly !== "object" ||
+    typeof WebAssembly?.instantiate !== "function"
+  ) {
     console.warn(
       "[cap worker] wasm not supported, falling back to alternative solver. this will be significantly slower.",
     );
@@ -81,7 +88,10 @@
       let cachedUint8ArrayMemory = null;
 
       const getMemory = () => {
-        if (cachedUint8ArrayMemory === null || cachedUint8ArrayMemory.byteLength === 0) {
+        if (
+          cachedUint8ArrayMemory === null ||
+          cachedUint8ArrayMemory.byteLength === 0
+        ) {
           cachedUint8ArrayMemory = new Uint8Array(wasm.memory.buffer);
         }
         return cachedUint8ArrayMemory;
@@ -113,7 +123,9 @@
 
         if (offset !== len) {
           if (offset !== 0) str = str.slice(offset);
-          ptr = realloc(ptr, len, (len = offset + str.length * 3), 1) >>> 0;
+          const newLen = offset + str.length * 3;
+          ptr = realloc(ptr, len, newLen, 1) >>> 0;
+          len = newLen;
           const subarray = getMemory().subarray(ptr + offset, ptr + len);
           const { written } = encoder.encodeInto(str, subarray);
           offset += written;
@@ -141,11 +153,22 @@
       if (wasm.__wbindgen_start) wasm.__wbindgen_start();
 
       solve_pow_function = (salt, target) => {
-        const saltPtr = passStringToWasm(salt, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const saltPtr = passStringToWasm(
+          salt,
+          wasm.__wbindgen_malloc,
+          wasm.__wbindgen_realloc,
+        );
         const saltLen = WASM_VECTOR_LEN;
-        const targetPtr = passStringToWasm(target, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const targetPtr = passStringToWasm(
+          target,
+          wasm.__wbindgen_malloc,
+          wasm.__wbindgen_realloc,
+        );
         const targetLen = WASM_VECTOR_LEN;
-        return BigInt.asUintN(64, wasm.solve_pow(saltPtr, saltLen, targetPtr, targetLen));
+        return BigInt.asUintN(
+          64,
+          wasm.solve_pow(saltPtr, saltLen, targetPtr, targetLen),
+        );
       };
 
       return true;
@@ -156,16 +179,23 @@
   };
 
   self.onmessage = async ({ data: { salt, target, wasmModule } }) => {
-    if (wasmModule instanceof WebAssembly.Module && solve_pow_function === null) {
+    if (
+      wasmModule instanceof WebAssembly.Module &&
+      solve_pow_function === null
+    ) {
       const ok = initFromModule(wasmModule);
       if (!ok) {
-        console.warn("[cap worker] wasm init failed, falling back to JS solver.");
+        console.warn(
+          "[cap worker] wasm init failed, falling back to JS solver.",
+        );
         return solveFallback({ salt, target });
       }
     }
 
     if (solve_pow_function === null) {
-      console.warn("[cap worker] no wasm module provided, falling back to JS solver.");
+      console.warn(
+        "[cap worker] no wasm module provided, falling back to JS solver.",
+      );
       return solveFallback({ salt, target });
     }
 

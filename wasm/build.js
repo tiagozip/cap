@@ -18,7 +18,10 @@ try {
 
 // +simd128 activates the 4-way multi-buffer SHA-256 kernel in lib.rs (core::arch::wasm32::v128).
 // browsers without simd128 will fail to instantiate the .wasm and the widget falls back to its js-side scalar solver in worker.js.
-const buildEnv = { ...process.env, RUSTFLAGS: `${process.env.RUSTFLAGS ?? ""} -C target-feature=+simd128`.trim() };
+const buildEnv = {
+  ...process.env,
+  RUSTFLAGS: `${process.env.RUSTFLAGS ?? ""} -C target-feature=+simd128`.trim(),
+};
 
 console.log(`\n  Building for Node...`);
 execSync(

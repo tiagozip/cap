@@ -1,6 +1,11 @@
 {
   "name": "widget",
   "private": true,
+  "scripts": {
+    "test": "bun test test/unit.test.js && bun test test/e2e.test.js && bun test test/e2e-instrumentation.test.js && bun test test/e2e-regression.test.js && bun test test/e2e-worker.test.js",
+    "test:unit": "bun test test/unit.test.js",
+    "test:e2e": "bun test test/e2e.test.js && bun test test/e2e-instrumentation.test.js && bun test test/e2e-regression.test.js && bun test test/e2e-worker.test.js"
+  },
   "dependencies": {
     "lightningcss": "^1.31.1",
     "playwright": "^1.52.0",

@@ -43,12 +43,14 @@ console.time("build");
 
 const rawMain = await fs.readFile("./src/src/cap.js", "utf-8");
 const rawCSS = await fs.readFile("./src/src/cap.css", "utf-8");
-const minifiedWorker = await minifyJS(await fs.readFile("./src/src/worker.js", "utf-8"));
+const minifiedWorker = await minifyJS(
+  await fs.readFile("./src/src/worker.js", "utf-8"),
+);
 const minifiedCSS = minifyCSS(rawCSS);
 
 const bundle = rawMain
-  .replace("%%workerScript%%", minifiedWorker)
-  .replace("%%capCSS%%", minifiedCSS);
+  .replace("%%workerScript%%", () => JSON.stringify(minifiedWorker))
+  .replace("%%capCSS%%", () => minifiedCSS);
 
 await fs.writeFile("./src/cap.min.js", bundle);
 await fs.writeFile("./src/cap.min.js", await minifyJS(bundle));
@@ -98,7 +100,7 @@ const server = Bun.serve({
 
         const publishAs = async (name) => {
           pkg.name = name;
-          await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+          await fs.writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
           const proc = Bun.spawn({
             cmd: ["bun", "publish", "--access", "public"],
             cwd: "./src",

@@ -1,4 +1,10 @@
 {
+  "name": "cap-wasm-build",
+  "private": true,
+  "scripts": {
+    "build": "bun build.js",
+    "test": "bun test"
+  },
   "dependencies": {
     "terser": "^5.43.1"
   }
