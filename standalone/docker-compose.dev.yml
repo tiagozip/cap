@@ -1,6 +1,8 @@
 services:
   cap:
-    build: .
+    build:
+      context: ..
+      dockerfile: standalone/Dockerfile
     develop:
       watch:
         - action: rebuild

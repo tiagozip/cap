@@ -5,7 +5,9 @@ let _ratelimit = null;
 
 export async function loadHeaders() {
   const raw = await db.get("settings:headers");
-  _headers = raw ? JSON.parse(raw) : { ipHeader: "", countryHeader: "", asnHeader: "" };
+  _headers = raw
+    ? JSON.parse(raw)
+    : { ipHeader: "", countryHeader: "", asnHeader: "" };
   return _headers;
 }
 
@@ -51,7 +53,9 @@ let _filtering = null;
 
 export async function loadFiltering() {
   const raw = await db.get("settings:filtering");
-  _filtering = raw ? JSON.parse(raw) : { blockNonBrowserUA: false, requiredHeaders: [] };
+  _filtering = raw
+    ? JSON.parse(raw)
+    : { blockNonBrowserUA: false, requiredHeaders: [] };
   return _filtering;
 }
 
@@ -95,20 +99,22 @@ export function checkCorsOrigin(request) {
 }
 
 function populateCorsCache(siteKey) {
-  db.hget(`key:${siteKey}`, "config").then((configStr) => {
-    if (configStr) {
-      try {
-        const config = JSON.parse(configStr);
-        const origins = config.corsOrigins?.length
-          ? config.corsOrigins
-          : getCorsDefault().origins ?? null;
-        _corsCache.set(siteKey, { origins, ts: Date.now() });
-      } catch {}
-    } else {
-      const fallback = getCorsDefault().origins ?? null;
-      _corsCache.set(siteKey, { origins: fallback, ts: Date.now() });
-    }
-  }).catch(() => {});
+  db.hget(`key:${siteKey}`, "config")
+    .then((configStr) => {
+      if (configStr) {
+        try {
+          const config = JSON.parse(configStr);
+          const origins = config.corsOrigins?.length
+            ? config.corsOrigins
+            : (getCorsDefault().origins ?? null);
+          _corsCache.set(siteKey, { origins, ts: Date.now() });
+        } catch {}
+      } else {
+        const fallback = getCorsDefault().origins ?? null;
+        _corsCache.set(siteKey, { origins: fallback, ts: Date.now() });
+      }
+    })
+    .catch(() => {});
 }
 
 export function invalidateCorsCache(siteKey) {

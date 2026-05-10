@@ -1,6 +1,7 @@
 import { RedisClient } from "bun";
 
-const redisUrl = process.env.REDIS_URL || process.env.VALKEY_URL || "redis://localhost:6379";
+const redisUrl =
+  process.env.REDIS_URL || process.env.VALKEY_URL || "redis://localhost:6379";
 const db = new RedisClient(redisUrl);
 
 await db.send("PING", []);

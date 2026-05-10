@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  statSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import maxmind from "maxmind";
 import { db } from "./db.js";
@@ -183,13 +189,17 @@ export async function downloadDB(mode, credentials) {
             break;
           }
           lastUrlError = `HTTP ${r.status} ${r.statusText || ""}`.trim();
-          try { await r.body?.cancel(); } catch {}
+          try {
+            await r.body?.cancel();
+          } catch {}
         } catch (e) {
           lastUrlError = `Network error (${new URL(url).host}): ${e.message}`;
         }
       }
       if (!response) {
-        throw new Error(`Failed to download ${file.name} database: ${lastUrlError || "no URLs succeeded"}`);
+        throw new Error(
+          `Failed to download ${file.name} database: ${lastUrlError || "no URLs succeeded"}`,
+        );
       }
 
       const contentLength = Number(response.headers.get("content-length")) || 0;
@@ -218,7 +228,8 @@ export async function downloadDB(mode, credentials) {
 
       if (file.isTarGz) {
         const mmdb = extractMMDBFromTar(decompressed);
-        if (!mmdb) throw new Error(`No .mmdb file found in ${file.name} tar archive`);
+        if (!mmdb)
+          throw new Error(`No .mmdb file found in ${file.name} tar archive`);
         await Bun.write(file.path, mmdb);
       } else {
         await Bun.write(file.path, decompressed);
@@ -294,13 +305,19 @@ export function getStatus() {
   const asnExists = existsSync(ASN_PATH);
   return {
     mode: ipdbSettings?.mode || "",
-    maxmindKey: ipdbSettings?.maxmindKey ? "••••" + ipdbSettings.maxmindKey.slice(-4) : "",
-    ipinfoToken: ipdbSettings?.ipinfoToken ? "••••" + ipdbSettings.ipinfoToken.slice(-4) : "",
+    maxmindKey: ipdbSettings?.maxmindKey
+      ? `••••${ipdbSettings.maxmindKey.slice(-4)}`
+      : "",
+    ipinfoToken: ipdbSettings?.ipinfoToken
+      ? `••••${ipdbSettings.ipinfoToken.slice(-4)}`
+      : "",
     lastUpdated: ipdbSettings?.lastUpdated || "",
     country: countryExists
       ? { exists: true, size: statSync(COUNTRY_PATH).size }
       : { exists: false },
-    asn: asnExists ? { exists: true, size: statSync(ASN_PATH).size } : { exists: false },
+    asn: asnExists
+      ? { exists: true, size: statSync(ASN_PATH).size }
+      : { exists: false },
     loaded: { country: !!countryReader, asn: !!asnReader },
     error: lastDownloadError,
   };
@@ -355,8 +372,7 @@ export async function lookup(ip) {
         result.country = c.country.iso_code;
         gotResult = true;
       }
-    } catch {
-    }
+    } catch {}
   }
   if (asnReader) {
     try {
@@ -365,9 +381,9 @@ export async function lookup(ip) {
         result.asn = `AS${a.autonomous_system_number}`;
         gotResult = true;
       }
-      if (a?.autonomous_system_organization) result.org = a.autonomous_system_organization;
-    } catch {
-    }
+      if (a?.autonomous_system_organization)
+        result.org = a.autonomous_system_organization;
+    } catch {}
   }
 
   if (!isPrivate && (countryReader || asnReader)) {
@@ -413,15 +429,18 @@ async function ipinfoLookup(ip) {
     }
 
     if (ipinfoCache.size >= IPINFO_CACHE_MAX) {
-      let oldest = Infinity, oldestKey = null;
+      let oldest = Infinity,
+        oldestKey = null;
       for (const [k, v] of ipinfoCache) {
-        if (v.ts < oldest) { oldest = v.ts; oldestKey = k; }
+        if (v.ts < oldest) {
+          oldest = v.ts;
+          oldestKey = k;
+        }
       }
       if (oldestKey) ipinfoCache.delete(oldestKey);
     }
     ipinfoCache.set(ip, { ts: Date.now(), data: result });
-  } catch {
-  }
+  } catch {}
 
   return result;
 }
