@@ -165,7 +165,7 @@ export default withMermaid({
     [
       "script",
       {
-        src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.46",
+        src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.50",
         async: true,
       },
     ],
@@ -245,8 +245,7 @@ export default withMermaid({
           text: "Libraries",
           collapsed: true,
           items: [
-            { text: "Server", link: "/guide/server.md" },
-            { text: "M2M", link: "/guide/solver.md" },
+            { text: "Core", link: "/guide/capjs-core.md" },
             { text: "Community libraries", link: "/guide/community.md" },
           ],
         },

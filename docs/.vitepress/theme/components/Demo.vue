@@ -93,6 +93,7 @@ cap-widget.demo-widget-highlight {
   width: fit-content !important;
   border-radius: 14px;
   animation: demo-widget-pulse 1.6s ease-out 0.4s 2;
+  height: 58px;
 }
 
 @keyframes demo-widget-pulse {

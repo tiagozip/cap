@@ -61,6 +61,8 @@ Cap Standalone supports JavaScript instrumentation challenges to defeat proof-of
 
 You can toggle instrumentation challenges on or off in your site key config. To block headless browsers, turn on "Attempt to block headless browsers" in the key settings.
 
+Note that high instrumentation levels can significantly reduce generation throughput. We recommend keeping it at level 3 unless you need stronger obfuscation. If you find level 3 is too slow, level 1 is significantly faster on a single core.
+
 ## IP database
 
 Country and ASN lookups can use one of three providers, configured under `Settings > IP Data > Country & ASN data` in the dashboard: DB-IP Lite, MaxMind GeoLite2 and IPInfo's API.

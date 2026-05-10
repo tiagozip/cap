@@ -1,5 +1,9 @@
 # @cap.js/server
 
+::: warning Legacy library — superseded by [`capjs-core`](./capjs-core.md)
+`@cap.js/server` is no longer the recommended Cap server library. New projects should use [`capjs-core`](./capjs-core.md), which is stateless (no filesystem, no in-memory token list, works on Cloudflare Workers / Lambda / edge), uses signed JWTs, and is what [Cap Standalone](./standalone/index.md) is built on internally. See the [migration table](./capjs-core.md#how-it-differs-from-cap-js-server).
+:::
+
 `@cap.js/server` is Cap's server-side library for creating and validating challenges. Install it using your preferred package manager:
 
 ::: code-group

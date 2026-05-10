@@ -1,0 +1,102 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  core:
+    name: cap-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install
+        working-directory: core
+        run: bun install --frozen-lockfile
+      - name: Test
+        working-directory: core
+        run: bun test
+
+  wasm:
+    name: cap-wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install (core)
+        working-directory: core
+        run: bun install --frozen-lockfile
+      - name: Test wasm bindings
+        working-directory: wasm
+        run: bun test
+
+  widget:
+    name: cap-widget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install (core)
+        working-directory: core
+        run: bun install --frozen-lockfile
+      - name: Install (widget)
+        working-directory: widget
+        run: bun install --frozen-lockfile
+      - name: Install Playwright browsers
+        working-directory: widget
+        run: bunx playwright install --with-deps chromium
+      - name: Run unit tests
+        working-directory: widget
+        run: bun test test/unit.test.js
+      - name: Run e2e (basic)
+        working-directory: widget
+        run: bun test test/e2e.test.js
+      - name: Run e2e (instrumentation)
+        working-directory: widget
+        run: bun test test/e2e-instrumentation.test.js
+      - name: Run e2e (regression)
+        working-directory: widget
+        run: bun test test/e2e-regression.test.js
+      - name: Run e2e (worker)
+        working-directory: widget
+        run: bun test test/e2e-worker.test.js
+
+  standalone:
+    name: cap-standalone
+    runs-on: ubuntu-latest
+    services:
+      valkey:
+        image: valkey/valkey:9-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install (core)
+        working-directory: core
+        run: bun install --frozen-lockfile
+      - name: Install (standalone)
+        working-directory: standalone
+        run: bun install --frozen-lockfile
+      - name: Test
+        working-directory: standalone
+        env:
+          REDIS_URL: redis://127.0.0.1:6379
+        run: bun test
