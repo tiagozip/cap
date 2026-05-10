@@ -215,7 +215,7 @@
 
       @font-face {
         font-family: "IBM Plex Sans";
-        src: url("/public/assets/ibm-plex-sans.woff2") format("woff2");
+        src: url("./public/assets/ibm-plex-sans.woff2") format("woff2");
         font-weight: 100 700;
         font-style: normal;
         font-display: swap;
@@ -283,8 +283,9 @@
 
       document.querySelector("button[type=submit]").disabled = true;
 
+      const loginUrl = new URL("auth/login", document.baseURI).toString();
       const { success, session_token, hashed_token, expires } = await (
-        await fetch("/auth/login", {
+        await fetch(loginUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

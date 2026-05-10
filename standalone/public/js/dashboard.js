@@ -37,6 +37,9 @@ function normalizeOrigin(val) {
   }
 }
 
+const url = (p) =>
+  new URL(String(p).replace(/^\/+/, ""), document.baseURI).toString();
+
 const api = async (method, path, body) => {
   try {
     const auth = JSON.parse(localStorage.getItem("cap_auth"));
@@ -49,7 +52,7 @@ const api = async (method, path, body) => {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
-    return await (await fetch(`/server${path}`, opts)).json();
+    return await (await fetch(url(`server${path}`), opts)).json();
   } catch (e) {
     console.error("standalone:", e);
     return { error: e.message };
@@ -126,7 +129,7 @@ const getDateRange = (chartData) => {
 
 async function init() {
   try {
-    const aboutRes = await fetch("/server/about");
+    const aboutRes = await fetch(url("server/about"));
     const aboutData = await aboutRes.json();
     if (aboutData.demo) demoMode = true;
   } catch {}
@@ -1268,7 +1271,7 @@ const countryNames = {
 
 const countryFlags = (code) => {
   if (!code || code.length !== 2) return "";
-  return `<img src="/public/assets/flags/${code.toLowerCase()}.svg" alt="${code}" class="country-flag" onerror="this.style.display='none'">`;
+  return `<img src="${url(`public/assets/flags/${code.toLowerCase()}.svg`)}" alt="${code}" class="country-flag" onerror="this.style.display='none'">`;
 };
 
 const countryFlagEmoji = (code) => {
@@ -1410,13 +1413,13 @@ async function loadWorldMap() {
   if (!window.topojson) {
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "/public/assets/topojson-client.min.js";
+      s.src = url("public/assets/topojson-client.min.js");
       s.onload = resolve;
       s.onerror = reject;
       document.head.appendChild(s);
     });
   }
-  worldTopoData = await (await fetch("/public/assets/countries-110m.json")).json();
+  worldTopoData = await (await fetch(url("public/assets/countries-110m.json"))).json();
   return worldTopoData;
 }
 
