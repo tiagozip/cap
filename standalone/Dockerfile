@@ -2,17 +2,13 @@ FROM oven/bun:slim AS base
 WORKDIR /usr/src/app
 
 FROM base AS install
-RUN mkdir -p /temp/dev/standalone /temp/dev/core
+RUN mkdir -p /temp/dev/standalone
 COPY standalone/package.json standalone/bun.lock /temp/dev/standalone/
-COPY core/package.json /temp/dev/core/
-COPY core/src /temp/dev/core/src
 RUN cd /temp/dev/standalone && bun install
 
 FROM base AS prod
-RUN mkdir -p /temp/prod/standalone /temp/prod/core
+RUN mkdir -p /temp/prod/standalone
 COPY standalone/package.json standalone/bun.lock /temp/prod/standalone/
-COPY core/package.json /temp/prod/core/
-COPY core/src /temp/prod/core/src
 RUN cd /temp/prod/standalone && bun install --production
 
 FROM base AS prerelease
