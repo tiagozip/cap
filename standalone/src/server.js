@@ -4,17 +4,17 @@ import { authBeforeHandle } from "./auth.js";
 import { invalidateBlockCache } from "./cap.js";
 import { db, hgetall } from "./db.js";
 import {
-  isDemoMode,
-  demoGetKeys,
-  demoGetKey,
-  demoGetGeoStats,
   demoGetBlockedIps,
+  demoGetGeoStats,
+  demoGetKey,
+  demoGetKeys,
+  isDemoMode,
 } from "./demo.js";
 import {
   deleteDB,
   downloadDB,
   getDownloadProgress,
-  getStatus as getIPDBStatus
+  getStatus as getIPDBStatus,
 } from "./ipdb.js";
 import {
   invalidateCorsCache,
@@ -38,14 +38,17 @@ const sumSolutions = (data, startBucket, endBucket) => {
   for (const [bucketStr, countStr] of Object.entries(data)) {
     const bucket = Number(bucketStr);
     const count = Number(countStr);
-    if (bucket >= startBucket && (endBucket === undefined || bucket < endBucket)) {
+    if (
+      bucket >= startBucket &&
+      (endBucket === undefined || bucket < endBucket)
+    ) {
       sum += count;
     }
   }
   return sum;
 };
 
-const demoWriteGuard = ({ request, set }) => {
+const demoWriteGuard = ({ request }) => {
   if (!isDemoMode()) return;
   const method = request.method;
   if (method === "POST" || method === "PUT" || method === "DELETE") {
@@ -79,7 +82,11 @@ export const server = new Elysia({
       const siteKeys = await db.smembers("keys");
       const keys = await Promise.all(
         siteKeys.map(async (sk) => {
-          const fields = await db.hmget(`key:${sk}`, ["name", "config", "created"]);
+          const fields = await db.hmget(`key:${sk}`, [
+            "name",
+            "config",
+            "created",
+          ]);
           return {
             siteKey: sk,
             name: fields[0],
@@ -101,7 +108,8 @@ export const server = new Elysia({
 
           if (previous > 0) {
             change = ((current - previous) / previous) * 100;
-            direction = current > previous ? "up" : current < previous ? "down" : "";
+            direction =
+              current > previous ? "up" : current < previous ? "down" : "";
           } else if (current > 0) {
             change = 100;
             direction = "up";
@@ -143,7 +151,11 @@ export const server = new Elysia({
         blockAutomatedBrowsers: body?.blockAutomatedBrowsers ?? false,
       };
 
-      if (body?.corsOrigins && Array.isArray(body.corsOrigins) && body.corsOrigins.length) {
+      if (
+        body?.corsOrigins &&
+        Array.isArray(body.corsOrigins) &&
+        body.corsOrigins.length
+      ) {
         config.corsOrigins = body.corsOrigins;
       }
 
@@ -187,7 +199,11 @@ export const server = new Elysia({
       }
 
       const sk = params.siteKey;
-      const keyFields = await db.hmget(`key:${sk}`, ["name", "config", "created"]);
+      const keyFields = await db.hmget(`key:${sk}`, [
+        "name",
+        "config",
+        "created",
+      ]);
 
       if (!keyFields[0]) {
         return { success: false, error: "Key not found" };
@@ -243,19 +259,21 @@ export const server = new Elysia({
       }
 
       const periodLen = endTime - startTime;
-      let prevStartTime = null, prevEndTime = null;
+      let prevStartTime = null,
+        prevEndTime = null;
       if (chartDuration !== "alltime") {
         prevEndTime = startTime;
         prevStartTime = startTime - periodLen;
       }
 
-      const [verifiedH, failedH, ratelimitedH, latSumH, latCountH] = await Promise.all([
-        hgetall(`metrics:verified:${sk}`),
-        hgetall(`metrics:failed:${sk}`),
-        hgetall(`metrics:ratelimited:${sk}`),
-        hgetall(`metrics:latency_sum:${sk}`),
-        hgetall(`metrics:latency_count:${sk}`),
-      ]);
+      const [verifiedH, failedH, ratelimitedH, latSumH, latCountH] =
+        await Promise.all([
+          hgetall(`metrics:verified:${sk}`),
+          hgetall(`metrics:failed:${sk}`),
+          hgetall(`metrics:ratelimited:${sk}`),
+          hgetall(`metrics:latency_sum:${sk}`),
+          hgetall(`metrics:latency_count:${sk}`),
+        ]);
 
       const sumRange = (hash, start, end) => {
         let s = 0;
@@ -307,7 +325,11 @@ export const server = new Elysia({
             });
           }
         } else {
-          const allBuckets = new Set([...veM.keys(), ...faM.keys(), ...rlM.keys()]);
+          const allBuckets = new Set([
+            ...veM.keys(),
+            ...faM.keys(),
+            ...rlM.keys(),
+          ]);
           for (const b of [...allBuckets].sort((a, c) => a - c)) {
             const verified = veM.get(b) || 0;
             const failed = faM.get(b) || 0;
@@ -343,7 +365,8 @@ export const server = new Elysia({
       const totalRateLimited = sumRange(ratelimitedH, startTime, endTime);
       const totalLatSum = sumRange(latSumH, startTime, endTime);
       const totalLatCount = sumRange(latCountH, startTime, endTime);
-      const avgLatency = totalLatCount > 0 ? Math.round(totalLatSum / totalLatCount) : 0;
+      const avgLatency =
+        totalLatCount > 0 ? Math.round(totalLatSum / totalLatCount) : 0;
 
       let prevStats = null;
       if (prevStartTime !== null) {
@@ -435,17 +458,26 @@ export const server = new Elysia({
         difficulty: difficulty ?? existingConfig.difficulty,
         challengeCount: challengeCount ?? existingConfig.challengeCount,
         saltSize: 32,
-        instrumentation: instrumentation ?? existingConfig.instrumentation ?? false,
-        obfuscationLevel: obfuscationLevel ?? existingConfig.obfuscationLevel ?? 3,
+        instrumentation:
+          instrumentation ?? existingConfig.instrumentation ?? false,
+        obfuscationLevel:
+          obfuscationLevel ?? existingConfig.obfuscationLevel ?? 3,
         blockAutomatedBrowsers:
-          blockAutomatedBrowsers ?? existingConfig.blockAutomatedBrowsers ?? false,
+          blockAutomatedBrowsers ??
+          existingConfig.blockAutomatedBrowsers ??
+          false,
         ratelimitMax:
-          ratelimitMax !== undefined ? ratelimitMax : (existingConfig.ratelimitMax ?? null),
+          ratelimitMax !== undefined
+            ? ratelimitMax
+            : (existingConfig.ratelimitMax ?? null),
         ratelimitDuration:
           ratelimitDuration !== undefined
             ? ratelimitDuration
             : (existingConfig.ratelimitDuration ?? null),
-        corsOrigins: corsOrigins !== undefined ? corsOrigins : (existingConfig.corsOrigins ?? null),
+        corsOrigins:
+          corsOrigins !== undefined
+            ? corsOrigins
+            : (existingConfig.corsOrigins ?? null),
         blockNonBrowserUA:
           blockNonBrowserUA !== undefined
             ? blockNonBrowserUA
@@ -477,7 +509,9 @@ export const server = new Elysia({
         instrumentation: t.Optional(t.Boolean()),
         obfuscationLevel: t.Optional(t.Number({ minimum: 1, maximum: 10 })),
         blockAutomatedBrowsers: t.Optional(t.Boolean()),
-        ratelimitMax: t.Optional(t.Union([t.Number({ minimum: 1, maximum: 10000 }), t.Null()])),
+        ratelimitMax: t.Optional(
+          t.Union([t.Number({ minimum: 1, maximum: 10000 }), t.Null()]),
+        ),
         ratelimitDuration: t.Optional(
           t.Union([t.Number({ minimum: 1000, maximum: 3600000 }), t.Null()]),
         ),
@@ -566,7 +600,18 @@ export const server = new Elysia({
     async ({ params }) => {
       if (isDemoMode()) {
         const d = demoGetGeoStats(params.siteKey);
-        return d || { countries: [], totalCountry: 0, asns: [], totalAsn: 0, platforms: [], totalPlatform: 0, oses: [], totalOs: 0 };
+        return (
+          d || {
+            countries: [],
+            totalCountry: 0,
+            asns: [],
+            totalAsn: 0,
+            platforms: [],
+            totalPlatform: 0,
+            oses: [],
+            totalOs: 0,
+          }
+        );
       }
 
       const sk = params.siteKey;
@@ -601,7 +646,16 @@ export const server = new Elysia({
 
       const totalOs = oses.reduce((s, o) => s + o.count, 0);
 
-      return { countries, totalCountry, asns, totalAsn, platforms, totalPlatform, oses, totalOs };
+      return {
+        countries,
+        totalCountry,
+        asns,
+        totalAsn,
+        platforms,
+        totalPlatform,
+        oses,
+        totalOs,
+      };
     },
     {
       params: t.Object({ siteKey: t.String() }),
@@ -639,7 +693,8 @@ export const server = new Elysia({
       }
 
       const duration = body.duration || 0;
-      const expires = duration === 0 ? "0" : String(Date.now() + duration * 1000);
+      const expires =
+        duration === 0 ? "0" : String(Date.now() + duration * 1000);
       await db.send("HSET", [`blocked:${sk}`, key, expires]);
       invalidateBlockCache(sk);
 
@@ -1068,7 +1123,9 @@ export const server = new Elysia({
         return { success: false, error: "Unauthorized" };
       }
 
-      const { hash } = JSON.parse(atob(authorization.replace("Bearer ", "").trim()));
+      const { hash } = JSON.parse(
+        atob(authorization.replace("Bearer ", "").trim()),
+      );
 
       let session = hash;
 

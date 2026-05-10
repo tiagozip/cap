@@ -6,7 +6,12 @@ import { capServer } from "./cap.js";
 import { isDemoMode } from "./demo.js";
 import { loadIPDB } from "./ipdb.js";
 import { server } from "./server.js";
-import { loadCorsDefault, loadFiltering, loadHeaders, loadRatelimit } from "./settings-cache.js";
+import {
+  loadCorsDefault,
+  loadFiltering,
+  loadHeaders,
+  loadRatelimit,
+} from "./settings-cache.js";
 import { siteverifyServer } from "./siteverify.js";
 import { publicStatic } from "./static.js";
 
@@ -29,7 +34,8 @@ new Elysia({
         tags: [
           {
             name: "Keys",
-            description: "Managing, creating and viewing keys. Requires API or session token",
+            description:
+              "Managing, creating and viewing keys. Requires API or session token",
           },
           {
             name: "Settings",
@@ -95,7 +101,8 @@ new Elysia({
         process.env.SHOW_ERRORS === "true"
           ? error
           : {
-              troubleshooting: "http://trycap.dev/guide/standalone/options.html#error-messages",
+              troubleshooting:
+                "http://trycap.dev/guide/standalone/options.html#error-messages",
               id: errorId,
             },
     };
@@ -103,7 +110,11 @@ new Elysia({
   .use(publicStatic)
   .get("/", async ({ cookie }) => {
     if (isDemoMode()) return file("./public/index.html");
-    return file(cookie.cap_authed?.value === "yes" ? "./public/index.html" : "./public/login.html");
+    return file(
+      cookie.cap_authed?.value === "yes"
+        ? "./public/index.html"
+        : "./public/login.html",
+    );
   })
   .use(auth)
   .use(server)

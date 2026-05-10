@@ -56,42 +56,45 @@ export default function valkeyRateLimit({
 } = {}) {
   const scope = scopeCounter++;
 
-  return new Elysia({ name: `cap-ratelimit-${scope}`, scoped: true }).onBeforeHandle(
-    async ({ request, set, server: srv, params }) => {
-      const ip = generator(request, srv);
-      if (!ip) return;
+  return new Elysia({
+    name: `cap-ratelimit-${scope}`,
+    scoped: true,
+  }).onBeforeHandle(async ({ request, set, server: srv, params }) => {
+    const ip = generator(request, srv);
+    if (!ip) return;
 
-      let max = defaultMax;
-      let duration = defaultDuration;
+    let max = defaultMax;
+    let duration = defaultDuration;
 
-      if (getLimits) {
-        const limits = await getLimits(params);
-        if (limits) {
-          max = limits.max;
-          duration = limits.duration;
-        }
+    if (getLimits) {
+      const limits = await getLimits(params);
+      if (limits) {
+        max = limits.max;
+        duration = limits.duration;
       }
+    }
 
-      const windowMs = duration;
-      const windowSecs = Math.ceil(duration / 1000);
-      const window = Math.floor(Date.now() / windowMs);
-      const key = `rl:${scope}:${ip}:${windowMs}:${window}`;
+    const windowMs = duration;
+    const windowSecs = Math.ceil(duration / 1000);
+    const window = Math.floor(Date.now() / windowMs);
+    const key = `rl:${scope}:${ip}:${windowMs}:${window}`;
 
-      const count = await db.incr(key);
-      if (count === 1) {
-        await db.expire(key, windowSecs + 1);
+    const count = await db.incr(key);
+    if (count === 1) {
+      await db.expire(key, windowSecs + 1);
+    }
+
+    set.headers["X-RateLimit-Limit"] = String(max);
+    set.headers["X-RateLimit-Remaining"] = String(Math.max(0, max - count));
+
+    if (count > max) {
+      if (onLimited) {
+        try {
+          await onLimited(request, ip);
+        } catch {}
       }
-
-      set.headers["X-RateLimit-Limit"] = String(max);
-      set.headers["X-RateLimit-Remaining"] = String(Math.max(0, max - count));
-
-      if (count > max) {
-        if (onLimited) {
-          try { await onLimited(request, ip); } catch { }
-        }
-        set.status = 429;
-        return { error: "Rate limit exceeded" };
-      }
-    },
-  );
+      set.status = 429;
+      return { error: "Rate limit exceeded" };
+    }
+  });
 }

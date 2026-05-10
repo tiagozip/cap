@@ -19,14 +19,14 @@ export const siteverifyServer = new Elysia({
     const sitekeyraw = params.siteKey || false;
     const { secret, response } = body;
     let sitekey = false;
-    if (response.split(":").length != 3) {
+    if (response.split(":").length !== 3) {
       set.status = 400;
       return { success: false, error: "Missing required parameters" };
     }
     if (sitekeyraw) {
       sitekey = sitekeyraw; //Overwrite if given as a parameter
     } else {
-      sitekey = response.split(":")[0]
+      sitekey = response.split(":")[0];
     }
     if (sitekeyraw && !response.startsWith(sitekeyraw)) {
       set.status = 404;

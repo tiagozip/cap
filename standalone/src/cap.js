@@ -1,15 +1,20 @@
-import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { cors } from "@elysiajs/cors";
+import {
+  generateChallenge as coreGenerateChallenge,
+  validateChallenge as coreValidateChallenge,
+} from "capjs-core";
 import { Elysia } from "elysia";
 
 import { db } from "./db.js";
-import {
-  generateInstrumentationChallenge,
-  verifyInstrumentationResult,
-} from "./instrumentation.js";
 import { isLoaded as ipdbIsLoaded, lookup as ipLookup } from "./ipdb.js";
 import valkeyRateLimit from "./ratelimit.js";
-import { checkCorsOrigin, getFiltering, getHeaders, getRatelimit } from "./settings-cache.js";
+import {
+  checkCorsOrigin,
+  getFiltering,
+  getHeaders,
+  getRatelimit,
+} from "./settings-cache.js";
 
 function hourlyBucket() {
   return String(Math.floor(Date.now() / 1000 / 3600) * 3600);
@@ -40,7 +45,9 @@ function getClientIp(request, srv) {
   const cachedHeaders = getHeaders();
   const headerName = cachedHeaders?.ipHeader || process.env.RATELIMIT_IP_HEADER;
   if (headerName) {
-    const ip = request.headers.get(headerName) || request.headers.get(headerName.toLowerCase());
+    const ip =
+      request.headers.get(headerName) ||
+      request.headers.get(headerName.toLowerCase());
     if (ip) {
       const parts = ip.split(",").filter((e) => !!e.trim());
       return parts[0].trim();
@@ -60,113 +67,6 @@ function getClientIp(request, srv) {
 const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
 
-const b64url = (buf) =>
-  (buf instanceof Uint8Array ? Buffer.from(buf) : Buffer.from(buf, "utf8")).toString("base64url");
-
-const b64urlDecode = (str) => Buffer.from(str, "base64url");
-
-function jwtSign(payload, secret) {
-  const header = b64url('{"alg":"HS256","typ":"JWT"}');
-  const body = b64url(JSON.stringify(payload));
-  const sigInput = `${header}.${body}`;
-  const sig = createHmac("sha256", secret).update(sigInput).digest();
-  return `${sigInput}.${b64url(sig)}`;
-}
-
-function jwtVerify(token, secret) {
-  if (!token || typeof token !== "string") return null;
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-
-  const [header, body, sig] = parts;
-  const sigInput = `${header}.${body}`;
-  const expected = createHmac("sha256", secret).update(sigInput).digest();
-  const actual = b64urlDecode(sig);
-
-  if (actual.length !== expected.length) return null;
-
-  const a = new Uint8Array(expected);
-  const b = new Uint8Array(actual);
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
-  if (diff !== 0) return null;
-
-  try {
-    return JSON.parse(b64urlDecode(body).toString("utf8"));
-  } catch {
-    return null;
-  }
-}
-
-function jwtSigHex(token) {
-  const lastDot = token.lastIndexOf(".");
-  if (lastDot === -1) return null;
-  return b64urlDecode(token.slice(lastDot + 1)).toString("hex");
-}
-
-function deriveEncKey(jwtSecret) {
-  return createHmac("sha256", jwtSecret).update("cap:instr-enc-v1").digest();
-}
-
-function encrypt(data, jwtSecret) {
-  const key = deriveEncKey(jwtSecret);
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", key, iv);
-  const plaintext = Buffer.from(JSON.stringify(data), "utf8");
-  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-  const tag = cipher.getAuthTag(); // 16 bytes
-  return Buffer.concat([iv, tag, encrypted]).toString("base64url");
-}
-
-function decrypt(blob, jwtSecret) {
-  try {
-    const buf = Buffer.from(blob, "base64url");
-    if (buf.length < 28) return null; // iv(12) + tag(16)
-    const iv = buf.subarray(0, 12);
-    const tag = buf.subarray(12, 28);
-    const ciphertext = buf.subarray(28);
-    const key = deriveEncKey(jwtSecret);
-    const decipher = createDecipheriv("aes-256-gcm", key, iv);
-    decipher.setAuthTag(tag);
-    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-    return JSON.parse(decrypted.toString("utf8"));
-  } catch {
-    return null;
-  }
-}
-
-function prng(seed, length) {
-  function fnv1a(str) {
-    let hash = 2166136261;
-    for (let i = 0; i < str.length; i++) {
-      hash ^= str.charCodeAt(i);
-      hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
-    }
-    return hash >>> 0;
-  }
-
-  let state = fnv1a(seed);
-  let result = "";
-
-  function next() {
-    state ^= state << 13;
-    state ^= state >>> 17;
-    state ^= state << 5;
-    return state >>> 0;
-  }
-
-  while (result.length < length) {
-    const rnd = next();
-    result += rnd.toString(16).padStart(8, "0");
-  }
-
-  return result.substring(0, length);
-}
-
-async function sha256(str) {
-  return new Bun.CryptoHasher("sha256").update(str).digest("hex");
-}
-
 function ipv4ToInt(a) {
   return a.split(".").reduce((r, b) => (r << 8) + parseInt(b, 10), 0) >>> 0;
 }
@@ -180,7 +80,10 @@ function expandIPv6(addr) {
     const missing = 8 - lParts.length - rParts.length;
     a = [...lParts, ...Array(missing).fill("0"), ...rParts].join(":");
   }
-  return a.split(":").map((g) => g.padStart(4, "0")).join(":");
+  return a
+    .split(":")
+    .map((g) => g.padStart(4, "0"))
+    .join(":");
 }
 
 function ipv6ToBytes(addr) {
@@ -217,7 +120,8 @@ function ipInCIDR(ip, cidr) {
       }
       if (bits % 8 !== 0) {
         const mask = 0xff << (8 - (bits % 8));
-        if ((ipBytes[fullBytes] & mask) !== (rangeBytes[fullBytes] & mask)) return false;
+        if ((ipBytes[fullBytes] & mask) !== (rangeBytes[fullBytes] & mask))
+          return false;
       }
       return true;
     }
@@ -307,7 +211,10 @@ export const capServer = new Elysia({
           if (configStr) {
             try {
               const config = JSON.parse(configStr);
-              if (config.ratelimitMax != null && config.ratelimitDuration != null) {
+              if (
+                config.ratelimitMax != null &&
+                config.ratelimitDuration != null
+              ) {
                 return {
                   max: config.ratelimitMax,
                   duration: config.ratelimitDuration,
@@ -325,7 +232,11 @@ export const capServer = new Elysia({
           const parts = url.pathname.split("/").filter(Boolean);
           const siteKey = parts[0];
           if (siteKey) {
-            await db.hincrby(`metrics:ratelimited:${siteKey}`, hourlyBucket(), 1);
+            await db.hincrby(
+              `metrics:ratelimited:${siteKey}`,
+              hourlyBucket(),
+              1,
+            );
           }
         } catch {}
       },
@@ -338,152 +249,143 @@ export const capServer = new Elysia({
     }),
   )
 
-  .post("/:siteKey/challenge", async ({ set, params, request, server: srv }) => {
-    const fields = await db.hmget(`key:${params.siteKey}`, ["config", "jwtSecret"]);
+  .post(
+    "/:siteKey/challenge",
+    async ({ set, params, request, server: srv }) => {
+      const fields = await db.hmget(`key:${params.siteKey}`, [
+        "config",
+        "jwtSecret",
+      ]);
 
-    if (!fields[0]) {
-      set.status = 404;
-      return { error: "Invalid site key or secret" };
-    }
-
-    const ip = getClientIp(request, srv);
-
-    try {
-      if (ip && (await isBlocked(params.siteKey, ip))) {
-        set.status = 403;
-        return { error: "Blocked" };
-      }
-    } catch (e) {
-      console.error("[cap] isBlocked check failed:", e);
-    }
-
-    const bucket = hourlyBucket();
-    const fnf = (p) => { p.catch(() => {}); };
-
-    (async () => {
-      if (!ip) return;
-      const cachedHeaders = getHeaders();
-      const hs = cachedHeaders || {};
-      let country = null,
-        asnValue = null;
-
-      if (hs.countryHeader) {
-        country =
-          request.headers.get(hs.countryHeader) ||
-          request.headers.get(hs.countryHeader.toLowerCase());
-      }
-      if (hs.asnHeader) {
-        asnValue =
-          request.headers.get(hs.asnHeader) || request.headers.get(hs.asnHeader.toLowerCase());
+      if (!fields[0]) {
+        set.status = 404;
+        return { error: "Invalid site key or secret" };
       }
 
-      if ((!country || !asnValue) && ipdbIsLoaded()) {
-        const geo = await ipLookup(ip);
-        if (!country && geo.country) country = geo.country;
-        if (!asnValue && geo.asn) asnValue = geo.org ? `${geo.asn} ${geo.org}` : geo.asn;
+      const ip = getClientIp(request, srv);
+
+      try {
+        if (ip && (await isBlocked(params.siteKey, ip))) {
+          set.status = 403;
+          return { error: "Blocked" };
+        }
+      } catch (e) {
+        console.error("[cap] isBlocked check failed:", e);
       }
 
-      if (country) {
-        fnf(db.hincrby(`metrics:country:${params.siteKey}`, country.toUpperCase(), 1));
+      const fnf = (p) => {
+        p.catch(() => {});
+      };
+
+      (async () => {
+        if (!ip) return;
+        const cachedHeaders = getHeaders();
+        const hs = cachedHeaders || {};
+        let country = null;
+        let asnValue = null;
+
+        if (hs.countryHeader) {
+          country =
+            request.headers.get(hs.countryHeader) ||
+            request.headers.get(hs.countryHeader.toLowerCase());
+        }
+        if (hs.asnHeader) {
+          asnValue =
+            request.headers.get(hs.asnHeader) ||
+            request.headers.get(hs.asnHeader.toLowerCase());
+        }
+
+        if ((!country || !asnValue) && ipdbIsLoaded()) {
+          const geo = await ipLookup(ip);
+          if (!country && geo.country) country = geo.country;
+          if (!asnValue && geo.asn)
+            asnValue = geo.org ? `${geo.asn} ${geo.org}` : geo.asn;
+        }
+
+        if (country) {
+          fnf(
+            db.hincrby(
+              `metrics:country:${params.siteKey}`,
+              country.toUpperCase(),
+              1,
+            ),
+          );
+        }
+        if (asnValue) {
+          fnf(db.hincrby(`metrics:asn:${params.siteKey}`, asnValue, 1));
+        }
+      })().catch(() => {});
+
+      try {
+        const ua = request.headers.get("user-agent");
+        const { platform, os } = parseUA(ua);
+        if (platform) {
+          fnf(db.hincrby(`metrics:platform:${params.siteKey}`, platform, 1));
+        }
+        if (os) {
+          fnf(db.hincrby(`metrics:os:${params.siteKey}`, os, 1));
+        }
+      } catch {}
+
+      const keyConfig = JSON.parse(fields[0]);
+      const jwtSecret = fields[1];
+
+      if (!jwtSecret) {
+        set.status = 500;
+        return { error: "Site key is not configured for JWT challenges" };
       }
-      if (asnValue) {
-        fnf(db.hincrby(`metrics:asn:${params.siteKey}`, asnValue, 1));
-      }
-    })().catch(() => {});
 
-    try {
-      const ua = request.headers.get("user-agent");
-      const { platform, os } = parseUA(ua);
-      if (platform) {
-        fnf(db.hincrby(`metrics:platform:${params.siteKey}`, platform, 1));
-      }
-      if (os) {
-        fnf(db.hincrby(`metrics:os:${params.siteKey}`, os, 1));
-      }
-    } catch {}
+      const globalFilter = getFiltering();
+      const blockUA =
+        keyConfig.blockNonBrowserUA ?? globalFilter.blockNonBrowserUA;
+      const reqHeaders = keyConfig.requiredHeaders?.length
+        ? keyConfig.requiredHeaders
+        : globalFilter.requiredHeaders;
 
-    const keyConfig = JSON.parse(fields[0]);
-    const jwtSecret = fields[1];
-
-    if (!jwtSecret) {
-      set.status = 500;
-      return { error: "Site key is not configured for JWT challenges" };
-    }
-
-    const globalFilter = getFiltering();
-    const blockUA = keyConfig.blockNonBrowserUA ?? globalFilter.blockNonBrowserUA;
-    const reqHeaders = keyConfig.requiredHeaders?.length
-      ? keyConfig.requiredHeaders
-      : globalFilter.requiredHeaders;
-
-    if (blockUA) {
-      const ua = request.headers.get("user-agent") || "";
-      const browserPattern = /Mozilla\/|Chrome\/|Safari\/|Firefox\/|Opera\/|Edg\//i;
-      if (!ua || !browserPattern.test(ua)) {
-        set.status = 403;
-        return { error: "Blocked" };
-      }
-    }
-
-    if (reqHeaders?.length) {
-      for (const h of reqHeaders) {
-        if (!request.headers.get(h)) {
+      if (blockUA) {
+        const ua = request.headers.get("user-agent") || "";
+        const browserPattern =
+          /Mozilla\/|Chrome\/|Safari\/|Firefox\/|Opera\/|Edg\//i;
+        if (!ua || !browserPattern.test(ua)) {
           set.status = 403;
           return { error: "Blocked" };
         }
       }
-    }
 
-    const c = keyConfig.challengeCount ?? 80;
-    const s = keyConfig.saltSize ?? 32;
-    const d = keyConfig.difficulty ?? 4;
-    const expires = Date.now() + CHALLENGE_TTL_MS;
+      if (reqHeaders?.length) {
+        for (const h of reqHeaders) {
+          if (!request.headers.get(h)) {
+            set.status = 403;
+            return { error: "Blocked" };
+          }
+        }
+      }
 
-    const nonce = randomBytes(25).toString("hex");
+      let result;
+      try {
+        result = await coreGenerateChallenge(jwtSecret, {
+          challengeCount: keyConfig.challengeCount ?? 80,
+          challengeSize: keyConfig.saltSize ?? 32,
+          challengeDifficulty: keyConfig.difficulty ?? 4,
+          expiresMs: CHALLENGE_TTL_MS,
+          scope: params.siteKey,
+          instrumentation: keyConfig.instrumentation
+            ? {
+                blockAutomatedBrowsers:
+                  keyConfig.blockAutomatedBrowsers === true,
+                obfuscationLevel: keyConfig.obfuscationLevel,
+              }
+            : false,
+        });
+      } catch (err) {
+        console.error("[cap] generateChallenge failed:", err);
+        set.status = 500;
+        return { error: "Failed to generate challenge" };
+      }
 
-    const jwtPayload = {
-      sk: params.siteKey,
-      n: nonce,
-      c,
-      s,
-      d,
-      exp: expires,
-      iat: Date.now(),
-    };
-
-    let instrBytes = null;
-    if (keyConfig.instrumentation) {
-      const instr = await generateInstrumentationChallenge(keyConfig);
-
-      jwtPayload.ei = encrypt(
-        {
-          id: instr.id,
-          expectedVals: instr.expectedVals,
-          vars: instr.vars,
-          blockAutomatedBrowsers: instr.blockAutomatedBrowsers,
-          expires,
-        },
-        jwtSecret,
-      );
-
-      instrBytes = instr.instrumentation;
-
-    }
-
-    const token = jwtSign(jwtPayload, jwtSecret);
-
-    const response = {
-      challenge: { c, s, d },
-      token,
-      expires,
-    };
-
-    if (instrBytes) {
-      response.instrumentation = instrBytes;
-    }
-
-    return response;
-  })
+      return result;
+    },
+  )
 
   .post("/:siteKey/redeem", async ({ body, set, params }) => {
     const bucket = hourlyBucket();
@@ -498,142 +400,138 @@ export const capServer = new Elysia({
       return { error: "Missing required fields" };
     }
 
-    const jwtSecretField = await db.hget(`key:${params.siteKey}`, "jwtSecret");
-
-    if (!jwtSecretField) {
+    const jwtSecret = await db.hget(`key:${params.siteKey}`, "jwtSecret");
+    if (!jwtSecret) {
       set.status = 404;
       return { error: "Invalid site key" };
     }
 
-    const jwtSecret = jwtSecretField;
-
-    const payload = jwtVerify(body.token, jwtSecret);
-
-    if (!payload) {
-      return failAndTrack(403, { error: "Invalid challenge token" });
-    }
-
-    if (payload.sk !== params.siteKey) {
-      return failAndTrack(403, {
-        error: "Challenge token does not match site key",
-      });
-    }
-
-    if (!payload.exp || payload.exp < Date.now()) {
-      return failAndTrack(403, { error: "Challenge expired" });
-    }
-
-    const sig = jwtSigHex(body.token);
-    if (!sig) {
-      return failAndTrack(403, { error: "Malformed challenge token" });
-    }
-
-    const ttlMs = payload.exp - Date.now();
-    const ttlSecs = Math.max(1, Math.ceil(ttlMs / 1000));
-    const claim = await db.send("SET", [`blocklist:${sig}`, "1", "NX", "EX", String(ttlSecs)]);
-    if (claim !== "OK") {
-      return failAndTrack(403, { error: "Challenge already redeemed" });
-    }
-
-    const { c, s: size, d: difficulty } = payload;
-    const solutions = body.solutions;
-
-    if (
-      !Array.isArray(solutions) ||
-      solutions.length !== c ||
-      solutions.some((v) => typeof v !== "number")
-    ) {
-      return failAndTrack(400, { error: "Invalid solutions" });
-    }
-
-    const prngSeed = body.token;
-
-    let idx = 0;
-    const challenges = Array.from({ length: c }, () => {
-      idx++;
-      return [prng(`${prngSeed}${idx}`, size), prng(`${prngSeed}${idx}d`, difficulty)];
-    });
-
-    const hashes = await Promise.all(
-      challenges.map(([salt, target], i) => sha256(salt + solutions[i]).then((h) => [h, target])),
+    const result = await coreValidateChallenge(
+      jwtSecret,
+      {
+        token: body.token,
+        solutions: body.solutions,
+        instr: body.instr,
+        instr_blocked: body.instr_blocked,
+        instr_timeout: body.instr_timeout,
+      },
+      {
+        scope: params.siteKey,
+        consumeNonce: async (sigHex, ttlMs) => {
+          const ttlSecs = Math.max(1, Math.ceil(ttlMs / 1000));
+          const claim = await db.send("SET", [
+            `blocklist:${sigHex}`,
+            "1",
+            "NX",
+            "EX",
+            String(ttlSecs),
+          ]);
+          return claim === "OK";
+        },
+        signToken: () => {
+          const redeemId = randomBytes(8).toString("hex");
+          const redeemSecret = randomBytes(15).toString("hex");
+          return `${params.siteKey}:${redeemId}:${redeemSecret}`;
+        },
+        tokenTtlMs: TOKEN_TTL_MS,
+      },
     );
 
-    const isValid = hashes.every(([h, target]) => h.startsWith(target));
-
-    if (!isValid) {
-      return failAndTrack(403, { error: "Invalid solution" });
-    }
-
-    let instrMeta = null;
-    if (payload.ei) {
-      instrMeta = decrypt(payload.ei, jwtSecret);
-      if (!instrMeta) {
+    if (!result.success) {
+      const reason = result.reason;
+      if (
+        reason === "missing_token" ||
+        reason === "missing_solutions" ||
+        reason === "invalid_solutions"
+      ) {
+        return failAndTrack(400, { error: "Invalid solutions" });
+      }
+      if (reason === "expired") {
+        return failAndTrack(403, { error: "Challenge expired" });
+      }
+      if (reason === "scope_mismatch") {
         return failAndTrack(403, {
-          instr_error: true,
-          error: "Blocked by instrumentation",
-          reason: "corrupted_instrumentation_data",
+          error: "Challenge token does not match site key",
         });
       }
-    }
-
-    if (instrMeta) {
-      if (body.instr_blocked === true) {
-        if (instrMeta.blockAutomatedBrowsers) {
+      if (reason === "invalid_token") {
+        return failAndTrack(403, { error: "Invalid challenge token" });
+      }
+      if (reason === "already_redeemed") {
+        return failAndTrack(403, { error: "Challenge already redeemed" });
+      }
+      if (reason === "invalid_solution") {
+        return failAndTrack(403, { error: "Invalid solution" });
+      }
+      if (result.instr_error) {
+        if (reason === "instr_corrupted") {
+          return failAndTrack(403, {
+            instr_error: true,
+            error: "Blocked by instrumentation",
+            reason: "corrupted_instrumentation_data",
+          });
+        }
+        if (reason === "instr_expired") {
+          return failAndTrack(403, {
+            instr_error: true,
+            error: "Blocked by instrumentation",
+            reason: "expired",
+          });
+        }
+        if (reason === "instr_automated_browser") {
           return failAndTrack(403, {
             instr_error: true,
             error: "Blocked by instrumentation",
             reason: "automated_browser_detected",
           });
         }
-      } else if (body.instr) {
-        let instrResult;
-        if (instrMeta.expires && Date.now() > instrMeta.expires) {
-          instrResult = { valid: false, env: null, reason: "expired" };
-        } else {
-          instrResult = verifyInstrumentationResult(instrMeta, body.instr);
+        if (reason === "instr_timeout") {
+          return failAndTrack(429, {
+            instr_error: true,
+            error: "Instrumentation timeout",
+            reason: "timeout",
+          });
         }
-
-        if (!instrResult.valid) {
+        if (reason === "instr_missing") {
           return failAndTrack(403, {
             instr_error: true,
             error: "Blocked by instrumentation",
-            reason: instrResult.reason || "failed_challenge",
+            reason: "missing_instrumentation_response",
           });
         }
-      } else if (body.instr_timeout === true) {
-        return failAndTrack(429, {
-          instr_error: true,
-          error: "Instrumentation timeout",
-          reason: "timeout",
-        });
-      } else {
         return failAndTrack(403, {
           instr_error: true,
           error: "Blocked by instrumentation",
-          reason: "missing_instrumentation_response",
+          reason: reason || "failed_challenge",
         });
       }
+      return failAndTrack(403, {
+        error: result.error || "Validation failed",
+        reason,
+      });
     }
 
-    const redeemId = randomBytes(8).toString("hex");
-    const redeemSecret = randomBytes(15).toString("hex");
-    const redeemToken = `${params.siteKey}:${redeemId}:${redeemSecret}`;
-    const tokenExpires = Date.now() + TOKEN_TTL_MS;
+    const redeemToken = result.token;
+    const tokenExpires = result.expires;
     const tokenTtlSecs = Math.ceil(TOKEN_TTL_MS / 1000);
     await db.set(`token:${redeemToken}`, String(tokenExpires));
     await db.expire(`token:${redeemToken}`, tokenTtlSecs);
 
     await db.hincrby(`metrics:verified:${params.siteKey}`, bucket, 1);
 
-    if (payload.iat) {
-      const latencyMs = Date.now() - payload.iat;
-      await db.hincrby(`metrics:latency_sum:${params.siteKey}`, bucket, latencyMs);
+    if (result.iat) {
+      const latencyMs = Date.now() - result.iat;
+      await db.hincrby(
+        `metrics:latency_sum:${params.siteKey}`,
+        bucket,
+        latencyMs,
+      );
       await db.hincrby(`metrics:latency_count:${params.siteKey}`, bucket, 1);
     }
+
     return {
       success: true,
       token: redeemToken,
       expires: tokenExpires,
     };
   });
-

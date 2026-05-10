@@ -12,7 +12,8 @@ const UNAUTHED_ALLOWLIST = new Set([
 const resolveSafePath = (rel) => {
   if (!rel || rel.includes("\0") || rel.includes("..")) return null;
   const resolved = path.resolve(PUBLIC_ROOT, rel);
-  if (resolved !== PUBLIC_ROOT && !resolved.startsWith(PUBLIC_ROOT + path.sep)) return null;
+  if (resolved !== PUBLIC_ROOT && !resolved.startsWith(PUBLIC_ROOT + path.sep))
+    return null;
   return resolved;
 };
 
@@ -50,7 +51,9 @@ export const publicStatic = new Elysia().get(
     }
 
     headers["content-type"] = f.type || "application/octet-stream";
-    headers["cache-control"] = allowUnauthed ? "public, max-age=86400" : "private, max-age=3600";
+    headers["cache-control"] = allowUnauthed
+      ? "public, max-age=86400"
+      : "private, max-age=3600";
     headers["x-content-type-options"] = "nosniff";
 
     return f;

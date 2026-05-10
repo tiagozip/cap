@@ -152,19 +152,64 @@ function mulberry32(seed) {
 }
 
 const COUNTRY_WEIGHTS = [
-  ["US", 28], ["GB", 9], ["DE", 7], ["PT", 6], ["FR", 5], ["CA", 4], ["AU", 3.5],
-  ["NL", 3], ["BR", 2.8], ["IN", 2.5], ["JP", 2.2], ["KR", 1.8], ["ES", 1.7],
-  ["IT", 1.5], ["PL", 1.4], ["SE", 1.2], ["MX", 1.1], ["RU", 1.0], ["ID", 0.9],
-  ["TR", 0.8], ["CH", 0.7], ["AT", 0.6], ["BE", 0.6], ["NO", 0.5], ["DK", 0.5],
-  ["FI", 0.5], ["PT", 0.5], ["IE", 0.5], ["CZ", 0.4], ["RO", 0.4], ["SG", 0.4],
-  ["IL", 0.4], ["NZ", 0.3], ["TH", 0.3], ["PH", 0.3], ["UA", 0.3], ["AR", 0.3],
-  ["CO", 0.2], ["ZA", 0.2], ["HK", 0.2], ["TW", 0.2], ["CL", 0.2], ["AE", 0.2],
-  ["VN", 0.2], ["MY", 0.2], ["NG", 0.15], ["EG", 0.1], ["SA", 0.1], ["PK", 0.1],
+  ["US", 28],
+  ["GB", 9],
+  ["DE", 7],
+  ["PT", 6],
+  ["FR", 5],
+  ["CA", 4],
+  ["AU", 3.5],
+  ["NL", 3],
+  ["BR", 2.8],
+  ["IN", 2.5],
+  ["JP", 2.2],
+  ["KR", 1.8],
+  ["ES", 1.7],
+  ["IT", 1.5],
+  ["PL", 1.4],
+  ["SE", 1.2],
+  ["MX", 1.1],
+  ["RU", 1.0],
+  ["ID", 0.9],
+  ["TR", 0.8],
+  ["CH", 0.7],
+  ["AT", 0.6],
+  ["BE", 0.6],
+  ["NO", 0.5],
+  ["DK", 0.5],
+  ["FI", 0.5],
+  ["PT", 0.5],
+  ["IE", 0.5],
+  ["CZ", 0.4],
+  ["RO", 0.4],
+  ["SG", 0.4],
+  ["IL", 0.4],
+  ["NZ", 0.3],
+  ["TH", 0.3],
+  ["PH", 0.3],
+  ["UA", 0.3],
+  ["AR", 0.3],
+  ["CO", 0.2],
+  ["ZA", 0.2],
+  ["HK", 0.2],
+  ["TW", 0.2],
+  ["CL", 0.2],
+  ["AE", 0.2],
+  ["VN", 0.2],
+  ["MY", 0.2],
+  ["NG", 0.15],
+  ["EG", 0.1],
+  ["SA", 0.1],
+  ["PK", 0.1],
 ];
 
 const ASN_POOL = [
   // residential
-  { name: "AS7922 Comcast Cable Communications", weight: 8, type: "residential" },
+  {
+    name: "AS7922 Comcast Cable Communications",
+    weight: 8,
+    type: "residential",
+  },
   { name: "AS7018 AT&T Services", weight: 7, type: "residential" },
   { name: "AS20001 Charter Communications", weight: 5, type: "residential" },
   { name: "AS22773 Cox Communications", weight: 3, type: "residential" },
@@ -173,14 +218,22 @@ const ASN_POOL = [
   { name: "AS12322 Free SAS", weight: 2.5, type: "residential" },
   { name: "AS3209 Vodafone GmbH", weight: 3, type: "residential" },
   { name: "AS5089 Virgin Media Limited", weight: 2, type: "residential" },
-  { name: "AS2856 British Telecommunications PLC", weight: 2.5, type: "residential" },
+  {
+    name: "AS2856 British Telecommunications PLC",
+    weight: 2.5,
+    type: "residential",
+  },
   { name: "AS3215 Orange S.A.", weight: 3, type: "residential" },
   { name: "AS6805 Telefonica Germany", weight: 2, type: "residential" },
   { name: "AS8151 UNINET", weight: 1.5, type: "residential" },
   { name: "AS4804 Microplex PTY LTD", weight: 1, type: "residential" },
   { name: "AS36375 Umich", weight: 0.5, type: "residential" },
   { name: "AS5650 Frontier Communications", weight: 1.5, type: "residential" },
-  { name: "AS34984 Superonline Iletisim Hizmetleri", weight: 1, type: "residential" },
+  {
+    name: "AS34984 Superonline Iletisim Hizmetleri",
+    weight: 1,
+    type: "residential",
+  },
   { name: "AS6167 Verizon Business", weight: 2, type: "residential" },
   { name: "AS3269 Telecom Italia", weight: 1.5, type: "residential" },
   { name: "AS1136 KPN", weight: 1.5, type: "residential" },
@@ -205,7 +258,12 @@ const ASN_POOL = [
 
 const BLOCKED_RULES = [
   { type: "ip", value: "45.134.26.171", permanent: true },
-  { type: "ip", value: "185.220.101.34", permanent: false, expiresIn: 86400000 },
+  {
+    type: "ip",
+    value: "185.220.101.34",
+    permanent: false,
+    expiresIn: 86400000,
+  },
   { type: "cidr", value: "192.42.116.0/22", permanent: true },
   { type: "asn", value: "AS60068 Datacamp Limited", permanent: true },
   { type: "country", value: "RU", permanent: false, expiresIn: 604800000 },
@@ -313,13 +371,20 @@ function generateChartData(rng, key, duration) {
     let multiplier = 1;
     if (bucketSize === hour) {
       const hourOfDay = Math.floor((bucket % day) / hour);
-      multiplier = 0.3 + 0.7 * Math.max(0, Math.sin(((hourOfDay - 4) / 24) * Math.PI * 2) * 0.5 + 0.5);
+      multiplier =
+        0.3 +
+        0.7 *
+          Math.max(
+            0,
+            Math.sin(((hourOfDay - 4) / 24) * Math.PI * 2) * 0.5 + 0.5,
+          );
     }
 
     const age = (bucket - startTime) / (endTime - startTime);
     const trendMul = 0.7 + 0.3 * age;
 
-    const base = (dailyTraffic / (bucketSize === hour ? 24 : 1)) * multiplier * trendMul;
+    const base =
+      (dailyTraffic / (bucketSize === hour ? 24 : 1)) * multiplier * trendMul;
     const jitter = 1 + (rng() - 0.5) * 0.3;
     const challenges = Math.max(0, Math.round(base * jitter));
     const failRate = key.failRate * (1 + (rng() - 0.5) * 0.6);
@@ -346,7 +411,8 @@ function generateChartData(rng, key, duration) {
       verified: totalVerified,
       failed: totalFailed,
       rateLimited: totalRateLimited,
-      avgLatency: totalLatCount > 0 ? Math.round(totalLatSum / totalLatCount) : 0,
+      avgLatency:
+        totalLatCount > 0 ? Math.round(totalLatSum / totalLatCount) : 0,
     },
     chartData: {
       duration,
@@ -360,7 +426,10 @@ function generateBlockedIps(rng, siteKey) {
   const keyIdx = DEMO_KEYS.findIndex((k) => k.siteKey === siteKey);
   if (keyIdx > 3) return [];
 
-  const numRules = Math.min(BLOCKED_RULES.length, 2 + Math.floor(rng() * (BLOCKED_RULES.length - 2)));
+  const numRules = Math.min(
+    BLOCKED_RULES.length,
+    2 + Math.floor(rng() * (BLOCKED_RULES.length - 2)),
+  );
   const rules = [];
   const used = new Set();
 
@@ -392,7 +461,7 @@ export function isDemoMode() {
 
 export function demoGetKeys() {
   return DEMO_KEYS.map((key) => {
-    const rng = mulberry32(hashStr(key.siteKey + "24h"));
+    const rng = mulberry32(hashStr(`${key.siteKey}24h`));
     const dailyTraffic = key.traffic / 91;
     const current = Math.round(dailyTraffic * (0.8 + rng() * 0.4));
     const previous = Math.round(dailyTraffic * (0.8 + rng() * 0.4));
@@ -426,7 +495,7 @@ export function demoGetKey(siteKey, chartDuration = "today") {
 
   let prevStats = null;
   if (chartDuration !== "alltime") {
-    const prevRng = mulberry32(hashStr(siteKey + chartDuration + "prev"));
+    const prevRng = mulberry32(hashStr(`${siteKey + chartDuration}prev`));
     prevStats = {
       challenges: Math.round(stats.challenges * (0.7 + prevRng() * 0.6)),
       verified: Math.round(stats.verified * (0.7 + prevRng() * 0.6)),
@@ -450,10 +519,17 @@ export function demoGetKey(siteKey, chartDuration = "today") {
 }
 
 const PLATFORM_WEIGHTS = [
-  ["Desktop", 62], ["Phone", 33], ["Tablet", 5],
+  ["Desktop", 62],
+  ["Phone", 33],
+  ["Tablet", 5],
 ];
 const OS_WEIGHTS = [
-  ["Windows", 38], ["macOS", 18], ["iOS", 16], ["Android", 17], ["Linux", 8], ["iPadOS", 3],
+  ["Windows", 38],
+  ["macOS", 18],
+  ["iOS", 16],
+  ["Android", 17],
+  ["Linux", 8],
+  ["iPadOS", 3],
 ];
 
 function generateWeightedStats(rng, total, weights) {
@@ -473,27 +549,40 @@ export function demoGetGeoStats(siteKey) {
   const key = DEMO_KEYS.find((k) => k.siteKey === siteKey);
   if (!key) return null;
 
-  const rng = mulberry32(hashStr(siteKey + "geo"));
+  const rng = mulberry32(hashStr(`${siteKey}geo`));
   const countries = generateCountryStats(rng, key.traffic);
   const totalCountry = countries.reduce((s, c) => s + c.count, 0);
 
-  const asnRng = mulberry32(hashStr(siteKey + "asn"));
+  const asnRng = mulberry32(hashStr(`${siteKey}asn`));
   const asns = generateASNStats(asnRng, key.traffic);
   const totalAsn = asns.reduce((s, a) => s + a.count, 0);
 
-  const platRng = mulberry32(hashStr(siteKey + "platform"));
-  const platforms = generateWeightedStats(platRng, key.traffic, PLATFORM_WEIGHTS);
+  const platRng = mulberry32(hashStr(`${siteKey}platform`));
+  const platforms = generateWeightedStats(
+    platRng,
+    key.traffic,
+    PLATFORM_WEIGHTS,
+  );
   const totalPlatform = platforms.reduce((s, p) => s + p.count, 0);
 
-  const osRng = mulberry32(hashStr(siteKey + "os"));
+  const osRng = mulberry32(hashStr(`${siteKey}os`));
   const oses = generateWeightedStats(osRng, key.traffic, OS_WEIGHTS);
   const totalOs = oses.reduce((s, o) => s + o.count, 0);
 
-  return { countries, totalCountry, asns, totalAsn, platforms, totalPlatform, oses, totalOs };
+  return {
+    countries,
+    totalCountry,
+    asns,
+    totalAsn,
+    platforms,
+    totalPlatform,
+    oses,
+    totalOs,
+  };
 }
 
 export function demoGetBlockedIps(siteKey) {
-  const rng = mulberry32(hashStr(siteKey + "blocked"));
+  const rng = mulberry32(hashStr(`${siteKey}blocked`));
   return generateBlockedIps(rng, siteKey);
 }
 
