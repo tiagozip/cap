@@ -1,0 +1,61 @@
+{
+  "name": "capjs-core",
+  "version": "0.1.0",
+  "description": "Stateless server-side challenge generator and verifier for Cap, a lightweight, modern open-source CAPTCHA alternative. No storage, no filesystem - bring your own.",
+  "keywords": [
+    "anti-abuse",
+    "anti-automation",
+    "anti-bot",
+    "anti-ddos",
+    "anti-spam",
+    "captcha-alternative",
+    "hashcash",
+    "instrumentation",
+    "pow",
+    "proof-of-work",
+    "stateless",
+    "verification"
+  ],
+  "homepage": "https://github.com/tiagozip/cap#readme",
+  "bugs": {
+    "url": "https://github.com/tiagozip/cap/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Tiago",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tiagozip/cap.git"
+  },
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
+  "types": "src/index.d.ts",
+  "files": [
+    "src/index.js",
+    "src/index.d.ts",
+    "src/instrumentation.js",
+    "src/prng.js",
+    "src/crypto.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "publish:dry": "bun publish --dry-run --access public"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.0"
+  },
+  "optionalDependencies": {
+    "javascript-obfuscator": "^4.2.2"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.12"
+  }
+}

@@ -1,5 +1,30 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
+  "files": {
+    "includes": [
+      "core/src/**",
+      "core/test/**",
+      "widget/src/src/**",
+      "widget/build.js",
+      "widget/test/**",
+      "wasm/build.js",
+      "wasm/test/**",
+      "standalone/src/**",
+      "standalone/test/**",
+      "!**/node_modules",
+      "!**/cap_wasm.js",
+      "!**/cap_wasm_bg.wasm.d.ts",
+      "!**/.data",
+      "!**/data",
+      "!**/dist",
+      "!widget/test/fixtures",
+      "!widget/src/cap.min.js",
+      "!widget/src/cap-floating.min.js",
+      "!widget/src/cap.compat.min.js",
+      "!widget/src/wasm-hashes.min.js",
+      "!widget/src/src/cap.js"
+    ]
+  },
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2
@@ -14,5 +39,20 @@
         "noUnusedVariables": "error"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["widget/src/src/cap.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          },
+          "style": {
+            "noDescendingSpecificity": "off"
+          }
+        }
+      }
+    }
+  ]
 }
