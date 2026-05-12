@@ -36,8 +36,8 @@ const SECRET = process.env.CAP_SECRET;
 
 // 1) Server route: create a challenge
 const ch = await generateChallenge(SECRET, {
-  scope: "signup",        // optional
-  instrumentation: true,  // optional, see below
+  scope: "signup", // optional
+  instrumentation: true, // optional, see below
 });
 // → { challenge: { c, s, d }, token, expires, instrumentation? }
 
@@ -51,8 +51,7 @@ const result = await validateChallenge(
   },
   {
     scope: "signup",
-    consumeNonce: async (sigHex, ttlMs) =>
-      myStore.setIfNotExists(`cap:${sigHex}`, 1, ttlMs),
+    consumeNonce: async (sigHex, ttlMs) => myStore.setIfNotExists(`cap:${sigHex}`, 1, ttlMs),
   },
 );
 
@@ -65,16 +64,16 @@ The widget calls `generateChallenge` to receive `{ challenge, token, expires, in
 
 ## How it differs from `@cap.js/server`
 
-| Aspect | `@cap.js/server` | `capjs-core` |
-| --- | --- | --- |
-| State | In-memory + filesystem token store | Stateless. Challenge tokens are signed JWTs |
-| Constructor | `new Cap({ ... })` | None — pass `secret` per call |
-| Replay prevention | Built-in token list with cleanup interval | Opt-in via `consumeNonce` callback |
-| Cleanup hooks | `SIGINT`/`beforeExit` flush | None — TTL is encoded in JWT `exp` |
-| Filesystem | Required for persistence | Never touched |
-| Worker compatible | No (filesystem) | Yes |
+| Aspect            | `@cap.js/server`                          | `capjs-core`                                |
+| ----------------- | ----------------------------------------- | ------------------------------------------- |
+| State             | In-memory + filesystem token store        | Stateless. Challenge tokens are signed JWTs |
+| Constructor       | `new Cap({ ... })`                        | None — pass `secret` per call               |
+| Replay prevention | Built-in token list with cleanup interval | Opt-in via `consumeNonce` callback          |
+| Cleanup hooks     | `SIGINT`/`beforeExit` flush               | None — TTL is encoded in JWT `exp`          |
+| Filesystem        | Required for persistence                  | Never touched                               |
+| Worker compatible | No (filesystem)                           | Yes                                         |
 
-Unlike the old library, `capjs-core` does not validate redeem tokens for you — it returns a `tokenKey` you store yourself, and a `token` you give the user. To validate later, re-derive the key from the user's submitted token and look it up:
+Unlike the old library, `capjs-core` does not validate redeem tokens for you - it returns a `tokenKey` you store yourself, and a `token` you give the user. To validate later, re-derive the key from the user's submitted token and look it up:
 
 ```js
 import { createHash } from "node:crypto";
@@ -111,12 +110,14 @@ The `token` is a signed JWT containing the challenge config. `expires` is the JW
 Returns `Promise<{ success: true, token, tokenKey, expires, scope, iat } | { success: false, reason, instr_error? }>`.
 
 `body`:
+
 - `token` — challenge token from `generateChallenge`
 - `solutions` — number array, length must equal `challenge.c`
 - `instr` — instrumentation result (if you enabled it)
 - `instr_blocked`, `instr_timeout` — flags from the widget when instrumentation rejected the page
 
 `opts`:
+
 - `scope` — must match the original challenge's scope
 - `tokenTtlMs` — TTL for the redeem token. Default `1_200_000` (20 min).
 - `consumeNonce(sigHex, ttlMs)` — replay prevention via your storage. See below.
@@ -124,19 +125,19 @@ Returns `Promise<{ success: true, token, tokenKey, expires, scope, iat } | { suc
 
 #### Failure reasons
 
-| `reason` | meaning |
-| --- | --- |
-| `invalid_body` | body isn't an object |
-| `missing_token` | no token provided |
-| `missing_solutions` | solutions missing or not an array |
-| `invalid_token` | JWT signature mismatch / malformed / out-of-bounds params |
-| `scope_mismatch` | token's scope doesn't match `opts.scope` |
-| `expired` | challenge JWT expired |
-| `invalid_solutions` | length mismatch or non-numbers |
-| `nonce_store_error` | `consumeNonce` callback threw |
-| `already_redeemed` | `consumeNonce` returned `false` |
-| `invalid_solution` | solutions don't satisfy the PoW |
-| `instr_*` | instrumentation failed (with `instr_error: true`) |
+| `reason`            | meaning                                                   |
+| ------------------- | --------------------------------------------------------- |
+| `invalid_body`      | body isn't an object                                      |
+| `missing_token`     | no token provided                                         |
+| `missing_solutions` | solutions missing or not an array                         |
+| `invalid_token`     | JWT signature mismatch / malformed / out-of-bounds params |
+| `scope_mismatch`    | token's scope doesn't match `opts.scope`                  |
+| `expired`           | challenge JWT expired                                     |
+| `invalid_solutions` | length mismatch or non-numbers                            |
+| `nonce_store_error` | `consumeNonce` callback threw                             |
+| `already_redeemed`  | `consumeNonce` returned `false`                           |
+| `invalid_solution`  | solutions don't satisfy the PoW                           |
+| `instr_*`           | instrumentation failed (with `instr_error: true`)         |
 
 ## Replay prevention
 
@@ -181,7 +182,7 @@ const consumeNonce = async (sigHex, ttlMs) => {
 
 :::
 
-The check runs *after* PoW and instrumentation verification, so an attacker who replays a captured submission with garbage solutions can't burn the legitimate user's nonce.
+The check runs _after_ PoW and instrumentation verification, so an attacker who replays a captured submission with garbage solutions can't burn the legitimate user's nonce.
 
 ## Instrumentation
 
@@ -191,7 +192,7 @@ Pass `instrumentation: true` (or an options object) to `generateChallenge` to re
 const ch = await generateChallenge(SECRET, {
   instrumentation: {
     blockAutomatedBrowsers: true, // reject playwright/puppeteer/selenium
-    obfuscationLevel: 3,          // 1-10, default 3
+    obfuscationLevel: 3, // 1-10, default 3
   },
 });
 ```
@@ -258,5 +259,31 @@ Bun.serve({
       },
     },
   },
+});
+```
+
+## RSW challenges
+
+Since v0.1.1 and widget v0.1.51, both pieces understand a richer wire format that supports multiple challenge protocols in a single response: SHA-256 PoW (the default), the new [RSW time-lock puzzle](./rsw.md), and instrumentation.
+
+### Minimum opt-in
+
+```js
+import { generateChallenge, generateRswKeypair, validateChallenge } from "capjs-core";
+
+const SECRET = process.env.CAP_SECRET;
+const KEYPAIR = generateRswKeypair(2048); // once at boot, persist this!
+
+app.post("/api/challenge", async () => {
+  return await generateChallenge(SECRET, {
+    format: 2,
+    protocols: ["rsw", "instrumentation"],
+    keypair: KEYPAIR,
+    t: 75_000, // optional. we recommend keeping it at 75_000
+  });
+});
+
+app.post("/api/redeem", async (req) => {
+  return await validateChallenge(SECRET, req.body, { consumeNonce });
 });
 ```
