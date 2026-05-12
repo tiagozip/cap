@@ -270,15 +270,31 @@
       });
     }
 
+    runMsg(msg, onProgress) {
+      return new Promise((resolve, reject) => {
+        this._queue.push({ msg, onProgress, resolve, reject });
+        this._dispatch();
+      });
+    }
+
     _dispatch() {
       while (this._idle.length > 0 && this._queue.length > 0) {
         const worker = this._idle.shift();
-        const { salt, target, resolve, reject } = this._queue.shift();
+        const task = this._queue.shift();
+        const { resolve, reject } = task;
+        const isMsg = task.msg !== undefined;
 
         let settled = false;
 
         const onMessage = ({ data }) => {
           if (settled) return;
+
+          if (data && typeof data.progress === "number" && !data.found) {
+            if (task.onProgress) {
+              try { task.onProgress(data.progress); } catch {}
+            }
+            return;
+          }
           settled = true;
           worker.removeEventListener("message", onMessage);
           worker.removeEventListener("error", onError);
@@ -287,7 +303,7 @@
           if (!data.found) {
             reject(new Error(data.error || "worker failed"));
           } else {
-            resolve(data.nonce);
+            resolve(isMsg ? data : data.nonce);
           }
           this._dispatch();
         };
@@ -307,13 +323,15 @@
         worker.addEventListener("message", onMessage);
         worker.addEventListener("error", onError);
 
-        if (this._wasmModule) {
+        if (isMsg) {
+          worker.postMessage(task.msg);
+        } else if (this._wasmModule) {
           worker.postMessage(
-            { salt, target, wasmModule: this._wasmModule },
+            { salt: task.salt, target: task.target, wasmModule: this._wasmModule },
             [],
           );
         } else {
-          worker.postMessage({ salt, target });
+          worker.postMessage({ salt: task.salt, target: task.target });
         }
       }
     }
@@ -461,6 +479,12 @@
 
         resp._apiEndpoint = apiEndpoint;
         this.#speculative.challengeResp = resp;
+
+        if (resp.format === 2 && Array.isArray(resp.challenges)) {
+          this.#speculative.state = "idle";
+          this.#speculative.notify();
+          return;
+        }
 
         const { challenge, token } = resp;
         let challenges = challenge;
@@ -871,9 +895,18 @@
             );
             clearInterval(progressInterval);
 
-            if (this.#speculative.state !== "done") {
-              throw new Error("Speculative solve failed – please try again");
-            }
+            if (
+              this.#speculative.state === "idle" &&
+              this.#speculative.challengeResp?.format === 2 &&
+              Array.isArray(this.#speculative.challengeResp.challenges)
+            ) {
+              challengeResp = this.#speculative.challengeResp;
+              this.#speculative.challengeResp = null;
+              solutions = await this.solveChallengesV2(challengeResp.challenges);
+            } else {
+              if (this.#speculative.state !== "done") {
+                throw new Error("Speculative solve failed – please try again");
+              }
 
             if (
               this.#speculative.token &&
@@ -912,31 +945,44 @@
             solutions = this.#speculative.results;
             challengeResp = this.#speculative.challengeResp;
             this.dispatchEvent("progress", { progress: 100 });
+            }
           } else {
-            const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
-              method: "POST",
-            });
-            try {
-              challengeResp = await challengeRaw.json();
-            } catch {
-              throw new Error("Failed to parse challenge response from server");
-            }
-            if (challengeResp.error) throw new Error(challengeResp.error);
-
-            const { challenge, token } = challengeResp;
-            let challenges = challenge;
-            if (!Array.isArray(challenges)) {
-              let i = 0;
-              challenges = Array.from({ length: challenge.c }, () => {
-                i++;
-                return [
-                  prng(`${token}${i}`, challenge.s),
-                  prng(`${token}${i}d`, challenge.d),
-                ];
+            const cached = this.#speculative.challengeResp;
+            if (cached?.format === 2 && Array.isArray(cached.challenges)) {
+              challengeResp = cached;
+              this.#speculative.challengeResp = null;
+            } else {
+              const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
+                method: "POST",
               });
+              try {
+                challengeResp = await challengeRaw.json();
+              } catch {
+                throw new Error("Failed to parse challenge response from server");
+              }
+              if (challengeResp.error) throw new Error(challengeResp.error);
             }
 
-            solutions = await this.solveChallenges(challenges);
+            if (
+              challengeResp.format === 2 &&
+              Array.isArray(challengeResp.challenges)
+            ) {
+              solutions = await this.solveChallengesV2(challengeResp.challenges);
+            } else {
+              const { challenge, token } = challengeResp;
+              let challenges = challenge;
+              if (!Array.isArray(challenges)) {
+                let i = 0;
+                challenges = Array.from({ length: challenge.c }, () => {
+                  i++;
+                  return [
+                    prng(`${token}${i}`, challenge.s),
+                    prng(`${token}${i}d`, challenge.d),
+                  ];
+                });
+              }
+              solutions = await this.solveChallenges(challenges);
+            }
           }
 
           const instrPromise = challengeResp.instrumentation
@@ -1036,6 +1082,105 @@
       } finally {
         this.#solving = false;
       }
+    }
+
+    async solveChallengesV2(challenges) {
+      const total = challenges.length;
+      let completed = 0;
+
+      const solutions = new Array(challenges.length);
+      for (let i = 0; i < challenges.length; i++) {
+        const ch = challenges[i];
+        if (
+          !ch ||
+          typeof ch !== "object" ||
+          !(
+            ch.protocol === "sha256-pow" ||
+            ch.protocol === "rsw" ||
+            ch.protocol === "instrumentation"
+          )
+        ) {
+          // Unknown protocol = older widget on a newer server. Fall back to
+          // erroring out -- the host can detect this and serve format-1.
+          throw new Error(`[cap] unsupported format-2 protocol '${ch?.protocol}'`);
+        }
+      }
+
+      let wasmModule = null;
+      const wasmSupported =
+        typeof WebAssembly === "object" &&
+        typeof WebAssembly.instantiate === "function";
+      if (wasmSupported) {
+        try { wasmModule = await getWasmModule(); }
+        catch (e) { console.warn("[cap] wasm unavailable, falling back to JS solver:", e); }
+      }
+
+      const poolSize = Math.max(1, Math.min(this.#workersCount, challenges.length));
+      const pool = new WorkerPool(poolSize);
+      pool.setWasm(wasmModule);
+      pool._ensureSize(poolSize);
+
+      const TASK_TIMEOUT_MS = 60_000;
+      const withTimeout = (promise, label) => Promise.race([
+        promise,
+        new Promise((_, rej) => setTimeout(
+          () => rej(new Error(`[cap] ${label} timed out after ${TASK_TIMEOUT_MS}ms`)),
+          TASK_TIMEOUT_MS,
+        )),
+      ]);
+
+      const inFlight = new Array(challenges.length).fill(0);
+      const emit = () => {
+        const sum = inFlight.reduce((a, b) => a + b, 0) + completed;
+        const visual = Math.min(99, Math.round((sum / total) * 100));
+        this.dispatchEvent("progress", { progress: visual });
+      };
+
+      try {
+        await Promise.all(
+          challenges.map((ch, idx) => {
+            if (ch.protocol === "sha256-pow") {
+              return withTimeout(
+                pool.run(ch.payload.salt, ch.payload.target),
+                `sha256-pow worker #${idx}`,
+              ).then((nonce) => {
+                solutions[idx] = { nonce: Number(nonce) };
+                inFlight[idx] = 0;
+                completed++;
+                emit();
+              });
+            }
+
+            if (ch.protocol === "rsw") {
+              return withTimeout(
+                pool.runMsg(
+                  { kind: "rsw", N: ch.payload.N, x: ch.payload.x, t: ch.payload.t | 0 },
+                  (p) => { inFlight[idx] = p; emit(); },
+                ),
+                `rsw worker #${idx}`,
+              ).then((data) => {
+                solutions[idx] = { y: data.y };
+                inFlight[idx] = 0;
+                completed++;
+                emit();
+              });
+            }
+            
+            return runInstrumentationChallenge(ch.payload.blob).then((out) => {
+              if (out?.__timeout) solutions[idx] = { timeout: true };
+              else if (out?.__blocked) solutions[idx] = { blocked: true };
+              else solutions[idx] = { instr: out };
+              inFlight[idx] = 0;
+              completed++;
+              emit();
+            });
+          }),
+        );
+      } finally {
+        pool.terminate();
+      }
+
+      return solutions;
     }
 
     async solveChallenges(challenges) {

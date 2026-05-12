@@ -1,6 +1,6 @@
 {
   "name": "capjs-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Stateless server-side challenge generator and verifier for Cap, a lightweight, modern open-source CAPTCHA alternative. No storage, no filesystem - bring your own.",
   "keywords": [
     "anti-abuse",
@@ -42,6 +42,7 @@
     "src/instrumentation.js",
     "src/prng.js",
     "src/crypto.js",
+    "src/rsw.js",
     "README.md",
     "LICENSE"
   ],
