@@ -255,6 +255,7 @@ export default withMermaid({
           items: [
             { text: "Effectiveness", link: "/guide/effectiveness.md" },
             { text: "Instrumentation", link: "/guide/instrumentation.md" },
+            { text: "RSW time-lock puzzles", link: "/guide/rsw.md" },
             { text: "How does Cap work?", link: "/guide/workings.md" },
           ],
         },
