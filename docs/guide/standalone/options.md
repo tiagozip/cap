@@ -55,6 +55,20 @@ The recommended setup uses Valkey (a Redis-compatible store) via the docker-comp
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.
 
+## RSW time-lock puzzles
+
+Standalone supports the [RSW time-lock puzzle](../rsw.md) as an opt-in, GPU-resistant alternative to SHA-256 PoW. It's configured per site key, so individual keys can use RSW while others stay on the default SHA-256 challenges.
+
+To enable it, open a key's **Configuration** tab and switch the **Challenge protocol** to "RSW time-lock puzzle". The first time you enable RSW on any key, Standalone generates a 2048-bit modulus (~1-3 seconds) and stores it in Redis. The same keypair is reused for all RSW-enabled keys; you don't need to manage it manually.
+
+Difficulty is controlled by the **RSW squarings** slider (the `t` parameter — the number of sequential squarings the client must compute). Defaults to `75_000`, which is roughly 300-800ms of client-side work on modern hardware. Lower it for cheaper challenges, raise it for stronger throttling. The valid range is `10_000`-`300_000`.
+
+You can override the modulus size at boot with `RSW_BITS=2048` (default). Smaller sizes are useful only for testing.
+
+::: tip
+RSW is opt-in and currently experimental. The default Cap pipeline still uses SHA-256 PoW. The widget auto-detects RSW challenges from the wire format, so flipping the toggle is the only change you need to make.
+:::
+
 ## Instrumentation challenges
 
 Cap Standalone supports JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to block headless browsers from solving them. Instrumentation challenges are enabled by default when creating new site keys.

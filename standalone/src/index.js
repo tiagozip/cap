@@ -5,6 +5,7 @@ import { auth } from "./auth.js";
 import { capServer } from "./cap.js";
 import { isDemoMode } from "./demo.js";
 import { loadIPDB } from "./ipdb.js";
+import { loadRswKeypair, startRswRefresh } from "./rsw-store.js";
 import { server } from "./server.js";
 import {
   loadCorsDefault,
@@ -129,4 +130,8 @@ await loadHeaders();
 await loadRatelimit();
 await loadCorsDefault();
 await loadFiltering();
+loadRswKeypair().catch((e) =>
+  console.warn("[cap] RSW keypair load:", e.message),
+);
+startRswRefresh();
 loadIPDB().catch((e) => console.warn("[cap] IP DB load:", e.message));

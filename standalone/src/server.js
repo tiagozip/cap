@@ -16,6 +16,7 @@ import {
   getDownloadProgress,
   getStatus as getIPDBStatus,
 } from "./ipdb.js";
+import { ensureRswKeypair, getRswStatus } from "./rsw-store.js";
 import {
   invalidateCorsCache,
   setCorsDefault,
@@ -31,6 +32,8 @@ const keyDefaults = {
   instrumentation: false,
   obfuscationLevel: 3,
   blockAutomatedBrowsers: false,
+  rsw: false,
+  rswT: 75_000,
 };
 
 const sumSolutions = (data, startBucket, endBucket) => {
@@ -149,6 +152,8 @@ export const server = new Elysia({
         ...keyDefaults,
         instrumentation: body?.instrumentation ?? false,
         blockAutomatedBrowsers: body?.blockAutomatedBrowsers ?? false,
+        rsw: body?.rsw ?? false,
+        rswT: body?.rswT ?? keyDefaults.rswT,
       };
 
       if (
@@ -184,6 +189,8 @@ export const server = new Elysia({
         instrumentation: t.Optional(t.Boolean()),
         blockAutomatedBrowsers: t.Optional(t.Boolean()),
         corsOrigins: t.Optional(t.Array(t.String())),
+        rsw: t.Optional(t.Boolean()),
+        rswT: t.Optional(t.Number({ minimum: 10000, maximum: 300000 })),
       }),
       detail: {
         tags: ["Keys"],
@@ -449,6 +456,8 @@ export const server = new Elysia({
         corsOrigins,
         blockNonBrowserUA,
         requiredHeaders,
+        rsw,
+        rswT,
       } = body;
 
       const config = {
@@ -486,6 +495,8 @@ export const server = new Elysia({
           requiredHeaders !== undefined
             ? requiredHeaders
             : (existingConfig.requiredHeaders ?? null),
+        rsw: rsw ?? existingConfig.rsw ?? false,
+        rswT: rswT ?? existingConfig.rswT ?? keyDefaults.rswT,
       };
 
       const currentName = await db.hget(`key:${params.siteKey}`, "name");
@@ -518,6 +529,8 @@ export const server = new Elysia({
         corsOrigins: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
         blockNonBrowserUA: t.Optional(t.Union([t.Boolean(), t.Null()])),
         requiredHeaders: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
+        rsw: t.Optional(t.Boolean()),
+        rswT: t.Optional(t.Number({ minimum: 10000, maximum: 300000 })),
       }),
       detail: {
         tags: ["Keys"],
@@ -1098,6 +1111,23 @@ export const server = new Elysia({
     async () => {
       await deleteDB();
       return { success: true };
+    },
+    { detail: { tags: ["Settings"] } },
+  )
+  .get("/settings/rsw", () => getRswStatus(), {
+    detail: { tags: ["Settings"] },
+  })
+  .post(
+    "/settings/rsw/ensure",
+    async ({ set }) => {
+      try {
+        const next = await ensureRswKeypair();
+        return { success: true, ...next };
+      } catch (e) {
+        console.error("[cap] RSW keypair generation failed:", e);
+        set.status = 500;
+        return { success: false, error: "Generation failed" };
+      }
     },
     { detail: { tags: ["Settings"] } },
   )
