@@ -9,12 +9,17 @@ import { Elysia } from "elysia";
 import { db } from "./db.js";
 import { isLoaded as ipdbIsLoaded, lookup as ipLookup } from "./ipdb.js";
 import valkeyRateLimit from "./ratelimit.js";
+import { ensureRswKeypair, getRswKeypair } from "./rsw-store.js";
 import {
   checkCorsOrigin,
   getFiltering,
   getHeaders,
   getRatelimit,
 } from "./settings-cache.js";
+
+const DEFAULT_RSW_T = 75_000;
+const MIN_RSW_T = 10_000;
+const MAX_RSW_T = 300_000;
 
 function hourlyBucket() {
   return String(Math.floor(Date.now() / 1000 / 3600) * 3600);
@@ -361,22 +366,57 @@ export const capServer = new Elysia({
         }
       }
 
-      let result;
-      try {
-        result = await coreGenerateChallenge(jwtSecret, {
+      const instrumentationOpts = keyConfig.instrumentation
+        ? {
+            blockAutomatedBrowsers: keyConfig.blockAutomatedBrowsers === true,
+            obfuscationLevel: keyConfig.obfuscationLevel,
+          }
+        : false;
+
+      let challengeOpts;
+      if (keyConfig.rsw) {
+        let keypair = getRswKeypair();
+        if (!keypair) {
+          try {
+            await ensureRswKeypair();
+            keypair = getRswKeypair();
+          } catch (err) {
+            console.error("[cap] RSW keypair unavailable:", err);
+            set.status = 500;
+            return { error: "RSW keypair unavailable" };
+          }
+        }
+        if (!keypair) {
+          set.status = 503;
+          return { error: "RSW keypair not ready" };
+        }
+        const rawT = Number(keyConfig.rswT) || DEFAULT_RSW_T;
+        const t = Math.min(MAX_RSW_T, Math.max(MIN_RSW_T, rawT));
+        challengeOpts = {
+          format: 2,
+          protocols: keyConfig.instrumentation
+            ? ["rsw", "instrumentation"]
+            : ["rsw"],
+          keypair,
+          t,
+          expiresMs: CHALLENGE_TTL_MS,
+          scope: params.siteKey,
+          instrumentation: instrumentationOpts,
+        };
+      } else {
+        challengeOpts = {
           challengeCount: keyConfig.challengeCount ?? 80,
           challengeSize: keyConfig.saltSize ?? 32,
           challengeDifficulty: keyConfig.difficulty ?? 4,
           expiresMs: CHALLENGE_TTL_MS,
           scope: params.siteKey,
-          instrumentation: keyConfig.instrumentation
-            ? {
-                blockAutomatedBrowsers:
-                  keyConfig.blockAutomatedBrowsers === true,
-                obfuscationLevel: keyConfig.obfuscationLevel,
-              }
-            : false,
-        });
+          instrumentation: instrumentationOpts,
+        };
+      }
+
+      let result;
+      try {
+        result = await coreGenerateChallenge(jwtSecret, challengeOpts);
       } catch (err) {
         console.error("[cap] generateChallenge failed:", err);
         set.status = 500;

@@ -77,6 +77,7 @@ if (!redisAvailable) {
   afterAll(async () => {
     // Cleanup: remove the site key and any blocklist/token entries
     await db.send("DEL", [`key:${SITE_KEY}`]);
+    await db.send("DEL", ["settings:rsw_keypair"]);
     const keys = await db.send("KEYS", [`metrics:*:${SITE_KEY}`]);
     if (Array.isArray(keys) && keys.length > 0) {
       await db.send("DEL", keys);
@@ -205,6 +206,57 @@ if (!redisAvailable) {
         }),
       );
       expect(b.status).toBe(403);
+    }, 30_000);
+
+    test("RSW: issues format-2 challenge and accepts solution", async () => {
+      const { ensureRswKeypair } = await import("../src/rsw-store.js");
+      await ensureRswKeypair();
+      const rswKey = `rsw_site_key_${Math.random().toString(16).slice(2)}`;
+      const rswT = 10_000;
+      await db.send("HSET", [
+        `key:${rswKey}`,
+        "config",
+        JSON.stringify({ rsw: true, rswT, instrumentation: false }),
+        "jwtSecret",
+        SECRET,
+      ]);
+      try {
+        const ch = await app
+          .handle(
+            new Request(`http://localhost/${rswKey}/challenge`, {
+              method: "POST",
+            }),
+          )
+          .then((r) => r.json());
+
+        expect(ch.format).toBe(2);
+        expect(Array.isArray(ch.challenges)).toBe(true);
+        expect(ch.challenges[0].protocol).toBe("rsw");
+
+        const { N, x, t } = ch.challenges[0].payload;
+        expect(t).toBe(rswT);
+
+        const Nb = BigInt(`0x${N}`);
+        let y = BigInt(`0x${x}`);
+        for (let i = 0; i < t; i++) y = (y * y) % Nb;
+        const yHex = y.toString(16);
+
+        const redeem = await app.handle(
+          new Request(`http://localhost/${rswKey}/redeem`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              token: ch.token,
+              solutions: [{ y: yHex }],
+            }),
+          }),
+        );
+        expect(redeem.status).toBe(200);
+        const body = await redeem.json();
+        expect(body.success).toBe(true);
+      } finally {
+        await db.send("DEL", [`key:${rswKey}`]);
+      }
     }, 30_000);
 
     test("rejects scope mismatch (token from another site key)", async () => {

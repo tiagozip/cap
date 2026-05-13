@@ -493,7 +493,14 @@ function renderKeyDetail() {
             <label>Name</label>
             <input type="text" id="cfgName" value="${escapeHtml(key.name)}">
           </div>
-          <div class="edit-row">
+          <div class="edit-field" style="margin-top:8px">
+            <label>Challenge protocol</label>
+            <select id="cfgChallengeProtocol">
+              <option value="sha256-pow" ${!key.config.rsw ? "selected" : ""}>SHA-256</option>
+              <option value="rsw" ${key.config.rsw ? "selected" : ""}>RSW (experimental)</option>
+            </select>
+          </div>
+          <div class="edit-row" id="shaPowFields" style="display:${key.config.rsw ? "none" : "flex"}">
             <div class="edit-field">
               <label>Difficulty</label>
               <input type="number" id="cfgDifficulty" value="${key.config.difficulty}" min="1" max="8">
@@ -501,6 +508,12 @@ function renderKeyDetail() {
             <div class="edit-field">
               <label>Challenge count</label>
               <input type="number" id="cfgChallengeCount" value="${key.config.challengeCount}" min="1" max="500">
+            </div>
+          </div>
+          <div class="config-row" id="rswTField" style="display:${key.config.rsw ? "flex" : "none"}">
+            <div class="range-field" style="flex:1">
+              <label>RSW difficulty <span class="range-value" id="rswTHint">${(key.config.rswT ?? 75000).toLocaleString()}</span></label>
+              <input type="range" id="cfgRswT" min="10000" max="300000" step="5000" value="${key.config.rswT ?? 75000}">
             </div>
           </div>
           <h3 class="config-section-title" style="margin-top:16px">Instrumentation</h3>
@@ -730,13 +743,17 @@ function renderKeyDetail() {
     const instrumentation = document.getElementById("cfgInstrumentation").checked;
     const obfuscationLevel = parseInt(document.getElementById("cfgObfuscationLevel").value, 10);
     const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
+    const rsw = document.getElementById("cfgChallengeProtocol").value === "rsw";
+    const rswT = parseInt(document.getElementById("cfgRswT").value, 10);
     const dirty =
       name !== key.name ||
       difficulty !== key.config.difficulty ||
       challengeCount !== key.config.challengeCount ||
       instrumentation !== key.config.instrumentation ||
       obfuscationLevel !== (key.config.obfuscationLevel ?? 5) ||
-      blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers;
+      blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers ||
+      rsw !== !!key.config.rsw ||
+      rswT !== (key.config.rswT ?? 75000);
     document.getElementById("saveMainConfigBtn").disabled = !dirty;
   }
 
@@ -876,6 +893,27 @@ function renderKeyDetail() {
     });
   }
   document.getElementById("cfgBlockAutomatedBrowsers")?.addEventListener("change", checkMainDirty);
+
+  document.getElementById("cfgChallengeProtocol")?.addEventListener("change", (e) => {
+    const isRsw = e.target.value === "rsw";
+    document.getElementById("shaPowFields").style.display = isRsw ? "none" : "flex";
+    document.getElementById("rswTField").style.display = isRsw ? "flex" : "none";
+    if (isRsw) {
+      const sl = document.getElementById("cfgRswT");
+      if (sl) updateRangeFill(sl);
+    }
+    checkMainDirty();
+  });
+  const rswSlider = document.getElementById("cfgRswT");
+  if (rswSlider) {
+    updateRangeFill(rswSlider);
+    rswSlider.addEventListener("input", (e) => {
+      document.getElementById("rswTHint").textContent =
+        Number(e.target.value).toLocaleString();
+      updateRangeFill(e.target);
+      checkMainDirty();
+    });
+  }
 
   document.getElementById("saveMainConfigBtn")?.addEventListener("click", saveMainConfig);
   document.getElementById("saveSecurityConfigBtn")?.addEventListener("click", saveSecurityConfig);
@@ -2247,6 +2285,8 @@ async function saveMainConfig() {
   const instrumentation = document.getElementById("cfgInstrumentation").checked;
   const obfuscationLevel = parseInt(document.getElementById("cfgObfuscationLevel").value, 10);
   const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
+  const rsw = document.getElementById("cfgChallengeProtocol").value === "rsw";
+  const rswT = parseInt(document.getElementById("cfgRswT").value, 10);
 
   if (!name || difficulty < 1 || challengeCount < 1) {
     showModal(
@@ -2257,6 +2297,21 @@ async function saveMainConfig() {
     return;
   }
 
+  if (rsw) {
+    btn.innerHTML = "Preparing RSW keypair…";
+    const gen = await api("POST", "/settings/rsw/ensure");
+    if (!gen?.exists) {
+      showModal(
+        "Error",
+        '<div class="modal-body"><p>Failed to generate the RSW keypair. Try again in a moment.</p></div>',
+      );
+      btn.innerHTML = "Save";
+      btn.disabled = false;
+      return;
+    }
+    btn.innerHTML = "Save";
+  }
+
   const res = await api("PUT", `/keys/${selectedKey.siteKey}/config`, {
     name,
     difficulty,
@@ -2264,6 +2319,8 @@ async function saveMainConfig() {
     instrumentation,
     obfuscationLevel,
     blockAutomatedBrowsers,
+    rsw,
+    rswT,
   });
 
   if (res.success) {
@@ -2276,6 +2333,8 @@ async function saveMainConfig() {
       instrumentation,
       obfuscationLevel,
       blockAutomatedBrowsers,
+      rsw,
+      rswT,
     };
     renderKeysList(searchInput.value);
   } else {

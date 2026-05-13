@@ -70,3 +70,5 @@ RSW doesn't protect against FPGA / ASIC hardware. Custom silicon can do a 2048-b
 ## Trying it
 
 The cap-core API surface for RSW is documented in [RSW challenges](./capjs-core.md#format-2-rsw-opt-in). The widget auto-detects format-2 responses, so a same-binary upgrade on the server is enough.
+
+If you're running [Cap Standalone](./standalone/options.md#rsw-time-lock-puzzles), RSW is exposed as a per-key toggle in the dashboard — see the Standalone options page for details.
