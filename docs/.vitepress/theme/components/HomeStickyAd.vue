@@ -49,8 +49,29 @@ const tryLoad = (attempt = 0) => {
   } catch (_) {}
 };
 
+const track = (name, props) => {
+  try {
+    if (typeof window === "undefined" || typeof window.plausible !== "function") return;
+    const merged = { ...(props || {}) };
+    for (const attr of document.documentElement.attributes) {
+      if (attr.name.startsWith("data-exp-")) {
+        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
+      }
+    }
+    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
+  } catch {}
+};
+
+const onSlotClick = (e) => {
+  const a = e.target.closest("a");
+  if (!a || !slot.value?.contains(a)) return;
+  if (a.closest(".ea-callout")) return;
+  track("sticky_ad_click");
+};
+
 const watchFill = () => {
   const startedAt = Date.now();
+  let firedView = false;
   const poll = setInterval(() => {
     const host = slot.value;
     if (!host) return;
@@ -70,6 +91,10 @@ const watchFill = () => {
     }
     if (isLoaded && !isNoFill) {
       clearInterval(poll);
+      if (!firedView) {
+        firedView = true;
+        track("sticky_ad_view");
+      }
       return;
     }
     if (Date.now() - startedAt > 4000) {
@@ -83,6 +108,7 @@ onMounted(() => {
   checkMobile();
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", checkMobile);
+  document.addEventListener("click", onSlotClick, true);
   if (isMobile.value) {
     requestAnimationFrame(() => tryLoad());
   }
@@ -91,6 +117,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener("scroll", onScroll);
   window.removeEventListener("resize", checkMobile);
+  document.removeEventListener("click", onSlotClick, true);
 });
 </script>
 
@@ -136,6 +163,22 @@ onUnmounted(() => {
   transform: translateY(120%);
   opacity: 0;
   pointer-events: none;
+}
+
+:root[data-exp-sticky-ad="2"] .home-sticky-ad {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+
+:root[data-exp-ad-callout="2"] .ea-wrap.ea-wrap--homesticky .ea-callout::before {
+  position: absolute;
+  bottom: 7px;
+  right: 10px;
 }
 
 .ea-wrap.ea-wrap--homesticky [data-ea-publisher] {
