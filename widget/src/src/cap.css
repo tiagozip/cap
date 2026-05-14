@@ -306,6 +306,12 @@
   border-radius: 4px;
 }
 
+.captcha .credits[part="attribution"] {
+  display: inline-flex !important;
+  visibility: visible !important;
+  pointer-events: all !important;
+}
+
 .credits:focus-visible {
   outline: 2px solid var(--cap-focus-ring, #0066cc);
   outline-offset: 2px;

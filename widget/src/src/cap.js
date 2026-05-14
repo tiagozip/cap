@@ -992,6 +992,17 @@
           const instrOut = await instrPromise;
 
           if (instrOut?.__timeout || instrOut?.__blocked) {
+            capFetch(`${apiEndpoint}redeem`, {
+              method: "POST",
+              body: JSON.stringify({
+                token: challengeResp.token,
+                solutions,
+                ...(instrOut.__blocked && { instr_blocked: true }),
+                ...(instrOut.__timeout && { instr_timeout: true }),
+              }),
+              headers: { "Content-Type": "application/json" },
+            }).catch(() => {});
+
             this.updateUIBlocked(
               this.getI18nText("error-label", "Error"),
               instrOut?.__blocked,
