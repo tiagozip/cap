@@ -9,7 +9,11 @@
   </head>
   <body>
     <div class="app">
-      <aside class="sidebar">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="appSidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M4 8h16M4 16h16"/></svg>
+      </button>
+      <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" hidden></div>
+      <aside class="sidebar" id="appSidebar">
         <div class="sidebar-search">
           <svg
             viewBox="0 0 24 24"
@@ -59,7 +63,14 @@
 
       <div class="content-area" id="detailPanel">
         <div class="welcome-screen" id="welcomeScreen">
-          <h2>Select or create a key to get started</h2>
+          <h2>Add Cap to your site in 60 seconds</h2>
+          <p class="welcome-sub">Create a sitekey, paste two snippets, you're live.</p>
+          <button type="button" class="welcome-cta" id="welcomeCreateKey">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="16" height="16"><path d="M12 5v14M5 12h14" /></svg>
+            Create your first key
+          </button>
+          <p class="welcome-steps"><span>1. Name your key</span><span class="welcome-step-dot">·</span><span>2. Copy the snippets</span><span class="welcome-step-dot">·</span><span>3. Ship</span></p>
+          <a class="welcome-docs" href="https://trycap.dev/guide/" target="_blank" rel="noreferrer">Read the docs →</a>
         </div>
 
         <div class="key-detail" id="keyDetail" style="display: none"></div>

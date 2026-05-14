@@ -414,9 +414,14 @@ function initLiveArchitecture() {
 
 function track(name, props) {
   try {
-    if (typeof window !== "undefined" && typeof window.plausible === "function") {
-      window.plausible(name, props ? { props } : undefined);
+    if (typeof window === "undefined" || typeof window.plausible !== "function") return;
+    const merged = { ...(props || {}) };
+    for (const attr of document.documentElement.attributes) {
+      if (attr.name.startsWith("data-exp-")) {
+        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
+      }
     }
+    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
   } catch {}
 }
 
@@ -436,13 +441,12 @@ function initCtaTracking() {
 }
 
 async function loadGithubStars() {
-  const el = document.getElementById("homev2-gh-stars");
-  if (!el) return;
+  const els = document.querySelectorAll(".homev2-gh-stars");
+  if (!els.length) return;
+  const write = (v) => els.forEach((el) => { el.textContent = v; });
   try {
     const cached = sessionStorage.getItem("cap-gh-stars");
-    if (cached) {
-      el.textContent = cached;
-    }
+    if (cached) write(cached);
     const res = await fetch("https://api.github.com/repos/tiagozip/cap", {
       headers: { Accept: "application/vnd.github+json" },
     });
@@ -451,7 +455,7 @@ async function loadGithubStars() {
     const n = data.stargazers_count;
     if (typeof n !== "number") return;
     const formatted = n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
-    el.textContent = formatted;
+    write(formatted);
     sessionStorage.setItem("cap-gh-stars", formatted);
   } catch {}
 }
@@ -465,6 +469,7 @@ onMounted(() => {
   initLiveArchitecture();
   initCtaTracking();
   loadGithubStars();
+  track("hero_view");
 });
 
 onBeforeUnmount(() => {
@@ -528,7 +533,7 @@ onBeforeUnmount(() => {
                   d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z"
                 />
               </svg>
-              <span id="homev2-gh-stars">6.2k</span>
+              <span class="homev2-gh-stars">6.2k</span>
             </a>
           </nav>
         </div>
@@ -544,13 +549,34 @@ onBeforeUnmount(() => {
           </h1>
 
           <p class="lead">
-            No Google. No telemetry. No visual puzzles. <br />Switch from reCAPTCHA in minutes.
+            <span class="exp-lead-1">No Google. No telemetry. No visual puzzles. <br />Switch from reCAPTCHA in minutes.</span>
+            <span class="exp-lead-2">Drop-in reCAPTCHA replacement. <br />Privacy-first. No tracking. No puzzles.</span>
           </p>
 
           <div class="actions">
-            <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="hero">Read the docs <span class="arr">→</span></a>
-            <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Demo <span class="arr">↗</span></a>
-            <a class="btn" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="hero">GitHub</a>
+            <a class="btn primary exp-primary-cta-1" href="/guide/" data-cta="docs" data-cta-location="hero">Read the docs <span class="arr">→</span></a>
+            <a class="btn primary exp-primary-cta-2" href="/guide/" data-cta="docs" data-cta-location="hero">Read the docs</a>
+            <a class="btn primary exp-primary-cta-3" href="/guide/" data-cta="docs" data-cta-location="hero">Self-host Cap <span class="arr">→</span></a>
+            <a class="btn primary exp-primary-cta-4" href="/guide/" data-cta="docs" data-cta-location="hero">Self-host Cap</a>
+            <a class="btn primary exp-primary-cta-5" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes <span class="arr">→</span></a>
+            <a class="btn primary exp-primary-cta-6" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes</a>
+
+            <a class="btn exp-demo-cta-1" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Watch it in action <span class="arr">↗</span></a>
+            <a class="btn exp-demo-cta-2" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Watch it in action</a>
+            <a class="btn exp-demo-cta-3" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">View live demo <span class="arr">↗</span></a>
+            <a class="btn exp-demo-cta-4" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">View live demo</a>
+            <a class="btn exp-demo-cta-5" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try it yourself <span class="arr">↗</span></a>
+            <a class="btn exp-demo-cta-6" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try it yourself</a>
+            <a class="btn exp-demo-cta-7" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo <span class="arr">↗</span></a>
+            <a class="btn exp-demo-cta-8" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo</a>
+
+            <a class="btn gh-link exp-github-cta-2" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="hero" aria-label="GitHub">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z" />
+              </svg>
+              <span class="homev2-gh-stars">6.2k</span>
+            </a>
+            <a class="btn exp-github-cta-3" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="hero">GitHub</a>
           </div>
         </div>
 
@@ -1273,7 +1299,7 @@ html.home-v2-active main.main {
 #homev2 header.top nav {
   display: flex;
   gap: 22px;
-  align-items: baseline;
+  align-items: center;
   font-family: var(--mono);
   font-size: 12px;
   color: var(--fg-dim);
@@ -1363,6 +1389,36 @@ html.home-v2-active main.main {
 #homev2 h1 .dim {
   color: var(--fg-dim);
   font-weight: 400;
+}
+
+:root:not([data-exp-lead="1"]) #homev2 .exp-lead-1,
+:root:not([data-exp-lead="2"]) #homev2 .exp-lead-2,
+:root:not([data-exp-primary-cta="1"]) #homev2 .exp-primary-cta-1,
+:root:not([data-exp-primary-cta="2"]) #homev2 .exp-primary-cta-2,
+:root:not([data-exp-primary-cta="3"]) #homev2 .exp-primary-cta-3,
+:root:not([data-exp-primary-cta="4"]) #homev2 .exp-primary-cta-4,
+:root:not([data-exp-primary-cta="5"]) #homev2 .exp-primary-cta-5,
+:root:not([data-exp-primary-cta="6"]) #homev2 .exp-primary-cta-6,
+:root:not([data-exp-demo-cta="1"]) #homev2 .exp-demo-cta-1,
+:root:not([data-exp-demo-cta="2"]) #homev2 .exp-demo-cta-2,
+:root:not([data-exp-demo-cta="3"]) #homev2 .exp-demo-cta-3,
+:root:not([data-exp-demo-cta="4"]) #homev2 .exp-demo-cta-4,
+:root:not([data-exp-demo-cta="5"]) #homev2 .exp-demo-cta-5,
+:root:not([data-exp-demo-cta="6"]) #homev2 .exp-demo-cta-6,
+:root:not([data-exp-demo-cta="7"]) #homev2 .exp-demo-cta-7,
+:root:not([data-exp-demo-cta="8"]) #homev2 .exp-demo-cta-8,
+:root:not([data-exp-github-cta="2"]) #homev2 .exp-github-cta-2,
+:root:not([data-exp-github-cta="3"]) #homev2 .exp-github-cta-3 { display: none; }
+
+#homev2 .btn.gh-link {
+  font-variant-numeric: tabular-nums;
+}
+#homev2 .btn.gh-link svg {
+  color: var(--fg-dim);
+  transition: color 0.18s ease;
+}
+#homev2 .btn.gh-link:hover svg {
+  color: var(--fg);
 }
 
 #homev2 .lead {
