@@ -570,13 +570,6 @@ onBeforeUnmount(() => {
             <a class="btn exp-demo-cta-7" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo <span class="arr">↗</span></a>
             <a class="btn exp-demo-cta-8" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo</a>
 
-            <a class="btn gh-link exp-github-cta-2" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="hero" aria-label="GitHub">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-                <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z" />
-              </svg>
-              <span class="homev2-gh-stars">6.2k</span>
-            </a>
-            <a class="btn exp-github-cta-3" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="hero">GitHub</a>
           </div>
         </div>
 
@@ -1406,20 +1399,7 @@ html.home-v2-active main.main {
 :root:not([data-exp-demo-cta="5"]) #homev2 .exp-demo-cta-5,
 :root:not([data-exp-demo-cta="6"]) #homev2 .exp-demo-cta-6,
 :root:not([data-exp-demo-cta="7"]) #homev2 .exp-demo-cta-7,
-:root:not([data-exp-demo-cta="8"]) #homev2 .exp-demo-cta-8,
-:root:not([data-exp-github-cta="2"]) #homev2 .exp-github-cta-2,
-:root:not([data-exp-github-cta="3"]) #homev2 .exp-github-cta-3 { display: none; }
-
-#homev2 .btn.gh-link {
-  font-variant-numeric: tabular-nums;
-}
-#homev2 .btn.gh-link svg {
-  color: var(--fg-dim);
-  transition: color 0.18s ease;
-}
-#homev2 .btn.gh-link:hover svg {
-  color: var(--fg);
-}
+:root:not([data-exp-demo-cta="8"]) #homev2 .exp-demo-cta-8 { display: none; }
 
 #homev2 .lead {
   font-size: 17px;
