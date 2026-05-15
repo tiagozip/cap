@@ -21,7 +21,7 @@ Cap is a self-hosted, open-source CAPTCHA for the modern web. It protects sites 
 
 Cap is **not** a proof-of-work CAPTCHA with extras bolted on. It runs two independent verification layers in parallel:
 
-1. **Proof-of-work:** The client solves SHA-256 hash challenges in parallel using Rust-compiled WASM and Web Workers. Optimized to resist GPU acceleration, keeping solve times similar across high-end and low-end hardware.
+1. **Proof-of-work:** The client solves SHA-256 hash or time-lock challenges in parallel using Rust-compiled WASM and Web Workers. Optimized to resist GPU acceleration, keeping solve times similar across high-end and low-end hardware.
 2. **Instrumentation challenges:** The server generates a unique JavaScript program per request. It runs DOM-dependent operations that are hard to emulate outside a real browser. The server knows the expected output and verifies it server-side.
 
 
@@ -30,6 +30,8 @@ Cap is **not** a proof-of-work CAPTCHA with extras bolted on. It runs two indepe
 ### Proof-of-work
 
 Standard SHA-256 PoW, parallelized and heavily optimized. Internal optimizations reduce GPU advantage, so attackers with server farms gain much less leverage than they would against naive PoW implementations.
+
+Alternatively, Cap also supports optimized time-lock puzzles (RSW). These are more resistant to GPU acceleration and, just like normal PoW, can be tuned to be more or less difficult. We've found them to work great in production.
 
 ### Instrumentation challenges
 

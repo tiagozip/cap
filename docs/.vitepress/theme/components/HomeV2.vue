@@ -824,7 +824,7 @@ onBeforeUnmount(() => {
               <span class="lbl">Layer 01 · Proof-of-work</span>
               <h3>Heavy math, in the browser.</h3>
               <p>
-                The client solves parallel SHA-256 hashes in WASM. Tuned against GPU acceleration,
+                The client solves parallel SHA-256 hashes and time-lock challenges in WASM. Tuned against GPU acceleration,
                 real CPU time, real money to scale.
               </p>
               <div class="kv-row">

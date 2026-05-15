@@ -7,7 +7,7 @@ export default withMermaid({
   lang: "en-US",
   title: "Cap: Self-hosted CAPTCHA for the modern web.",
   description:
-    "Cap is a lightweight, modern open-source CAPTCHA alternative using SHA-256 proof-of-work and instrumentation challenges",
+    "Cap is a lightweight, modern open-source CAPTCHA alternative using proof-of-work, time-lock and instrumentation challenges",
   lastUpdated: true,
   appearance: "force-dark",
   vite: {

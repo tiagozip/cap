@@ -4,7 +4,7 @@ outline: deep
 
 # Quickstart
 
-Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using SHA-256 proof-of-work and instrumentation challenges.
+Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using proof-of-work, time-lock and instrumentation challenges.
 
 Unlike traditional CAPTCHAs, Cap is fast and unobtrusive, has no telemetry or tracking, and uses accessible proof-of-work instead of annoying visual puzzles.
 
