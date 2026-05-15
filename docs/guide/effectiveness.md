@@ -17,3 +17,7 @@ Cap's goal is to make automated abuse expensive while keeping the experience fas
 Imagine sending 10,000 spam messages costs $1, potentially earning $10 – a profitable venture. If Cap increases the computational cost so that sending those messages now costs $100, the spammer loses $90. This eliminates the financial incentive.
 
 Cap's proof-of-work is heavily inspired by [Hashcash](https://www.researchgate.net/publication/2482110_Hashcash_-_A_Denial_of_Service_Counter-Measure). Our instrumentation challenges are inspired by Twitter and YouTube's own custom challenges.
+
+## Making GPUs useless
+
+SHA-256 is reasonable as a general PoW algorithm, but it can be significantly optimized on GPUs. That's why we also support experimental GPU-resistant algorithms like [RSW time-locks](./rsw.md).
