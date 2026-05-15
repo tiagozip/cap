@@ -31,7 +31,7 @@ The default way to use Cap is with the Standalone Docker container. [Learn more 
 - **Standalone mode**  
    Run Cap anywhere with a Docker container with analytics & more
 
-- **Programmatic**  
+- **No user interaction needed**  
    Hide Cap's widget and solve challenges in the background
 
 - **Open-source**  

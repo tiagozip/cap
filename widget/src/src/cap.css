@@ -306,7 +306,7 @@
   border-radius: 4px;
 }
 
-.captcha .credits[part="attribution"] {
+.captcha .credits {
   display: inline-flex !important;
   visibility: visible !important;
   pointer-events: all !important;
