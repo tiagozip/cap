@@ -52,11 +52,102 @@
     <script>
       const widget = document.querySelector("cap-widget");
 
-      widget.solve();
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const getCredits = () =>
+        widget.shadowRoot && widget.shadowRoot.querySelector(".credits");
 
-      widget.addEventListener("solve", function (e) {
-        fetch(e.detail.token === "ok" ? "/solved" : "/failed");
+      // Wait for the post-init 100ms enforce + first paint to settle.
+      const runTamperTests = async () => {
+        await wait(200);
+
+        let credits = getCredits();
+        if (!credits) throw new Error("credits node not rendered");
+        if (credits.hasAttribute("part")) {
+          throw new Error("credits still exposes the 'part' attribute");
+        }
+
+        // each tamper then trigger a fresh solve() to re-run the enforce
+        const tamperAndVerify = async (label, tamper, assert) => {
+          tamper(getCredits());
+          widget.reset();
+          await widget.solve();
+          const c = getCredits();
+          if (!c) throw new Error(`${label}: credits gone after solve`);
+          assert(c);
+          console.log(`[test] ${label} restored`);
+        };
+
+        await tamperAndVerify(
+          "display:none",
+          (c) => c.style.setProperty("display", "none", "important"),
+          (c) => {
+            if (getComputedStyle(c).display === "none")
+              throw new Error("display still none");
+          },
+        );
+
+        await tamperAndVerify(
+          "opacity:0",
+          (c) => c.style.setProperty("opacity", "0", "important"),
+          (c) => {
+            if (parseFloat(getComputedStyle(c).opacity) < 0.1)
+              throw new Error("opacity still 0");
+          },
+        );
+
+        await tamperAndVerify(
+          "font-size:0",
+          (c) => c.style.setProperty("font-size", "0px", "important"),
+          (c) => {
+            if (parseFloat(getComputedStyle(c).fontSize) < 8)
+              throw new Error("font-size still small");
+          },
+        );
+
+        await tamperAndVerify(
+          "removal",
+          (c) => c.remove(),
+          (c) => {
+            if (!c.isConnected) throw new Error("not re-attached");
+          },
+        );
+
+        await tamperAndVerify(
+          "text + href hijack",
+          (c) => {
+            c.textContent = "";
+            c.setAttribute("href", "https://evil.example");
+          },
+          (c) => {
+            if (!c.textContent || !c.textContent.trim())
+              throw new Error("text empty");
+            if (c.getAttribute("href") !== "https://trycap.dev")
+              throw new Error("href not restored");
+          },
+        );
+
+        console.log("[test] all tamper tests passed");
+      };
+
+      let solveCount = 0;
+      widget.addEventListener("solve", (e) => {
+        if (e.detail.token !== "ok") {
+          console.error("[test] solve failed");
+          fetch("/failed");
+        }
+        solveCount++;
       });
+
+      (async () => {
+        try {
+          await widget.solve();
+          await runTamperTests();
+          fetch("/solved");
+        } catch (err) {
+          console.error("[test] tamper test failed:", err && err.message);
+          fetch("/failed");
+        }
+      })();
     </script>
   </body>
 </html>

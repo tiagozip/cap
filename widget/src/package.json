@@ -1,6 +1,6 @@
 {
-  "name": "cap-widget",
-  "version": "0.1.52",
+  "name": "@cap.js/widget",
+  "version": "0.1.53",
   "description": "The self-hosted CAPTCHA for the modern web.",
   "keywords": [
     "algorithm",

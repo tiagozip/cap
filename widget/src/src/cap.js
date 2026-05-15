@@ -782,6 +782,8 @@
         return;
       }
 
+      this.#enforceCredits();
+
       try {
         this.#solving = true;
         this.updateUI(
@@ -1309,7 +1311,6 @@
 
       this.#credits = document.createElement("a");
       this.#credits.className = "credits";
-      this.#credits.setAttribute("part", "attribution");
       this.#credits.setAttribute("aria-label", "Secured by Cap");
       this.#credits.setAttribute("href", "https://trycap.dev");
       this.#credits.setAttribute("target", "_blank");
@@ -1323,6 +1324,9 @@
       this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
 
       this.#shadow.appendChild(this.#div);
+
+      this.#enforceCredits();
+      setTimeout(() => this.#enforceCredits(), 100);
     }
 
     addEventListeners() {
@@ -1374,6 +1378,39 @@
       this.addEventListener("solve", this.boundHandleSolve);
       this.addEventListener("error", this.boundHandleError);
       this.addEventListener("reset", this.boundHandleReset);
+    }
+
+    #hostIsHidden() {
+      if (!this.#host) return false;
+      const rect = this.#host.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return true;
+      const cs = window.getComputedStyle(this.#host);
+      if (cs.display === "none" || cs.visibility === "hidden") return true;
+      return false;
+    }
+
+    #enforceCredits() {
+      if (!this.#credits || !this.#div || this.#hostIsHidden()) return;
+      if (!this.#credits.isConnected || this.#credits.parentNode !== this.#div) {
+        this.#div.appendChild(this.#credits);
+      }
+      if (!this.#credits.textContent || !this.#credits.textContent.trim()) {
+        this.#credits.textContent = "Cap";
+      }
+      if (this.#credits.getAttribute("href") !== "https://trycap.dev") {
+        this.#credits.setAttribute("href", "https://trycap.dev");
+      }
+      this.#credits.style.cssText = [
+        "display: inline-flex !important",
+        "visibility: visible !important",
+        "opacity: 0.8 !important",
+        "pointer-events: all !important",
+        "font-size: 12px !important",
+        "transform: none !important",
+        "clip-path: none !important",
+        "filter: none !important",
+        "position: absolute !important",
+      ].join("; ");
     }
 
     animateLabel(text) {
