@@ -683,9 +683,9 @@ onBeforeUnmount(() => {
                   <path d="M8 6l-4 6 4 6M16 6l4 6-4 6M14 4l-4 16" />
                 </svg>
               </div>
-              <h3>Programmatic</h3>
+              <h3>No user interaction</h3>
               <p>
-                Hide the widget entirely and solve challenges silently, ideal for APIs and forms.
+                Hide the widget entirely and solve challenges silently, ideal for APIs and forms. Ready for headless browser detection.
               </p>
             </div>
             <div class="feat-cell">
@@ -695,8 +695,8 @@ onBeforeUnmount(() => {
                   <path d="M9 12l2 2 4-4" />
                 </svg>
               </div>
-              <h3>API protection</h3>
-              <p>Block abusive traffic while allow-listing trusted automated clients.</p>
+              <h3>GDPR & WCAG 2.2 compliant</h3>
+              <p>Meets strict privacy and accessibility standards.</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
