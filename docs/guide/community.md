@@ -67,3 +67,11 @@ These are React hook implementations of the Cap API, allowing full customization
 
 - **[clysss/capito](https://github.com/clysss/capito)**: Capito Cap PHP Server
 - **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)**: PHP port of the Cap proof-of-work captcha server
+
+## Client
+
+**Warning:** These libraries are community-maintained and not officially supported or actively monitored for security by Cap. We can't guarantee their quality, security, or compatibility.
+
+### JavaScript
+
+- **[cap-client](https://codeberg.org/sanin/cap-client)**: Client library and express middleware for making verification requests, intended for NodeJS
