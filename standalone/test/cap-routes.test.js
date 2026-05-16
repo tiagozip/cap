@@ -122,7 +122,7 @@ if (!redisAvailable) {
 
     test("returns 404 for unknown site key", async () => {
       const res = await app.handle(
-        new Request("http://localhost/nonexistent_key/challenge", {
+        new Request("http://localhost/0000000000/challenge", {
           method: "POST",
         }),
       );
