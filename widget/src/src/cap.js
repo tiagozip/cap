@@ -562,11 +562,13 @@
             this.#speculativePool
               .run(challenge[0], challenge[1])
               .then((nonce) => {
-                this.#speculative.completedCount++;
+                if (this.#speculative) this.#speculative.completedCount++;
                 return nonce;
               }),
           ),
         );
+
+        if (!this.#speculative) return;
 
         for (let i = 0; i < batchIndices.length; i++) {
           results[batchIndices[i]] = batchResults[i];
@@ -577,8 +579,11 @@
             setTimeout(resolve, SPECULATIVE_YIELD_MS),
           );
         }
+
+        if (!this.#speculative) return;
       }
 
+      if (!this.#speculative) return;
       this.#speculative.results = results;
       this.#speculative.state = "redeeming";
       this.#speculativeRedeem(results);
@@ -586,6 +591,7 @@
     }
 
     async #speculativeRedeem(solutions) {
+      if (!this.#speculative) return;
       try {
         const challengeResp = this.#speculative.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
@@ -597,6 +603,7 @@
           instrOut = await runInstrumentationChallenge(
             challengeResp.instrumentation,
           );
+          if (!this.#speculative) return;
           if (instrOut?.__timeout || instrOut?.__blocked) {
             this.#speculative.state = "done";
             this.#speculative.notify();
@@ -614,12 +621,16 @@
           headers: { "Content-Type": "application/json" },
         });
 
+        if (!this.#speculative) return;
+
         let resp;
         try {
           resp = await redeemRaw.json();
         } catch {
           throw new Error("Failed to parse speculative redeem response");
         }
+
+        if (!this.#speculative) return;
 
         if (!resp.success)
           throw new Error(resp.error || "Speculative redeem failed");
@@ -629,6 +640,7 @@
         this.#speculative.state = "done";
         this.#speculative.notify();
       } catch (e) {
+        if (!this.#speculative) return;
         console.warn(
           "[cap] speculative redeem failed (will redo on click):",
           e,
@@ -874,6 +886,7 @@
             }
 
             const progressInterval = setInterval(() => {
+              if (!this.#speculative) { clearInterval(progressInterval); return; }
               const st = this.#speculative.state;
               if (st === "done" || st === "error") {
                 clearInterval(progressInterval);
@@ -896,6 +909,7 @@
               this.#speculative.onSettled(resolve),
             );
             clearInterval(progressInterval);
+            if (!this.#speculative) return;
 
             if (
               this.#speculative.state === "idle" &&
