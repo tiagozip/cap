@@ -745,7 +745,8 @@ export const server = new Elysia({
       } else if (type === "country") {
         key = `country:${body.value}`;
       } else {
-        key = body.ip;
+        set.status = 400;
+        return { success: false, error: "Invalid block type" };
       }
 
       if (!key) {

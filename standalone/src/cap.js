@@ -21,6 +21,8 @@ const DEFAULT_RSW_T = 75_000;
 const MIN_RSW_T = 10_000;
 const MAX_RSW_T = 300_000;
 
+const SITE_KEY_RE = /^[a-f0-9]{10}$/;
+
 function hourlyBucket() {
   return String(Math.floor(Date.now() / 1000 / 3600) * 3600);
 }
@@ -253,6 +255,12 @@ export const capServer = new Elysia({
       methods: ["POST"],
     }),
   )
+  .onBeforeHandle(({ params, set }) => {
+    if (params?.siteKey && !SITE_KEY_RE.test(params.siteKey)) {
+      set.status = 400;
+      return { error: "Invalid site key format" };
+    }
+  })
 
   .post(
     "/:siteKey/challenge",
