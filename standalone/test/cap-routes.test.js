@@ -27,7 +27,7 @@ if (!redisAvailable) {
   const { capServer } = await import("../src/cap.js");
   const { db } = await import("../src/db.js");
   const { generateChallenge: cgChallenge } = await import("capjs-core");
-  const { createHash } = await import("node:crypto");
+  const { createHash, randomBytes } = await import("node:crypto");
 
   function fnv1a(str) {
     let hash = 2166136261;
@@ -55,7 +55,7 @@ if (!redisAvailable) {
   }
 
   const app = new Elysia().use(capServer);
-  const SITE_KEY = `test_site_key_${Math.random().toString(16).slice(2)}`;
+  const SITE_KEY = randomBytes(5).toString("hex");
   const SECRET = "test-jwt-secret-32-bytes-padding-junk-1!";
 
   beforeAll(async () => {
@@ -211,7 +211,7 @@ if (!redisAvailable) {
     test("RSW: issues format-2 challenge and accepts solution", async () => {
       const { ensureRswKeypair } = await import("../src/rsw-store.js");
       await ensureRswKeypair();
-      const rswKey = `rsw_site_key_${Math.random().toString(16).slice(2)}`;
+      const rswKey = randomBytes(5).toString("hex");
       const rswT = 10_000;
       await db.send("HSET", [
         `key:${rswKey}`,
@@ -260,7 +260,7 @@ if (!redisAvailable) {
     }, 30_000);
 
     test("rejects scope mismatch (token from another site key)", async () => {
-      const otherKey = `other_site_key_${Math.random().toString(16).slice(2)}`;
+      const otherKey = randomBytes(5).toString("hex");
       await db.send("HSET", [
         `key:${otherKey}`,
         "config",
