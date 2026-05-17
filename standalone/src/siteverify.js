@@ -69,10 +69,13 @@ export const siteverifyServer = new Elysia({
       return { success: true };
     },
     {
-      body: t.Object({
-        secret: t.Optional(t.String()),
-        response: t.Optional(t.String()),
-      }),
+      body: t.Object(
+        {
+          secret: t.Optional(t.String()),
+          response: t.Optional(t.String()),
+        },
+        { additionalProperties: true },
+      ),
       params: t.Object({
         siteKey: t.Optional(t.String()),
       }),
