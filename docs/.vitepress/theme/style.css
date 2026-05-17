@@ -228,7 +228,7 @@ body {
   max-width: 100% !important;
   box-shadow: none !important;
   margin: 0 !important;
-  
+
   border: 1px solid var(--vp-c-border) !important;
   display: block !important;
   padding: 12px 14px !important;
@@ -296,13 +296,13 @@ body {
   text-align: left !important;
   cursor: pointer !important;
   transition: color 0.15s ease;
-  
+
   color: var(--vp-c-brand-1) !important;
   text-decoration: underline !important;
   width: fit-content !important;
   display: inline-block !important;
   margin-left: 3px !important;
-  text-underline-offset: 3px!important;
+  text-underline-offset: 3px !important;
 }
 
 .ea-wrap .ea-content:hover strong.ea-cta,
@@ -321,7 +321,7 @@ body {
   padding: 0 !important;
   margin: 2px 0 0 !important;
   font-size: 11.5px !important;
-  
+
   &::after {
     content: " • via EthicalAds";
     color: var(--vp-c-text-3) !important;
@@ -329,7 +329,7 @@ body {
 }
 
 [data-ea-publisher].loaded .ea-callout {
-  display: none!important;
+  display: none !important;
 }
 
 .ea-wrap .ea-callout {
@@ -385,3 +385,8 @@ body {
   color: var(--carbon-text-color) !important;
 }
 
+.VPFooter.has-sidebar {
+  display: block!important;
+  border-top: transparent!important;
+  padding-top: 0px!important;
+}
