@@ -440,6 +440,22 @@ function initCtaTracking() {
   registerCleanup(() => handlers.forEach(([el, h]) => el.removeEventListener("click", h)));
 }
 
+function initCtaBlockView() {
+  const el = document.querySelector("#homev2 .cta-block");
+  if (!el || typeof IntersectionObserver === "undefined") return;
+  let fired = false;
+  const io = new IntersectionObserver((entries) => {
+    if (fired) return;
+    if (entries.some((e) => e.isIntersecting)) {
+      fired = true;
+      io.disconnect();
+      track("cta_block_view");
+    }
+  }, { threshold: 0.4 });
+  io.observe(el);
+  registerCleanup(() => io.disconnect());
+}
+
 async function loadGithubStars() {
   const els = document.querySelectorAll(".homev2-gh-stars");
   if (!els.length) return;
@@ -468,6 +484,7 @@ onMounted(() => {
   initCountUp();
   initLiveArchitecture();
   initCtaTracking();
+  initCtaBlockView();
   loadGithubStars();
   track("hero_view");
 });
@@ -1005,13 +1022,17 @@ onBeforeUnmount(() => {
         <div class="wrap">
           <div class="cta">
             <span class="eyebrow">Get started</span>
-            <h2>Ship Cap in 15 minutes.</h2>
+            <h2>
+              <span class="exp-cta-headline-1">Ship Cap in 15 minutes.</span>
+              <span class="exp-cta-headline-2">Ditch reCAPTCHA this afternoon.</span>
+            </h2>
             <p>
               Drop the widget into your site, point it at a $5 VPS, and stop paying anyone to see
               your users' traffic.
             </p>
             <div class="actions">
-              <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="cta_block">Read the docs <span class="arr">→</span></a>
+              <a class="btn primary exp-cta-primary-1" href="/guide/" data-cta="docs" data-cta-location="cta_block">Read the docs <span class="arr">→</span></a>
+              <a class="btn primary exp-cta-primary-2" href="/guide/" data-cta="docs" data-cta-location="cta_block">Get started in 5 minutes</a>
               <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="cta_block">Try the demo <span class="arr">↗</span></a>
               <a class="btn" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="cta_block">Star on GitHub</a>
             </div>
@@ -1399,7 +1420,11 @@ html.home-v2-active main.main {
 :root:not([data-exp-demo-cta="5"]) #homev2 .exp-demo-cta-5,
 :root:not([data-exp-demo-cta="6"]) #homev2 .exp-demo-cta-6,
 :root:not([data-exp-demo-cta="7"]) #homev2 .exp-demo-cta-7,
-:root:not([data-exp-demo-cta="8"]) #homev2 .exp-demo-cta-8 { display: none; }
+:root:not([data-exp-demo-cta="8"]) #homev2 .exp-demo-cta-8,
+:root:not([data-exp-cta-headline="1"]) #homev2 .exp-cta-headline-1,
+:root:not([data-exp-cta-headline="2"]) #homev2 .exp-cta-headline-2,
+:root:not([data-exp-cta-primary="1"]) #homev2 .exp-cta-primary-1,
+:root:not([data-exp-cta-primary="2"]) #homev2 .exp-cta-primary-2 { display: none; }
 
 #homev2 .lead {
   font-size: 17px;
