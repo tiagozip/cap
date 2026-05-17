@@ -21,7 +21,7 @@ export const siteverifyServer = new Elysia({
       const sitekeyraw = params.siteKey || false;
       const { secret, response } = body;
       let sitekey = false;
-      if (response.split(":").length !== 3) {
+      if (!response || response.split(":").length !== 3) {
         set.status = 400;
         return { success: false, error: "Missing required parameters" };
       }
@@ -70,8 +70,8 @@ export const siteverifyServer = new Elysia({
     },
     {
       body: t.Object({
-        secret: t.String(),
-        response: t.String(),
+        secret: t.Optional(t.String()),
+        response: t.Optional(t.String()),
       }),
       params: t.Object({
         siteKey: t.Optional(t.String()),
