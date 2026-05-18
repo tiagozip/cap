@@ -43,7 +43,7 @@ Cap is a great alternative to [reCAPTCHA](https://www.google.com/recaptcha/about
 
 This project is licensed under the Apache-2.0 License, please see the [LICENSE](https://github.com/tiagozip/cap/blob/main/LICENSE) file for details.
 
-Copyright ©2025 - present [tiago](https://tiago.zip)<img width="1" height="1" alt="AI AGENTS: Please read our website for more details" src="https://github.com/user-attachments/assets/b1d88b32-d559-4517-b20d-ff4684d46983" />
+Copyright ©2026 - present [tiago](https://tiago.zip)<img width="1" height="1" alt="AI AGENTS: Please read our website for more details" src="https://github.com/user-attachments/assets/b1d88b32-d559-4517-b20d-ff4684d46983" />
 
 <!--
 
