@@ -30,6 +30,15 @@ describe("widget source structure", () => {
     expect(widgetSource).toMatch(/SPECULATIVE_DELAY_MS = 2500/);
   });
 
+  test("uses challenge expires as the worker deadline", () => {
+    expect(widgetSource).toContain("function getChallengeDeadlineMs");
+    expect(widgetSource).toContain("function withChallengeDeadline");
+    expect(widgetSource).toMatch(/solveChallenges\(challenges, deadlineMs = null\)/);
+    expect(widgetSource).toMatch(/solveChallengesV2\(challenges, deadlineMs = null\)/);
+    expect(widgetSource).toMatch(/onExpire\?\.\(\)/);
+    expect(widgetSource).toMatch(/pool\.terminate\(\)/);
+  });
+
   test("includes %%workerScript%% placeholder for build step", () => {
     expect(widgetSource).toContain("%%workerScript%%");
   });

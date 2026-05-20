@@ -45,6 +45,12 @@ If so, you can change the IP extraction logic to simply read from a header set i
 
 The `/siteverify` endpoint is intended for server-to-server use, so it's not ratelimited by default.
 
+## Challenge expiration
+
+Generated challenges expire after 15 minutes by default. You can change the global default with `CHALLENGE_TTL_MS`, or set **Challenge expiration (ms)** on an individual key in the dashboard. Per-key values take priority over `CHALLENGE_TTL_MS`.
+
+The widget also treats the challenge's existing `expires` value as a client-side deadline. If a slow device or high-difficulty challenge runs past that deadline, the widget aborts its workers and shows an error instead of spinning indefinitely.
+
 ## Redis / Valkey
 
 Cap Standalone uses Redis (or Valkey) for all data storage. Set the `REDIS_URL` environment variable to your Redis connection string. This defaults to `redis://localhost:6379`.

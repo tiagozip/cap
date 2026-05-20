@@ -69,8 +69,22 @@ function getClientIp(request, srv) {
   return srv?.requestIP(request)?.address || null;
 }
 
-const CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
+const DEFAULT_CHALLENGE_TTL_MS = 15 * 60 * 1000; // 15min
 const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2h
+
+function parseTtlMs(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+const CHALLENGE_TTL_MS = parseTtlMs(
+  process.env.CHALLENGE_TTL_MS,
+  DEFAULT_CHALLENGE_TTL_MS,
+);
+
+function resolveChallengeTtlMs(keyConfig) {
+  return parseTtlMs(keyConfig?.expiresMs, CHALLENGE_TTL_MS);
+}
 
 function ipv4ToInt(a) {
   return a.split(".").reduce((r, b) => (r << 8) + parseInt(b, 10), 0) >>> 0;
@@ -372,6 +386,7 @@ export const capServer = new Elysia({
             obfuscationLevel: keyConfig.obfuscationLevel,
           }
         : false;
+      const challengeTtlMs = resolveChallengeTtlMs(keyConfig);
 
       let challengeOpts;
       if (keyConfig.rsw) {
@@ -399,7 +414,7 @@ export const capServer = new Elysia({
             : ["rsw"],
           keypair,
           t,
-          expiresMs: CHALLENGE_TTL_MS,
+          expiresMs: challengeTtlMs,
           scope: params.siteKey,
           instrumentation: instrumentationOpts,
         };
@@ -408,7 +423,7 @@ export const capServer = new Elysia({
           challengeCount: keyConfig.challengeCount ?? 80,
           challengeSize: keyConfig.saltSize ?? 32,
           challengeDifficulty: keyConfig.difficulty ?? 4,
-          expiresMs: CHALLENGE_TTL_MS,
+          expiresMs: challengeTtlMs,
           scope: params.siteKey,
           instrumentation: instrumentationOpts,
         };

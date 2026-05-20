@@ -34,6 +34,7 @@ const keyDefaults = {
   blockAutomatedBrowsers: false,
   rsw: false,
   rswT: 75_000,
+  expiresMs: null,
 };
 
 const sumSolutions = (data, startBucket, endBucket) => {
@@ -154,6 +155,7 @@ export const server = new Elysia({
         blockAutomatedBrowsers: body?.blockAutomatedBrowsers ?? false,
         rsw: body?.rsw ?? false,
         rswT: body?.rswT ?? keyDefaults.rswT,
+        expiresMs: body?.expiresMs ?? keyDefaults.expiresMs,
       };
 
       if (
@@ -191,6 +193,9 @@ export const server = new Elysia({
         corsOrigins: t.Optional(t.Array(t.String())),
         rsw: t.Optional(t.Boolean()),
         rswT: t.Optional(t.Number({ minimum: 10000, maximum: 300000 })),
+        expiresMs: t.Optional(
+          t.Union([t.Number({ minimum: 1000, maximum: 86400000 }), t.Null()]),
+        ),
       }),
       detail: {
         tags: ["Keys"],
@@ -453,6 +458,7 @@ export const server = new Elysia({
         blockAutomatedBrowsers,
         ratelimitMax,
         ratelimitDuration,
+        expiresMs,
         corsOrigins,
         blockNonBrowserUA,
         requiredHeaders,
@@ -483,6 +489,8 @@ export const server = new Elysia({
           ratelimitDuration !== undefined
             ? ratelimitDuration
             : (existingConfig.ratelimitDuration ?? null),
+        expiresMs:
+          expiresMs !== undefined ? expiresMs : (existingConfig.expiresMs ?? null),
         corsOrigins:
           corsOrigins !== undefined
             ? corsOrigins
@@ -525,6 +533,9 @@ export const server = new Elysia({
         ),
         ratelimitDuration: t.Optional(
           t.Union([t.Number({ minimum: 1000, maximum: 3600000 }), t.Null()]),
+        ),
+        expiresMs: t.Optional(
+          t.Union([t.Number({ minimum: 1000, maximum: 86400000 }), t.Null()]),
         ),
         corsOrigins: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
         blockNonBrowserUA: t.Optional(t.Union([t.Boolean(), t.Null()])),

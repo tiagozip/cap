@@ -574,6 +574,10 @@ function renderKeyDetail() {
               <input type="range" id="cfgRswT" min="10000" max="300000" step="5000" value="${key.config.rswT ?? 75000}">
             </div>
           </div>
+          <div class="edit-field" style="margin-top:8px">
+            <label>Challenge expiration (ms)</label>
+            <input type="number" id="cfgExpiresMs" value="${key.config.expiresMs ?? ""}" min="1000" max="86400000" step="1000" placeholder="900000">
+          </div>
           <h3 class="config-section-title" style="margin-top:16px">Instrumentation</h3>
           <div class="switch-field">
             <label class="switch">
@@ -803,6 +807,8 @@ function renderKeyDetail() {
     const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
     const rsw = document.getElementById("cfgChallengeProtocol").value === "rsw";
     const rswT = parseInt(document.getElementById("cfgRswT").value, 10);
+    const expiresVal = document.getElementById("cfgExpiresMs").value;
+    const expiresMs = expiresVal === "" ? null : parseInt(expiresVal, 10);
     const dirty =
       name !== key.name ||
       difficulty !== key.config.difficulty ||
@@ -811,7 +817,8 @@ function renderKeyDetail() {
       obfuscationLevel !== (key.config.obfuscationLevel ?? 5) ||
       blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers ||
       rsw !== !!key.config.rsw ||
-      rswT !== (key.config.rswT ?? 75000);
+      rswT !== (key.config.rswT ?? 75000) ||
+      expiresMs !== (key.config.expiresMs ?? null);
     document.getElementById("saveMainConfigBtn").disabled = !dirty;
   }
 
@@ -841,7 +848,7 @@ function renderKeyDetail() {
     checkSecurityDirty();
   }
 
-  for (const id of ["cfgName", "cfgDifficulty", "cfgChallengeCount"]) {
+  for (const id of ["cfgName", "cfgDifficulty", "cfgChallengeCount", "cfgExpiresMs"]) {
     document.getElementById(id)?.addEventListener("input", checkMainDirty);
   }
   for (const id of ["cfgRatelimitMax", "cfgRatelimitDuration"]) {
@@ -2345,8 +2352,15 @@ async function saveMainConfig() {
   const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
   const rsw = document.getElementById("cfgChallengeProtocol").value === "rsw";
   const rswT = parseInt(document.getElementById("cfgRswT").value, 10);
+  const expiresVal = document.getElementById("cfgExpiresMs").value;
+  const expiresMs = expiresVal === "" ? null : parseInt(expiresVal, 10);
 
-  if (!name || difficulty < 1 || challengeCount < 1) {
+  if (
+    !name ||
+    difficulty < 1 ||
+    challengeCount < 1 ||
+    (expiresMs !== null && (expiresMs < 1000 || expiresMs > 86400000))
+  ) {
     showModal(
       "Validation error",
       '<div class="modal-body"><p>Please check your input values.</p></div>',
@@ -2379,6 +2393,7 @@ async function saveMainConfig() {
     blockAutomatedBrowsers,
     rsw,
     rswT,
+    expiresMs,
   });
 
   if (res.success) {
@@ -2393,6 +2408,7 @@ async function saveMainConfig() {
       blockAutomatedBrowsers,
       rsw,
       rswT,
+      expiresMs,
     };
     renderKeysList(searchInput.value);
   } else {

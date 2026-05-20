@@ -206,6 +206,44 @@
   const SPECULATIVE_WORKERS = 1;
   const SPECULATIVE_YIELD_MS = 120;
 
+  function getChallengeDeadlineMs(challengeResp) {
+    const expires = challengeResp?.expires;
+    if (expires === undefined || expires === null) return null;
+
+    const deadline =
+      typeof expires === "number" ? expires : new Date(expires).getTime();
+    return Number.isFinite(deadline) ? deadline : null;
+  }
+
+  function getChallengeTimeRemaining(deadlineMs) {
+    if (deadlineMs === null || deadlineMs === undefined) return Infinity;
+    return deadlineMs - Date.now();
+  }
+
+  async function withChallengeDeadline(work, deadlineMs, onExpire) {
+    const remainingMs = getChallengeTimeRemaining(deadlineMs);
+    if (remainingMs <= 0) {
+      onExpire?.();
+      throw new Error("Challenge expired");
+    }
+    if (!Number.isFinite(remainingMs)) return await work();
+
+    let timer = null;
+    try {
+      return await Promise.race([
+        work(),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            onExpire?.();
+            reject(new Error("Challenge expired"));
+          }, remainingMs);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
   let _sharedWorkerUrl = null;
 
   function _getSharedWorkerUrl() {
@@ -381,6 +419,7 @@
         state: "idle",
         challengeResp: null,
         challenges: null,
+        deadlineMs: null,
         results: [],
         completedCount: 0,
         solvePromise: null,
@@ -478,7 +517,12 @@
         if (resp.error) throw new Error(resp.error);
 
         resp._apiEndpoint = apiEndpoint;
+        const deadlineMs = getChallengeDeadlineMs(resp);
+        if (getChallengeTimeRemaining(deadlineMs) <= 0) {
+          throw new Error("Challenge expired");
+        }
         this.#speculative.challengeResp = resp;
+        this.#speculative.deadlineMs = deadlineMs;
 
         if (resp.format === 2 && Array.isArray(resp.challenges)) {
           this.#speculative.state = "idle";
@@ -501,7 +545,10 @@
         this.#speculative.challenges = challenges;
         this.#speculative.state = "solving";
 
-        this.#speculative.solvePromise = this.#speculativeSolveAll(challenges);
+        this.#speculative.solvePromise = this.#speculativeSolveAll(
+          challenges,
+          deadlineMs,
+        ).catch(() => {});
       } catch (e) {
         console.warn("[cap] speculative challenge fetch failed:", e);
         this.#speculative.state = "error";
@@ -509,7 +556,7 @@
       }
     }
 
-    async #speculativeSolveAll(challenges) {
+    async #speculativeSolveAll(challenges, deadlineMs) {
       _getSharedWorkerUrl();
 
       let wasmModule = null;
@@ -544,49 +591,67 @@
 
       let nextIndex = 0;
 
-      while (nextIndex < total) {
-        const batchSize = concurrency;
-        const batch = [];
-        const batchIndices = [];
+      try {
+        await withChallengeDeadline(
+          async () => {
+            while (nextIndex < total) {
+              const batchSize = concurrency;
+              const batch = [];
+              const batchIndices = [];
 
-        for (let i = 0; i < batchSize && nextIndex < total; i++) {
-          batchIndices.push(nextIndex);
-          batch.push(challenges[nextIndex]);
-          nextIndex++;
-        }
+              for (let i = 0; i < batchSize && nextIndex < total; i++) {
+                batchIndices.push(nextIndex);
+                batch.push(challenges[nextIndex]);
+                nextIndex++;
+              }
 
-        this.#speculativePool._ensureSize(Math.max(concurrency, batchSize));
+              this.#speculativePool._ensureSize(
+                Math.max(concurrency, batchSize),
+              );
 
-        const batchResults = await Promise.all(
-          batch.map((challenge) =>
-            this.#speculativePool
-              .run(challenge[0], challenge[1])
-              .then((nonce) => {
-                this.#speculative.completedCount++;
-                return nonce;
-              }),
-          ),
+              const batchResults = await Promise.all(
+                batch.map((challenge) =>
+                  this.#speculativePool
+                    .run(challenge[0], challenge[1])
+                    .then((nonce) => {
+                      this.#speculative.completedCount++;
+                      return nonce;
+                    }),
+                ),
+              );
+
+              for (let i = 0; i < batchIndices.length; i++) {
+                results[batchIndices[i]] = batchResults[i];
+              }
+
+              if (!promoted && nextIndex < total) {
+                await new Promise((resolve) =>
+                  setTimeout(resolve, SPECULATIVE_YIELD_MS),
+                );
+              }
+            }
+          },
+          deadlineMs,
+          () => this.#speculativePool?.terminate(),
         );
-
-        for (let i = 0; i < batchIndices.length; i++) {
-          results[batchIndices[i]] = batchResults[i];
-        }
-
-        if (!promoted && nextIndex < total) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, SPECULATIVE_YIELD_MS),
-          );
-        }
+      } catch (e) {
+        this.#speculative.state = "error";
+        this.#speculative.notify();
+        throw e;
       }
 
       this.#speculative.results = results;
       this.#speculative.state = "redeeming";
-      this.#speculativeRedeem(results);
+      this.#speculativeRedeem(results, deadlineMs);
       return results;
     }
 
-    async #speculativeRedeem(solutions) {
+    async #speculativeRedeem(solutions, deadlineMs) {
       try {
+        if (getChallengeTimeRemaining(deadlineMs) <= 0) {
+          throw new Error("Challenge expired");
+        }
+
         const challengeResp = this.#speculative.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
         if (!apiEndpoint)
@@ -633,7 +698,8 @@
           "[cap] speculative redeem failed (will redo on click):",
           e,
         );
-        this.#speculative.state = "done";
+        this.#speculative.state =
+          e?.message === "Challenge expired" ? "error" : "done";
         this.#speculative.notify();
       }
     }
@@ -813,6 +879,7 @@
 
           let solutions;
           let challengeResp;
+          let deadlineMs;
 
           if (
             this.#speculative.state === "done" &&
@@ -852,6 +919,7 @@
           if (this.#speculative.state === "done") {
             solutions = this.#speculative.results;
             challengeResp = this.#speculative.challengeResp;
+            deadlineMs = this.#speculative.deadlineMs;
             this.dispatchEvent("progress", { progress: 100 });
           } else if (
             this.#speculative.state === "solving" ||
@@ -904,7 +972,11 @@
             ) {
               challengeResp = this.#speculative.challengeResp;
               this.#speculative.challengeResp = null;
-              solutions = await this.solveChallengesV2(challengeResp.challenges);
+              deadlineMs = getChallengeDeadlineMs(challengeResp);
+              solutions = await this.solveChallengesV2(
+                challengeResp.challenges,
+                deadlineMs,
+              );
             } else {
               if (this.#speculative.state !== "done") {
                 throw new Error("Speculative solve failed – please try again");
@@ -946,6 +1018,7 @@
 
             solutions = this.#speculative.results;
             challengeResp = this.#speculative.challengeResp;
+            deadlineMs = this.#speculative.deadlineMs;
             this.dispatchEvent("progress", { progress: 100 });
             }
           } else {
@@ -969,8 +1042,13 @@
               challengeResp.format === 2 &&
               Array.isArray(challengeResp.challenges)
             ) {
-              solutions = await this.solveChallengesV2(challengeResp.challenges);
+              deadlineMs = getChallengeDeadlineMs(challengeResp);
+              solutions = await this.solveChallengesV2(
+                challengeResp.challenges,
+                deadlineMs,
+              );
             } else {
+              deadlineMs = getChallengeDeadlineMs(challengeResp);
               const { challenge, token } = challengeResp;
               let challenges = challenge;
               if (!Array.isArray(challenges)) {
@@ -983,15 +1061,24 @@
                   ];
                 });
               }
-              solutions = await this.solveChallenges(challenges);
+              solutions = await this.solveChallenges(challenges, deadlineMs);
             }
           }
 
-          const instrPromise = challengeResp.instrumentation
-            ? runInstrumentationChallenge(challengeResp.instrumentation)
-            : Promise.resolve(null);
+          if (deadlineMs === undefined) {
+            deadlineMs = getChallengeDeadlineMs(challengeResp);
+          }
+          if (getChallengeTimeRemaining(deadlineMs) <= 0) {
+            throw new Error("Challenge expired");
+          }
 
-          const instrOut = await instrPromise;
+          const instrOut = await withChallengeDeadline(
+            () =>
+              challengeResp.instrumentation
+                ? runInstrumentationChallenge(challengeResp.instrumentation)
+                : Promise.resolve(null),
+            deadlineMs,
+          );
 
           if (instrOut?.__timeout || instrOut?.__blocked) {
             capFetch(`${apiEndpoint}redeem`, {
@@ -1031,6 +1118,9 @@
           }
 
           const { token } = challengeResp;
+          if (getChallengeTimeRemaining(deadlineMs) <= 0) {
+            throw new Error("Challenge expired");
+          }
 
           const redeemResponse = await capFetch(`${apiEndpoint}redeem`, {
             method: "POST",
@@ -1097,7 +1187,7 @@
       }
     }
 
-    async solveChallengesV2(challenges) {
+    async solveChallengesV2(challenges, deadlineMs = null) {
       const total = challenges.length;
       let completed = 0;
 
@@ -1150,44 +1240,49 @@
       };
 
       try {
-        await Promise.all(
-          challenges.map((ch, idx) => {
-            if (ch.protocol === "sha256-pow") {
-              return withTimeout(
-                pool.run(ch.payload.salt, ch.payload.target),
-                `sha256-pow worker #${idx}`,
-              ).then((nonce) => {
-                solutions[idx] = { nonce: Number(nonce) };
-                inFlight[idx] = 0;
-                completed++;
-                emit();
-              });
-            }
+        await withChallengeDeadline(
+          async () =>
+            await Promise.all(
+              challenges.map((ch, idx) => {
+                if (ch.protocol === "sha256-pow") {
+                  return withTimeout(
+                    pool.run(ch.payload.salt, ch.payload.target),
+                    `sha256-pow worker #${idx}`,
+                  ).then((nonce) => {
+                    solutions[idx] = { nonce: Number(nonce) };
+                    inFlight[idx] = 0;
+                    completed++;
+                    emit();
+                  });
+                }
 
-            if (ch.protocol === "rsw") {
-              return withTimeout(
-                pool.runMsg(
-                  { kind: "rsw", N: ch.payload.N, x: ch.payload.x, t: ch.payload.t | 0 },
-                  (p) => { inFlight[idx] = p; emit(); },
-                ),
-                `rsw worker #${idx}`,
-              ).then((data) => {
-                solutions[idx] = { y: data.y };
-                inFlight[idx] = 0;
-                completed++;
-                emit();
-              });
-            }
-            
-            return runInstrumentationChallenge(ch.payload.blob).then((out) => {
-              if (out?.__timeout) solutions[idx] = { timeout: true };
-              else if (out?.__blocked) solutions[idx] = { blocked: true };
-              else solutions[idx] = { instr: out };
-              inFlight[idx] = 0;
-              completed++;
-              emit();
-            });
-          }),
+                if (ch.protocol === "rsw") {
+                  return withTimeout(
+                    pool.runMsg(
+                      { kind: "rsw", N: ch.payload.N, x: ch.payload.x, t: ch.payload.t | 0 },
+                      (p) => { inFlight[idx] = p; emit(); },
+                    ),
+                    `rsw worker #${idx}`,
+                  ).then((data) => {
+                    solutions[idx] = { y: data.y };
+                    inFlight[idx] = 0;
+                    completed++;
+                    emit();
+                  });
+                }
+
+                return runInstrumentationChallenge(ch.payload.blob).then((out) => {
+                  if (out?.__timeout) solutions[idx] = { timeout: true };
+                  else if (out?.__blocked) solutions[idx] = { blocked: true };
+                  else solutions[idx] = { instr: out };
+                  inFlight[idx] = 0;
+                  completed++;
+                  emit();
+                });
+              }),
+            ),
+          deadlineMs,
+          () => pool.terminate(),
         );
       } finally {
         pool.terminate();
@@ -1196,7 +1291,7 @@
       return solutions;
     }
 
-    async solveChallenges(challenges) {
+    async solveChallenges(challenges, deadlineMs = null) {
       const total = challenges.length;
       let completed = 0;
 
@@ -1238,26 +1333,32 @@
 
       const results = [];
       try {
-        for (let i = 0; i < challenges.length; i += this.#workersCount) {
-          const chunk = challenges.slice(
-            i,
-            Math.min(i + this.#workersCount, challenges.length),
-          );
-          const chunkResults = await Promise.all(
-            chunk.map(([salt, target]) =>
-              pool.run(salt, target).then((nonce) => {
-                completed++;
-                const visual = Math.min(
-                  99,
-                  Math.round(((speculativeHead + completed) / total) * 100),
-                );
-                this.dispatchEvent("progress", { progress: visual });
-                return nonce;
-              }),
-            ),
-          );
-          results.push(...chunkResults);
-        }
+        await withChallengeDeadline(
+          async () => {
+            for (let i = 0; i < challenges.length; i += this.#workersCount) {
+              const chunk = challenges.slice(
+                i,
+                Math.min(i + this.#workersCount, challenges.length),
+              );
+              const chunkResults = await Promise.all(
+                chunk.map(([salt, target]) =>
+                  pool.run(salt, target).then((nonce) => {
+                    completed++;
+                    const visual = Math.min(
+                      99,
+                      Math.round(((speculativeHead + completed) / total) * 100),
+                    );
+                    this.dispatchEvent("progress", { progress: visual });
+                    return nonce;
+                  }),
+                ),
+              );
+              results.push(...chunkResults);
+            }
+          },
+          deadlineMs,
+          () => pool.terminate(),
+        );
       } finally {
         pool.terminate();
       }

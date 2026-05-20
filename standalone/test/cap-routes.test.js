@@ -120,6 +120,39 @@ if (!redisAvailable) {
       expect(body.expires).toBeGreaterThan(Date.now());
     });
 
+    test("uses per-key expiresMs for challenge TTL", async () => {
+      const ttlKey = `ttl_site_key_${Math.random().toString(16).slice(2)}`;
+      const expiresMs = 2_000;
+      await db.send("HSET", [
+        `key:${ttlKey}`,
+        "config",
+        JSON.stringify({
+          challengeCount: 1,
+          saltSize: 4,
+          difficulty: 1,
+          instrumentation: false,
+          expiresMs,
+        }),
+        "jwtSecret",
+        SECRET,
+      ]);
+      try {
+        const before = Date.now();
+        const res = await app.handle(
+          new Request(`http://localhost/${ttlKey}/challenge`, {
+            method: "POST",
+          }),
+        );
+        expect(res.status).toBe(200);
+        const body = await res.json();
+        const after = Date.now();
+        expect(body.expires).toBeGreaterThanOrEqual(before + expiresMs);
+        expect(body.expires).toBeLessThanOrEqual(after + expiresMs + 100);
+      } finally {
+        await db.send("DEL", [`key:${ttlKey}`]);
+      }
+    });
+
     test("returns 404 for unknown site key", async () => {
       const res = await app.handle(
         new Request("http://localhost/nonexistent_key/challenge", {
