@@ -52,13 +52,7 @@ const tryLoad = (attempt = 0) => {
 const track = (name, props) => {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    const merged = { ...(props || {}) };
-    for (const attr of document.documentElement.attributes) {
-      if (attr.name.startsWith("data-exp-")) {
-        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
-      }
-    }
-    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
+    window.plausible(name, props ? { props } : undefined);
   } catch {}
 };
 
@@ -163,22 +157,6 @@ onUnmounted(() => {
   transform: translateY(120%);
   opacity: 0;
   pointer-events: none;
-}
-
-:root[data-exp-sticky-ad="2"] .home-sticky-ad {
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: none;
-}
-
-:root[data-exp-ad-callout="2"] .ea-wrap.ea-wrap--homesticky .ea-callout::before {
-  position: absolute;
-  bottom: 7px;
-  right: 10px;
 }
 
 .ea-wrap.ea-wrap--homesticky [data-ea-publisher] {
