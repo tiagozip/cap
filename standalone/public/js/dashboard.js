@@ -2606,12 +2606,12 @@ function openCreateKeyModal(prefill = "") {
   const corsPanel = modal.querySelector("#newKeyCorsPanel");
   const corsList = modal.querySelector("#newKeyCorsOriginsList");
 
-  instrToggle.click();
-
   instrToggle.addEventListener("change", () => {
     blockBotsField.style.display = instrToggle.checked ? "flex" : "none";
     if (!instrToggle.checked) blockBotsToggle.checked = false;
   });
+
+  instrToggle.click();
 
   function ensureNewKeyCorsEmptyRow() {
     const entries = [...corsList.querySelectorAll(".origin-entry")];
