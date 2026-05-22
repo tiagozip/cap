@@ -415,13 +415,7 @@ function initLiveArchitecture() {
 function track(name, props) {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    const merged = { ...(props || {}) };
-    for (const attr of document.documentElement.attributes) {
-      if (attr.name.startsWith("data-exp-")) {
-        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
-      }
-    }
-    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
+    window.plausible(name, props ? { props } : undefined);
   } catch {}
 }
 
@@ -566,27 +560,12 @@ onBeforeUnmount(() => {
           </h1>
 
           <p class="lead">
-            <span class="exp-lead-1">No Google. No telemetry. No visual puzzles. <br />Switch from reCAPTCHA in minutes.</span>
-            <span class="exp-lead-2">Drop-in reCAPTCHA replacement. <br />Privacy-first. No tracking. No puzzles.</span>
+            No Google. No telemetry. No visual puzzles. <br />Switch from reCAPTCHA in minutes.
           </p>
 
           <div class="actions">
-            <a class="btn primary exp-primary-cta-1" href="/guide/" data-cta="docs" data-cta-location="hero">Read the docs <span class="arr">→</span></a>
-            <a class="btn primary exp-primary-cta-2" href="/guide/" data-cta="docs" data-cta-location="hero">Read the docs</a>
-            <a class="btn primary exp-primary-cta-3" href="/guide/" data-cta="docs" data-cta-location="hero">Self-host Cap <span class="arr">→</span></a>
-            <a class="btn primary exp-primary-cta-4" href="/guide/" data-cta="docs" data-cta-location="hero">Self-host Cap</a>
-            <a class="btn primary exp-primary-cta-5" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes <span class="arr">→</span></a>
-            <a class="btn primary exp-primary-cta-6" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes</a>
-
-            <a class="btn exp-demo-cta-1" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Watch it in action <span class="arr">↗</span></a>
-            <a class="btn exp-demo-cta-2" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Watch it in action</a>
-            <a class="btn exp-demo-cta-3" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">View live demo <span class="arr">↗</span></a>
-            <a class="btn exp-demo-cta-4" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">View live demo</a>
-            <a class="btn exp-demo-cta-5" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try it yourself <span class="arr">↗</span></a>
-            <a class="btn exp-demo-cta-6" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try it yourself</a>
-            <a class="btn exp-demo-cta-7" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo <span class="arr">↗</span></a>
-            <a class="btn exp-demo-cta-8" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo</a>
-
+            <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes</a>
+            <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo <span class="arr">↗</span></a>
           </div>
         </div>
 
@@ -1022,17 +1001,13 @@ onBeforeUnmount(() => {
         <div class="wrap">
           <div class="cta">
             <span class="eyebrow">Get started</span>
-            <h2>
-              <span class="exp-cta-headline-1">Ship Cap in 15 minutes.</span>
-              <span class="exp-cta-headline-2">Ditch reCAPTCHA this afternoon.</span>
-            </h2>
+            <h2>Ditch reCAPTCHA this afternoon.</h2>
             <p>
               Drop the widget into your site, point it at a $5 VPS, and stop paying anyone to see
               your users' traffic.
             </p>
             <div class="actions">
-              <a class="btn primary exp-cta-primary-1" href="/guide/" data-cta="docs" data-cta-location="cta_block">Read the docs <span class="arr">→</span></a>
-              <a class="btn primary exp-cta-primary-2" href="/guide/" data-cta="docs" data-cta-location="cta_block">Get started in 5 minutes</a>
+              <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="cta_block">Get started in 5 minutes</a>
               <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="cta_block">Try the demo <span class="arr">↗</span></a>
               <a class="btn" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="cta_block">Star on GitHub</a>
             </div>
@@ -1404,27 +1379,6 @@ html.home-v2-active main.main {
   color: var(--fg-dim);
   font-weight: 400;
 }
-
-:root:not([data-exp-lead="1"]) #homev2 .exp-lead-1,
-:root:not([data-exp-lead="2"]) #homev2 .exp-lead-2,
-:root:not([data-exp-primary-cta="1"]) #homev2 .exp-primary-cta-1,
-:root:not([data-exp-primary-cta="2"]) #homev2 .exp-primary-cta-2,
-:root:not([data-exp-primary-cta="3"]) #homev2 .exp-primary-cta-3,
-:root:not([data-exp-primary-cta="4"]) #homev2 .exp-primary-cta-4,
-:root:not([data-exp-primary-cta="5"]) #homev2 .exp-primary-cta-5,
-:root:not([data-exp-primary-cta="6"]) #homev2 .exp-primary-cta-6,
-:root:not([data-exp-demo-cta="1"]) #homev2 .exp-demo-cta-1,
-:root:not([data-exp-demo-cta="2"]) #homev2 .exp-demo-cta-2,
-:root:not([data-exp-demo-cta="3"]) #homev2 .exp-demo-cta-3,
-:root:not([data-exp-demo-cta="4"]) #homev2 .exp-demo-cta-4,
-:root:not([data-exp-demo-cta="5"]) #homev2 .exp-demo-cta-5,
-:root:not([data-exp-demo-cta="6"]) #homev2 .exp-demo-cta-6,
-:root:not([data-exp-demo-cta="7"]) #homev2 .exp-demo-cta-7,
-:root:not([data-exp-demo-cta="8"]) #homev2 .exp-demo-cta-8,
-:root:not([data-exp-cta-headline="1"]) #homev2 .exp-cta-headline-1,
-:root:not([data-exp-cta-headline="2"]) #homev2 .exp-cta-headline-2,
-:root:not([data-exp-cta-primary="1"]) #homev2 .exp-cta-primary-1,
-:root:not([data-exp-cta-primary="2"]) #homev2 .exp-cta-primary-2 { display: none; }
 
 #homev2 .lead {
   font-size: 17px;
