@@ -267,7 +267,7 @@ export default withMermaid({
 
     socialLinks: [
       { icon: "github", link: "https://github.com/tiagozip/cap" },
-      { icon: "twitter", link: "https://x.com/0xtiago_" },
+      { icon: "twitter", link: "https://x.com/tiagozip_" },
     ],
 
     footer: {
