@@ -29,140 +29,10 @@ function dismissWidgetBanner() {
   }
 }
 
-const SNIPPETS = {
-  html:
-    `<!-- drop in anywhere -->\n<scr` +
-    `ipt src="https://cdn.jsdelivr.net/npm/cap-widget"></scr` +
-    `ipt>\n\n<cap-widget\n  data-cap-api-endpoint="https://your.server/<site-key>/">\n</cap-widget>`,
-  react: `import "cap-widget";\n\n<cap-widget
-  data-cap-api-endpoint="https://your.server/<site-key>/"
-  onsolve={(e) => console.log("token:", e.detail.token)}
-  onprogress={(e) => console.log(e.detail.progress)}
-  onerror={(e) => console.error(e.detail.message)}
-/>`,
-  docker: `# self-host in one command\ndocker run -p 3000:3000 \\\n  -e ADMIN_KEY=$(openssl rand -hex 32) \\\n  tiago2/cap:latest`,
-  verify: `// server-side\nconst res = await fetch("https://your.server/<site_key>/siteverify", {\n  method: "POST",\n  body: JSON.stringify({ secret, response: token })\n});\nconst { success } = await res.json();`,
-};
-
 const cleanups = [];
 
 function registerCleanup(fn) {
   cleanups.push(fn);
-}
-
-function initTabs() {
-  const tabEls = Array.from(document.querySelectorAll("#homev2 #tabs button[data-tab]"));
-  const tabIndicator = document.querySelector("#homev2 #tabs .tab-indicator");
-  let currentSnippet = "html";
-
-  const KEYWORDS = new Set([
-    "const", "let", "var", "import", "export", "from", "await", "new", "return",
-    "async", "function", "if", "else", "for", "while", "try", "catch", "throw",
-    "true", "false", "null", "undefined", "void", "typeof", "in", "of",
-  ]);
-  const BUILTINS = new Set(["fetch", "JSON", "console", "document", "window", "Math", "Promise"]);
-
-  function renderCode(key) {
-    const el = document.getElementById("homev2-code");
-    if (!el) return;
-    const text = SNIPPETS[key];
-    const esc = text.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m]);
-    const tokenRe = new RegExp(
-      [
-        "(&lt;!--[\\s\\S]*?--&gt;)",
-        "(\\/\\/[^\\n]*)",
-        "(#[^\\n]*)",
-        "(\"[^\"\\n]*\"|`[^`]*`)",
-        "(&lt;\\/?[a-zA-Z][\\w-]*)",
-        "([a-zA-Z][\\w-]*)(?==)",
-        "\\b([A-Za-z_$][\\w$]*)\\b",
-        "\\b(\\d+(?:\\.\\d+)?)\\b",
-      ].join("|"),
-      "g",
-    );
-    const painted = esc.replace(
-      tokenRe,
-      (m, htmlC, slashC, hashC, str, tag, attr, word, num) => {
-        if (htmlC) return `<span class="c">${htmlC}</span>`;
-        if (slashC) return `<span class="c">${slashC}</span>`;
-        if (hashC) return `<span class="c">${hashC}</span>`;
-        if (str) return `<span class="s">${str}</span>`;
-        if (tag) return `<span class="t">${tag}</span>`;
-        if (attr) return `<span class="a">${attr}</span>`;
-        if (word) {
-          if (KEYWORDS.has(word)) return `<span class="k">${word}</span>`;
-          if (BUILTINS.has(word)) return `<span class="p">${word}</span>`;
-          return word;
-        }
-        if (num) return `<span class="n">${num}</span>`;
-        return m;
-      },
-    );
-    el.innerHTML = painted;
-    currentSnippet = key;
-  }
-
-  function positionIndicator(btn) {
-    if (!tabIndicator || !btn) return;
-    tabIndicator.style.width = btn.offsetWidth + "px";
-    tabIndicator.style.transform = `translateX(${btn.offsetLeft}px)`;
-  }
-
-  const handlers = [];
-  tabEls.forEach((b) => {
-    const handler = () => {
-      tabEls.forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-      renderCode(b.dataset.tab);
-      positionIndicator(b);
-      try {
-        if (typeof window !== "undefined" && typeof window.plausible === "function") {
-          window.plausible("install_tab_click", { props: { tab: b.dataset.tab } });
-        }
-      } catch {}
-    };
-    b.addEventListener("click", handler);
-    handlers.push([b, handler]);
-  });
-
-  renderCode("html");
-  requestAnimationFrame(() => positionIndicator(tabEls.find((b) => b.classList.contains("active"))));
-
-  const onResize = () => {
-    const active = tabEls.find((b) => b.classList.contains("active"));
-    positionIndicator(active);
-  };
-  window.addEventListener("resize", onResize);
-
-  const copyBtn = document.getElementById("homev2-copy-btn");
-  let copyTimer;
-  const onCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(SNIPPETS[currentSnippet]);
-      copyBtn.classList.add("copied");
-      copyBtn.querySelector(".copy-label").textContent = "Copied";
-      try {
-        if (typeof window !== "undefined" && typeof window.plausible === "function") {
-          window.plausible("install_snippet_copy", { props: { tab: currentSnippet } });
-        }
-      } catch {}
-      clearTimeout(copyTimer);
-      copyTimer = setTimeout(() => {
-        copyBtn.classList.remove("copied");
-        copyBtn.querySelector(".copy-label").textContent = "Copy";
-      }, 1600);
-    } catch {
-      copyBtn.querySelector(".copy-label").textContent = "Failed";
-    }
-  };
-  if (copyBtn) copyBtn.addEventListener("click", onCopy);
-
-  registerCleanup(() => {
-    handlers.forEach(([b, h]) => b.removeEventListener("click", h));
-    window.removeEventListener("resize", onResize);
-    if (copyBtn) copyBtn.removeEventListener("click", onCopy);
-    clearTimeout(copyTimer);
-  });
 }
 
 async function loadStats() {
@@ -495,7 +365,6 @@ async function loadGithubStars() {
 onMounted(() => {
   document.documentElement.classList.add("home-v2-active");
   initFromWidgetBanner();
-  initTabs();
   loadStats();
   initCountUp();
   initLiveArchitecture();
@@ -955,49 +824,6 @@ onBeforeUnmount(() => {
 
       <section class="block">
         <div class="wrap">
-          <div class="head">
-            <span class="eyebrow">Install</span>
-            <h2>Drop it in. Point at your server.<br />Verify server-side.</h2>
-          </div>
-          <div class="install">
-            <div class="tabs" id="tabs">
-              <span class="tab-indicator" aria-hidden="true"></span>
-              <button data-tab="html" class="active">HTML</button>
-              <button data-tab="react">React</button>
-              <button data-tab="docker">Docker</button>
-              <button data-tab="verify">Verify</button>
-              <button id="homev2-copy-btn" class="copy-btn" aria-label="Copy snippet">
-                <svg
-                  class="ic ic-copy"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.6"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="9" y="9" width="11" height="11" rx="2" />
-                  <path d="M5 15V6a2 2 0 012-2h9" />
-                </svg>
-                <svg
-                  class="ic ic-check"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 12l5 5 9-11" />
-                </svg>
-                <span class="copy-label">Copy</span>
-              </button>
-            </div>
-            <pre id="homev2-code"></pre>
-          </div>
-
           <div class="stats" id="homev2-stats" aria-live="polite">
             <div class="stats-row">
               <span class="stats-label">CDN hits · 12mo</span>
@@ -1263,10 +1089,6 @@ html.home-v2-active main.main {
 #homev2 .btn:focus-visible {
   outline-offset: 2px;
   border-radius: 8px;
-}
-#homev2 .install .tabs button:focus-visible {
-  outline-offset: -2px;
-  border-radius: 2px;
 }
 
 #homev2 .wrap {
@@ -2025,101 +1847,6 @@ html.home-v2-active main.main {
   background: color-mix(in oklab, var(--accent) 5%, transparent);
 }
 
-#homev2 .install {
-  margin-top: 28px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-}
-#homev2 .install .tabs {
-  display: flex;
-  position: relative;
-  border-bottom: 1px solid var(--line);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-#homev2 .install .tab-indicator {
-  position: absolute;
-  left: 0;
-  bottom: -1px;
-  height: 1px;
-  background: var(--accent);
-  transform: translateX(0);
-  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), width 0.34s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-  width: 0;
-}
-#homev2 .install .tabs button {
-  background: transparent;
-  border: none;
-  font-family: inherit;
-  color: var(--fg-dim);
-  padding: 12px 16px;
-  cursor: pointer;
-  border-right: 1px solid var(--line);
-  transition: color 0.15s, background 0.15s;
-}
-#homev2 .install .tabs button:hover {
-  color: var(--fg);
-}
-#homev2 .install .tabs button.active {
-  color: var(--fg);
-  background: rgba(255, 255, 255, 0.03);
-}
-#homev2 .install .copy-btn {
-  margin-left: auto;
-  border-right: none;
-  border-left: 1px solid var(--line);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--fg-dim);
-  position: relative;
-}
-#homev2 .install .copy-btn .ic {
-  width: 13px;
-  height: 13px;
-  transition: opacity 0.2s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
-}
-#homev2 .install .copy-btn .ic-check {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%) scale(0.6);
-  opacity: 0;
-  color: var(--accent);
-}
-#homev2 .install .copy-btn.copied .ic-copy {
-  opacity: 0;
-  transform: scale(0.6);
-}
-#homev2 .install .copy-btn.copied .ic-check {
-  opacity: 1;
-  transform: translateY(-50%) scale(1);
-}
-#homev2 .install .copy-btn.copied {
-  color: var(--accent);
-}
-#homev2 .install pre {
-  margin: 0;
-  padding: 22px 24px;
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--fg);
-  overflow-x: auto;
-  background: transparent;
-  white-space: pre;
-}
-#homev2 .install pre .c { color: var(--fg-mute); font-style: italic; }
-#homev2 .install pre .k { color: var(--accent); }
-#homev2 .install pre .s { color: #b6e0a7; }
-#homev2 .install pre .t { color: #f5c2e7; }
-#homev2 .install pre .a { color: #fab387; }
-#homev2 .install pre .n { color: #f9e2af; }
-#homev2 .install pre .p { color: #cba6f7; }
-
 #homev2 footer {
   margin-top: 120px;
   padding: 40px 0 48px;
@@ -2427,27 +2154,6 @@ html.home-v2-active main.main {
   #homev2 footer {
     margin-top: 80px;
     padding: 32px 0 40px;
-  }
-  #homev2 .install .tabs {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  #homev2 .install .tabs::-webkit-scrollbar {
-    display: none;
-  }
-  #homev2 .install .tabs button {
-    padding: 11px 14px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  #homev2 .install .copy-btn {
-    position: sticky;
-    right: 0;
-    background: var(--surface);
-  }
-  #homev2 .install pre {
-    padding: 18px 20px;
-    font-size: 12px;
   }
   #homev2 .how-card {
     padding: 20px;
