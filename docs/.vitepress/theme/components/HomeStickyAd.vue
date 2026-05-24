@@ -52,13 +52,7 @@ const tryLoad = (attempt = 0) => {
 const track = (name, props) => {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    const merged = { ...(props || {}) };
-    for (const attr of document.documentElement.attributes) {
-      if (attr.name.startsWith("data-exp-")) {
-        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
-      }
-    }
-    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
+    window.plausible(name, props ? { props } : undefined);
   } catch {}
 };
 

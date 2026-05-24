@@ -87,7 +87,7 @@ export default withMermaid({
     [
       "script",
       {},
-      `(function(){try{if(location.pathname==='/'||location.pathname==='/index.html'){document.documentElement.classList.add('home-v2-active');}}catch(e){}try{var EXPS={'trust-style':2,'trust-pos':2};var saved={};try{saved=JSON.parse(localStorage.getItem('cap-exp'))||{};}catch(_){}var dirty=false;for(var k in EXPS){var n=EXPS[k];var v=saved[k];if(typeof v!=='number'||v<1||v>n){v=Math.floor(Math.random()*n)+1;saved[k]=v;dirty=true;}document.documentElement.setAttribute('data-exp-'+k,String(v));}if(dirty)localStorage.setItem('cap-exp',JSON.stringify(saved));}catch(e){}})();`
+      `(function(){try{if(location.pathname==='/'||location.pathname==='/index.html'){document.documentElement.classList.add('home-v2-active');}}catch(e){}})();`
     ],
     [
       "script",
