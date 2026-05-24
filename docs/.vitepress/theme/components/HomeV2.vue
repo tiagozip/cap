@@ -285,13 +285,7 @@ function initLiveArchitecture() {
 function track(name, props) {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    const merged = { ...(props || {}) };
-    for (const attr of document.documentElement.attributes) {
-      if (attr.name.startsWith("data-exp-")) {
-        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
-      }
-    }
-    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
+    window.plausible(name, props ? { props } : undefined);
   } catch {}
 }
 
@@ -485,23 +479,13 @@ onBeforeUnmount(() => {
 
       <div class="wrap">
         <div class="trust-zone">
-          <div class="trust exp-trust-style-1">
-            <span class="trust-item">6k stars on GitHub</span><span class="trust-sep">·</span>
-            <span class="trust-item">Apache 2.0</span>
-            <span class="trust-sep">·</span>
-            <span class="trust-item">Zero dependencies</span>
-            <span class="trust-sep">·</span>
-            <span class="trust-item">20kb widget</span>
-            <span class="trust-sep">·</span>
-            <span class="trust-item">1.1B CDN hits</span>
-          </div>
-          <div class="logobar exp-trust-style-logos">
+          <div class="logobar">
             <span class="logobar-label">Used in production by</span>
             <span class="logobar-item">Bunny.net</span>
             <span class="logobar-sep">·</span>
-            <span class="logobar-item">Traveloka</span>
+            <span class="logobar-item">AdGuard</span>
             <span class="logobar-sep">·</span>
-            <span class="logobar-item">Raiffeisen</span>
+            <span class="logobar-item">Traveloka</span>
             <span class="logobar-sep">·</span>
             <span class="logobar-item logobar-more">and&nbsp;more</span>
           </div>
@@ -1550,17 +1534,6 @@ html.home-v2-active main.main {
   font-weight: 400;
   font-size: 11px;
   color: var(--fg-mute);
-}
-
-:root:not([data-exp-trust-style="1"]) #homev2 .exp-trust-style-1 { display: none; }
-:root[data-exp-trust-style="1"] #homev2 .exp-trust-style-logos { display: none; }
-
-:root[data-exp-trust-pos="2"] #homev2 .hero-stage { min-height: 0; margin-top: 44px; }
-:root[data-exp-trust-pos="2"] #homev2 .v-dashboard { min-height: 0; }
-:root[data-exp-trust-pos="2"] #homev2 .v-dashboard .dash-wrap { gap: 0; }
-:root[data-exp-trust-pos="2"] #homev2 .v-dashboard .dash-frame {
-  max-height: 264px;
-  overflow: hidden;
 }
 
 #homev2 .how-grid {
