@@ -3,6 +3,7 @@
 import DefaultTheme from "vitepress/theme";
 import { h } from "vue";
 import Benchmark from "./components/Benchmark.vue";
+import Compliance from "./components/Compliance.vue";
 import Demo from "./components/Demo.vue";
 import DemoReply from "./components/DemoReply.vue";
 import DemoTabs from "./components/DemoTabs.vue";
@@ -25,6 +26,7 @@ export default {
   },
   enhanceApp({ app }) {
     app.component("Benchmark", Benchmark);
+    app.component("Compliance", Compliance);
     app.component("Demo", Demo);
     app.component("DemoReply", DemoReply);
     app.component("DemoTabs", DemoTabs);
