@@ -415,8 +415,30 @@ function initLiveArchitecture() {
 function track(name, props) {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    window.plausible(name, props ? { props } : undefined);
+    const merged = { ...(props || {}) };
+    for (const attr of document.documentElement.attributes) {
+      if (attr.name.startsWith("data-exp-")) {
+        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
+      }
+    }
+    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
   } catch {}
+}
+
+function initTrustView() {
+  const el = document.querySelector("#homev2 .trust-zone");
+  if (!el || typeof IntersectionObserver === "undefined") return;
+  let fired = false;
+  const io = new IntersectionObserver((entries) => {
+    if (fired) return;
+    if (entries.some((e) => e.isIntersecting)) {
+      fired = true;
+      io.disconnect();
+      track("trust_view");
+    }
+  }, { threshold: 0.6 });
+  io.observe(el);
+  registerCleanup(() => io.disconnect());
 }
 
 function initCtaTracking() {
@@ -479,6 +501,7 @@ onMounted(() => {
   initLiveArchitecture();
   initCtaTracking();
   initCtaBlockView();
+  initTrustView();
   loadGithubStars();
   track("hero_view");
 });
@@ -592,15 +615,27 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="wrap">
-        <div class="trust">
-          <span class="trust-item">6k stars on GitHub</span><span class="trust-sep">·</span>
-          <span class="trust-item">Apache 2.0</span>
-          <span class="trust-sep">·</span>
-          <span class="trust-item">Zero dependencies</span>
-          <span class="trust-sep">·</span>
-          <span class="trust-item">20kb widget</span>
-          <span class="trust-sep">·</span>
-          <span class="trust-item">1.1B CDN hits</span>
+        <div class="trust-zone">
+          <div class="trust exp-trust-style-1">
+            <span class="trust-item">6k stars on GitHub</span><span class="trust-sep">·</span>
+            <span class="trust-item">Apache 2.0</span>
+            <span class="trust-sep">·</span>
+            <span class="trust-item">Zero dependencies</span>
+            <span class="trust-sep">·</span>
+            <span class="trust-item">20kb widget</span>
+            <span class="trust-sep">·</span>
+            <span class="trust-item">1.1B CDN hits</span>
+          </div>
+          <div class="logobar exp-trust-style-logos">
+            <span class="logobar-label">Used in production by</span>
+            <span class="logobar-item">Bunny.net</span>
+            <span class="logobar-sep">·</span>
+            <span class="logobar-item">Traveloka</span>
+            <span class="logobar-sep">·</span>
+            <span class="logobar-item">Raiffeisen</span>
+            <span class="logobar-sep">·</span>
+            <span class="logobar-item logobar-more">and&nbsp;more</span>
+          </div>
         </div>
       </div>
 
@@ -1616,6 +1651,54 @@ html.home-v2-active main.main {
   color: var(--fg-mute);
 }
 
+#homev2 .logobar {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px 13px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+#homev2 .logobar-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-right: 2px;
+}
+#homev2 .logobar-item {
+  color: var(--fg);
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 13px;
+}
+#homev2 .logobar-sep {
+  color: var(--fg-mute);
+}
+#homev2 .logobar-more {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--fg-mute);
+}
+
+:root:not([data-exp-trust-style="1"]) #homev2 .exp-trust-style-1 { display: none; }
+:root[data-exp-trust-style="1"] #homev2 .exp-trust-style-logos { display: none; }
+
+:root[data-exp-trust-pos="2"] #homev2 .hero-stage { min-height: 0; margin-top: 44px; }
+:root[data-exp-trust-pos="2"] #homev2 .v-dashboard { min-height: 0; }
+:root[data-exp-trust-pos="2"] #homev2 .v-dashboard .dash-wrap { gap: 0; }
+:root[data-exp-trust-pos="2"] #homev2 .v-dashboard .dash-frame {
+  max-height: 264px;
+  overflow: hidden;
+}
+
 #homev2 .how-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2295,6 +2378,10 @@ html.home-v2-active main.main {
   #homev2 .trust-sep {
     display: none;
   }
+  #homev2 .logobar {
+    margin-top: 32px;
+    gap: 7px 11px;
+  }
   #homev2 footer {
     margin-top: 80px;
     padding: 32px 0 40px;
@@ -2390,7 +2477,8 @@ html.home-v2-active main.main {
 #homev2 .hero-copy > .actions,
 #homev2 .hero-image,
 #homev2 .hero-stage,
-#homev2 .trust {
+#homev2 .trust,
+#homev2 .logobar {
   opacity: 0;
   animation: homev2-hero-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
@@ -2403,7 +2491,8 @@ html.home-v2-active main.main {
 #homev2 .hero-copy > .actions { animation-delay: 0.34s; }
 #homev2 .hero-image { animation-delay: 0.2s; }
 #homev2 .hero-stage { animation-delay: 0.48s; }
-#homev2 .trust { animation-delay: 0.62s; }
+#homev2 .trust,
+#homev2 .logobar { animation-delay: 0.62s; }
 
 @media (prefers-reduced-motion: reduce) {
   #homev2 .hero-copy > h1,
@@ -2411,7 +2500,8 @@ html.home-v2-active main.main {
   #homev2 .hero-copy > .actions,
   #homev2 .hero-image,
   #homev2 .hero-stage,
-  #homev2 .trust {
+  #homev2 .trust,
+  #homev2 .logobar {
     opacity: 1;
     animation: none;
   }
