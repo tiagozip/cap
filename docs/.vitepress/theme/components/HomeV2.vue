@@ -40,7 +40,7 @@ const SNIPPETS = {
   onprogress={(e) => console.log(e.detail.progress)}
   onerror={(e) => console.error(e.detail.message)}
 />`,
-  docker: `# self-host in one command\ndocker run -p 3000:3000 \\\n  -e ADMIN_KEY=$(openssl rand -hex 32) \\\n  tiago2/standalone:latest\n\n# includes analytics + multi-site-key support`,
+  docker: `# self-host in one command\ndocker run -p 3000:3000 \\\n  -e ADMIN_KEY=$(openssl rand -hex 32) \\\n  tiago2/cap:latest`,
   verify: `// server-side\nconst res = await fetch("https://your.server/<site_key>/siteverify", {\n  method: "POST",\n  body: JSON.stringify({ secret, response: token })\n});\nconst { success } = await res.json();`,
 };
 
@@ -840,6 +840,50 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
+      <section class="block" id="compliance">
+        <div class="wrap">
+          <div class="head">
+            <span class="eyebrow">Compliance</span>
+            <h2>Compliant out of the box.</h2>
+            <p>
+              Self-hosted and privacy-first, so the hard regulatory questions answer themselves.
+              No cookies, no tracking, no data leaving your servers.
+            </p>
+          </div>
+
+          <div class="cmpl">
+            <div class="cmpl-row">
+              <span class="cmpl-label">Privacy &amp; data</span>
+              <div class="cmpl-chips">
+                <span class="cmpl-chip"><img src="/assets/flags/eu.svg" alt="" width="18" height="18" loading="lazy" />GDPR</span>
+                <span class="cmpl-chip"><img src="/assets/flags/us.svg" alt="" width="18" height="18" loading="lazy" />CCPA / CPRA</span>
+                <span class="cmpl-chip"><img src="/assets/flags/us.svg" alt="" width="18" height="18" loading="lazy" />HIPAA</span>
+                <span class="cmpl-chip"><img src="/assets/flags/ca.svg" alt="" width="18" height="18" loading="lazy" />PIPEDA / CPPA</span>
+                <span class="cmpl-chip"><img src="/assets/flags/br.svg" alt="" width="18" height="18" loading="lazy" />LGPD</span>
+                <span class="cmpl-chip"><img src="/assets/flags/in.svg" alt="" width="18" height="18" loading="lazy" />DPDPA</span>
+                <span class="cmpl-chip"><img src="/assets/flags/cn.svg" alt="" width="18" height="18" loading="lazy" />PIPL</span>
+              </div>
+            </div>
+            <div class="cmpl-row">
+              <span class="cmpl-label">Accessibility</span>
+              <div class="cmpl-chips">
+                <span class="cmpl-chip"><span class="cmpl-globe" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="7" fill="#1f6feb"/><g fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><circle cx="16" cy="16" r="10"/><ellipse cx="16" cy="16" rx="4.2" ry="10"/><path d="M6.4 13h19.2M6.4 19h19.2M16 6v20"/></g></svg></span>WCAG 2.2 AA</span>
+                <span class="cmpl-chip"><img src="/assets/flags/eu.svg" alt="" width="18" height="18" loading="lazy" />EAA / EN 301 549</span>
+                <span class="cmpl-chip"><img src="/assets/flags/us.svg" alt="" width="18" height="18" loading="lazy" />Section 508</span>
+              </div>
+            </div>
+            <div class="cmpl-row">
+              <span class="cmpl-label">Intl.</span>
+              <div class="cmpl-chips">
+                <span class="cmpl-chip"><span class="cmpl-globe" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="1" y="1" width="30" height="30" rx="7" fill="#1f6feb"/><g fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><circle cx="16" cy="16" r="10"/><ellipse cx="16" cy="16" rx="4.2" ry="10"/><path d="M6.4 13h19.2M6.4 19h19.2M16 6v20"/></g></svg></span>i18n &amp; RTL</span>
+              </div>
+            </div>
+          </div>
+
+          <a class="cmpl-link" href="/guide/compliance.html" data-cta="compliance" data-cta-location="home_compliance">See how Cap complies <span class="arr">↗</span></a>
+        </div>
+      </section>
+
       <section class="block">
         <div class="wrap">
           <div class="head">
@@ -852,11 +896,10 @@ onBeforeUnmount(() => {
           </div>
           <div class="how-grid">
             <div class="how-card">
-              <span class="lbl">Layer 01 · Proof-of-work</span>
-              <h3>Heavy math, in the browser.</h3>
+              <span class="lbl">Layer 01</span>
+              <h3>PoW and time-locks</h3>
               <p>
-                The client solves parallel SHA-256 hashes and time-lock challenges in WASM. Tuned against GPU acceleration,
-                real CPU time, real money to scale.
+                The client solves parallel SHA-256 hashes and time-lock challenges tuned against GPU acceleration in WASM.
               </p>
               <div class="kv-row">
                 <div>
@@ -880,11 +923,10 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="how-card">
-              <span class="lbl">Layer 02 · Instrumentation</span>
-              <h3>A real browser proves itself.</h3>
+              <span class="lbl">Layer 02</span>
+              <h3>JS instrumentation</h3>
               <p>
-                A freshly-generated JS program runs DOM-dependent ops a real browser handles
-                trivially, and a headless runtime cannot fake cheaply.
+                A freshly-generated JS program runs complex JavaScript, DOM and browser checks.
               </p>
               <div class="probe-log">
                 <div class="pl">
@@ -2523,5 +2565,80 @@ html.home-v2-active main.main {
   font-family: "Inter";
   src: url("/assets/inter.woff2") format("woff2");
   font-display: swap;
+}
+
+#homev2 .cmpl {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
+}
+#homev2 .cmpl-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 2px;
+  border-bottom: 1px dashed var(--line);
+}
+#homev2 .cmpl-row:last-child {
+  border-bottom: none;
+}
+#homev2 .cmpl-label {
+  flex-shrink: 0;
+  width: 120px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+#homev2 .cmpl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#homev2 .cmpl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--fg);
+  white-space: nowrap;
+}
+#homev2 .cmpl-chip img,
+#homev2 .cmpl-chip .cmpl-globe,
+#homev2 .cmpl-chip .cmpl-globe svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+#homev2 .cmpl-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 28px;
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+}
+#homev2 .cmpl-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  #homev2 .cmpl-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  #homev2 .cmpl-label {
+    width: auto;
+  }
 }
 </style>
