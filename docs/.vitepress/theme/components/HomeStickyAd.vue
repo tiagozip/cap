@@ -52,7 +52,13 @@ const tryLoad = (attempt = 0) => {
 const track = (name, props) => {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    window.plausible(name, props ? { props } : undefined);
+    const merged = { ...(props || {}) };
+    for (const attr of document.documentElement.attributes) {
+      if (attr.name.startsWith("data-exp-")) {
+        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
+      }
+    }
+    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
   } catch {}
 };
 
@@ -139,7 +145,8 @@ onUnmounted(() => {
   right: 8px;
   bottom: 8px;
   z-index: 50;
-  background: var(--bg, #11111b);
+  background: #11111b8f;
+  backdrop-filter: blur(2px);
   border: 1px solid var(--line, #313244);
   border-radius: 10px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);

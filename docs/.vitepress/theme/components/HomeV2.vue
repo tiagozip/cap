@@ -285,7 +285,13 @@ function initLiveArchitecture() {
 function track(name, props) {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    window.plausible(name, props ? { props } : undefined);
+    const merged = { ...(props || {}) };
+    for (const attr of document.documentElement.attributes) {
+      if (attr.name.startsWith("data-exp-")) {
+        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
+      }
+    }
+    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
   } catch {}
 }
 
@@ -479,7 +485,7 @@ onBeforeUnmount(() => {
 
       <div class="wrap">
         <div class="trust-zone">
-          <div class="logobar">
+          <div class="logobar exp-style-text">
             <span class="logobar-label">Used in production by</span>
             <span class="logobar-item">Bunny.net</span>
             <span class="logobar-sep">·</span>
@@ -488,6 +494,14 @@ onBeforeUnmount(() => {
             <span class="logobar-item">Traveloka</span>
             <span class="logobar-sep">·</span>
             <span class="logobar-item logobar-more">and&nbsp;more</span>
+          </div>
+          <div class="logoimg exp-style-logos">
+            <span class="logobar-label">Used in production by</span>
+            <span class="logoimg-row">
+              <img class="li li-bunny" src="/logos/bunny.svg" alt="bunny.net" width="112" height="43" loading="lazy" />
+              <img class="li li-adguard" src="/logos/adguard.svg" alt="AdGuard" width="120" height="60" loading="lazy" />
+              <img class="li li-traveloka" src="/logos/traveloka.png" alt="Traveloka" width="320" height="70" loading="lazy" />
+            </span>
           </div>
         </div>
       </div>
@@ -1536,6 +1550,45 @@ html.home-v2-active main.main {
   color: var(--fg-mute);
 }
 
+#homev2 .logoimg {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 14px 30px;
+}
+#homev2 .logoimg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 18px 34px;
+}
+#homev2 img.li {
+  width: auto;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 0.18s ease;
+}
+#homev2 img.li.li-bunny { height: 27px; }
+#homev2 img.li.li-adguard { height: 40px; }
+#homev2 img.li.li-traveloka { height: 18px; }
+#homev2 img.li:hover { opacity: 1; }
+
+/* grayscale variant: desaturated (keeps logo detail, unlike a hard invert) */
+:root[data-exp-logo-color="2"] #homev2 img.li {
+  filter: grayscale(1) brightness(2.2);
+  opacity: 0.8;
+}
+:root[data-exp-logo-color="2"] #homev2 img.li:hover { opacity: 1; }
+
+/* text vs logos toggle (default: text) */
+:root[data-exp-trust-style="2"] #homev2 .exp-style-text { display: none; }
+:root:not([data-exp-trust-style="2"]) #homev2 .exp-style-logos { display: none; }
+
 #homev2 .how-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2124,6 +2177,14 @@ html.home-v2-active main.main {
     margin-top: 32px;
     gap: 7px 11px;
   }
+  #homev2 .logoimg {
+    margin-top: 32px;
+    gap: 12px 18px;
+  }
+  #homev2 .logoimg-row { gap: 14px 24px; }
+  #homev2 img.li.li-bunny { height: 23px; }
+  #homev2 img.li.li-adguard { height: 34px; }
+  #homev2 img.li.li-traveloka { height: 15px; }
   #homev2 footer {
     margin-top: 80px;
     padding: 32px 0 40px;
@@ -2199,7 +2260,8 @@ html.home-v2-active main.main {
 #homev2 .hero-image,
 #homev2 .hero-stage,
 #homev2 .trust,
-#homev2 .logobar {
+#homev2 .logobar,
+#homev2 .logoimg {
   opacity: 0;
   animation: homev2-hero-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
@@ -2213,7 +2275,8 @@ html.home-v2-active main.main {
 #homev2 .hero-image { animation-delay: 0.2s; }
 #homev2 .hero-stage { animation-delay: 0.48s; }
 #homev2 .trust,
-#homev2 .logobar { animation-delay: 0.62s; }
+#homev2 .logobar,
+#homev2 .logoimg { animation-delay: 0.62s; }
 
 @media (prefers-reduced-motion: reduce) {
   #homev2 .hero-copy > h1,
@@ -2222,7 +2285,8 @@ html.home-v2-active main.main {
   #homev2 .hero-image,
   #homev2 .hero-stage,
   #homev2 .trust,
-  #homev2 .logobar {
+  #homev2 .logobar,
+  #homev2 .logoimg {
     opacity: 1;
     animation: none;
   }
