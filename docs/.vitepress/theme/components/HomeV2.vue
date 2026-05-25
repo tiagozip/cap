@@ -491,7 +491,7 @@ onBeforeUnmount(() => {
             <span class="logobar-sep">·</span>
             <span class="logobar-item">AdGuard</span>
             <span class="logobar-sep">·</span>
-            <span class="logobar-item">Traveloka</span>
+            <span class="logobar-item">Fraunhofer</span>
             <span class="logobar-sep">·</span>
             <span class="logobar-item logobar-more">and&nbsp;more</span>
           </div>
@@ -500,7 +500,7 @@ onBeforeUnmount(() => {
             <span class="logoimg-row">
               <img class="li li-bunny" src="/logos/bunny.svg" alt="bunny.net" width="112" height="43" loading="lazy" />
               <img class="li li-adguard" src="/logos/adguard.svg" alt="AdGuard" width="120" height="60" loading="lazy" />
-              <img class="li li-traveloka" src="/logos/traveloka.png" alt="Traveloka" width="320" height="70" loading="lazy" />
+              <img class="li li-fraunhofer" src="/logos/fraunhofer.svg" alt="Fraunhofer" width="258" height="72" loading="lazy" />
             </span>
           </div>
         </div>
@@ -1574,8 +1574,8 @@ html.home-v2-active main.main {
   transition: opacity 0.18s ease;
 }
 #homev2 img.li.li-bunny { height: 27px; }
-#homev2 img.li.li-adguard { height: 40px; }
-#homev2 img.li.li-traveloka { height: 18px; }
+#homev2 img.li.li-adguard { height: 30px; }
+#homev2 img.li.li-fraunhofer { height: 20px; }
 #homev2 img.li:hover { opacity: 1; }
 
 /* grayscale variant: desaturated (keeps logo detail, unlike a hard invert) */
@@ -2183,8 +2183,8 @@ html.home-v2-active main.main {
   }
   #homev2 .logoimg-row { gap: 14px 24px; }
   #homev2 img.li.li-bunny { height: 23px; }
-  #homev2 img.li.li-adguard { height: 34px; }
-  #homev2 img.li.li-traveloka { height: 15px; }
+  #homev2 img.li.li-adguard { height: 25px; }
+  #homev2 img.li.li-fraunhofer { height: 16px; }
   #homev2 footer {
     margin-top: 80px;
     padding: 32px 0 40px;
