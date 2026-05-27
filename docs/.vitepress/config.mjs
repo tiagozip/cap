@@ -2,10 +2,107 @@ import llmstxt from "vitepress-plugin-llms";
 import { withMermaid } from "vitepress-plugin-mermaid";
 // import { defineConfig } from "vitepress";
 
+const GITHUB_STARS = 6632;
+
+const jsonLd = (obj) => ["script", { type: "application/ld+json" }, JSON.stringify(obj)];
+
+const SOFTWARE_APPLICATION = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Cap",
+  applicationCategory: "SecurityApplication",
+  operatingSystem: "Cross-platform",
+  url: "https://trycap.dev",
+  image: "https://trycap.dev/logo.png",
+  description:
+    "Cap is a free, open-source CAPTCHA alternative. Self-hosted, privacy-first, no Google. Proof-of-work and instrumentation, no visual puzzles. Apache 2.0.",
+  license: "https://www.apache.org/licenses/LICENSE-2.0",
+  author: { "@type": "Person", name: "tiago", url: "https://tiago.zip" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  interactionStatistic: {
+    "@type": "InteractionCounter",
+    interactionType: "https://schema.org/LikeAction",
+    userInteractionCount: GITHUB_STARS,
+  },
+};
+
+const ORGANIZATION = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Cap",
+  url: "https://trycap.dev",
+  logo: "https://trycap.dev/logo.png",
+  sameAs: ["https://github.com/tiagozip/cap", "https://x.com/tiagozip_"],
+};
+
+const FAQ_ITEMS = [
+  [
+    "Is it GDPR-friendly?",
+    "Yes. Cap doesn't phone home, doesn't set cookies, and doesn't fingerprint users. Your server sees the verification, no one else does.",
+  ],
+  [
+    "Can I migrate from reCAPTCHA / hCaptcha?",
+    "Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll need to swap your client-side code to use Cap's widget.",
+  ],
+  [
+    "How effective is it against real bots?",
+    "Cap's instrumentation combined with proof-of-work is very effective at making abuse extremely difficult to automate at scale.",
+  ],
+  [
+    "What does it cost to self-host?",
+    "Cap Standalone fits on a $5 VPS for most sites. There are no per-request fees, no egress to a third party, and no API quotas to hit.",
+  ],
+  [
+    "What is an open-source CAPTCHA?",
+    "An open-source CAPTCHA is bot protection whose code you can read, audit, and self-host, rather than a closed third-party service. Cap is licensed under Apache 2.0 and runs entirely on your own infrastructure, so visitor data never reaches a vendor.",
+  ],
+  [
+    "What is the best open-source alternative to reCAPTCHA?",
+    "Cap is a privacy-first, self-hosted alternative to Google reCAPTCHA that uses proof-of-work and instrumentation instead of visual puzzles or tracking. Compare it against reCAPTCHA, hCaptcha, and Turnstile to find what fits your stack.",
+  ],
+  [
+    "How does proof-of-work CAPTCHA work?",
+    "Instead of asking users to solve a puzzle, a proof-of-work CAPTCHA makes the browser compute a small cryptographic challenge before it submits. Cap solves SHA-256 challenges in WebAssembly in well under a second for real users, while making large-scale abuse computationally expensive. See how Cap works.",
+  ],
+];
+
+const FAQ_PAGE = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map(([name, text]) => ({
+    "@type": "Question",
+    name,
+    acceptedAnswer: { "@type": "Answer", text },
+  })),
+};
+
+const humanize = (s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+function breadcrumbList(pageData) {
+  const rel = pageData.relativePath;
+  const segs = rel
+    .replace(/index\.md$/, "")
+    .replace(/\.md$/, "")
+    .split("/")
+    .filter(Boolean);
+  if (segs[0] !== "guide") return null;
+  const items = [{ "@type": "ListItem", position: 1, name: "Home", item: "https://trycap.dev/" }];
+  let acc = "https://trycap.dev";
+  segs.forEach((seg, i) => {
+    acc += `/${seg}`;
+    const isLast = i === segs.length - 1;
+    const name = seg === "guide" ? "Docs" : isLast ? pageData.title : humanize(seg);
+    const item = isLast ? acc + (rel.endsWith("index.md") ? "/" : ".html") : `${acc}/`;
+    items.push({ "@type": "ListItem", position: i + 2, name, item });
+  });
+  return { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items };
+}
+
 // https://vitepress.dev/reference/site-config
 export default withMermaid({
   lang: "en-US",
-  title: "Cap: Self-hosted CAPTCHA for the modern web.",
+  title: "Cap – Open-source, self-hosted CAPTCHA alternative to reCAPTCHA",
+  titleTemplate: ':title – Cap CAPTCHA',
   description:
     "Cap is a lightweight, modern open-source CAPTCHA alternative using proof-of-work, time-lock and instrumentation challenges",
   lastUpdated: true,
@@ -13,7 +110,12 @@ export default withMermaid({
   vite: {
     plugins: [llmstxt()],
   },
+  srcExclude: ["public/**"],
   transformPageData(pageData) {
+    if (!pageData.description || !pageData.description.trim()) {
+      const t = pageData.title || pageData.frontmatter.title || "Cap";
+      pageData.description = `${t} – Cap, the open-source self-hosted CAPTCHA. Apache 2.0, no Google, no telemetry.`;
+    }
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push([
       "link",
@@ -25,8 +127,36 @@ export default withMermaid({
       },
     ]);
   },
+  transformHead({ title, description, pageData }) {
+    const canonical = `https://trycap.dev/${pageData.relativePath}`
+      .replace(/index\.md$/, "")
+      .replace(/\.md$/, ".html");
+    const head = [
+      ["meta", { property: "og:title", content: title }],
+      ["meta", { property: "og:description", content: description }],
+      ["meta", { property: "og:url", content: canonical }],
+      ["meta", { name: "twitter:title", content: title }],
+      ["meta", { name: "twitter:description", content: description }],
+    ];
+    if (pageData.relativePath === "index.md") {
+      head.push(jsonLd(SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(FAQ_PAGE));
+    } else {
+      const bc = breadcrumbList(pageData);
+      if (bc) head.push(jsonLd(bc));
+    }
+    return head;
+  },
   head: [
     ["link", { rel: "icon", href: "/logo.png" }],
+    ["link", { rel: "preconnect", href: "https://cdn.jsdelivr.net" }],
+    ["link", { rel: "preconnect", href: "https://a.tiago.zip" }],
+    ["link", { rel: "preconnect", href: "https://fullres-script-proxy.tiag.workers.dev" }],
+    ["link", { rel: "preconnect", href: "https://media.ethicalads.io" }],
+    ["link", { rel: "dns-prefetch", href: "https://cdn.jsdelivr.net" }],
+    ["link", { rel: "dns-prefetch", href: "https://a.tiago.zip" }],
+    ["link", { rel: "dns-prefetch", href: "https://fullres-script-proxy.tiag.workers.dev" }],
+    ["link", { rel: "dns-prefetch", href: "https://media.ethicalads.io" }],
+    ["link", { rel: "dns-prefetch", href: "https://server.ethicalads.io" }],
     [
       "meta",
       {
@@ -36,44 +166,15 @@ export default withMermaid({
       },
     ],
     ["meta", { name: "author", content: "tiagozip" }],
-    [
-      "meta",
-      {
-        property: "og:title",
-        content: "Cap is the self-hosted CAPTCHA for the modern web.",
-      },
-    ],
-    [
-      "meta",
-      {
-        property: "og:description",
-        content:
-          "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
-      },
-    ],
-    ["meta", { property: "og:url", content: "https://trycap.dev" }],
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:site_name", content: "Cap" }],
     ["meta", { property: "og:image", content: "https://trycap.dev/og-image.png" }],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
     [
       "meta",
       {
-        name: "twitter:title",
-        content: "Cap: The self-hosted CAPTCHA for the modern web",
-      },
-    ],
-    [
-      "meta",
-      {
         property: "theme-color",
         content: "#007aff",
-      },
-    ],
-    [
-      "meta",
-      {
-        name: "twitter:description",
-        content:
-          "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
       },
     ],
     ["meta", { name: "twitter:image", content: "https://trycap.dev/og-image.png" }],
@@ -117,33 +218,6 @@ export default withMermaid({
         "no-twidget": "true",
         src: "https://tiago.zip/cdn/widget.js",
       },
-    ],
-    [
-      "script",
-      {
-        type: "application/ld+json",
-      },
-      `{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Cap",
-  "url": "https://trycap.dev",
-  "description": "Lightweight, privacy-first, and designed to put you first. Switch from reCAPTCHA in minutes.",
-  "applicationCategory": "SecurityApplication",
-  "operatingSystem": "All",
-  "image": "https://trycap.dev/logo.png",
-  "author": {
-    "@type": "Person",
-    "name": "tiago",
-    "url": "https://tiago.zip"
-  },
-  "license": "https://github.com/tiagozip/cap/blob/main/LICENSE",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "USD"
-  }
-}`,
     ],
     [
       "script",
@@ -288,5 +362,18 @@ export default withMermaid({
   },
   sitemap: {
     hostname: "https://trycap.dev",
+    transformItems(items) {
+      const excluded = [
+        "guide/standalone.html",
+        "guide/server.html",
+        "guide/standalone/usage.html",
+        "guide/standalone/installation.html",
+      ];
+      return items.filter(
+        (item) =>
+          !item.url.includes("/public/") &&
+          !excluded.some((path) => item.url.endsWith(path)),
+      );
+    },
   },
 });

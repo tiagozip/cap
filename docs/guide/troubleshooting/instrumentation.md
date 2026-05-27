@@ -4,6 +4,7 @@ editLink: false
 prev: false
 next: false
 footer: false
+description: "Troubleshooting Cap verification failures: fixes for the open-source, self-hosted CAPTCHA when proof-of-work or instrumentation checks fail in your browser."
 ---
 
 # Troubleshooting

@@ -1,3 +1,7 @@
+---
+description: "Cap Standalone is the easiest way to self-host the open-source CAPTCHA backend: Docker, instrumentation, a reCAPTCHA-compatible API, and a web dashboard."
+---
+
 # Cap Standalone
 
 Cap Standalone is the recommended way to self-host Cap's backend. It runs on Bun and keeps idle memory usage around 50 MB. It ships with built-in support for instrumentation challenges, which significantly raise the bar for bots, a siteverify API compatible with reCAPTCHA, and a web dashboard for managing multiple site keys.

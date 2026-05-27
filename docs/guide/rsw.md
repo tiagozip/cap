@@ -1,5 +1,6 @@
 ---
 outline: [2, 3]
+description: "RSW time-lock puzzles are Cap's GPU-resistant alternative to SHA-256 proof-of-work. How the open-source CAPTCHA uses Rivest-Shamir-Wagner challenges."
 ---
 
 # RSW time-lock puzzles

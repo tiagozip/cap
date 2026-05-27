@@ -1,5 +1,6 @@
 ---
 outline: [2, 3, 4]
+description: "capjs-core is Cap's stateless server library for generating and verifying JWT proof-of-work challenges. Self-host the open-source CAPTCHA on Workers or edge."
 ---
 
 # Core

@@ -472,10 +472,11 @@ onBeforeUnmount(() => {
           <div class="dash-wrap">
             <div class="dash-frame">
               <img
-                src="/assets/screenshot.png"
+                src="/assets/screenshot.webp"
                 alt="Cap admin dashboard screenshot"
                 width="2892"
                 height="1556"
+                fetchpriority="high"
                 style="width: 100%; height: auto"
               />
             </div>
@@ -893,6 +894,36 @@ onBeforeUnmount(() => {
                   egress to a third party, and no API quotas to hit.
                 </dd>
               </div>
+              <div>
+                <dt>What is an open-source CAPTCHA?</dt>
+                <dd>
+                  An open-source CAPTCHA is bot protection whose code you can read, audit, and
+                  <a href="/guide/standalone/">self-host</a>, rather than a closed third-party
+                  service. Cap is licensed under Apache 2.0 and runs entirely on your own
+                  infrastructure, so visitor data never reaches a vendor.
+                </dd>
+              </div>
+              <div>
+                <dt>What is the best open-source alternative to reCAPTCHA?</dt>
+                <dd>
+                  Cap is a privacy-first, self-hosted alternative to Google reCAPTCHA that uses
+                  proof-of-work and instrumentation instead of visual puzzles or tracking. Compare it
+                  against <a href="/guide/alternatives/recaptcha.html">reCAPTCHA</a>,
+                  <a href="/guide/alternatives/hcaptcha.html">hCaptcha</a>, and
+                  <a href="/guide/alternatives/turnstile.html">Turnstile</a> to find what fits your
+                  stack.
+                </dd>
+              </div>
+              <div>
+                <dt>How does proof-of-work CAPTCHA work?</dt>
+                <dd>
+                  Instead of asking users to solve a puzzle, a proof-of-work CAPTCHA makes the
+                  browser compute a small cryptographic challenge before it submits. Cap solves
+                  SHA-256 challenges in WebAssembly in well under a second for real users, while
+                  making large-scale abuse computationally expensive.
+                  <a href="/guide/workings.html">See how Cap works</a>.
+                </dd>
+              </div>
             </dl>
           </div>
         </div>
@@ -922,14 +953,62 @@ onBeforeUnmount(() => {
     </div>
 
     <footer>
-      <div class="wrap">
-        <div class="inner">
-          <span>© 2026 <a href="https://tiago.zip">tiago.zip</a> · Apache 2.0</span>
-          <span>
-            <a href="/guide/">Docs</a> ·
-            <a href="https://github.com/tiagozip/cap">GitHub</a> ·
-            <a href="/guide/demo.html">Demo</a>
-          </span>
+      <div class="ft-glow" aria-hidden="true"></div>
+      <div class="wrap-wide ft-wrap">
+        <div class="ft-top">
+          <div class="ft-brand">
+            <a class="ft-logo" href="/" aria-label="Cap home">
+              <img alt="" src="/logo.png" width="26" height="26" />
+              <strong>Cap</strong>
+            </a>
+            <p class="ft-tagline">
+              Self-hosted CAPTCHA.<br />
+              No Google. No telemetry. No puzzles.
+            </p>
+            <div class="ft-social">
+              <a
+                class="ft-soc gh-link"
+                href="https://github.com/tiagozip/cap"
+                aria-label="GitHub"
+                data-cta="github"
+                data-cta-location="footer"
+              >
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
+                  <path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z" />
+                </svg>
+                <span class="homev2-gh-stars">6.2k</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="ft-cols">
+            <nav class="ft-col" aria-label="Product">
+              <span class="ft-col-title">Product</span>
+              <a href="/guide/" data-cta="docs" data-cta-location="footer">Quickstart</a>
+              <a href="/guide/standalone/" data-cta="standalone" data-cta-location="footer">Standalone</a>
+              <a href="/guide/widget.html" data-cta="widget" data-cta-location="footer">Widget</a>
+              <a href="/guide/demo.html" data-cta="demo" data-cta-location="footer">Demo</a>
+              <a href="/guide/benchmark.html" data-cta="benchmark" data-cta-location="footer">Benchmark</a>
+            </nav>
+            <nav class="ft-col" aria-label="Compare">
+              <span class="ft-col-title">Compare</span>
+              <a href="/guide/alternatives/recaptcha.html">vs reCAPTCHA</a>
+              <a href="/guide/alternatives/turnstile.html">vs Turnstile</a>
+              <a href="/guide/alternatives/hcaptcha.html">vs hCaptcha</a>
+              <a href="/guide/alternatives.html">All comparisons</a>
+            </nav>
+            <nav class="ft-col" aria-label="Learn">
+              <span class="ft-col-title">Learn</span>
+              <a href="/guide/workings.html">How it works</a>
+              <a href="/guide/effectiveness.html">Effectiveness</a>
+              <a href="/guide/compliance.html">Compliance</a>
+              <a href="/guide/community.html">Community</a>
+            </nav>
+          </div>
+        </div>
+
+        <div class="ft-bottom">
+          <span class="ft-copy">© 2026 <a href="https://tiago.zip">tiago.zip</a> · Apache 2.0</span>
         </div>
       </div>
     </footer>
@@ -1874,27 +1953,153 @@ html.home-v2-active main.main {
 }
 
 #homev2 footer {
-  margin-top: 120px;
-  padding: 40px 0 48px;
+  position: relative;
+  margin-top: 140px;
+  padding: 72px 0 0;
+  border-top: 1px solid var(--line);
+  background:
+    radial-gradient(120% 100% at 50% 0%, color-mix(in oklab, var(--accent) 6%, transparent) 0%, transparent 60%),
+    linear-gradient(to bottom, color-mix(in oklab, var(--surface) 55%, transparent), transparent 280px);
+  overflow: hidden;
+}
+#homev2 footer .ft-glow {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 70%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+#homev2 .ft-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+#homev2 .ft-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+  gap: 56px;
+  padding-bottom: 56px;
+}
+
+#homev2 .ft-logo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 18px;
+}
+#homev2 .ft-logo img {
+  width: 26px;
+  height: 26px;
+  transform: translateY(5px);
+  border-radius: 0 !important;
+}
+#homev2 .ft-logo strong {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+#homev2 .ft-tagline {
+  margin: 18px 0 0;
+  max-width: 30ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--fg-dim);
+}
+#homev2 .ft-social {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+#homev2 .ft-soc {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: color-mix(in oklab, var(--surface) 60%, transparent);
+  color: var(--fg-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+#homev2 .ft-soc:hover {
+  color: var(--fg);
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
+  background: color-mix(in oklab, var(--accent) 9%, transparent);
+}
+
+#homev2 .ft-cols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+#homev2 .ft-col {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+#homev2 .ft-col-title {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+  margin-bottom: 3px;
+}
+#homev2 .ft-col a {
+  position: relative;
+  width: fit-content;
+  font-size: 13.5px;
+  color: var(--fg-dim);
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+#homev2 .ft-col a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#homev2 .ft-col a:hover {
+  color: var(--fg);
+}
+#homev2 .ft-col a:hover::after {
+  transform: scaleX(1);
+}
+
+#homev2 .ft-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+  padding: 22px 0 36px;
   border-top: 1px solid var(--line);
   font-family: var(--mono);
   font-size: 12px;
   color: var(--fg-mute);
 }
-#homev2 footer .inner {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
+#homev2 .ft-copy a {
+  color: var(--fg-dim);
+  transition: color 0.18s ease;
 }
-#homev2 footer a {
-  transition: opacity 0.2s;
-}
-#homev2 footer a:hover {
+#homev2 .ft-copy a:hover {
   color: var(--fg);
 }
-#homev2 footer .inner span:has(a:hover) a:not(:hover) {
-  opacity: 0.6;
+@media (prefers-reduced-motion: reduce) {
+  #homev2 .ft-hashtrack { animation: none; }
 }
 
 #homev2 .stats {
@@ -2186,8 +2391,13 @@ html.home-v2-active main.main {
   #homev2 img.li.li-adguard { height: 25px; }
   #homev2 img.li.li-fraunhofer { height: 16px; }
   #homev2 footer {
-    margin-top: 80px;
-    padding: 32px 0 40px;
+    margin-top: 96px;
+    padding-top: 56px;
+  }
+  #homev2 .ft-top {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-bottom: 40px;
   }
   #homev2 .how-card {
     padding: 20px;
@@ -2204,9 +2414,13 @@ html.home-v2-active main.main {
   #homev2 .hero-stage {
     margin-top: 40px;
   }
-  #homev2 footer .inner {
-    flex-direction: column;
-    gap: 12px;
+  #homev2 .ft-cols {
+    gap: 24px 20px;
+  }
+}
+@media (max-width: 480px) {
+  #homev2 .ft-cols {
+    grid-template-columns: 1fr 1fr;
   }
 }
 @media (max-width: 420px) {

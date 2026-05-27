@@ -1,5 +1,6 @@
 ---
 outline: deep
+description: "How Cap meets GDPR, CCPA and WCAG 2.2. The self-hosted, open-source CAPTCHA keeps user data on your servers, with no cookies, tracking, or third-party calls."
 ---
 
 # Compliance

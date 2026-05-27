@@ -1,3 +1,7 @@
+---
+description: "Floating mode for Cap's widget hides the open-source CAPTCHA until a button is pressed, then runs proof-of-work on demand. Set it up with one data attribute."
+---
+
 # Floating mode
 
 Cap can automatically hide the CAPTCHA until a button is pressed. To use this, add the `data-cap-floating` attribute to your trigger with the query selector of the `cap-widget` element you want to use.

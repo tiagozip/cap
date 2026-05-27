@@ -1,3 +1,7 @@
+---
+description: "Configuration options and environment variables for Cap Standalone, the self-hosted open-source CAPTCHA: CORS, asset server, widget and WASM versions, and more."
+---
+
 # Options
 
 ## CORS
