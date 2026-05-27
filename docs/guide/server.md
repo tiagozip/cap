@@ -1,3 +1,10 @@
+---
+head:
+  - - meta
+    - name: robots
+      content: noindex, follow
+---
+
 # @cap.js/server
 
 ::: warning Legacy library — superseded by [`capjs-core`](./capjs-core.md)

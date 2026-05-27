@@ -1,3 +1,7 @@
+---
+description: "Cap CAPTCHA benchmark: proof-of-work solve times across low-end to high-end devices. See how fast the self-hosted, open-source widget runs in real browsers."
+---
+
 # Benchmark
 
 <Benchmark />

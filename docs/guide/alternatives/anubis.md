@@ -1,6 +1,6 @@
 ---
 title: Cap vs Anubis
-description: How Cap compares to Anubis, the proof-of-work scraper deterrent. When to use each.
+description: "Cap vs Anubis: Anubis deters scrapers site-wide, Cap is a self-hosted, open-source CAPTCHA for forms and logins using proof-of-work. When to pick each one."
 ---
 
 # Cap vs Anubis

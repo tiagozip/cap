@@ -1,6 +1,6 @@
 ---
 title: Cap vs Cloudflare Turnstile
-description: How Cap compares to Cloudflare Turnstile. A self-hosted, fully customizable, open-source alternative.
+description: "Cap vs Cloudflare Turnstile: a self-hosted, customizable, open-source CAPTCHA you fully control. No vendor lock-in, with proof-of-work and instrumentation."
 ---
 
 # Cap vs Cloudflare Turnstile

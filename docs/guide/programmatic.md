@@ -1,3 +1,7 @@
+---
+description: "Programmatic mode for Cap: call new Cap() and solve() to run the open-source CAPTCHA from your own JavaScript, with proof-of-work and no visible widget."
+---
+
 # Programmatic mode
 
 You can use `new Cap({ ... })` in your client-side JavaScript to create a new Cap instance and use the `solve()` method to solve the challenge.

@@ -1,3 +1,7 @@
+---
+description: "Cap's instrumentation challenges run server-generated JS to verify a real browser, working alongside proof-of-work in the self-hosted, open-source CAPTCHA."
+---
+
 # Instrumentation challenges
 
 Instrumentation challenges are Cap's second layer of verification, running silently alongside the core proof-of-work system and present on Cap Standalone.

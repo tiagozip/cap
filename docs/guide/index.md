@@ -1,5 +1,6 @@
 ---
 outline: deep
+description: "Quickstart for Cap, the open-source self-hosted CAPTCHA. Set up the proof-of-work widget and server in minutes, with no Google, telemetry, or visual puzzles."
 ---
 
 # Quickstart

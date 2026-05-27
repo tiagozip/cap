@@ -1,3 +1,7 @@
+---
+description: "Compare Cap against reCAPTCHA, hCaptcha, Turnstile, Altcha and more. See how the open-source, self-hosted, proof-of-work CAPTCHA stacks up on privacy and cost."
+---
+
 # Alternatives to Cap
 
 | CAPTCHA              | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | Checkpoints | Widget support | GDPR/CCPA Compliant | Customizable | Hard for bots | Easy to integrate |

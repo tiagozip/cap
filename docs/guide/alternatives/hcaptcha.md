@@ -1,6 +1,6 @@
 ---
 title: Cap vs hCaptcha
-description: How Cap compares to hCaptcha. A self-hosted, puzzle-free, free-at-scale open-source alternative.
+description: "Cap vs hCaptcha: a self-hosted, puzzle-free, open-source CAPTCHA alternative. No image grids, no data sold to advertisers, free at scale via proof-of-work."
 ---
 
 # Cap vs hCaptcha

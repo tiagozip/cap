@@ -1,6 +1,6 @@
 ---
 title: Cap vs FriendlyCaptcha
-description: How Cap compares to FriendlyCaptcha. A free, self-hosted, open-source proof-of-work alternative.
+description: "Cap vs Friendly Captcha: a free, self-hosted, open-source proof-of-work CAPTCHA versus a paid SaaS. Compare privacy, pricing, and where your visitor data lives."
 ---
 
 # Cap vs FriendlyCaptcha

@@ -1,3 +1,7 @@
+---
+description: "Community-maintained libraries for using Cap, the self-hosted open-source CAPTCHA, in more languages and frameworks. Verify proof-of-work tokens outside SDKs."
+---
+
 # Community libraries
 
 Want to use Cap without the standalone server and with a different language? Here are some community-maintained libraries that might help. If you want to add a library, feel free to open a pull request!
