@@ -215,6 +215,14 @@ export default withMermaid({
       "script",
       {
         defer: true,
+        src: "https://palantir.estrogen.delivery/Pn7xQk2.js",
+        "data-domain": "trycap.dev",
+      }
+    ],
+    [
+      "script",
+      {
+        defer: true,
         "no-twidget": "true",
         src: "https://tiago.zip/cdn/widget.js",
       },
