@@ -1,3 +1,7 @@
+---
+description: "Add a Cap Checkpoint to a Hono app with @cap.js/checkpoint-hono. Protect routes with the self-hosted, open-source proof-of-work CAPTCHA and browser check."
+---
+
 # Hono checkpoint
 
 ## Installation

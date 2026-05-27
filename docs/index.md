@@ -6,6 +6,10 @@ sidebar: false
 aside: false
 prev: false
 next: false
+
+title: Cap – Open-source, self-hosted CAPTCHA alternative to reCAPTCHA
+titleTemplate: false
+description: "Cap is a free, open-source CAPTCHA alternative. Self-hosted, privacy-first, no Google. Proof-of-work and instrumentation, no visual puzzles. Apache 2.0."
 ---
 
 <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path: inset(50%)">

@@ -1,3 +1,7 @@
+---
+description: "How effective Cap is against bots: the open-source CAPTCHA pairs proof-of-work with instrumentation to make abuse expensive while staying invisible to users."
+---
+
 # Effectiveness
 
 ## Privacy & security

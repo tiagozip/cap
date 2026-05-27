@@ -1,3 +1,7 @@
+---
+description: "REST API reference for Cap Standalone: create and manage site keys and sessions for the self-hosted, open-source CAPTCHA using bearer-authenticated requests."
+---
+
 # API
 
 Standalone mode offers a simple API for creating, viewing, and managing keys and sessions. First, log in to your Cap Standalone dashboard and get an API key from **Settings** → **API Keys**. Give it a name and tap "Create".

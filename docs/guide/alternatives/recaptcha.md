@@ -1,6 +1,6 @@
 ---
 title: Cap vs reCAPTCHA
-description: How Cap compares to Google reCAPTCHA v2 and v3. A privacy-friendly, self-hosted, open-source alternative.
+description: "Cap vs Google reCAPTCHA v2 and v3: a privacy-first, self-hosted, open-source alternative. No Google tracking or visual puzzles, just proof-of-work challenges."
 ---
 
 # Cap vs reCAPTCHA

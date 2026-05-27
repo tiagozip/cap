@@ -1,3 +1,7 @@
+---
+description: "@cap.js/solver solves Cap proof-of-work challenges server-side on Bun for machine-to-machine flows. A tiny, dependency-free piece of the open-source CAPTCHA."
+---
+
 # M2M
 
 `@cap.js/solver` is a standalone library that can be used to solve Cap challenges from the server. It's extremely simple (no dependencies, one single file) yet as fast and efficient as the widget. Note that it can **only be used with Bun**.

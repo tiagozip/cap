@@ -1,5 +1,6 @@
 ---
 outline: [2, 3, 4]
+description: "Cap's client widget requests, solves and displays proof-of-work challenges with a native web component and WASM. Client-side docs for the open-source CAPTCHA."
 ---
 
 # Widget

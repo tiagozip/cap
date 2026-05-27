@@ -1,6 +1,6 @@
 ---
 title: Cap vs Altcha
-description: How Cap compares to Altcha. Both are open-source proof-of-work CAPTCHAs — here's where they differ.
+description: "Cap vs Altcha: two open-source, self-hosted proof-of-work CAPTCHAs compared. See how Cap adds instrumentation challenges, a widget, and a managed dashboard."
 ---
 
 # Cap vs Altcha
