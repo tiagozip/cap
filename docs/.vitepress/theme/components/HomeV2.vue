@@ -285,13 +285,7 @@ function initLiveArchitecture() {
 function track(name, props) {
   try {
     if (typeof window === "undefined" || typeof window.plausible !== "function") return;
-    const merged = { ...(props || {}) };
-    for (const attr of document.documentElement.attributes) {
-      if (attr.name.startsWith("data-exp-")) {
-        merged["exp_" + attr.name.slice(9).replaceAll("-", "_")] = attr.value;
-      }
-    }
-    window.plausible(name, Object.keys(merged).length ? { props: merged } : undefined);
+    window.plausible(name, props ? { props } : undefined);
   } catch {}
 }
 
@@ -486,17 +480,7 @@ onBeforeUnmount(() => {
 
       <div class="wrap">
         <div class="trust-zone">
-          <div class="logobar exp-style-text">
-            <span class="logobar-label">Used in production by</span>
-            <span class="logobar-item">Bunny.net</span>
-            <span class="logobar-sep">·</span>
-            <span class="logobar-item">AdGuard</span>
-            <span class="logobar-sep">·</span>
-            <span class="logobar-item">Fraunhofer</span>
-            <span class="logobar-sep">·</span>
-            <span class="logobar-item logobar-more">and&nbsp;more</span>
-          </div>
-          <div class="logoimg exp-style-logos">
+          <div class="logoimg">
             <span class="logobar-label">Used in production by</span>
             <span class="logoimg-row">
               <img class="li li-bunny" src="/logos/bunny.svg" alt="bunny.net" width="112" height="43" loading="lazy" />
@@ -1656,17 +1640,6 @@ html.home-v2-active main.main {
 #homev2 img.li.li-adguard { height: 30px; }
 #homev2 img.li.li-fraunhofer { height: 20px; }
 #homev2 img.li:hover { opacity: 1; }
-
-/* grayscale variant: desaturated (keeps logo detail, unlike a hard invert) */
-:root[data-exp-logo-color="2"] #homev2 img.li {
-  filter: grayscale(1) brightness(2.2);
-  opacity: 0.8;
-}
-:root[data-exp-logo-color="2"] #homev2 img.li:hover { opacity: 1; }
-
-/* text vs logos toggle (default: text) */
-:root[data-exp-trust-style="2"] #homev2 .exp-style-text { display: none; }
-:root:not([data-exp-trust-style="2"]) #homev2 .exp-style-logos { display: none; }
 
 #homev2 .how-grid {
   display: grid;
