@@ -1,4 +1,8 @@
 (() => {
+  const wlog = (method, ...args) => {
+    if (!self.CAP_SILENT) console[method]("[cap worker]", ...args);
+  };
+
   const solveFallback = async ({ salt, target }) => {
     let nonce = 0;
     const batchSize = 50000;
@@ -50,7 +54,7 @@
           nonce++;
         }
       } catch (error) {
-        console.error("[cap worker]", error);
+        wlog("error","fallback solver crashed:", error.message || error);
         self.postMessage({
           found: false,
           error: error.message,
@@ -79,9 +83,7 @@
   };
 
   if (typeof WebAssembly !== "object" || typeof WebAssembly?.instantiate !== "function") {
-    console.warn(
-      "[cap worker] wasm not supported, falling back to alternative solver. this will be significantly slower.",
-    );
+    wlog("warn","WebAssembly unavailable, using JS fallback solver (significantly slower)");
 
     self.onmessage = async ({ data }) => {
       if (data?.kind === "rsw") return solveRsw(data);
@@ -171,7 +173,7 @@
 
       return true;
     } catch (e) {
-      console.error("[cap worker] failed to init wasm from module:", e);
+      wlog("error","wasm init failed:", e.message || e);
       return false;
     }
   };
@@ -182,13 +184,13 @@
     if (wasmModule instanceof WebAssembly.Module && solve_pow_function === null) {
       const ok = initFromModule(wasmModule);
       if (!ok) {
-        console.warn("[cap worker] wasm init failed, falling back to JS solver.");
+        wlog("warn","wasm init failed, falling back to JS solver");
         return solveFallback({ salt, target });
       }
     }
 
     if (solve_pow_function === null) {
-      console.warn("[cap worker] no wasm module provided, falling back to JS solver.");
+      wlog("warn","no wasm module provided, falling back to JS solver");
       return solveFallback({ salt, target });
     }
 
@@ -203,7 +205,7 @@
         durationMs: (endTime - startTime).toFixed(2),
       });
     } catch (error) {
-      console.error("[cap worker]", error);
+      wlog("error","solve_pow threw:", error.message || error);
 
       self.postMessage({
         found: false,

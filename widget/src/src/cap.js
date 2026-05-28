@@ -8,6 +8,31 @@
     return;
   }
 
+  const _ctp = ["#f5c2e7","#cba6f7","#f38ba8","#fab387","#f9e2af","#a6e3a1","#94e2d5","#89dceb","#b4befe"];
+  const _bg = (s) => {
+    if (s === "cap") return "#89b4fa";
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
+    return _ctp[Math.abs(h) % _ctp.length];
+  };
+  const _style = (t, i, n) => {
+    const l = i === 0 ? "9999px" : "0";
+    const r = i === n - 1 ? "9999px" : "0";
+    return `color:#1e1e2e;background:${_bg(t)};margin-left:${i ? "-6px" : 0};padding:0 6px;border-radius:${l} ${r} ${r} ${l};font-weight:600`;
+  };
+  const log = {};
+  for (const lvl of ["debug", "info", "warn", "error"]) {
+    log[lvl] = (tags, ...args) => {
+      if (window.CAP_SILENT || (lvl === "debug" && !window.CAP_DEBUG)) return;
+      const fmt = tags.map((t) => `%c${t}`).join(" ");
+      const styles = tags.map((t, i) => _style(t, i, tags.length));
+      console[lvl === "debug" ? "log" : lvl](fmt, ...styles, ...args);
+    };
+  }
+  const T = (sub) => (sub ? ["cap", sub] : ["cap"]);
+  const since = (t) => `${Math.round(performance.now() - t)}ms`;
+  const _err = (code, message) => Object.assign(new Error(message), { code });
+
   const capFetch = (u, conf = {}) => {
     if (window?.CAP_CUSTOM_FETCH) {
       return window.CAP_CUSTOM_FETCH(u, conf);
@@ -78,17 +103,18 @@
         const url =
           window.CAP_PAKO_URL ||
           "https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako_inflate.min.js";
+        log.debug(T("instr"), "DecompressionStream unavailable, loading pako from", url);
         const script = document.createElement("script");
         script.src = url;
         const pakoNonce = window.CAP_SCRIPT_NONCE || window.CAP_CSS_NONCE;
         if (pakoNonce) script.setAttribute("nonce", pakoNonce);
         script.onload = () => {
           if (window.pako?.inflateRaw) resolve(window.pako);
-          else reject(new Error("[cap] pako loaded but inflateRaw is missing"));
+          else reject(new Error("pako loaded but inflateRaw is missing"));
         };
         script.onerror = () => {
           _pakoPromise = null;
-          reject(new Error(`[cap] failed to load pako fallback from ${url}`));
+          reject(new Error(`failed to load pako fallback from ${url}`));
         };
         document.head.appendChild(script);
       });
@@ -178,14 +204,21 @@
       window.CAP_CUSTOM_WASM_URL ||
       `https://cdn.jsdelivr.net/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`;
 
+    const t0 = performance.now();
+    log.debug(T("wasm"), "fetching", wasmUrl);
     wasmModulePromise = fetch(wasmUrl)
       .then((r) => {
         if (!r.ok) throw new Error(`Failed to fetch wasm: ${r.status}`);
         return r.arrayBuffer();
       })
       .then((buf) => WebAssembly.compile(buf))
+      .then((mod) => {
+        log.debug(T("wasm"), `ready in ${since(t0)}`);
+        return mod;
+      })
       .catch((e) => {
         wasmModulePromise = null;
+        log.warn(T("wasm"), `load failed (${since(t0)}):`, e.message || e);
         throw e;
       });
 
@@ -251,8 +284,9 @@
       } catch {}
 
       this._spawnFailures++;
+      log.warn(T("pool"), `worker died, replacing (attempt ${this._spawnFailures}/3)`);
       if (this._spawnFailures > 3) {
-        console.error("[cap] worker spawn failed repeatedly, not retrying");
+        log.error(T("pool"), "worker spawn failed repeatedly, giving up");
         return null;
       }
 
@@ -438,8 +472,11 @@
           checkVisibilityCSS: true,
         });
       }
-      // Fallback: offsetParent is null for display:none; also check the style directly
       return !!(this.offsetParent || this.getClientRects().length > 0);
+    }
+
+    #logInvisible() {
+      if (!this.#isVisible()) log.info(T("challenges"), "solved invisible challenge");
     }
 
     #onFirstInteraction() {
@@ -454,6 +491,7 @@
     async #beginSpeculativeSolve() {
       if (this.#speculative.state !== "waiting") return;
       this.#speculative.state = "fetching";
+      this.#speculative._t0 = performance.now();
 
       let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
       if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
@@ -502,8 +540,7 @@
         this.#speculative.state = "solving";
 
         this.#speculative.solvePromise = this.#speculativeSolveAll(challenges);
-      } catch (e) {
-        console.warn("[cap] speculative challenge fetch failed:", e);
+      } catch {
         this.#speculative.state = "error";
         this.#speculative.notify();
       }
@@ -590,7 +627,7 @@
         const challengeResp = this.#speculative.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
         if (!apiEndpoint)
-          throw new Error("[cap] speculative redeem: missing apiEndpoint");
+          throw _err("missing_endpoint", "speculative redeem: missing apiEndpoint");
 
         let instrOut = null;
         if (challengeResp.instrumentation) {
@@ -627,12 +664,9 @@
         this.#speculative.token = resp.token;
         this.#speculative.tokenExpires = new Date(resp.expires).getTime();
         this.#speculative.state = "done";
+        this.#speculative._invisibleElapsed = this.#speculative._t0 ? since(this.#speculative._t0) : "?";
         this.#speculative.notify();
-      } catch (e) {
-        console.warn(
-          "[cap] speculative redeem failed (will redo on click):",
-          e,
-        );
+      } catch {
         this.#speculative.state = "done";
         this.#speculative.notify();
       }
@@ -758,6 +792,7 @@
         this.getAttribute("data-cap-hidden-field-name") || "cap-token";
       this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
 
+      log.debug(T(), `widget ready (workers=${this.#workersCount}, haptics=${this.#hasHaptics})`);
       this.#attachInteractionListeners();
       this.#updateValidity();
 
@@ -783,6 +818,8 @@
       }
 
       this.#enforceCredits();
+      const _solveT0 = performance.now();
+      log.debug(T("solve"), "starting");
 
       try {
         this.#solving = true;
@@ -805,7 +842,8 @@
           if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
             apiEndpoint = "/";
           } else if (!apiEndpoint) {
-            throw new Error(
+            throw _err(
+              "missing_endpoint",
               "Missing API endpoint. Either custom fetch or an API endpoint must be provided.",
             );
           }
@@ -820,6 +858,7 @@
             this.#speculative.tokenExpires &&
             Date.now() < this.#speculative.tokenExpires
           ) {
+            log.debug(T("solve"), `served from speculative cache (saved ${this.#speculative._invisibleElapsed || "?"})`);
             this.dispatchEvent("progress", { progress: 100 });
 
             const fieldName =
@@ -844,6 +883,7 @@
             );
             if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
+            this.#logInvisible();
             this.#resetSpeculativeState();
             this.#solving = false;
             return { success: true, token: this.token };
@@ -907,7 +947,7 @@
               solutions = await this.solveChallengesV2(challengeResp.challenges);
             } else {
               if (this.#speculative.state !== "done") {
-                throw new Error("Speculative solve failed – please try again");
+                throw _err("solve_failed", "Speculative solve failed – please try again");
               }
 
             if (
@@ -915,6 +955,7 @@
               this.#speculative.tokenExpires &&
               Date.now() < this.#speculative.tokenExpires
             ) {
+              log.debug(T("solve"), `served from speculative cache (saved ${this.#speculative._invisibleElapsed || "?"})`);
               this.dispatchEvent("progress", { progress: 100 });
 
               const fieldName =
@@ -939,6 +980,7 @@
               );
               if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
+              this.#logInvisible();
               this.#resetSpeculativeState();
               this.#solving = false;
               return { success: true, token: this.token };
@@ -960,9 +1002,9 @@
               try {
                 challengeResp = await challengeRaw.json();
               } catch {
-                throw new Error("Failed to parse challenge response from server");
+                throw _err("challenge_parse_error", "Failed to parse challenge response from server");
               }
-              if (challengeResp.error) throw new Error(challengeResp.error);
+              if (challengeResp.error) throw _err("network_error", challengeResp.error);
             }
 
             if (
@@ -1016,16 +1058,20 @@
                 "An error occurred, please try again",
               ),
             );
+            const instrCode = instrOut?.__blocked ? "instr_blocked" : "instr_timeout";
+            const instrMsg = instrOut?.__blocked
+              ? `Instrumentation blocked (${instrOut.blockReason || "automated_browser"})`
+              : "Instrumentation timed out";
             this.removeEventListener("error", this.boundHandleError);
             const errEvent = new CustomEvent("error", {
               bubbles: true,
               composed: true,
-              detail: { isCap: true, message: "Instrumentation failed" },
+              detail: { isCap: true, code: instrCode, message: instrMsg },
             });
             super.dispatchEvent(errEvent);
             this.addEventListener("error", this.boundHandleError);
             this.executeAttributeCode("onerror", errEvent);
-            console.error("[cap]", "Instrumentation failed");
+            log.error(T("instr"), `[${instrCode}] ${instrMsg}`);
             this.#solving = false;
             return;
           }
@@ -1046,11 +1092,11 @@
           try {
             resp = await redeemResponse.json();
           } catch {
-            throw new Error("Failed to parse server response");
+            throw _err("redeem_failed", "Failed to parse server response");
           }
 
           this.dispatchEvent("progress", { progress: 100 });
-          if (!resp.success) throw new Error(resp.error || "Invalid solution");
+          if (!resp.success) throw _err("invalid_solution", resp.error || "Invalid solution");
 
           const fieldName =
             this.getAttribute("data-cap-hidden-field-name") || "cap-token";
@@ -1068,7 +1114,7 @@
           if (expiresIn > 0 && expiresIn < 24 * 60 * 60 * 1000) {
             this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
           } else {
-            this.error("Invalid expiration time");
+            this.error("Invalid expiration time", "invalid_expires");
           }
 
           this.#trigger.setAttribute(
@@ -1080,6 +1126,8 @@
           );
           if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
+          log.debug(T("solve"), `verified in ${since(_solveT0)}`);
+          this.#logInvisible();
           return { success: true, token: this.token };
         } catch (err) {
           this.#trigger.setAttribute(
@@ -1089,7 +1137,7 @@
               "An error occurred, please try again",
             ),
           );
-          this.error(err.message);
+          this.error(err.message, err.code || "solve_failed");
           throw err;
         }
       } finally {
@@ -1115,7 +1163,7 @@
         ) {
           // Unknown protocol = older widget on a newer server. Fall back to
           // erroring out -- the host can detect this and serve format-1.
-          throw new Error(`[cap] unsupported format-2 protocol '${ch?.protocol}'`);
+          throw _err("challenge_unsupported", `unsupported format-2 protocol '${ch?.protocol}'`);
         }
       }
 
@@ -1125,7 +1173,7 @@
         typeof WebAssembly.instantiate === "function";
       if (wasmSupported) {
         try { wasmModule = await getWasmModule(); }
-        catch (e) { console.warn("[cap] wasm unavailable, falling back to JS solver:", e); }
+        catch (e) { log.warn(T("wasm"), "unavailable, falling back to JS solver:", e.message || e); }
       }
 
       const poolSize = Math.max(1, Math.min(this.#workersCount, challenges.length));
@@ -1211,11 +1259,12 @@
         try {
           wasmModule = await getWasmModule();
         } catch (e) {
-          console.warn("[cap] wasm unavailable, falling back to JS solver:", e);
+          log.warn(T("wasm"), "unavailable, falling back to JS solver:", e.message || e);
         }
       }
 
       if (!wasmSupported) {
+        log.warn(T("wasm"), "WebAssembly disabled in this browser, solver will be ~10x slower");
         if (!this.#shadow.querySelector(".warning")) {
           const warningEl = document.createElement("div");
           warningEl.className = "warning";
@@ -1552,16 +1601,17 @@
         return;
       }
 
-      console.error(
-        "[cap] using `onxxx='…'` is strongly discouraged and will be deprecated soon. please use `addEventListener` callbacks instead.",
+      log.warn(
+        T(),
+        "inline `onxxx='…'` handlers are deprecated. use `addEventListener` callbacks instead.",
       );
 
       new Function("event", code).call(this, event);
     }
 
-    error(message = "Unknown error") {
-      console.error("[cap]", message);
-      this.dispatchEvent("error", { isCap: true, message });
+    error(message = "Unknown error", code = "unknown") {
+      log.error(T("solve"), `[${code}] ${message}`);
+      this.dispatchEvent("error", { isCap: true, code, message });
     }
 
     dispatchEvent(eventName, detail = {}) {
@@ -1679,8 +1729,9 @@
   if (!customElements.get("cap-widget") && !window?.CAP_DONT_SKIP_REDEFINE) {
     customElements.define("cap-widget", CapWidget);
   } else if (customElements.get("cap-widget")) {
-    console.warn(
-      "[cap] the cap-widget element has already been defined, skipping re-defining it.\nto prevent this, set window.CAP_DONT_SKIP_REDEFINE to true",
+    log.warn(
+      T(),
+      "cap-widget custom element already defined, skipping re-define. set window.CAP_DONT_SKIP_REDEFINE = true to override",
     );
   }
 

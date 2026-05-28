@@ -2,9 +2,12 @@ declare global {
   interface Window {
     CAP_CUSTOM_FETCH?: typeof fetch;
     CAP_CUSTOM_WASM_URL?: string;
+    CAP_PAKO_URL?: string;
     CAP_CSS_NONCE?: string;
     CAP_SCRIPT_NONCE?: string;
     CAP_DONT_SKIP_REDEFINE?: boolean;
+    CAP_DEBUG?: boolean;
+    CAP_SILENT?: boolean;
     Cap: typeof Cap;
   }
 }
@@ -17,8 +20,24 @@ interface CapSolveEventDetail {
   token: string;
 }
 
+type CapErrorCode =
+  | "missing_endpoint"
+  | "network_error"
+  | "challenge_parse_error"
+  | "challenge_unsupported"
+  | "solve_failed"
+  | "instr_timeout"
+  | "instr_blocked"
+  | "redeem_failed"
+  | "invalid_solution"
+  | "invalid_expires"
+  | "wasm_load_failed"
+  | "worker_spawn_failed"
+  | "unknown";
+
 interface CapErrorEventDetail {
   isCap: boolean;
+  code: CapErrorCode;
   message: string;
 }
 
@@ -116,6 +135,7 @@ export {
   type CapProgressEvent,
   type CapSolveEvent,
   type CapErrorEvent,
+  type CapErrorCode,
   type CapResetEvent,
   type SolveResult,
 };
