@@ -293,6 +293,7 @@ export default withMermaid({
           items: [
             { text: "← Back to docs", link: "/guide/" },
             { text: "Feature comparison", link: "/guide/alternatives.md" },
+            { text: "Migrate from reCAPTCHA", link: "/guide/alternatives/migrate-from-recaptcha.md" },
           ],
         },
         {
