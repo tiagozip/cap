@@ -699,7 +699,7 @@ onBeforeUnmount(() => {
             <h2>Compliant out of the box.</h2>
             <p>
               Self-hosted and privacy-first, so the hard regulatory questions answer themselves.
-              No cookies, no tracking, no data leaving your servers.
+              No cookies, no tracking, no data leaving your servers.<span style="color:var(--line)">*</span>
             </p>
           </div>
 
@@ -992,7 +992,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="ft-bottom">
-          <span class="ft-copy">© 2026 <a href="https://tiago.zip">tiago.zip</a> · Apache 2.0</span>
+          <span class="ft-copy">© 2026 <a href="https://tiago.zip">tiago.zip</a></span>
+
+          <p style="font-family: system-ui;opacity: .8;">* Cap is designed to be compatible with these frameworks. Compatibility and compliance aren't guaranteed and depend on your deployment. Not legal advice.</p>
         </div>
       </div>
     </footer>
