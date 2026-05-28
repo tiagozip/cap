@@ -70,11 +70,22 @@ new Elysia({
     set.headers["X-Powered-By"] = "Cap Standalone";
   })
   .onError(({ error, code }) => {
+    const serializeError = (err) =>
+      err instanceof Error
+        ? {
+            name: err.name,
+            message: err.message,
+            stack: err.stack,
+            ...(err.code ? { code: err.code } : {}),
+            ...(err.cause ? { cause: String(err.cause) } : {}),
+          }
+        : err;
+
     if (["VALIDATION", "NOT_FOUND"].includes(code)) {
       return {
         success: false,
         error: error.code || "Internal server error",
-        detail: error,
+        detail: serializeError(error),
       };
     }
 
@@ -85,7 +96,7 @@ new Elysia({
         `[${error.code || "ERR"} ${errorId}]`,
         JSON.stringify({
           timestamp: new Date().toISOString(),
-          error,
+          error: serializeError(error),
           env: {
             bun: process.versions.bun,
             platform: process.platform,
@@ -100,7 +111,7 @@ new Elysia({
       error: error.code || "Internal server error",
       detail:
         process.env.SHOW_ERRORS === "true"
-          ? error
+          ? serializeError(error)
           : {
               troubleshooting:
                 "http://trycap.dev/guide/standalone/options.html#error-messages",
