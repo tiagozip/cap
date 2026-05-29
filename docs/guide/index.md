@@ -1,25 +1,33 @@
 ---
 outline: deep
-description: "Quickstart for Cap, the open-source self-hosted CAPTCHA. Set up the proof-of-work widget and server in minutes, with no Google, telemetry, or visual puzzles."
+description: "Set up Cap, the open-source self-hosted CAPTCHA, in about five minutes. Run the server with Docker, drop in the widget, verify tokens. No Google, no telemetry, no visual puzzles."
 ---
 
 # Quickstart
 
-Cap is a modern, lightweight, and self-hosted CAPTCHA alternative using proof-of-work, time-lock and instrumentation challenges.
+Cap is a self-hosted CAPTCHA that replaces image puzzles with invisible proof-of-work. Your users click one checkbox, the work runs silently in their browser, and none of their data ever leaves your servers. No Google, no telemetry, no per-request fees.
 
-Unlike traditional CAPTCHAs, Cap is fast and unobtrusive, has no telemetry or tracking, and uses accessible proof-of-work instead of annoying visual puzzles.
+Cap has two parts: a **widget** that runs the challenge and shows the checkbox, and a **server** that issues challenges and verifies solutions. You'll have both running in about five minutes.
 
-We've found that Cap offers a better balance for site admins than big-tech alternatives because **it puts the levers of control in your hands, not a third party.** You decide the difficulty, you own the data, and you never pay per-request fees.
-
-Cap consists of a client-side widget, which solves challenges and displays the checkbox, and a server-side component, which generates challenges and redeems solutions.
+**Here's the widget, live:**
 
 <Demo />
 
-## 1. Setting up your server
+::: tip Already using reCAPTCHA?
+Cap's `/siteverify` is compatible with reCAPTCHA's API. You can point your existing verification code at Cap by changing one URL, run both side by side, and cut over whenever you're ready. There's no rewrite and no risky big-bang switch. See the [feature comparison](./alternatives.md).
+:::
 
-We recommend starting with Cap Standalone for [Docker](https://docs.docker.com/get-docker/). It supports multiple site keys and is compatible with reCAPTCHA's siteverify API, so you can even run it alongside reCAPTCHA and switch over gradually.
+## What you'll need
 
-Start by creating a `docker-compose.yml` file:
+- [Docker](https://docs.docker.com/get-docker/) (the fastest way to run the server)
+- A place to host it that's reachable from your users' browsers
+- A few minutes
+
+## 1. Run the server
+
+We recommend [Cap Standalone](./standalone/index.md), a single container that exposes a small REST API and a dashboard for managing keys. It supports multiple site keys and is compatible with reCAPTCHA's siteverify API.
+
+Create a `docker-compose.yml`:
 
 ```yaml
 services:
@@ -53,67 +61,67 @@ volumes:
   valkey-data:
 ```
 
-::: tip Tips
-
-- `ADMIN_KEY` is your dashboard login. We recommend making it at least 32 characters.
-- Change `3000:3000` if that port is already in use on your host.
-- If the dashboard is unreachable, try adding `network_mode: "host"` under the `cap` service.
-
-:::
-
-Start the container:
+Start it:
 
 ```bash
 docker compose up -d
 ```
 
-Open `http://localhost:3000` (or your server's IP/domain on port 3000) to access the dashboard. Log in with your admin key, create a site key, and note down both the **site key** and its **secret key** - you'll need both.
+Open `http://localhost:3000` (or your server's IP or domain on port 3000), log in with your `ADMIN_KEY`, and create a site key. You'll get a **site key** and a **secret key**. Keep both, you'll need them in the next steps.
 
-We also highly recommend keeping [instrumentation challenges](./instrumentation.md) on. It's already the default and results in much better bot protection.
+::: tip Tips
 
-## 2. Adding the widget
+- `ADMIN_KEY` is your dashboard password. Make it at least 32 characters.
+- Change `3000:3000` if that port is already in use.
+- If the dashboard is unreachable, add `network_mode: "host"` under the `cap` service.
+  :::
 
-You can find example snippets for multiple frameworks on the [widget docs](./widget.md#usage). We're gonna assume a basic vanilla implementation here for simplicity.
+## 2. Add the widget
 
-Add the widget script to your website's HTML:
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
-<!-- we recommend pinning a version in production -->
-```
-
-Then add the widget component, pointing it at your instance:
+The widget is a single web component. If you wouldn't like to pin versions, replace `<version>` with `latest`.
 
 ```html
-<cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
 ```
 
-- `<your-instance>` — the public URL of your Cap Standalone instance (e.g. `cap.example.com`). This must be publicly reachable by the client (not `localhost`).
-- `<site-key>` — the site key from your dashboard
+::: tip
+Check the [latest release](https://github.com/tiagozip/cap/releases) for the version to pin. In high-security setups you can self-host this file instead of loading it from the CDN.
+:::
 
-Example:
+### The simple way: drop it in a form
+
+If your widget lives inside a `<form>`, Cap injects a hidden `cap-token` field automatically and submits it with the rest of your form data. No JavaScript required.
 
 ```html
-<cap-widget data-cap-api-endpoint="https://cap.example.com/d9256640cb53/"></cap-widget>
+<form action="/submit" method="POST">
+  <!-- your fields -->
+  <cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
+  <button type="submit">Submit</button>
+</form>
 ```
 
-In your JavaScript, listen for the `solve` event to capture the token:
+- `<your-instance>` is the public URL of your Cap server, e.g. `cap.example.com`. It has to be reachable by your visitors, so not `localhost`.
+- `<site-key>` is the site key from your dashboard.
+
+On submit, your server receives `cap-token` alongside the other fields. Skip to [step 3](#_3-verify-the-token) to verify it.
+
+### With JavaScript: when you need control
+
+For SPAs, custom flows, or anything that isn't a plain form, listen for the `solve` event:
 
 ```js
 const widget = document.querySelector("cap-widget");
-widget.addEventListener("solve", function (e) {
+widget.addEventListener("solve", (e) => {
   const token = e.detail.token;
-  // Handle the token as needed
+  // send token to your server, enable the submit button, etc.
 });
 ```
 
-Alternatively, you can wrap the widget in a `<form></form>` and Cap will automatically submit the token alongside other form data as `cap-token`.
+You can also render the widget invisibly and solve [programmatically](./programmatic.md), or use [floating mode](./floating.md). Framework snippets (React, Vue, Svelte and more) are on the [widget page](./widget.md#usage).
 
-You can also get a token programmatically without displaying the widget by using the [programmatic mode](./programmatic.md).
+## 3. Verify the token
 
-## 3. Verifying tokens
-
-Once a user completes the CAPTCHA, your backend must verify the token before proceeding. Send a `POST` request to your instance's `/siteverify` endpoint:
+Before you trust a submission, your server has to verify the token. Send a `POST` to your instance's `/siteverify` endpoint:
 
 ::: code-group
 
@@ -132,16 +140,17 @@ const { success } = await (
     body: JSON.stringify({ secret: "<key_secret>", response: "<captcha_token>" }),
   })
 ).json();
+
+if (!success) throw new Error("invalid cap token");
 ```
 
 ```py [python]
 import requests
-success = requests.post(
-  "https://<your-instance>/<site-key>/siteverify",
-  json={"secret": "<key_secret>", "response": "<captcha_token>"}
-).json().get("success")
 
-print(success)
+success = requests.post(
+    "https://<your-instance>/<site-key>/siteverify",
+    json={"secret": "<key_secret>", "response": "<captcha_token>"},
+).json().get("success")
 ```
 
 ```php [php]
@@ -160,20 +169,38 @@ var_dump($data['success'] ?? false);
 
 :::
 
-- `<key_secret>` — the secret key from your dashboard (**not** the dashboard admin key).
-- `<captcha_token>` — the token generated by the widget
+- `<key_secret>` is the **secret key** from your dashboard, not the dashboard `ADMIN_KEY`. Mixing these up is the most common setup mistake.
+- `<captcha_token>` is the token from the widget (the `cap-token` form field or `e.detail.token`).
 
-A successful verification returns:
+A valid token returns:
 
 ```json
 { "success": true }
 ```
 
-That's it! Cap is fully set up. Your users solve challenges client-side, your server verifies tokens, and you own all the data.
+Tokens are single-use, so verify each one once and then run your own logic (create the account, send the message, and so on).
+
+## 4. Confirm it works
+
+A quick end-to-end check:
+
+1. Load your page. The checkbox should tick and your `solve` handler (or form field) should produce a token.
+2. Send that token to `/siteverify`. You should get `{ "success": true }`.
+3. Send the same token again. It should now fail, which confirms single-use is working.
+
+If verification always fails, check that you're using the secret key (not the admin key) and that `<your-instance>` is the same public URL the widget points at.
+
+That's the whole integration. Users solve challenges in their browser, your server verifies tokens, and you keep every byte of the data.
+
+## Built for compliance
+
+Because Cap is self-hosted with no cookies, no tracking, and no third-party calls, your users' data never leaves your infrastructure. Cap is designed to meet GDPR, CCPA, HIPAA, LGPD and other privacy regimes, and the proof-of-work checkbox avoids the WCAG 2.2 barriers that image and audio puzzles run into. Full details, and the regulations Cap is built around, are on the [Compliance](./compliance.md) page.
 
 ## Next steps
 
-**You're mostly done.** If you'd like, you can:
+You're protecting your forms. From here you can:
 
-- [Customize your widget](./widget#options)'s look and feel
-- [Fully configure Cap Standalone](./standalone/options.html) to set up CORS or make sure rate-limiting works properly
+- Drop Cap into your stack with a [framework snippet](./widget.md#usage)
+- [Customize the widget](./widget.md#options)'s look and behavior
+- Tune [instrumentation](./instrumentation.md) and [configure](./standalone/options.md) CORS and rate limiting
+- See how Cap compares to [reCAPTCHA, Turnstile, hCaptcha and others](./alternatives.md)
