@@ -10,51 +10,6 @@ html:has(.Layout.home-v2-page) body {
   color: #e8e8e8;
 }
 
-/**
- * Customize default theme styling by overriding CSS variables:
- * https://github.com/vuejs/vitepress/blob/main/src/client/theme-default/styles/vars.css
- */
-
-/**
- * Colors
- *
- * Each colors have exact same color scale system with 3 levels of solid
- * colors with different brightness, and 1 soft color.
- *
- * - `XXX-1`: The most solid color used mainly for colored text. It must
- *   satisfy the contrast ratio against when used on top of `XXX-soft`.
- *
- * - `XXX-2`: The color used mainly for hover state of the button.
- *
- * - `XXX-3`: The color for solid background, such as bg color of the button.
- *   It must satisfy the contrast ratio with pure white (#ffffff) text on
- *   top of it.
- *
- * - `XXX-soft`: The color used for subtle background such as custom container
- *   or badges. It must satisfy the contrast ratio when putting `XXX-1` colors
- *   on top of it.
- *
- *   The soft color must be semi transparent alpha channel. This is crucial
- *   because it allows adding multiple "soft" colors on top of each other
- *   to create a accent, such as when having inline code block inside
- *   custom containers.
- *
- * - `default`: The color used purely for subtle indication without any
- *   special meanings attached to it such as bg color for menu hover state.
- *
- * - `brand`: Used for primary brand colors, such as link text, button with
- *   brand theme, etc.
- *
- * - `tip`: Used to indicate useful information. The default theme uses the
- *   brand color for this by default.
- *
- * - `warning`: Used to indicate warning to the users. Used in custom
- *   container, badges, etc.
- *
- * - `danger`: Used to show error, or dangerous message to the users. Used
- *   in custom container, badges, etc.
- * -------------------------------------------------------------------------- */
-
 :root {
   --vp-c-default-1: var(--vp-c-gray-1);
   --vp-c-default-2: var(--vp-c-gray-2);
@@ -84,10 +39,6 @@ html:has(.Layout.home-v2-page) body {
   --vp-c-danger-soft: var(--vp-c-red-soft);
 }
 
-/**
- * Component: Button
- * -------------------------------------------------------------------------- */
-
 :root {
   --vp-button-brand-border: transparent;
   --vp-button-brand-text: var(--vp-c-white);
@@ -101,8 +52,24 @@ html:has(.Layout.home-v2-page) body {
 }
 
 ::selection {
-  background-color: #3e63dd;
-  color: rgb(255, 255, 255);
+  background-color: #89b4fa;
+  color: #0a0a0b;
+}
+
+.VPNav, .VPLocalNav, .VPSidebar, footer {
+  user-select: none;
+}
+
+.dark {
+  --vp-c-bg: oklch(20.385% 0.00773 285.719);
+  --vp-c-bg-alt: oklch(17.105% 0.00397 285.961);
+  --vp-c-bg-elv: oklch(22.927% 0.01144 278.034);
+  --vp-c-bg-soft: oklch(22.927% 0.01144 278.034);
+
+  --vp-c-gray-1: oklch(43.933% 0.0226 248.367);
+  --vp-c-gray-2: oklch(35.955% 0.02077 259.438);
+  --vp-c-gray-3: oklch(30.266% 0.01685 266.452);
+  --vp-c-gray-soft: oklch(50.504% 0.03148 248.444 / 0.16);
 }
 
 /**
@@ -386,7 +353,7 @@ body {
 }
 
 .VPFooter.has-sidebar {
-  display: block!important;
-  border-top: transparent!important;
-  padding-top: 0px!important;
+  display: block !important;
+  border-top: transparent !important;
+  padding-top: 0px !important;
 }

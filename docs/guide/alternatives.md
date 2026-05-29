@@ -4,22 +4,23 @@ description: "Compare Cap against reCAPTCHA, hCaptcha, Turnstile, Altcha and mor
 
 # Alternatives to Cap
 
-| CAPTCHA              | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | Checkpoints | Widget support | GDPR/CCPA Compliant | Customizable | Hard for bots | Easy to integrate |
-| :------------------- | :---------- | :--- | :------ | :------------ | :-------------- | :--------------- | :---------- | :------------- | :------------------ | :----------- | :------------ | :---------------- |
-| **Cap**              | ✅          | ✅   | ✅      | ✅            | ✅              | ✅               | ✅          | ✅             | ✅                  | ✅           | ✅            | ✅                |
-| Cloudflare Turnstile | ❌          | ✅   | 🟨      | 🟨            | ✅              | ❌               | 🟨          | ✅             | ✅                  | ❌           | 🟨            | ✅                |
-| reCAPTCHA            | ❌          | 🟨   | ❌      | ✅            | ❌              | 🟨               | ❌          | ✅             | 🟨                  | ❌           | ❌            | ✅                |
-| hCAPTCHA             | ❌          | 🟨   | 🟨      | ❌            | ❌              | 🟨               | ❌          | ✅             | 🟨                  | ❌           | 🟨            | ✅                |
-| Altcha               | ✅          | ✅   | ✅      | ✅            | ✅              | ✅               | ❌          | ✅             | ✅                  | ✅           | 🟨            | 🟨                |
-| FriendlyCaptcha      | ❌          | ❌   | ✅      | 🟨            | ✅              | ✅               | ❌          | ✅             | ✅                  | ✅           | 🟨            | 🟨                |
-| MTCaptcha            | ❌          | 🟨   | 🟨      | ❌            | ❌              | 🟨               | ❌          | ✅             | ✅                  | ❌           | ❌            | 🟨                |
-| GeeTest              | ❌          | ❌   | ❌      | 🟨            | 🟨              | 🟨               | ❌          | ✅             | ✅                  | ❌           | 🟨            | 🟨                |
-| Arkose Labs          | ❌          | ❌   | ❌      | ❌            | ❌              | ❌               | ❌          | ❌             | ✅                  | 🟨           | ❌            | 🟨                |
+| CAPTCHA              | Open-source | Free | Private | Fast to solve | Easy for humans | Small error rate | GDPR compliant | Customizable | Hard for bots | Instrumentation | RSW support | Easy to integrate |
+| :------------------- | :---------- | :--- | :------ | :------------ | :-------------- | :--------------- | :------------- | :----------- | :------------ | :-------------- | :---------- | :---------------- |
+| **Cap**              | ✅          | ✅   | ✅      | ✅            | ✅              | ✅               | ✅             | ✅           | ✅            | ✅              | ✅          | ✅                |
+| Cloudflare Turnstile | ❌          | ✅   | 🟨      | 🟨            | ✅              | ❌               | ✅             | ❌           | ✅            | ✅              | 🟨          | ✅                |
+| reCAPTCHA            | ❌          | 🟨   | ❌      | ❌            | ❌              | 🟨               | 🟨             | ❌           | 🟨            | ✅              | 🟨          | ✅                |
+| hCAPTCHA             | ❌          | 🟨   | 🟨      | ❌            | ❌              | 🟨               | 🟨             | ❌           | 🟨            | ✅              | 🟨          | ✅                |
+| Altcha               | ✅          | ✅   | ✅      | ✅            | ✅              | ✅               | ✅             | ✅           | 🟨            | ❌              | ❌          | 🟨                |
+| FriendlyCaptcha      | ❌          | ❌   | ✅      | ✅            | ✅              | ✅               | ✅             | ✅           | ❌            | ❌              | ❌          | 🟨                |
+| MTCaptcha            | ❌          | 🟨   | 🟨      | ❌            | ❌              | 🟨               | ✅             | ❌           | ❌            | ❌              | ❌          | 🟨                |
+| GeeTest              | ❌          | ❌   | ❌      | 🟨            | 🟨              | 🟨               | ✅             | ❌           | 🟨            | ❌              | ❌          | 🟨                |
+| Arkose Labs          | ❌          | ❌   | ❌      | ❌            | ❌              | ❌               | ✅             | 🟨           | 🟨            | 🟨              | 🟨          | 🟨                |
 
 ::: tip Note
 
-"Hard for bots" for Cap refers to the combination of Proof-of-Work and [dynamic instrumentation challenges](./standalone/options.md#instrumentation-challenges). It does not consider commercial solvers like BrightData, as I cannot verify their legitimacy myself.
+Based on internal testing, Cap achieved lower challenge abandonment rates and higher privacy-browser compatibility than competing solutions.
 
+"Hard for bots" refers to resistance against commodity automation, including headless browsers, scripted attacks, and self-operated bot networks. For Cap, this is primarily provided by PoW and instrumentation. This category does not consider commercial CAPTCHA-solving services or human-assisted solver platforms, as their effectiveness is difficult to independently verify.
 :::
 
 ## All alternatives
