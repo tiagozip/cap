@@ -59,11 +59,7 @@ const FAQ_ITEMS = [
   [
     "What is the best open-source alternative to reCAPTCHA?",
     "Cap is a privacy-first, self-hosted alternative to Google reCAPTCHA that uses proof-of-work and instrumentation instead of visual puzzles or tracking. Compare it against reCAPTCHA, hCaptcha, and Turnstile to find what fits your stack.",
-  ],
-  [
-    "How does proof-of-work CAPTCHA work?",
-    "Instead of asking users to solve a puzzle, a proof-of-work CAPTCHA makes the browser compute a small cryptographic challenge before it submits. Cap solves SHA-256 challenges in WebAssembly in well under a second for real users, while making large-scale abuse computationally expensive. See how Cap works.",
-  ],
+  ]
 ];
 
 const FAQ_PAGE = {
