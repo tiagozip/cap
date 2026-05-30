@@ -450,7 +450,7 @@ onBeforeUnmount(() => {
           </p>
 
           <div class="actions">
-            <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes</a>
+            <a class="btn primary" href="/guide/" data-cta="docs" data-cta-location="hero">Get started in 5 minutes <span class="arr">→</span></a>
             <a class="btn" href="/guide/demo.html" data-cta="demo" data-cta-location="hero">Try the demo <span class="arr">↗</span></a>
           </div>
         </div>
@@ -493,100 +493,49 @@ onBeforeUnmount(() => {
 
       <section class="block" id="features">
         <div class="wrap-wide">
-          <div class="head">
-            <span class="eyebrow">Features</span>
-            <h2>250x smaller than hCaptcha.<br />No puzzles, no tracking.</h2>
-          </div>
           <div class="feat-grid">
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <path d="M12 3l8 3v5c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-3z" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Zm-68-56a12,12,0,1,1-12-12A12,12,0,0,1,140,152Z"></path></svg>
               </div>
-              <h3>Privacy-first</h3>
+              <h3>Privacy-first. No tracking.</h3>
               <p>
                 Zero telemetry. No third-party network. Your users' data stays between you and them.
               </p>
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.6"
-                  stroke-linejoin="round"
-                >
-                  <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z"></path></svg>
               </div>
-              <h3>~20kb, zero dependencies</h3>
-              <p>Loads in milliseconds, not seconds.</p>
+              <h3>250x smaller than hCaptcha.</h3>
+              <p>~20kb, zero dependencies. Loads in milliseconds, not seconds.</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M8 12l3 3 5-6" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path></svg>
               </div>
-              <h3>No visual puzzles</h3>
+              <h3>No visual puzzles. Always invisible.</h3>
               <p>
-                PoW and instrumentation run silently in the background. No "click the traffic
-                lights."
+                PoW, time-lock challenges and instrumentation run silently in the background.
               </p>
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <path d="M4 19V5a2 2 0 012-2h9l5 5v11a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
-                  <path d="M14 3v6h6" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-brand-open-source"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3a9 9 0 0 1 3.618 17.243l-2.193 -5.602a3 3 0 1 0 -2.849 0l-2.193 5.603a9 9 0 0 1 3.617 -17.244" /></svg>
               </div>
-              <h3>Apache 2.0</h3>
+              <h3>Apache 2.0 licensed</h3>
               <p>Free forever. Audit it, fork it, own it. No vendor can pull the rug.</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <rect x="3" y="4" width="18" height="12" rx="2" />
-                  <path d="M7 20h10M12 16v4" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"></path></svg>
               </div>
-              <h3>Standalone mode</h3>
-              <p>
-                Deploy anywhere with one Docker container. Includes analytics and multi-site-key
-                support.
-              </p>
+              <h3>Comply with privacy laws.</h3>
+              <p>Fully compliant with GDPR, CCPA, LGPD and more, meeting strict privacy and accessibility standards.</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <path d="M8 6l-4 6 4 6M16 6l4 6-4 6M14 4l-4 16" />
-                </svg>
-              </div>
-              <h3>No user interaction</h3>
-              <p>
-                Hide the widget entirely and solve challenges silently, ideal for APIs and forms. Ready for headless browser detection.
-              </p>
-            </div>
-            <div class="feat-cell">
-              <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="M9 12l2 2 4-4" />
-                </svg>
-              </div>
-              <h3>GDPR & WCAG 2.2 compliant</h3>
-              <p>Meets strict privacy and accessibility standards.</p>
-            </div>
-            <div class="feat-cell">
-              <div class="icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M4 12h16M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256"><path d="M232,32a8,8,0,0,0-8-8c-44.08,0-89.31,49.71-114.43,82.63A60,60,0,0,0,32,164c0,30.88-19.54,44.73-20.47,45.37A8,8,0,0,0,16,224H92a60,60,0,0,0,57.37-77.57C182.3,121.31,232,76.08,232,32ZM92,208H34.63C41.38,198.41,48,183.92,48,164a44,44,0,1,1,44,44Zm32.42-94.45q5.14-6.66,10.09-12.55A76.23,76.23,0,0,1,155,121.49q-5.9,4.94-12.55,10.09A60.54,60.54,0,0,0,124.42,113.55Zm42.7-2.68a92.57,92.57,0,0,0-22-22c31.78-34.53,55.75-45,69.9-47.91C212.17,55.12,201.65,79.09,167.12,110.87Z"></path></svg>
               </div>
               <h3>Fully customizable</h3>
               <p>
@@ -610,8 +559,7 @@ onBeforeUnmount(() => {
       <section class="block" id="compare">
         <div class="wrap-wide">
           <div class="head">
-            <span class="eyebrow">Compared</span>
-            <h2>How it compares.</h2>
+            <h2>How it compares</h2>
             <p>
               Cap sits in the same detection tier as the big names, without shipping your users'
               data to a third party.
@@ -1357,24 +1305,23 @@ html.home-v2-active main.main {
 #homev2 .actions {
   margin-top: 32px;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   flex-wrap: wrap;
 }
 #homev2 .btn {
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   padding: 10px 16px;
   border-radius: 8px;
-  border: 1px solid var(--line-strong);
-  background: transparent;
+  background: #3132446b;
   color: var(--fg);
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: border-color 0.15s, background 0.15s, transform .2s;
+  transition: border-color .15s, background .15s, transform .2s, filter .15s;
 }
 #homev2 .btn:hover {
   border-color: rgba(255, 255, 255, 0.3);
@@ -1390,13 +1337,16 @@ html.home-v2-active main.main {
   font-weight: 500;
 }
 #homev2 .btn.primary:hover:not(:active) {
-  transform: scale(1.03);
+  filter: brightness(1.2);
 }
 
 #homev2 .btn .arr {
   opacity: 0.6;
   display: inline-block;
   transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+}
+#homev2 .btn.primary .arr {
+  opacity: 1;
 }
 #homev2 .btn:hover .arr {
   opacity: 1;
@@ -1450,7 +1400,7 @@ html.home-v2-active main.main {
 }
 
 #homev2 section.block {
-  padding: 80px 0 0;
+  padding: 60px 0 0;
 }
 #homev2 section.home-ad-block {
   padding: 56px 0 0;
@@ -1806,11 +1756,8 @@ html.home-v2-active main.main {
 
 #homev2 .feat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 12px;
   overflow: hidden;
 }
 #homev2 .feat-cell {
@@ -1820,28 +1767,24 @@ html.home-v2-active main.main {
   flex-direction: column;
   gap: 12px;
   min-height: 180px;
-  transition: background 0.2s;
-}
-#homev2 .feat-cell:hover {
-  background: var(--surface);
 }
 #homev2 .feat-cell .icon {
   color: var(--accent);
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
 }
 #homev2 .feat-cell .icon svg {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   position: relative;
 }
 #homev2 .feat-cell h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--fg);
   letter-spacing: -0.005em;
@@ -1851,6 +1794,7 @@ html.home-v2-active main.main {
   color: var(--fg-dim);
   font-size: 13.5px;
   line-height: 1.55;
+  margin-top: -4px;
 }
 
 #homev2 .matrix {
@@ -2405,9 +2349,6 @@ html.home-v2-active main.main {
   }
   #homev2 h1 {
     font-size: 26px;
-  }
-  #homev2 .actions {
-    gap: 6px;
   }
   #homev2 .btn {
     padding: 9px 12px;
