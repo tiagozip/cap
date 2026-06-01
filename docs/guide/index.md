@@ -27,6 +27,8 @@ Cap's `/siteverify` is compatible with reCAPTCHA's API. You can point your exist
 
 We recommend [Cap Standalone](./standalone/index.md), a single container that exposes a small REST API and a dashboard for managing keys. It supports multiple site keys and is compatible with reCAPTCHA's siteverify API.
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
 Create a `docker-compose.yml`:
 
 ```yaml

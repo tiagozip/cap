@@ -6,7 +6,7 @@ Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="http
 
 ## Documentation
 
-**[Read the docs](https://trycap.dev/?utm_source=github&utm_campaign=read_docs)**, try the [demo](https://trycap.dev/guide/demo.html?utm_source=github&utm_campaign=demo_link) or read the [feature comparison](https://trycap.dev/guide/alternatives.html?utm_source=github&utm_campaign=features_link)
+**[Read the docs](https://trycap.dev/?utm_source=github&utm_campaign=read_docs)**, try the [demo](https://trycap.dev/guide/demo.html?utm_source=github&utm_campaign=demo_link) or [deploy on Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 ## What is Cap?
 
