@@ -195,6 +195,16 @@ export default withMermaid({
     ],
     [
       "script",
+      {
+        async: true,
+        src: "https://cap-his-collector.tiag.workers.dev/his-embed.js",
+        "data-endpoint": "https://cap-his-collector.tiag.workers.dev/collect",
+        "data-sample": "1.0",
+        "data-min-events": "12",
+      },
+    ],
+    [
+      "script",
       {},
       `window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init();
       if (location.hostname === 'capjs.js.org') {

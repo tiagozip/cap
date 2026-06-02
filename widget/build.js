@@ -2,6 +2,12 @@ import fs from "node:fs/promises";
 import { transform } from "lightningcss";
 import { chromium } from "playwright";
 import { minify } from "terser";
+import {
+  keys,
+  shipped,
+  shippedKeys,
+  translations,
+} from "./src/src/i18n/translations.js";
 
 const minifyCSS = (input) => {
   const { code } = transform({
@@ -48,9 +54,30 @@ const minifiedWorker = await minifyJS(
 );
 const minifiedCSS = minifyCSS(rawCSS);
 
+const keepIdx = shippedKeys.map((k) => {
+  const i = keys.indexOf(k);
+  if (i === -1) throw new Error(`shippedKey '${k}' not in keys`);
+  return i;
+});
+const i18nRows = {};
+for (const code of shipped) {
+  if (!translations[code])
+    throw new Error(`shipped lang '${code}' missing from translations`);
+  const vals = keepIdx.map((i) => translations[code][i]);
+  const bad = vals.find((v) => v.includes("/"));
+  if (bad) throw new Error(`'${code}' string contains the "/" delimiter: ${bad}`);
+  i18nRows[code] = vals.join("/");
+}
+const i18nJSON = JSON.stringify(i18nRows);
+console.log(
+  `i18n: ${shipped.length} langs x ${shippedKeys.length} keys, ${i18nJSON.length}B raw`,
+);
+
 const bundle = rawMain
   .replace("%%workerScript%%", () => JSON.stringify(minifiedWorker))
-  .replace("%%capCSS%%", () => minifiedCSS);
+  .replace("%%capCSS%%", () => minifiedCSS)
+  .replace("%%i18nKeys%%", () => shippedKeys.join(","))
+  .replace("%%i18nData%%", () => i18nJSON);
 
 await fs.writeFile("./src/cap.min.js", bundle);
 await fs.writeFile("./src/cap.min.js", await minifyJS(bundle));
