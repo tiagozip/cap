@@ -41,6 +41,33 @@
     return fetch(u, conf);
   };
 
+  const I18N_KEYS = "%%i18nKeys%%".split(",");
+  const I18N_ROWS = %%i18nData%%;
+
+  function _resolveI18nMap(forced) {
+    const prefs = forced
+      ? [forced]
+      : navigator.languages || [navigator.language || ""];
+    for (let pref of prefs) {
+      if (!pref) continue;
+      pref = pref.toLowerCase();
+      if (pref === "en" || pref.startsWith("en-")) return null;
+      const code = I18N_ROWS[pref]
+        ? pref
+        : I18N_ROWS[pref.split("-")[0]]
+          ? pref.split("-")[0]
+          : null;
+      if (!code) return null;
+      const parts = I18N_ROWS[code].split("/");
+      const map = {};
+      I18N_KEYS.forEach((k, i) => {
+        map[k] = parts[i];
+      });
+      return map;
+    }
+    return null;
+  }
+
   function prng(seed, length) {
     function fnv1a(str) {
       let hash = 2166136261;
@@ -401,6 +428,7 @@
     #speculativeTimer = null;
     #speculativePool = null;
     #interactionHandler = null;
+    #i18n = null;
 
     get #hasHaptics() {
       return (
@@ -672,8 +700,55 @@
       }
     }
 
+    get #fieldName() {
+      return this.getAttribute("data-cap-hidden-field-name") || "cap-token";
+    }
+
+    #setToken(value) {
+      const input = this.querySelector(`input[name='${this.#fieldName}']`);
+      if (input) input.value = value;
+    }
+
     getI18nText(key, defaultValue) {
-      return this.getAttribute(`data-cap-i18n-${key}`) || defaultValue;
+      return (
+        this.getAttribute(`data-cap-i18n-${key}`) ||
+        this.#i18n?.[key] ||
+        defaultValue
+      );
+    }
+
+    #commitSpeculativeToken() {
+      log.debug(T("solve"), `served from speculative cache (saved ${this.#speculative._invisibleElapsed || "?"})`);
+      this.dispatchEvent("progress", { progress: 100 });
+
+      this.#setToken(this.#speculative.token);
+
+      this.dispatchEvent("solve", { token: this.#speculative.token });
+      this.token = this.#speculative.token;
+
+      const expiresIn = this.#speculative.tokenExpires - Date.now();
+      if (this.#resetTimer) clearTimeout(this.#resetTimer);
+      this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
+
+      this.#trigger.setAttribute(
+        "aria-label",
+        this.getI18nText(
+          "verified-aria-label",
+          "We have verified you're a human, you may now continue",
+        ),
+      );
+      if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
+
+      this.#logInvisible();
+      this.#resetSpeculativeState();
+      this.#solving = false;
+      return { success: true, token: this.token };
+    }
+
+    #resolveI18n() {
+      this.#i18n = _resolveI18nMap(
+        window.CAP_LANG || this.getAttribute("data-cap-lang"),
+      );
     }
 
     static get observedAttributes() {
@@ -780,6 +855,7 @@
       }
 
       if (!this.#div) this.#div = document.createElement("div");
+      this.#resolveI18n();
       this.createUI();
       this.addEventListeners();
       this.initialize();
@@ -788,9 +864,7 @@
       const workers = this.getAttribute("data-cap-worker-count");
       const parsedWorkers = workers ? parseInt(workers, 10) : null;
       this.setWorkersCount(parsedWorkers || navigator.hardwareConcurrency || 8);
-      const fieldName =
-        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
-      this.#host.innerHTML = `<input type="hidden" name="${fieldName}">`;
+      this.#host.innerHTML = `<input type="hidden" name="${this.#fieldName}">`;
 
       log.debug(T(), `widget ready (workers=${this.#workersCount}, haptics=${this.#hasHaptics})`);
       this.#attachInteractionListeners();
@@ -858,35 +932,7 @@
             this.#speculative.tokenExpires &&
             Date.now() < this.#speculative.tokenExpires
           ) {
-            log.debug(T("solve"), `served from speculative cache (saved ${this.#speculative._invisibleElapsed || "?"})`);
-            this.dispatchEvent("progress", { progress: 100 });
-
-            const fieldName =
-              this.getAttribute("data-cap-hidden-field-name") || "cap-token";
-            if (this.querySelector(`input[name='${fieldName}']`)) {
-              this.querySelector(`input[name='${fieldName}']`).value =
-                this.#speculative.token;
-            }
-            this.dispatchEvent("solve", { token: this.#speculative.token });
-            this.token = this.#speculative.token;
-
-            const expiresIn = this.#speculative.tokenExpires - Date.now();
-            if (this.#resetTimer) clearTimeout(this.#resetTimer);
-            this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
-
-            this.#trigger.setAttribute(
-              "aria-label",
-              this.getI18nText(
-                "verified-aria-label",
-                "We have verified you're a human, you may now continue",
-              ),
-            );
-            if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
-
-            this.#logInvisible();
-            this.#resetSpeculativeState();
-            this.#solving = false;
-            return { success: true, token: this.token };
+            return this.#commitSpeculativeToken();
           }
 
           if (this.#speculative.state === "done") {
@@ -955,35 +1001,7 @@
               this.#speculative.tokenExpires &&
               Date.now() < this.#speculative.tokenExpires
             ) {
-              log.debug(T("solve"), `served from speculative cache (saved ${this.#speculative._invisibleElapsed || "?"})`);
-              this.dispatchEvent("progress", { progress: 100 });
-
-              const fieldName =
-                this.getAttribute("data-cap-hidden-field-name") || "cap-token";
-              if (this.querySelector(`input[name='${fieldName}']`)) {
-                this.querySelector(`input[name='${fieldName}']`).value =
-                  this.#speculative.token;
-              }
-              this.dispatchEvent("solve", { token: this.#speculative.token });
-              this.token = this.#speculative.token;
-
-              const expiresIn = this.#speculative.tokenExpires - Date.now();
-              if (this.#resetTimer) clearTimeout(this.#resetTimer);
-              this.#resetTimer = setTimeout(() => this.reset(), expiresIn);
-
-              this.#trigger.setAttribute(
-                "aria-label",
-                this.getI18nText(
-                  "verified-aria-label",
-                  "We have verified you're a human, you may now continue",
-                ),
-              );
-              if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
-
-              this.#logInvisible();
-              this.#resetSpeculativeState();
-              this.#solving = false;
-              return { success: true, token: this.token };
+              return this.#commitSpeculativeToken();
             }
 
             solutions = this.#speculative.results;
@@ -1098,11 +1116,7 @@
           this.dispatchEvent("progress", { progress: 100 });
           if (!resp.success) throw _err("invalid_solution", resp.error || "Invalid solution");
 
-          const fieldName =
-            this.getAttribute("data-cap-hidden-field-name") || "cap-token";
-          if (this.querySelector(`input[name='${fieldName}']`)) {
-            this.querySelector(`input[name='${fieldName}']`).value = resp.token;
-          }
+          this.#setToken(resp.token);
 
           this.dispatchEvent("solve", { token: resp.token });
           this.token = resp.token;
@@ -1630,11 +1644,7 @@
       }
       this.token = null;
       this.dispatchEvent("reset");
-      const fieldName =
-        this.getAttribute("data-cap-hidden-field-name") || "cap-token";
-      if (this.querySelector(`input[name='${fieldName}']`)) {
-        this.querySelector(`input[name='${fieldName}']`).value = "";
-      }
+      this.#setToken("");
     }
 
     get tokenValue() {
