@@ -993,7 +993,7 @@
               solutions = await this.solveChallengesV2(challengeResp.challenges);
             } else {
               if (this.#speculative.state !== "done") {
-                throw _err("solve_failed", "Speculative solve failed – please try again");
+                throw _err("solve_failed", "Unable to solve challenge, self-hosted instance likely down. This is not an issue with Cap.");
               }
 
             if (
