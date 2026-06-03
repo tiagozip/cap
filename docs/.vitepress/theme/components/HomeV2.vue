@@ -814,8 +814,8 @@ onBeforeUnmount(() => {
             </svg>
             <h2>Compliant out of the box.</h2>
             <p>
-              Open-source, self-hosted and privacy-first. We don't use
-              cookies or tracking and no data leaves your servers.
+              Open-source, self-hosted and privacy-first. We don't use cookies
+              or tracking and no data leaves your servers.
             </p>
 
             <a
@@ -1047,27 +1047,58 @@ onBeforeUnmount(() => {
           <div class="cmp">
             <div class="cmp-row">
               <h3>Self-hosted</h3>
-              <p>Runs entirely on your own server. reCAPTCHA, hCaptcha and Turnstile are cloud-only.</p>
+              <p>
+                Runs entirely on your own server. reCAPTCHA, hCaptcha and
+                Turnstile are cloud-only.
+              </p>
             </div>
             <div class="cmp-row">
               <h3>Open source</h3>
-              <p>Apache 2.0. Read it, fork it, own it. The big three are closed source.</p>
+              <p>
+                Apache 2.0. Read it, fork it, own it. The big three are closed
+                source.
+              </p>
             </div>
             <div class="cmp-row">
               <h3>No visual puzzles</h3>
-              <p>Invisible proof-of-work, no crosswalks. reCAPTCHA and hCaptcha still show puzzles.</p>
+              <p>
+                Invisible proof-of-work, no crosswalks. reCAPTCHA and hCaptcha
+                still show puzzles.
+              </p>
             </div>
             <div class="cmp-row">
               <h3>Zero third-party telemetry</h3>
-              <p>Your visitors' data never leaves your server. Google, Cloudflare and hCaptcha all phone home.</p>
+              <p>
+                Your visitors' data never leaves your server. Google, Cloudflare
+                and hCaptcha all phone home.
+              </p>
             </div>
             <div class="cmp-row">
               <h3>Free at scale</h3>
-              <p>No quotas, no per-request fees. reCAPTCHA and hCaptcha meter or charge.</p>
+              <p>
+                No quotas, no per-request fees. reCAPTCHA and hCaptcha meter or
+                charge.
+              </p>
             </div>
             <div class="cmp-row">
               <h3>Layered defense</h3>
-              <p>Proof-of-work layered with dynamic JavaScript instrumentation challenges</p>
+              <p>
+                Proof-of-work layered with dynamic JavaScript instrumentation
+                challenges
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" id="widget-demo">
+        <div class="wrap-wide">
+          <div class="widget-demo-box">
+            <span class="widget-demo-title">Try solving a Cap challenge</span>
+            <div class="widget-demo-stage">
+              <span class="wd-widget-wrap">
+                <Demo />
+              </span>
             </div>
           </div>
         </div>
@@ -1313,7 +1344,6 @@ onBeforeUnmount(() => {
     </div>
 
     <footer>
-      <div class="ft-glow" aria-hidden="true"></div>
       <div class="wrap-wide ft-wrap">
         <div class="ft-top">
           <div class="ft-brand">
@@ -1322,7 +1352,7 @@ onBeforeUnmount(() => {
               <strong>Cap</strong>
             </a>
             <p class="ft-tagline">
-              Self-hosted CAPTCHA.<br />
+              Self-hosted, open-source CAPTCHA.<br />
               No Google. No telemetry. No puzzles.
             </p>
             <div class="ft-social">
@@ -1397,10 +1427,7 @@ onBeforeUnmount(() => {
           >
 
           <p style="font-family: system-ui; opacity: 0.8">
-            Disclaimer: The information above is not legal advice, and we don’t
-            accept any legal liability. Cap is designed to be compatible with
-            these frameworks, but compatibility and compliance aren't guaranteed
-            and depend on your deployment.
+            Not legal advice. Compliance depends on your deployment.
           </p>
         </div>
       </div>
@@ -1801,8 +1828,8 @@ html.home-v2-active main.main {
 #homev2 .btn {
   font: inherit;
   font-size: 15px;
-  padding: 10px 16px;
-  border-radius: 8px;
+  padding: 12px 18px;
+  border-radius: 10px;
   background: #3132446b;
   color: var(--fg);
   cursor: pointer;
@@ -1813,12 +1840,22 @@ html.home-v2-active main.main {
   transition:
     border-color 0.15s,
     background 0.15s,
-    transform 0.2s,
-    filter 0.15s;
+    transform 0.2s;
 }
 #homev2 .btn:hover {
   border-color: rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.02);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  span {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+  }
+
+  &:not(.primary) span {
+    text-decoration-color: #00000000;
+  }
 }
 #homev2 .btn:active {
   transform: scale(0.96);
@@ -1828,9 +1865,6 @@ html.home-v2-active main.main {
   color: #0a0a0b;
   border-color: var(--accent);
   font-weight: 500;
-}
-#homev2 .btn.primary:hover:not(:active) {
-  filter: brightness(1.2);
 }
 
 #homev2 .btn .arr {
@@ -2037,7 +2071,7 @@ html.home-v2-active main.main {
   color: var(--fg-dim);
 }
 #homev2 .logobar-label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--fg-mute);
   margin-bottom: 2px;
 }
@@ -2080,15 +2114,17 @@ html.home-v2-active main.main {
   object-fit: contain;
   opacity: 0.9;
   transition: opacity 0.18s ease;
+
+  --scale: 1.2;
 }
 #homev2 img.li.li-bunny {
-  height: 32px;
+  height: calc(32px * var(--scale));
 }
 #homev2 img.li.li-adguard {
-  height: 30px;
+  height: calc(30px * var(--scale));
 }
 #homev2 img.li.li-fraunhofer {
-  height: 22px;
+  height: calc(22px * var(--scale));
 }
 #homev2 img.li:hover {
   opacity: 1;
@@ -2361,34 +2397,52 @@ html.home-v2-active main.main {
   }
 }
 
+#homev2 #widget-demo .wrap-wide {
+  padding: 0;
+}
+#homev2 #widget-demo .widget-demo-box {
+  text-align: center;
+  padding: 32px 32px 36px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+#homev2 #widget-demo .widget-demo-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin-bottom: 8px;
+}
+#homev2 #widget-demo .widget-demo-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0 24px;
+}
+#homev2 #widget-demo .wd-widget-wrap {
+  display: inline-block;
+  transform: scale(1.1);
+  transform-origin: center;
+}
+@media (max-width: 640px) {
+  #homev2 #widget-demo .widget-demo-box {
+    padding: 36px 20px 34px;
+  }
+  #homev2 #widget-demo .widget-demo-stage {
+    padding: 28px 0 12px;
+  }
+  #homev2 #widget-demo .wd-widget-wrap {
+    transform: scale(1);
+  }
+}
+
 #homev2 footer {
   position: relative;
-  margin-top: 140px;
-  padding: 72px 0 0;
-  border-top: 1px solid var(--line);
-  background:
-    radial-gradient(
-      120% 100% at 50% 0%,
-      color-mix(in oklab, var(--accent) 6%, transparent) 0%,
-      transparent 60%
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklab, var(--surface) 55%, transparent),
-      transparent 280px
-    );
+  margin-top: 20px;
+  padding: 36px 0 0;
   overflow: hidden;
-}
-#homev2 footer .ft-glow {
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(560px, 70%);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.55;
-  pointer-events: none;
 }
 #homev2 .ft-wrap {
   position: relative;
@@ -2818,7 +2872,7 @@ html.home-v2-active main.main {
     height: 16px;
   }
   #homev2 footer {
-    margin-top: 96px;
+    margin-top: 12px;
     padding-top: 56px;
   }
   #homev2 .ft-top {
@@ -3170,7 +3224,8 @@ html.home-v2-active main.main {
 }
 
 #homev2 #compare,
-#homev2 #speed {
+#homev2 #speed,
+#homev2 #widget-demo {
   padding-top: 32px;
 }
 @media (max-width: 640px) {
