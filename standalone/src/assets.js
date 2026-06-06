@@ -1,4 +1,3 @@
-import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { db } from "./db.js";
 
@@ -77,12 +76,6 @@ export const assetsServer = new Elysia({
   prefix: "/assets",
   detail: { tags: ["Assets"] },
 })
-  .use(
-    cors({
-      origin: true,
-      methods: ["GET"],
-    }),
-  )
   .onBeforeHandle(({ set }) => {
     set.headers["Cache-Control"] = "max-age=31536000, immutable";
   })
