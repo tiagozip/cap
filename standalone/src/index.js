@@ -1,3 +1,4 @@
+import { cors } from "@elysiajs/cors";
 import { swagger } from "@elysiajs/swagger";
 import { Elysia, file } from "elysia";
 import { assetsServer } from "./assets.js";
@@ -8,6 +9,7 @@ import { loadIPDB } from "./ipdb.js";
 import { loadRswKeypair, startRswRefresh } from "./rsw-store.js";
 import { server } from "./server.js";
 import {
+  checkCorsOrigin,
   loadCorsDefault,
   loadFiltering,
   loadHeaders,
@@ -119,6 +121,16 @@ new Elysia({
             },
     };
   })
+  .use(
+    cors({
+      origin: (request) => {
+        const path = new URL(request.url).pathname;
+        if (path === "/assets" || path.startsWith("/assets/")) return true;
+        return checkCorsOrigin(request);
+      },
+      methods: ["GET", "POST"],
+    }),
+  )
   .use(publicStatic)
   .get("/", async ({ cookie }) => {
     if (isDemoMode()) return file("./public/index.html");
