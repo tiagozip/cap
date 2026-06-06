@@ -1,5 +1,4 @@
 import { randomBytes } from "node:crypto";
-import { cors } from "@elysiajs/cors";
 import {
   generateChallenge as coreGenerateChallenge,
   validateChallenge as coreValidateChallenge,
@@ -10,12 +9,7 @@ import { db } from "./db.js";
 import { isLoaded as ipdbIsLoaded, lookup as ipLookup } from "./ipdb.js";
 import valkeyRateLimit from "./ratelimit.js";
 import { ensureRswKeypair, getRswKeypair } from "./rsw-store.js";
-import {
-  checkCorsOrigin,
-  getFiltering,
-  getHeaders,
-  getRatelimit,
-} from "./settings-cache.js";
+import { getFiltering, getHeaders, getRatelimit } from "./settings-cache.js";
 
 const DEFAULT_RSW_T = 75_000;
 const MIN_RSW_T = 10_000;
@@ -245,12 +239,6 @@ export const capServer = new Elysia({
           }
         } catch {}
       },
-    }),
-  )
-  .use(
-    cors({
-      origin: checkCorsOrigin,
-      methods: ["POST"],
     }),
   )
 

@@ -35,9 +35,19 @@ export function setRatelimit(settings) {
 
 let _corsDefault = null;
 
+function corsDefaultFromEnv() {
+  const env = process.env.CORS_ORIGIN;
+  if (!env || env.trim() === "*") return { origins: null };
+  const origins = env
+    .split(",")
+    .map((o) => o.trim())
+    .filter((o) => o && o !== "*");
+  return { origins: origins.length ? origins : null };
+}
+
 export async function loadCorsDefault() {
   const raw = await db.get("settings:cors");
-  _corsDefault = raw ? JSON.parse(raw) : { origins: null };
+  _corsDefault = raw ? JSON.parse(raw) : corsDefaultFromEnv();
   return _corsDefault;
 }
 
@@ -77,16 +87,17 @@ export function checkCorsOrigin(request) {
 
   const now = Date.now();
   const cached = _corsCache.get(siteKey);
-  let origins = null;
+  let origins;
 
-  if (cached && now - cached.ts < CORS_CACHE_TTL) {
+  if (cached) {
     origins = cached.origins;
+    if (now - cached.ts >= CORS_CACHE_TTL) populateCorsCache(siteKey);
   } else {
     populateCorsCache(siteKey);
     origins = getCorsDefault().origins ?? null;
   }
 
-  if (!origins || !origins.length) return true;
+  if (!origins?.length) return true;
 
   const from = request.headers.get("Origin") || "";
   if (origins.includes(from)) return true;
