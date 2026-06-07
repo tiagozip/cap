@@ -51,6 +51,34 @@ if (!SHOULD_RUN_E2E) {
     );
 
     fs.writeFileSync(
+      path.join(__dirname, "fixtures", "disconnect.html"),
+      `<!DOCTYPE html>
+<html><head>${wasmInjection}</head><body>
+<div id="container"></div>
+<script src="/widget.js"></script>
+<script>
+  window.__errors = [];
+  window.addEventListener("unhandledrejection", (e) => {
+    window.__errors.push("rejection:" + ((e.reason && e.reason.message) || e.reason));
+  });
+  const c = document.getElementById("container");
+  const w = document.createElement("cap-widget");
+  w.id = "cap";
+  w.setAttribute("data-cap-api-endpoint", "/cap-slow/");
+  c.appendChild(w);
+  window.__startAndDetach = async () => {
+    window.dispatchEvent(new MouseEvent("mousemove"));
+    w.solve();
+    await new Promise((r) => setTimeout(r, 500));
+    c.removeChild(w);
+    await new Promise((r) => setTimeout(r, 300));
+    return window.__errors;
+  };
+</script>
+</body></html>`,
+    );
+
+    fs.writeFileSync(
       path.join(__dirname, "fixtures", "required.html"),
       `<!DOCTYPE html>
 <html><head>${wasmInjection}</head><body>
@@ -109,6 +137,19 @@ if (!SHOULD_RUN_E2E) {
             scope: "regression",
           });
           return Response.json(r);
+        }
+        if (url.pathname === "/cap-slow/challenge" && req.method === "POST") {
+          const r = await generateChallenge(SECRET, {
+            challengeCount: 3,
+            challengeSize: 16,
+            challengeDifficulty: 2,
+            scope: "regression",
+          });
+          return Response.json(r);
+        }
+        if (url.pathname === "/cap-slow/redeem" && req.method === "POST") {
+          await new Promise((r) => setTimeout(r, 3000));
+          return Response.json({ success: false, error: "too slow" });
         }
         if (url.pathname === "/cap/redeem" && req.method === "POST") {
           let body;
@@ -176,6 +217,29 @@ if (!SHOULD_RUN_E2E) {
         () => document.querySelectorAll("cap-widget").length,
       );
       expect(widgets).toBe(1);
+      await page.close();
+    }, 30_000);
+
+    test("regression: disconnect during in-flight solve does not throw", async () => {
+      const page = await browser.newPage();
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(`${baseUrl}/page/disconnect`, { waitUntil: "load" });
+      await page.waitForFunction(
+        () =>
+          document
+            .getElementById("cap")
+            ?.shadowRoot?.querySelector?.(".captcha-trigger"),
+        null,
+        { timeout: 10_000 },
+      );
+
+      const rejections = await page.evaluate(() => window.__startAndDetach());
+
+      expect(rejections).toEqual([]);
+      expect(errors.filter((e) => /\bstate\b|null|undefined/i.test(e))).toEqual(
+        [],
+      );
       await page.close();
     }, 30_000);
 
