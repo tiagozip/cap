@@ -41,6 +41,21 @@
     return fetch(u, conf);
   };
 
+  const raceAbort = (promise, signal) => {
+    if (!signal) return promise;
+    if (signal.aborted) return Promise.reject(_err("aborted", "aborted"));
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        signal.addEventListener(
+          "abort",
+          () => reject(_err("aborted", "aborted")),
+          { once: true },
+        ),
+      ),
+    ]);
+  };
+
   const I18N_KEYS = "%%i18nKeys%%".split(",");
   const I18N_ROWS = %%i18nData%%;
 
@@ -429,6 +444,7 @@
     #speculativePool = null;
     #interactionHandler = null;
     #i18n = null;
+    #abort = null;
 
     get #hasHaptics() {
       return (
@@ -534,6 +550,7 @@
       try {
         const raw = await capFetch(`${apiEndpoint}challenge`, {
           method: "POST",
+          signal: this.#abort?.signal,
         });
         let resp;
         try {
@@ -542,6 +559,7 @@
           throw new Error("Failed to parse speculative challenge response");
         }
         if (resp.error) throw new Error(resp.error);
+        if (!this.#speculative) return;
 
         resp._apiEndpoint = apiEndpoint;
         this.#speculative.challengeResp = resp;
@@ -569,6 +587,7 @@
 
         this.#speculative.solvePromise = this.#speculativeSolveAll(challenges);
       } catch {
+        if (!this.#speculative) return;
         this.#speculative.state = "error";
         this.#speculative.notify();
       }
@@ -627,7 +646,7 @@
             this.#speculativePool
               .run(challenge[0], challenge[1])
               .then((nonce) => {
-                this.#speculative.completedCount++;
+                if (this.#speculative) this.#speculative.completedCount++;
                 return nonce;
               }),
           ),
@@ -644,6 +663,7 @@
         }
       }
 
+      if (!this.#speculative) return results;
       this.#speculative.results = results;
       this.#speculative.state = "redeeming";
       this.#speculativeRedeem(results);
@@ -652,6 +672,7 @@
 
     async #speculativeRedeem(solutions) {
       try {
+        if (!this.#speculative) return;
         const challengeResp = this.#speculative.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
         if (!apiEndpoint)
@@ -662,6 +683,7 @@
           instrOut = await runInstrumentationChallenge(
             challengeResp.instrumentation,
           );
+          if (!this.#speculative) return;
           if (instrOut?.__timeout || instrOut?.__blocked) {
             this.#speculative.state = "done";
             this.#speculative.notify();
@@ -677,6 +699,7 @@
             ...(instrOut && { instr: instrOut }),
           }),
           headers: { "Content-Type": "application/json" },
+          signal: this.#abort?.signal,
         });
 
         let resp;
@@ -686,6 +709,7 @@
           throw new Error("Failed to parse speculative redeem response");
         }
 
+        if (!this.#speculative) return;
         if (!resp.success)
           throw new Error(resp.error || "Speculative redeem failed");
 
@@ -695,6 +719,7 @@
         this.#speculative._invisibleElapsed = this.#speculative._t0 ? since(this.#speculative._t0) : "?";
         this.#speculative.notify();
       } catch {
+        if (!this.#speculative) return;
         this.#speculative.state = "done";
         this.#speculative.notify();
       }
@@ -797,6 +822,7 @@
 
     initialize() {
       _getSharedWorkerUrl();
+      this.#abort = new AbortController();
       if (!this.#speculative) {
         this.#speculative = this.#makeSpeculativeState();
       }
@@ -893,6 +919,7 @@
 
       this.#enforceCredits();
       const _solveT0 = performance.now();
+      const signal = this.#abort?.signal;
       log.debug(T("solve"), "starting");
 
       try {
@@ -960,6 +987,10 @@
             }
 
             const progressInterval = setInterval(() => {
+              if (signal?.aborted || !this.#speculative) {
+                clearInterval(progressInterval);
+                return;
+              }
               const st = this.#speculative.state;
               if (st === "done" || st === "error") {
                 clearInterval(progressInterval);
@@ -982,6 +1013,7 @@
               this.#speculative.onSettled(resolve),
             );
             clearInterval(progressInterval);
+            if (signal?.aborted || !this.#speculative) return;
 
             if (
               this.#speculative.state === "idle" &&
@@ -990,7 +1022,10 @@
             ) {
               challengeResp = this.#speculative.challengeResp;
               this.#speculative.challengeResp = null;
-              solutions = await this.solveChallengesV2(challengeResp.challenges);
+              solutions = await this.solveChallengesV2(
+                challengeResp.challenges,
+                signal,
+              );
             } else {
               if (this.#speculative.state !== "done") {
                 throw _err("solve_failed", "Unable to solve challenge, self-hosted instance likely down. This is not an issue with Cap.");
@@ -1016,6 +1051,7 @@
             } else {
               const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
                 method: "POST",
+                signal,
               });
               try {
                 challengeResp = await challengeRaw.json();
@@ -1029,7 +1065,10 @@
               challengeResp.format === 2 &&
               Array.isArray(challengeResp.challenges)
             ) {
-              solutions = await this.solveChallengesV2(challengeResp.challenges);
+              solutions = await this.solveChallengesV2(
+                challengeResp.challenges,
+                signal,
+              );
             } else {
               const { challenge, token } = challengeResp;
               let challenges = challenge;
@@ -1043,7 +1082,7 @@
                   ];
                 });
               }
-              solutions = await this.solveChallenges(challenges);
+              solutions = await this.solveChallenges(challenges, signal);
             }
           }
 
@@ -1052,6 +1091,7 @@
             : Promise.resolve(null);
 
           const instrOut = await instrPromise;
+          if (signal?.aborted || !this.#speculative) return;
 
           if (instrOut?.__timeout || instrOut?.__blocked) {
             capFetch(`${apiEndpoint}redeem`, {
@@ -1063,6 +1103,7 @@
                 ...(instrOut.__timeout && { instr_timeout: true }),
               }),
               headers: { "Content-Type": "application/json" },
+              signal,
             }).catch(() => {});
 
             this.updateUIBlocked(
@@ -1104,6 +1145,7 @@
               ...(instrOut && { instr: instrOut }),
             }),
             headers: { "Content-Type": "application/json" },
+            signal,
           });
 
           let resp;
@@ -1112,6 +1154,8 @@
           } catch {
             throw _err("redeem_failed", "Failed to parse server response");
           }
+
+          if (signal?.aborted || !this.#speculative) return;
 
           this.dispatchEvent("progress", { progress: 100 });
           if (!resp.success) throw _err("invalid_solution", resp.error || "Invalid solution");
@@ -1144,6 +1188,7 @@
           this.#logInvisible();
           return { success: true, token: this.token };
         } catch (err) {
+          if (signal?.aborted || !this.#speculative) return;
           this.#trigger.setAttribute(
             "aria-label",
             this.getI18nText(
@@ -1159,7 +1204,7 @@
       }
     }
 
-    async solveChallengesV2(challenges) {
+    async solveChallengesV2(challenges, signal) {
       const total = challenges.length;
       let completed = 0;
 
@@ -1212,7 +1257,7 @@
       };
 
       try {
-        await Promise.all(
+        await raceAbort(Promise.all(
           challenges.map((ch, idx) => {
             if (ch.protocol === "sha256-pow") {
               return withTimeout(
@@ -1250,7 +1295,7 @@
               emit();
             });
           }),
-        );
+        ), signal);
       } finally {
         pool.terminate();
       }
@@ -1258,7 +1303,7 @@
       return solutions;
     }
 
-    async solveChallenges(challenges) {
+    async solveChallenges(challenges, signal) {
       const total = challenges.length;
       let completed = 0;
 
@@ -1306,7 +1351,7 @@
             i,
             Math.min(i + this.#workersCount, challenges.length),
           );
-          const chunkResults = await Promise.all(
+          const chunkResults = await raceAbort(Promise.all(
             chunk.map(([salt, target]) =>
               pool.run(salt, target).then((nonce) => {
                 completed++;
@@ -1318,7 +1363,7 @@
                 return nonce;
               }),
             ),
-          );
+          ), signal);
           results.push(...chunkResults);
         }
       } finally {
@@ -1652,6 +1697,7 @@
     }
 
     disconnectedCallback() {
+      this.#abort?.abort();
       this.removeEventListener("progress", this.boundHandleProgress);
       this.removeEventListener("solve", this.boundHandleSolve);
       this.removeEventListener("error", this.boundHandleError);
