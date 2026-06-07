@@ -1027,6 +1027,32 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
+      <section class="block" id="testimonial">
+        <figure class="quote-card wrap-wide">
+          <blockquote class="quote-text">
+            Cap has been a good fit for AdGuard Temp Mail. We use it as an
+            <span class="hl">invisible, self-hosted CAPTCHA layer</span> with
+            <span class="hl"
+              >proof-of-work and browser instrumentation challenges</span
+            >, which helps us add abuse protection while keeping the experience
+            <span class="hl">lightweight and unobtrusive</span> for regular
+            users.
+          </blockquote>
+          <figcaption class="quote-by">
+            <img
+              class="quote-logo"
+              src="/logos/adguard.svg"
+              alt="AdGuard"
+              width="120"
+              height="60"
+              loading="lazy"
+            />
+            <span class="quote-sep" aria-hidden="true"></span>
+            <span class="quote-role">Head of PR, AdGuard</span>
+          </figcaption>
+        </figure>
+      </section>
+
       <section class="block" id="compare">
         <div class="wrap-wide">
           <div class="head">
@@ -3225,7 +3251,8 @@ html.home-v2-active main.main {
 
 #homev2 #compare,
 #homev2 #speed,
-#homev2 #widget-demo {
+#homev2 #widget-demo,
+#homev2 #testimonial {
   padding-top: 32px;
 }
 @media (max-width: 640px) {
@@ -3249,6 +3276,58 @@ html.home-v2-active main.main {
   #homev2 .speed-copy {
     flex: none;
     padding: 28px 24px;
+  }
+}
+
+#homev2 #testimonial .quote-card {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 40px 36px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+#homev2 .quote-text {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1.42;
+  letter-spacing: -0.015em;
+  color: var(--fg-dim);
+  text-wrap: balance;
+}
+#homev2 .quote-text .hl {
+  color: var(--fg);
+  font-weight: 500;
+}
+#homev2 .quote-by {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+#homev2 .quote-logo {
+  height: 30px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.95;
+}
+#homev2 .quote-sep {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+}
+#homev2 .quote-role {
+  font-size: 14px;
+  color: var(--fg-mute);
+}
+@media (max-width: 860px) {
+  #homev2 #testimonial .quote-card {
+    gap: 26px;
+    padding: 28px 24px;
+  }
+  #homev2 .quote-text {
+    font-size: 22px;
   }
 }
 </style>

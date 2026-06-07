@@ -4,6 +4,10 @@
   font-display: swap;
 }
 
+* {
+  text-underline-offset: 3px;
+}
+
 html:has(.Layout.home-v2-page),
 html:has(.Layout.home-v2-page) body {
   background: #11111b;
@@ -56,7 +60,10 @@ html:has(.Layout.home-v2-page) body {
   color: #0a0a0b;
 }
 
-.VPNav, .VPLocalNav, .VPSidebar, footer {
+.VPNav,
+.VPLocalNav,
+.VPSidebar,
+footer {
   user-select: none;
 }
 
@@ -269,7 +276,6 @@ body {
   width: fit-content !important;
   display: inline-block !important;
   margin-left: 3px !important;
-  text-underline-offset: 3px !important;
 }
 
 .ea-wrap .ea-content:hover strong.ea-cta,
