@@ -1078,15 +1078,19 @@ export const server = new Elysia({
         set.status = 400;
         return { success: false, error: "Invalid mode" };
       }
-      if (mode === "maxmind" && !body.maxmindKey) {
+      if (mode === "maxmind" && (!body.maxmindAccountId || !body.maxmindKey)) {
         set.status = 400;
-        return { success: false, error: "MaxMind license key required" };
+        return {
+          success: false,
+          error: "MaxMind account ID and license key required",
+        };
       }
       if (mode === "ipinfo" && !body.ipinfoToken) {
         set.status = 400;
         return { success: false, error: "IPInfo token required" };
       }
       downloadDB(mode, {
+        maxmindAccountId: body.maxmindAccountId,
         maxmindKey: body.maxmindKey,
         ipinfoToken: body.ipinfoToken,
       }).catch((e) => {
@@ -1097,6 +1101,7 @@ export const server = new Elysia({
     {
       body: t.Object({
         mode: t.String(),
+        maxmindAccountId: t.Optional(t.String()),
         maxmindKey: t.Optional(t.String()),
         ipinfoToken: t.Optional(t.String()),
       }),

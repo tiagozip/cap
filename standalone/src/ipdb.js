@@ -58,6 +58,7 @@ export async function loadIPDB() {
     }
     try {
       await downloadDB(ipdbSettings.mode, {
+        maxmindAccountId: ipdbSettings.maxmindAccountId || "",
         maxmindKey: ipdbSettings.maxmindKey || "",
         ipinfoToken: ipdbSettings.ipinfoToken || "",
       });
@@ -147,24 +148,29 @@ export async function downloadDB(mode, credentials) {
         },
       ];
     } else if (mode === "maxmind") {
+      const accountId = credentials?.maxmindAccountId;
       const key = credentials?.maxmindKey;
-      if (!key) throw new Error("MaxMind license key required");
+      if (!accountId || !key)
+        throw new Error("MaxMind account ID and license key required");
+      const auth = `Basic ${btoa(`${accountId}:${key}`)}`;
       files = [
         {
           urls: [
-            `https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-Country&license_key=${encodeURIComponent(key)}&suffix=tar.gz`,
+            "https://download.maxmind.com/geoip/databases/GeoLite2-Country/download?suffix=tar.gz",
           ],
           path: COUNTRY_PATH,
           name: "country",
           isTarGz: true,
+          headers: { Authorization: auth },
         },
         {
           urls: [
-            `https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-ASN&license_key=${encodeURIComponent(key)}&suffix=tar.gz`,
+            "https://download.maxmind.com/geoip/databases/GeoLite2-ASN/download?suffix=tar.gz",
           ],
           path: ASN_PATH,
           name: "asn",
           isTarGz: true,
+          headers: { Authorization: auth },
         },
       ];
     } else {
@@ -183,7 +189,10 @@ export async function downloadDB(mode, credentials) {
       let lastUrlError = null;
       for (const url of file.urls) {
         try {
-          const r = await fetch(url);
+          const r = await fetch(
+            url,
+            file.headers ? { headers: file.headers } : undefined,
+          );
           if (r.ok) {
             response = r;
             break;
@@ -238,6 +247,7 @@ export async function downloadDB(mode, credentials) {
 
     ipdbSettings = {
       mode,
+      maxmindAccountId: credentials?.maxmindAccountId || "",
       maxmindKey: credentials?.maxmindKey || "",
       ipinfoToken: credentials?.ipinfoToken || "",
       lastUpdated: new Date().toISOString(),
@@ -305,6 +315,7 @@ export function getStatus() {
   const asnExists = existsSync(ASN_PATH);
   return {
     mode: ipdbSettings?.mode || "",
+    maxmindAccountId: ipdbSettings?.maxmindAccountId || "",
     maxmindKey: ipdbSettings?.maxmindKey
       ? `••••${ipdbSettings.maxmindKey.slice(-4)}`
       : "",
