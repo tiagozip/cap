@@ -3343,6 +3343,10 @@ async function loadIPDBSettings() {
             <option value="ipinfo">IPInfo (API, needs token)</option>
           </select>
         </div>
+        <div class="edit-field" id="ipdbMaxmindAccountField" style="display:none">
+          <label>MaxMind account ID</label>
+          <input type="text" id="ipdbMaxmindAccountId" placeholder="Your MaxMind account ID">
+        </div>
         <div class="edit-field" id="ipdbMaxmindField" style="display:none">
           <label>MaxMind license key</label>
           <input type="text" id="ipdbMaxmindKey" placeholder="Your GeoLite2 license key">
@@ -3363,10 +3367,12 @@ async function loadIPDBSettings() {
 
   if (!isActive) {
     const modeSelect = container.querySelector("#ipdbMode");
+    const maxmindAccountField = container.querySelector("#ipdbMaxmindAccountField");
     const maxmindField = container.querySelector("#ipdbMaxmindField");
     const ipinfoField = container.querySelector("#ipdbIpinfoField");
 
     modeSelect?.addEventListener("change", () => {
+      maxmindAccountField.style.display = modeSelect.value === "maxmind" ? "" : "none";
       maxmindField.style.display = modeSelect.value === "maxmind" ? "" : "none";
       ipinfoField.style.display = modeSelect.value === "ipinfo" ? "" : "none";
     });
@@ -3374,8 +3380,10 @@ async function loadIPDBSettings() {
     container.querySelector("#ipdbDownloadBtn")?.addEventListener("click", async () => {
       const mode = modeSelect.value;
       const body = { mode };
-      if (mode === "maxmind")
+      if (mode === "maxmind") {
+        body.maxmindAccountId = container.querySelector("#ipdbMaxmindAccountId").value.trim();
         body.maxmindKey = container.querySelector("#ipdbMaxmindKey").value.trim();
+      }
       if (mode === "ipinfo")
         body.ipinfoToken = container.querySelector("#ipdbIpinfoToken").value.trim();
 
@@ -3427,10 +3435,13 @@ async function loadIPDBSettings() {
   } else {
     container.querySelector("#ipdbUpdateBtn")?.addEventListener("click", async () => {
       const body = { mode: data.mode };
-      if (data.maxmindKey) body.maxmindKey = prompt("MaxMind license key:", "") || "";
+      if (data.mode === "maxmind") {
+        body.maxmindAccountId = prompt("MaxMind account ID:", data.maxmindAccountId || "") || "";
+        body.maxmindKey = prompt("MaxMind license key:", "") || "";
+      }
       if (data.ipinfoToken) body.ipinfoToken = prompt("IPInfo token:", "") || "";
       if (data.mode === "dbip") {
-      } else if (data.mode === "maxmind" && !body.maxmindKey) return;
+      } else if (data.mode === "maxmind" && (!body.maxmindAccountId || !body.maxmindKey)) return;
       else if (data.mode === "ipinfo" && !body.ipinfoToken) return;
 
       const updateBtn = container.querySelector("#ipdbUpdateBtn");
