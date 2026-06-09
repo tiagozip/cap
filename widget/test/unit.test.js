@@ -116,10 +116,14 @@ describe("regression: shadow root re-attach guard (#243-ish)", () => {
 });
 
 describe("regression: token sometimes not returned (widget@0.1.40)", () => {
-  test("hidden input is updated with token before solve event", () => {
+  test("setToken writes the token into the hidden input", () => {
     expect(widgetSource).toMatch(
-      /querySelector\(`input\[name='\$\{fieldName\}'\]`\)\.value = .*token[\s\S]*?dispatchEvent\("solve"/,
+      /#setToken\(value\)\s*\{[\s\S]*?querySelector\(`input\[name='\$\{this\.#fieldName\}'\]`\)[\s\S]*?\.value = value/,
     );
+  });
+
+  test("hidden input is set before solve event is dispatched", () => {
+    expect(widgetSource).toMatch(/#setToken\([\s\S]*?dispatchEvent\("solve"/);
   });
 });
 
