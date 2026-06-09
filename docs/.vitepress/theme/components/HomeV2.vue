@@ -894,6 +894,15 @@ onBeforeUnmount(() => {
                     loading="lazy"
                   />PIPL</span
                 >
+                <span class="cmpl-chip"
+                  ><img
+                    src="/assets/flags/ru.svg"
+                    alt=""
+                    width="18"
+                    height="18"
+                    loading="lazy"
+                  />152-FZ</span
+                >
               </div>
             </div>
             <div class="cmpl-row">
