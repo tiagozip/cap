@@ -52,6 +52,13 @@ const groups = [
         name: "Personal Information Protection Law",
         note: "Self-host in-region and no data ever leaves your infrastructure.",
       },
+      {
+        code: "152-FZ",
+        region: "Russia",
+        flag: "ru",
+        name: 'Federal Law No. 152-FZ "On Personal Data"',
+        note: "Self-host on your own infrastructure, including in-region. No cookies, tracking, profiling, or third-party calls are required in the verification flow.",
+      },
     ],
   },
   {
