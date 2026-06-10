@@ -74,6 +74,7 @@ These are React hook implementations of the Cap API, allowing full customization
 - **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**: WordPress plugin integrating Cap into comments, login, registration and WooCommerce checkout — supports both visible widget and invisible (programmatic) mode
 - **[laravel-cap](https://github.com/oli217/laravel-cap)**: Laravel integration for Cap — Blade directives, middleware, validation rules and facade for server-side token verification (`composer require oliweb/laravel-cap`)
 - **[statamic-cap](https://github.com/oli217/statamic-cap)**: Statamic addon integrating Cap into forms — widget rendering, automatic token validation and flexible CP configuration (`composer require oliweb/statamic-cap`)
+- **[cap-captcha-wordpress](https://github.com/forge28labs/cap-captcha-wordpress)**: A WordPress plugin to integrate Cap into the auth flows, as well as on new comments. Configurable (instance, keys and colors) through the WordPress admin panel.
 
 ## Client
 
