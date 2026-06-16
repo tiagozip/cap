@@ -60,7 +60,12 @@ services:
     environment:
       ADMIN_KEY: your_secret_password
       REDIS_CLUSTER: "true"
+      # Comma-separate several seed nodes in a real multi-node cluster, e.g.
+      # redis://node-1:6379,redis://node-2:6379,redis://node-3:6379
       REDIS_URL: redis://valkey:6379
+      # Optional: namespace all keys (recommended on a shared instance).
+      # Only set this on a fresh instance, never on one with existing data.
+      REDIS_PREFIX: "cap:"
     depends_on:
       valkey-init:
         condition: service_completed_successfully

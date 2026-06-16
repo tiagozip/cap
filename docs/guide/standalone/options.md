@@ -55,7 +55,31 @@ Cap Standalone uses Redis (or Valkey) for all data storage. Set the `REDIS_URL` 
 
 The recommended setup uses Valkey (a Redis-compatible store) via the docker-compose file provided in the [quickstart guide](/guide/standalone/).
 
-If you share a single Redis instance across multiple Cap deployments (or with other apps), set `REDIS_PREFIX` to namespace all keys. For example, `REDIS_PREFIX=cap:` stores sessions as `cap:session:...`, metrics as `cap:metrics:...`, and so on. It's empty by default, so existing deployments are unaffected.
+### Connection string
+
+`REDIS_URL` (or `VALKEY_URL`) accepts the standard formats:
+
+```
+redis://localhost:6379                  # plain
+redis://localhost:6379/0                # with database number
+redis://user:password@localhost:6379    # with authentication
+rediss://user:password@host:6379        # TLS (note the double "s")
+```
+
+### Key prefix
+
+If you share a single Redis instance across multiple Cap deployments (or with other apps), set `REDIS_PREFIX` to namespace all keys. For example, `REDIS_PREFIX=cap:` stores sessions as `cap:session:...`, metrics as `cap:metrics:...`, and so on:
+
+```
+REDIS_PREFIX=cap:
+```
+
+It's **empty by default**, and this matters:
+
+- **New deployment:** setting `REDIS_PREFIX=cap:` from the start is a good convention, especially on a shared instance.
+- **Existing deployment:** do **not** add a prefix to a running instance without migrating. Cap would start looking for `cap:key:...` while your data lives under `key:...`, making every existing site, session and metric invisible (it looks like data loss). Rename the keys first, or only introduce a prefix on a fresh instance.
+
+The prefix is applied transparently to every command; it has no effect on cluster routing (it is included consistently in the slot calculation).
 
 ### High availability (Redis Cluster)
 
@@ -66,13 +90,36 @@ REDIS_CLUSTER=true
 REDIS_URL=redis://node-1:6379,redis://node-2:6379,redis://node-3:6379
 ```
 
-The client then discovers the full topology from the seeds and routes each command to the node owning its key, surviving the loss of any single master. When `REDIS_CLUSTER` is unset (the default), Cap connects to a single Redis/Valkey instance as before. `REDIS_PREFIX` and authentication/TLS in the URL work the same way in both modes.
+You only need to list a couple of reachable seed nodes; the client discovers the full topology from them and keeps it refreshed. The prefix, authentication and TLS work the same way in both modes — for an authenticated TLS cluster:
 
-A single-node cluster compose file for exercising this locally is provided at `standalone/docker-compose.cluster.yml` (testing only, it provides no failover). Real high availability requires at least 3 masters and 3 replicas, or a managed cluster.
+```
+REDIS_CLUSTER=true
+REDIS_URL=rediss://user:password@node-1:6379,rediss://user:password@node-2:6379
+REDIS_PREFIX=cap:
+```
 
-Notes:
+When `REDIS_CLUSTER` is unset (the default), Cap connects to a single Redis/Valkey instance exactly as before.
+
+#### How it behaves
+
+- **Routing:** every command is sent to the master owning its key's slot. Reads and writes both go to masters (no stale reads from replicas), which is what Cap's counters, nonces and tokens require.
+- **Node failure:** if a master goes down, the client detects it, retries, and reroutes to the promoted replica once the cluster elects one — automatically, no application code involved. During the election window (driven by `cluster-node-timeout` plus election time, typically a few seconds), requests whose keys live on the affected shard may be slower or fail with an error; they never return an incorrect verification. Other shards keep serving.
+- **Replicas are required:** failover only works if each master has at least one replica to promote.
+
+#### Local testing
+
+A single-node cluster compose file is provided at `standalone/docker-compose.cluster.yml`:
+
+```sh
+docker compose -f docker-compose.cluster.yml up -d
+```
+
+It exercises the cluster code path (topology discovery, slot routing) with one master owning all 16384 slots. It is for **testing only** — a single node has no replica, so it provides **no failover**. Real high availability requires at least 3 masters and 3 replicas, or a managed Valkey/Redis cluster, with `REDIS_URL` pointing at the seed nodes.
+
+#### Notes and limitations
+
 - Redis **Sentinel** is not supported; use Cluster mode for HA.
-- All of Cap's commands operate on a single key, so they route cleanly across cluster slots.
+- All of Cap's commands operate on a single key, so they route cleanly across cluster slots (no `CROSSSLOT` errors).
 
 ## Error messages
 
