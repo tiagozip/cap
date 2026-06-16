@@ -57,6 +57,23 @@ The recommended setup uses Valkey (a Redis-compatible store) via the docker-comp
 
 If you share a single Redis instance across multiple Cap deployments (or with other apps), set `REDIS_PREFIX` to namespace all keys. For example, `REDIS_PREFIX=cap:` stores sessions as `cap:session:...`, metrics as `cap:metrics:...`, and so on. It's empty by default, so existing deployments are unaffected.
 
+### High availability (Redis Cluster)
+
+For high availability, Cap Standalone can connect to a Redis/Valkey Cluster. Set `REDIS_CLUSTER=true` and point `REDIS_URL` at one or more seed nodes (comma-separated):
+
+```
+REDIS_CLUSTER=true
+REDIS_URL=redis://node-1:6379,redis://node-2:6379,redis://node-3:6379
+```
+
+The client then discovers the full topology from the seeds and routes each command to the node owning its key, surviving the loss of any single master. When `REDIS_CLUSTER` is unset (the default), Cap connects to a single Redis/Valkey instance as before. `REDIS_PREFIX` and authentication/TLS in the URL work the same way in both modes.
+
+A single-node cluster compose file for exercising this locally is provided at `standalone/docker-compose.cluster.yml` (testing only, it provides no failover). Real high availability requires at least 3 masters and 3 replicas, or a managed cluster.
+
+Notes:
+- Redis **Sentinel** is not supported; use Cluster mode for HA.
+- All of Cap's commands operate on a single key, so they route cleanly across cluster slots.
+
 ## Error messages
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.

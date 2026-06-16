@@ -75,12 +75,14 @@ if (!redisAvailable) {
   });
 
   afterAll(async () => {
-    // Cleanup: remove the site key and any blocklist/token entries
-    await db.send("DEL", [`key:${SITE_KEY}`]);
-    await db.send("DEL", ["settings:rsw_keypair"]);
+    // Cleanup: remove the site key and any blocklist/token entries.
+    // Deletes are issued one key at a time so this works against a Redis
+    // Cluster too (a multi-key DEL would fail with CROSSSLOT).
+    await db.del(`key:${SITE_KEY}`);
+    await db.del("settings:rsw_keypair");
     const keys = await db.send("KEYS", [`metrics:*:${SITE_KEY}`]);
     if (Array.isArray(keys) && keys.length > 0) {
-      await db.send("DEL", keys);
+      await Promise.all(keys.map((k) => db.del(k)));
     }
   });
 

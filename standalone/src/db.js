@@ -1,89 +1,68 @@
-import { RedisClient } from "bun";
+import Redis from "ioredis";
 
-const redisUrl =
-  process.env.REDIS_URL || process.env.VALKEY_URL || "redis://localhost:6379";
 const prefix = process.env.REDIS_PREFIX || "";
+const useCluster = process.env.REDIS_CLUSTER === "true";
 
-const client = new RedisClient(redisUrl);
+// REDIS_URL may hold a comma-separated list of seed nodes in cluster mode.
+const rawUrl =
+  process.env.REDIS_URL || process.env.VALKEY_URL || "redis://localhost:6379";
 
-await client.send("PING", []);
+function parseNode(url) {
+  const u = new URL(url);
+  return { host: u.hostname, port: Number(u.port) || 6379 };
+}
 
-const addPrefix = (k) =>
-  typeof k === "string" && k.length ? prefix + k : k;
+function buildClient() {
+  if (useCluster) {
+    const urls = rawUrl
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const nodes = urls.map(parseNode);
+    const seed = new URL(urls[0]);
+    return new Redis.Cluster(nodes, {
+      enableAutoPipelining: true,
+      redisOptions: {
+        keyPrefix: prefix,
+        username: seed.username || undefined,
+        password: seed.password || undefined,
+        tls: seed.protocol === "rediss:" ? {} : undefined,
+      },
+    });
+  }
+  return new Redis(rawUrl, { keyPrefix: prefix, enableAutoPipelining: true });
+}
+
+const client = buildClient();
+
+await client.ping();
+
 const stripPrefix = (k) =>
   typeof k === "string" && k.startsWith(prefix) ? k.slice(prefix.length) : k;
 
-const KEY_FIRST = new Set([
-  "get",
-  "getBuffer",
-  "getdel",
-  "set",
-  "incr",
-  "decr",
-  "expire",
-  "ttl",
-  "sadd",
-  "srem",
-  "smembers",
-  "scard",
-  "sismember",
-  "hget",
-  "hset",
-  "hmget",
-  "hgetall",
-  "hincrby",
-  "hdel",
-  "getset",
-  "append",
-]);
-
-const KEY_ALL = new Set(["del", "unlink", "exists", "mget"]);
-
-const MULTI_KEY_CMDS = new Set(["DEL", "UNLINK", "MGET", "EXISTS"]);
-
-function prefixedSend(cmd, args = []) {
-  const upper = cmd.toUpperCase();
-  if (upper === "PING" || !args.length) return client.send(cmd, args);
-  if (upper === "KEYS") {
+// Raw command escape hatch. ioredis applies keyPrefix to call() too (it knows
+// each command's key positions), so keys must NOT be prefixed manually here or
+// they would be double-prefixed relative to the builtin methods.
+function send(cmd, args = []) {
+  if (cmd.toUpperCase() === "KEYS") {
+    // ioredis prefixes the pattern but does not strip it from the reply.
     return client
-      .send(cmd, [addPrefix(args[0]), ...args.slice(1)])
+      .call(cmd, ...args)
       .then((res) => (Array.isArray(res) ? res.map(stripPrefix) : res));
   }
-  if (MULTI_KEY_CMDS.has(upper)) {
-    return client.send(cmd, args.map(addPrefix));
-  }
-  return client.send(cmd, [addPrefix(args[0]), ...args.slice(1)]);
+  return client.call(cmd, ...args);
 }
 
-const db = prefix
-  ? new Proxy(client, {
-      get(target, prop, receiver) {
-        if (prop === "send") return prefixedSend;
-        const value = Reflect.get(target, prop, receiver);
-        if (typeof value !== "function") return value;
-        if (KEY_FIRST.has(prop)) {
-          return (...args) => {
-            if (args.length) args[0] = addPrefix(args[0]);
-            return value.apply(target, args);
-          };
-        }
-        if (KEY_ALL.has(prop)) {
-          return (...args) => value.apply(target, args.map(addPrefix));
-        }
-        return value.bind(target);
-      },
-    })
-  : client;
+// ioredis exposes every command as a lowercase method with keyPrefix applied
+// automatically, so the client is used directly; only send() needs wrapping.
+client.send = send;
+
+const db = client;
 
 export async function hgetall(key) {
-  const data = await db.send("HGETALL", [key]);
-  if (!data) return {};
-  if (typeof data === "object" && !Array.isArray(data)) return data;
-  const obj = {};
-  for (let i = 0; i < data.length; i += 2) {
-    obj[data[i]] = data[i + 1];
-  }
-  return obj;
+  // Builtin method: keyPrefix is applied and the reply is already an object.
+  const data = await client.hgetall(key);
+  return data || {};
 }
 
 export { db };

@@ -100,3 +100,45 @@ jobs:
         env:
           REDIS_URL: redis://127.0.0.1:6379
         run: bun test
+
+  standalone-cluster:
+    name: cap-standalone (cluster)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      # A GitHub Actions service container cannot override its command, and a
+      # cluster node would otherwise announce an unreachable internal IP, so the
+      # node is started manually with --cluster-announce-ip pointing at the runner.
+      - name: Start single-node Valkey cluster
+        run: |
+          docker run -d --name valkey-cluster -p 6379:6379 valkey/valkey:9-alpine \
+            valkey-server --cluster-enabled yes --cluster-config-file nodes.conf \
+            --cluster-node-timeout 5000 --appendonly no --loglevel warning \
+            --cluster-announce-ip 127.0.0.1 --cluster-announce-port 6379
+          for i in $(seq 1 30); do
+            if docker exec valkey-cluster valkey-cli ping | grep -q PONG; then break; fi
+            sleep 1
+          done
+          docker exec valkey-cluster valkey-cli --cluster create 127.0.0.1:6379 --cluster-yes
+          for i in $(seq 1 30); do
+            if docker exec valkey-cluster valkey-cli cluster info | grep -q cluster_state:ok; then
+              echo "cluster ready"; exit 0
+            fi
+            sleep 1
+          done
+          echo "cluster did not reach cluster_state:ok"; exit 1
+      - name: Install (core)
+        working-directory: core
+        run: bun install --frozen-lockfile
+      - name: Install (standalone)
+        working-directory: standalone
+        run: bun install --frozen-lockfile
+      - name: Test
+        working-directory: standalone
+        env:
+          REDIS_CLUSTER: "true"
+          REDIS_URL: redis://127.0.0.1:6379
+        run: bun test

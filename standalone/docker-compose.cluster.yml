@@ -1,0 +1,70 @@
+# Single-node Valkey CLUSTER for LOCAL TESTING ONLY.
+#
+#   docker compose -f docker-compose.cluster.yml up -d
+#
+# This exercises the cluster code path (REDIS_CLUSTER=true: topology discovery,
+# slot routing, MOVED/ASK handling) with one master owning all 16384 slots.
+#
+# WARNING: a single node provides NO high availability (no replica, no failover).
+# For real HA use at least 3 masters + 3 replicas, or a managed Valkey/Redis
+# cluster, and point REDIS_URL at the seed nodes (comma-separated).
+
+services:
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: cap-valkey
+    volumes:
+      - valkey-data:/data
+    command: >
+      valkey-server
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --maxmemory-policy noeviction
+      --loglevel warning
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # One-shot: forms the single-node cluster, then exits. Idempotent.
+  valkey-init:
+    image: valkey/valkey:9-alpine
+    container_name: cap-valkey-init
+    depends_on:
+      valkey:
+        condition: service_healthy
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        if valkey-cli -h valkey cluster info | grep -q 'cluster_state:ok'; then
+          echo "Cluster already initialized, skipping."
+        else
+          # Resolve the node's container IP so it announces a network-reachable address.
+          ip=$$(getent hosts valkey | awk '{print $$1}')
+          echo "Creating single-node cluster on $$ip:6379"
+          valkey-cli --cluster create $$ip:6379 --cluster-yes
+        fi
+    restart: "no"
+
+  cap:
+    image: tiago2/cap:latest
+    container_name: cap
+    ports:
+      - "3000:3000"
+    environment:
+      ADMIN_KEY: your_secret_password
+      REDIS_CLUSTER: "true"
+      REDIS_URL: redis://valkey:6379
+    depends_on:
+      valkey-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  valkey-data:
