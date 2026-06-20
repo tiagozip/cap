@@ -53,6 +53,8 @@ These are React hook implementations of the Cap API, allowing full customization
 
 - **[wuhunyu/cap-server-java](https://github.com/wuhunyu/cap-server-java)**
 
+- **[schwebke/cap-captcha-keycloak](https://github.com/schwebke/cap-captcha-keycloak)**: Keycloak extension providing Cap captcha validation for the registration flow
+
 ### Go
 
 - **[samwafgo/cap_go_server](https://github.com/samwafgo/cap_go_server)**
