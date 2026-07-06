@@ -648,6 +648,13 @@ onBeforeUnmount(() => {
                 loading="lazy"
               />
             </span>
+            <a
+              class="logoimg-more"
+              href="/guide/showcase.html"
+              data-cta="users"
+              data-cta-location="home_trust"
+              >See all <span class="arr">→</span></a
+            >
           </div>
         </div>
       </div>
@@ -2163,6 +2170,25 @@ html.home-v2-active main.main {
 }
 #homev2 img.li:hover {
   opacity: 1;
+}
+#homev2 .logoimg-more {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--fg-mute);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+#homev2 .logoimg-more:hover {
+  color: var(--fg);
+  text-decoration: underline;
+}
+#homev2 .logoimg-more .arr {
+  display: inline-block;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#homev2 .logoimg-more:hover .arr {
+  transform: translateX(3px);
 }
 
 #homev2 .how-grid {

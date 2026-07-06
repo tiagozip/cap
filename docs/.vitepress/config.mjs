@@ -356,6 +356,7 @@ export default withMermaid({
         { text: "Benchmark", link: "/guide/benchmark.md" },
         { text: "Compliance", link: "/guide/compliance.md" },
         { text: "Demo", link: "/guide/demo.md" },
+        { text: "Who's Using Cap", link: "/guide/showcase.md" },
         { text: "GitHub", link: "https://github.com/tiagozip/cap" },
       ],
     },
