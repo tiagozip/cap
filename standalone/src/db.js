@@ -29,6 +29,7 @@ const KEY_FIRST = new Set([
   "sismember",
   "hget",
   "hset",
+  "hmset",
   "hmget",
   "hgetall",
   "hincrby",
