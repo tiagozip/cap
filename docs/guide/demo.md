@@ -1,4 +1,4 @@
----
+ ---
 description: "Try Cap live: a working demo of the open-source, self-hosted CAPTCHA widget solving proof-of-work challenges in your browser, with no visual puzzles to click."
 ---
 
