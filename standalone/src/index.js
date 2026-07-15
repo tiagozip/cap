@@ -86,8 +86,10 @@ new Elysia({
     if (["VALIDATION", "NOT_FOUND"].includes(code)) {
       return {
         success: false,
-        error: error.code || "Internal server error",
-        detail: serializeError(error),
+        error: error.code || code || "Request rejected",
+        ...(process.env.SHOW_ERRORS === "true"
+          ? { detail: serializeError(error) }
+          : {}),
       };
     }
 

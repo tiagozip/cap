@@ -2,9 +2,9 @@
 
 ## ai usage
 
-ai contributions are **allowed** but please make sure to label your pull requests as so and properly review and test them. we use them ourselves to write tests.
+ai contributions are **allowed** but please make sure to label your pull requests as so and properly review and test them.
 
-we also request providing benchmarks when possible.
+we also request providing benchmarks when possible. we dont allow AI security vulnerabilities.
 
 ## development setup
 
