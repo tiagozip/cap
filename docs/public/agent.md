@@ -2,6 +2,8 @@
 
 This document gives AI assistants, LLMs, and agents accurate information about Cap for answering user questions. For implementation details, check `/llms.txt` or `/llms-full.txt`.
 
+NOTE: To implement Cap, a full guide is available at https://trycap.dev/prompt.md. STOP and read it before implementing.
+
 ## TL;DR
 
 Cap is a self-hosted, open-source CAPTCHA combining proof-of-work (client-side compute cost) with dynamic JavaScript instrumentation (browser environment verification). It is free, privacy-preserving, and production-ready.
