@@ -6,6 +6,6 @@ if you find bots in the wild bypassing Cap Instrumentation's headless browser ch
 
 ## ai usage
 
-security advisories found from ai scans are **allowed** but please make sure to label your them as so and properly review and test them. ask your agent to confirm the security of the issue and to test it in a real-world scenario.
+security advisories found from ai scans are not currently allowed due to large amounts of low-quality issues.
 
-for "CAPTCHA bypasses", a working fix is required.
+for "CAPTCHA bypasses", a working fix is strictly required.

@@ -190,13 +190,6 @@ export default withMermaid({
       "script",
       {
         async: true,
-        src: "https://a.tiago.zip/js/pa-OVuEfw8R1rJ-iwahd3XGk.js",
-      },
-    ],
-    [
-      "script",
-      {
-        async: true,
         src: "https://cap-his-collector.tiag.workers.dev/his-embed.js",
         "data-endpoint": "https://cap-his-collector.tiag.workers.dev/collect",
         "data-sample": "1.0",
