@@ -1,8 +1,29 @@
+import { execSync } from "node:child_process";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import llmstxt from "vitepress-plugin-llms";
 import { withMermaid } from "vitepress-plugin-mermaid";
-// import { defineConfig } from "vitepress";
 
 const GITHUB_STARS = 6632;
+
+const DOCS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
+const gitDatesCache = new Map();
+const gitDates = (relativePath) => {
+  if (gitDatesCache.has(relativePath)) return gitDatesCache.get(relativePath);
+  let dates = null;
+  try {
+    const out = execSync(
+      `git log --follow --format=%aI -- "${relativePath}"`,
+      { cwd: DOCS_DIR, encoding: "utf8" },
+    ).trim();
+    if (out) {
+      const lines = out.split("\n");
+      dates = { published: lines.at(-1), modified: lines[0] };
+    }
+  } catch {}
+  gitDatesCache.set(relativePath, dates);
+  return dates;
+};
 
 const jsonLd = (obj) => [
   "script",
@@ -34,10 +55,14 @@ const SOFTWARE_APPLICATION = {
 const ORGANIZATION = {
   "@context": "https://schema.org",
   "@type": "Organization",
+  "@id": "https://trycap.dev/#organization",
   name: "Cap",
   url: "https://trycap.dev",
   logo: "https://trycap.dev/logo.png",
+  foundingDate: "2025-01-11",
+  founder: { "@type": "Person", name: "tiago", url: "https://tiago.zip" },
   sameAs: ["https://github.com/tiagozip/cap", "https://x.com/tiagozip_"],
+  subjectOf: { "@id": "https://trycap.dev/about.html" },
 };
 
 const FAQ_ITEMS = [
@@ -175,8 +200,31 @@ export default withMermaid({
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
     ];
+    const dates = gitDates(pageData.relativePath);
+    const published = pageData.frontmatter.datePublished || dates?.published;
+    const modified = dates?.modified;
+    if (published) {
+      head.push(["meta", { property: "article:published_time", content: published }]);
+    }
+    if (modified) {
+      head.push(["meta", { property: "article:modified_time", content: modified }]);
+    }
     if (pageData.relativePath === "index.md") {
       head.push(jsonLd(SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(FAQ_PAGE));
+    } else if (pageData.relativePath === "about.md") {
+      head.push(
+        jsonLd(ORGANIZATION),
+        jsonLd({
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "@id": "https://trycap.dev/about.html",
+          name: "About Cap",
+          url: "https://trycap.dev/about.html",
+          description,
+          mainEntity: { "@id": "https://trycap.dev/#organization" },
+          ...(modified && { dateModified: modified }),
+        }),
+      );
     } else {
       const bc = breadcrumbList(pageData);
       if (bc) head.push(jsonLd(bc));
@@ -191,6 +239,9 @@ export default withMermaid({
             url: canonical,
             about: { "@id": "https://trycap.dev/#software" },
             author: { "@type": "Person", name: "tiago", url: "https://tiago.zip" },
+            publisher: { "@id": "https://trycap.dev/#organization" },
+            ...(published && { datePublished: published }),
+            ...(modified && { dateModified: modified }),
           }),
           jsonLd({
             "@context": "https://schema.org",
