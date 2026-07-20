@@ -206,3 +206,4 @@ You're protecting your forms. From here you can:
 - [Customize the widget](./widget.md#options)'s look and behavior
 - Tune [instrumentation](./instrumentation.md) and [configure](./standalone/options.md) CORS and rate limiting
 - See how Cap compares to [reCAPTCHA, Turnstile, hCaptcha and others](./alternatives.md)
+- Read the [best CAPTCHA alternatives for 2026](./best-captcha-alternatives.md) guide if you're still evaluating

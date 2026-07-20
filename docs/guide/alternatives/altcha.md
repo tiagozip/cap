@@ -11,7 +11,7 @@ Altcha also has a commercial product called **Altcha Sentinel** that layers ML-b
 
 ## Quick verdict
 
-If you want a minimal, library-style PoW CAPTCHA you can drop into a Node project and forget about, the open-source Altcha is great. If you want a turn-key self-hosted service with a dashboard, multi-site-key support, instrumentation challenges layered on top of PoW, and a UI that progress-tracks the solve — without paying for Sentinel — Cap is the better fit.
+If you want a minimal, library-style PoW CAPTCHA you can drop into a Node project and forget about, the open-source Altcha is great. If you want a turn-key self-hosted service with a dashboard, multi-site-key support, instrumentation challenges layered on top of PoW, and a UI that progress-tracks the solve (without paying for Sentinel), Cap is the better fit.
 
 ## Where Altcha makes sense
 
@@ -24,7 +24,7 @@ If you want a minimal, library-style PoW CAPTCHA you can drop into a Node projec
 - **Two independent verification layers, free.** Cap runs proof-of-work *and* dynamic JavaScript [instrumentation challenges](../instrumentation.md) in parallel, both included. Defeating one doesn't defeat the other. The open-source Altcha is PoW only; the second layer (ML-based) requires paying for Sentinel.
 - **Standalone server with dashboard, free.** Cap ships a one-Docker-container deployment with a web dashboard, multi-site-key management, analytics, and a reCAPTCHA-compatible siteverify endpoint. Altcha's open-source side leaves you to wire those yourself; the all-in-one experience is Sentinel-only.
 - **Smaller widget.** Cap is ~20 KB. Altcha is ~34 KB gzipped.
-- **Progress tracking.** Cap's widget reports solve progress to the user as a percentage — meaningful UX feedback during the small wait.
+- **Progress tracking.** Cap's widget reports solve progress to the user as a percentage, meaningful UX feedback during the small wait.
 - **Floating and programmatic modes.** Cap can hide entirely or float over a button until form submit. Altcha's display modes are simpler.
 - **Customizable look.** Cap exposes CSS variables for colors, size, position, and icons. Altcha's customization is more limited.
 
@@ -37,6 +37,7 @@ If you want a minimal, library-style PoW CAPTCHA you can drop into a Node projec
 
 ## See also
 
-- [Live demo](../demo.md) — try Cap in your browser
-- [How Cap detects bots](../effectiveness.md) — proof-of-work + instrumentation
-- [All alternatives](../alternatives.md) — full feature matrix
+- [Live demo](../demo.md): try Cap in your browser
+- [How Cap detects bots](../effectiveness.md): proof-of-work + instrumentation
+- [All alternatives](../alternatives.md): full feature matrix
+- [Open-source CAPTCHA options](../open-source-captcha.md): Cap, ALTCHA, mCAPTCHA and Anubis compared

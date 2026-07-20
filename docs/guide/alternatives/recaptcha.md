@@ -22,18 +22,20 @@ If your site doesn't already depend on Google for analytics or login, there is l
 - **Privacy.** reCAPTCHA loads scripts from `google.com` and sends user signals to Google. Cap runs entirely on your infrastructure and adds nothing third-party to your page.
 - **No visual puzzles.** reCAPTCHA v2 routinely drops users into traffic-light, fire-hydrant, and crosswalk puzzles. These are increasingly easy for AI solvers and increasingly hard for humans, especially on mobile or for users on VPNs and privacy browsers.
 - **Bundle size.** reCAPTCHA's client weighs 500 KB+. Cap's widget is ~20 KB.
-- **No quotas.** reCAPTCHA Enterprise is metered per assessment. Cap has no per-request fee — it runs on a $5 VPS for most workloads.
+- **No quotas.** reCAPTCHA Enterprise is metered per assessment. Cap has no per-request fee: it runs on a $5 VPS for most workloads.
 - **No "suspicious user" lockouts.** v3 will silently penalize users who use Tor, VPNs, or privacy-respecting browsers. With Cap you set the difficulty; the user always has a path through.
 - **Open source.** Apache 2.0. Audit, fork, deploy.
 
 ## Migration
 
-Cap's `/siteverify` endpoint is intentionally compatible with reCAPTCHA's API shape, so most server-side migrations are a single URL swap plus a new secret. Client-side, replace the `<script src="https://www.google.com/recaptcha/api.js">` and `<div class="g-recaptcha">` with Cap's widget — see the [quickstart](../index.md) for a full walk-through.
+Cap's `/siteverify` endpoint is intentionally compatible with reCAPTCHA's API shape, so most server-side migrations are a single URL swap plus a new secret. Client-side, replace the `<script src="https://www.google.com/recaptcha/api.js">` and `<div class="g-recaptcha">` with Cap's widget; see the [quickstart](../index.md) for a full walk-through.
 
 You can also run them side-by-side during the cut-over by mounting Cap on a different element and verifying both tokens server-side until you're confident.
 
 ## See also
 
-- [Live demo](../demo.md) — try Cap in your browser
-- [How Cap detects bots](../effectiveness.md) — the proof-of-work + instrumentation model
-- [All alternatives](../alternatives.md) — full feature matrix
+- [Live demo](../demo.md): try Cap in your browser
+- [How Cap detects bots](../effectiveness.md): the proof-of-work + instrumentation model
+- [All alternatives](../alternatives.md): full feature matrix
+- [Best CAPTCHA alternatives in 2026](../best-captcha-alternatives.md): every reCAPTCHA alternative, ranked
+- [CAPTCHA and conversion rate](../captcha-conversion-rate.md): what puzzle loops cost your signups

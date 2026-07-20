@@ -19,7 +19,7 @@ If you specifically need a paid, EU-hosted, vendor-supported product with an SLA
 
 ## Where Cap is the better choice
 
-- **No quotas at any volume.** FriendlyCaptcha's Starter plan is €9/month for 1,000 requests/month, with higher tiers as you scale. Cap is free at any volume — no per-request fee, no domain limit.
+- **No quotas at any volume.** FriendlyCaptcha's Starter plan is €9/month for 1,000 requests/month, with higher tiers as you scale. Cap is free at any volume: no per-request fee, no domain limit.
 - **Server is open-source.** FriendlyCaptcha's framework integrations are open-source but the server is proprietary. Cap is fully Apache-2.0, end to end.
 - **Self-hosted.** Cap runs on your own infrastructure, on a $5 VPS, with no third-party round-trip.
 - **Two verification layers.** Cap adds [instrumentation challenges](../instrumentation.md) on top of proof-of-work. FriendlyCaptcha is PoW only.
@@ -33,6 +33,7 @@ If you specifically need a paid, EU-hosted, vendor-supported product with an SLA
 
 ## See also
 
-- [Live demo](../demo.md) — try Cap in your browser
-- [How Cap detects bots](../effectiveness.md) — proof-of-work + instrumentation
-- [All alternatives](../alternatives.md) — full feature matrix
+- [Live demo](../demo.md): try Cap in your browser
+- [How Cap detects bots](../effectiveness.md): proof-of-work + instrumentation
+- [All alternatives](../alternatives.md): full feature matrix
+- [Best CAPTCHA alternatives in 2026](../best-captcha-alternatives.md): managed and self-hosted options ranked

@@ -3,7 +3,6 @@
 
 User-agent: *
 Allow: /
-Disallow: /assets/
 
 Sitemap: https://trycap.dev/sitemap.xml
 

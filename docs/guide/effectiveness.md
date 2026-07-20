@@ -23,3 +23,8 @@ Cap's proof-of-work is heavily inspired by [Hashcash](https://www.researchgate.n
 ## Making GPUs useless
 
 SHA-256 is reasonable as a general PoW algorithm, but it can be significantly optimized on GPUs. That's why we also support experimental GPU-resistant algorithms like [RSW time-locks](./rsw.md).
+
+## See also
+
+- [CAPTCHA and conversion rate](./captcha-conversion-rate.md): what challenge friction costs in signups
+- [Best CAPTCHA alternatives in 2026](./best-captcha-alternatives.md): how other mechanisms compare

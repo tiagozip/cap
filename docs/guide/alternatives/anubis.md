@@ -9,7 +9,7 @@ Anubis is a proof-of-work scraper deterrent, popular in self-hosted communities 
 
 ## Quick verdict
 
-Use **Anubis** when you want to gate an entire site or path against bots and scrapers at the reverse-proxy level — usually because crawlers are eating your bandwidth. Use **Cap** when you want to gate a specific *action* — a form submission, an API call, an account creation — and let normal browsing continue freely.
+Use **Anubis** when you want to gate an entire site or path against bots and scrapers at the reverse-proxy level, usually because crawlers are eating your bandwidth. Use **Cap** when you want to gate a specific *action* (a form submission, an API call, an account creation) and let normal browsing continue freely.
 
 ## Where Anubis makes sense
 
@@ -19,11 +19,11 @@ Use **Anubis** when you want to gate an entire site or path against bots and scr
 
 ## Where Cap is the better choice
 
-- **Per-action protection, not per-pageview.** Cap protects forms, signups, contact pages, and API endpoints — exactly where abuse converts to cost. Visitors browse normally.
+- **Per-action protection, not per-pageview.** Cap protects forms, signups, contact pages, and API endpoints, exactly where abuse converts to cost. Visitors browse normally.
 - **Difficulty is per-action.** Anubis's challenge has to be small enough not to hurt every page load, which limits how high you can crank it. Cap is configured per-action, so difficulty can be set higher on signup or login forms without hurting browsing.
 - **Two verification layers.** Cap layers [instrumentation challenges](../instrumentation.md) on top of PoW, so even bots that bring GPU-acceleration to the proof-of-work step still have to fake a real browser environment.
 - **Standalone server with a dashboard.** Cap ships analytics, multi-site-key management, and a reCAPTCHA-compatible siteverify endpoint out of the box.
-- **Widget UX.** Cap is meant to be visible to humans on a form — there's a checkbox, progress indicator, and brand surface. Anubis is a transparent gate.
+- **Widget UX.** Cap is meant to be visible to humans on a form: there is a checkbox, progress indicator, and brand surface. Anubis is a transparent gate.
 
 ## They can coexist
 
@@ -31,6 +31,7 @@ If you're already running Anubis in front of a site for crawler protection, you 
 
 ## See also
 
-- [Live demo](../demo.md) — try Cap in your browser
-- [How Cap detects bots](../effectiveness.md) — proof-of-work + instrumentation
-- [All alternatives](../alternatives.md) — full feature matrix
+- [Live demo](../demo.md): try Cap in your browser
+- [How Cap detects bots](../effectiveness.md): proof-of-work + instrumentation
+- [All alternatives](../alternatives.md): full feature matrix
+- [Open-source CAPTCHA options](../open-source-captcha.md): Cap, ALTCHA, mCAPTCHA and Anubis compared

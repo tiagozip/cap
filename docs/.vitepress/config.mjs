@@ -4,11 +4,16 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 
 const GITHUB_STARS = 6632;
 
-const jsonLd = (obj) => ["script", { type: "application/ld+json" }, JSON.stringify(obj)];
+const jsonLd = (obj) => [
+  "script",
+  { type: "application/ld+json" },
+  JSON.stringify(obj).replace(/</g, "\\u003c"),
+];
 
 const SOFTWARE_APPLICATION = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
+  "@id": "https://trycap.dev/#software",
   name: "Cap",
   applicationCategory: "SecurityApplication",
   operatingSystem: "Cross-platform",
@@ -72,6 +77,38 @@ const FAQ_PAGE = {
   })),
 };
 
+const COMPARE_SIDEBAR = [
+  {
+    text: "Compare Cap",
+    items: [
+      { text: "← Back to docs", link: "/guide/" },
+      { text: "Feature comparison", link: "/guide/alternatives.md" },
+      { text: "Migrate from reCAPTCHA", link: "/guide/alternatives/migrate-from-recaptcha.md" },
+    ],
+  },
+  {
+    text: "vs",
+    items: [
+      { text: "reCAPTCHA", link: "/guide/alternatives/recaptcha.md" },
+      { text: "Turnstile", link: "/guide/alternatives/turnstile.md" },
+      { text: "hCaptcha", link: "/guide/alternatives/hcaptcha.md" },
+      { text: "Altcha", link: "/guide/alternatives/altcha.md" },
+      { text: "FriendlyCaptcha", link: "/guide/alternatives/friendlycaptcha.md" },
+      { text: "SilentShield", link: "/guide/alternatives/silentshield.md" },
+      { text: "Anubis", link: "/guide/alternatives/anubis.md" },
+    ],
+  },
+  {
+    text: "Guides",
+    items: [
+      { text: "Best CAPTCHA alternatives", link: "/guide/best-captcha-alternatives.md" },
+      { text: "CAPTCHA & conversion rate", link: "/guide/captcha-conversion-rate.md" },
+      { text: "Open-source CAPTCHA", link: "/guide/open-source-captcha.md" },
+      { text: "Mobile form bot protection", link: "/guide/mobile-form-bot-protection.md" },
+    ],
+  },
+];
+
 const humanize = (s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function breadcrumbList(pageData) {
@@ -88,7 +125,11 @@ function breadcrumbList(pageData) {
     acc += `/${seg}`;
     const isLast = i === segs.length - 1;
     const name = seg === "guide" ? "Docs" : isLast ? pageData.title : humanize(seg);
-    const item = isLast ? acc + (rel.endsWith("index.md") ? "/" : ".html") : `${acc}/`;
+    const item = isLast
+      ? acc + (rel.endsWith("index.md") ? "/" : ".html")
+      : seg === "guide"
+        ? `${acc}/`
+        : `${acc}.html`;
     items.push({ "@type": "ListItem", position: i + 2, name, item });
   });
   return { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: items };
@@ -139,6 +180,48 @@ export default withMermaid({
     } else {
       const bc = breadcrumbList(pageData);
       if (bc) head.push(jsonLd(bc));
+      const faq = pageData.frontmatter.faq;
+      if (Array.isArray(faq) && faq.length) {
+        head.push(
+          jsonLd({
+            "@context": "https://schema.org",
+            "@type": "TechArticle",
+            headline: title,
+            description,
+            url: canonical,
+            about: { "@id": "https://trycap.dev/#software" },
+            author: { "@type": "Person", name: "tiago", url: "https://tiago.zip" },
+          }),
+          jsonLd({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faq.map(({ q, a }) => ({
+              "@type": "Question",
+              name: q,
+              acceptedAnswer: { "@type": "Answer", text: a },
+            })),
+          }),
+        );
+      }
+      if (pageData.relativePath === "guide/best-captcha-alternatives.md") {
+        head.push(
+          jsonLd({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            itemListOrder: "https://schema.org/ItemListOrderAscending",
+            numberOfItems: 7,
+            itemListElement: [
+              ["Cap", "https://trycap.dev/"],
+              ["Cloudflare Turnstile", "https://trycap.dev/guide/alternatives/turnstile.html"],
+              ["ALTCHA", "https://trycap.dev/guide/alternatives/altcha.html"],
+              ["FriendlyCaptcha", "https://trycap.dev/guide/alternatives/friendlycaptcha.html"],
+              ["SilentShield", "https://trycap.dev/guide/alternatives/silentshield.html"],
+              ["hCaptcha", "https://trycap.dev/guide/alternatives/hcaptcha.html"],
+              ["reCAPTCHA", "https://trycap.dev/guide/alternatives/recaptcha.html"],
+            ].map(([name, url], i) => ({ "@type": "ListItem", position: i + 1, name, url })),
+          }),
+        );
+      }
     }
     return head;
   },
@@ -286,27 +369,11 @@ export default withMermaid({
     ],
 
     sidebar: {
-      "/guide/alternatives/": [
-        {
-          text: "Compare Cap",
-          items: [
-            { text: "← Back to docs", link: "/guide/" },
-            { text: "Feature comparison", link: "/guide/alternatives.md" },
-            { text: "Migrate from reCAPTCHA", link: "/guide/alternatives/migrate-from-recaptcha.md" },
-          ],
-        },
-        {
-          text: "vs",
-          items: [
-            { text: "reCAPTCHA", link: "/guide/alternatives/recaptcha.md" },
-            { text: "Turnstile", link: "/guide/alternatives/turnstile.md" },
-            { text: "hCaptcha", link: "/guide/alternatives/hcaptcha.md" },
-            { text: "Altcha", link: "/guide/alternatives/altcha.md" },
-            { text: "FriendlyCaptcha", link: "/guide/alternatives/friendlycaptcha.md" },
-            { text: "Anubis", link: "/guide/alternatives/anubis.md" },
-          ],
-        },
-      ],
+      "/guide/best-captcha-alternatives": COMPARE_SIDEBAR,
+      "/guide/captcha-conversion-rate": COMPARE_SIDEBAR,
+      "/guide/open-source-captcha": COMPARE_SIDEBAR,
+      "/guide/mobile-form-bot-protection": COMPARE_SIDEBAR,
+      "/guide/alternatives/": COMPARE_SIDEBAR,
       "/": [
         { text: "Quickstart", link: "/guide/index.md" },
         { text: "Feature comparison", link: "/guide/alternatives.md" },
