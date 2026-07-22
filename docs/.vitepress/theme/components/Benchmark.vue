@@ -66,7 +66,8 @@ const doBenchmark = async (i, total) => {
     };
 
     const cap = new Cap({
-      apiEndpoint: "/api/",
+      apiEndpoint: "https://<your-instance>/<site-key>/",
+      // or: apiEndpoint: "/api/",
       workers: workers.value,
     });
 

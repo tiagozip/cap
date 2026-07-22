@@ -14,6 +14,14 @@ The asset server is disabled by default. You can enable it by setting the `ENABL
 
 Then, make sure to set `WIDGET_VERSION` and `WASM_VERSION` to the correct version of the widget and WASM files you want to serve. This defaults to `latest`, which will serve the latest version of the widget and WASM files, although these are not recommended in production as they might serve breaking changes.
 
+The available versions are the published npm releases of [`@cap.js/widget`](https://www.npmjs.com/package/@cap.js/widget?activeTab=versions) and [`@cap.js/wasm`](https://www.npmjs.com/package/@cap.js/wasm?activeTab=versions). For example:
+
+```env
+ENABLE_ASSETS_SERVER=true
+WIDGET_VERSION=0.1.56
+WASM_VERSION=0.0.7
+```
+
 Your assets will be served from the following paths:
 
 - `/assets/widget.js`
@@ -41,13 +49,34 @@ window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
 
 By default, these fetch from `process.env.CACHE_HOST` (which defaults to `https://cdn.jsdelivr.net`). You can change this by setting the `CACHE_HOST` env variable when running the server.
 
+### Troubleshooting
+
+The assets are downloaded from `CACHE_HOST` into Redis at startup, then refreshed hourly. If an asset endpoint responds with `Asset not cached yet`, the download hasn't happened. Check that:
+
+- `ENABLE_ASSETS_SERVER=true` is actually set on the Cap container. If you changed it in a compose file, recreate the container. When it isn't set, the `/assets/*` endpoints respond with a 404 explaining that the asset server is disabled.
+- The container has outbound network access to `CACHE_HOST`. If a download fails, the server logs a line containing `[asset server] failed to update assets cache` at startup and retries every hour.
+- `WIDGET_VERSION` and `WASM_VERSION` point to versions that actually exist on npm.
+
 ## Rate-limiting
 
-By default, Standalone will use Elysia's built-in `server.requestIP` function to identify a client's IP for ratelimiting. This might not be correct if you're using something like Cloudflare behind your service.
-
-If so, you can change the IP extraction logic to simply read from a header set in `RATELIMIT_IP_HEADER` in your env. For example, if you were using Cloudflare, you might set `RATELIMIT_IP_HEADER` to `cf-connecting-ip`. On most setups, this is `x-forwarded-for`.
+Challenge endpoints are rate-limited per client IP using a fixed window, defaulting to 30 requests every 5 seconds. You can change the global limit under **Settings** in the dashboard (or via `PUT /settings/ratelimit`), and override it per site key in the key's **Configuration** tab. When the limit is exceeded, requests get a `429` response with an `X-RateLimit-Remaining: 0` header.
 
 The `/siteverify` endpoint is intended for server-to-server use, so it's not ratelimited by default.
+
+### Client IPs behind a proxy
+
+Standalone identifies clients by checking the `X-Forwarded-For`, `X-Real-IP` and `CF-Connecting-IP` headers (in that order), falling back to the socket address. If you're behind a reverse proxy that uses a different header, set `RATELIMIT_IP_HEADER` in your env (or the IP header under **Settings > Headers** in the dashboard). For example, behind Cloudflare you might set it to `cf-connecting-ip`.
+
+Make sure your proxy actually forwards the client IP. For nginx:
+
+```nginx
+location / {
+    proxy_pass http://localhost:3000;
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
+```
+
+Without this, every request appears to come from the proxy's own IP and all clients share a single rate-limit bucket. Also note that `X-Forwarded-For` is trusted as-is, so the server must not be directly reachable from the internet, otherwise clients can spoof the header and bypass rate limiting.
 
 ## Redis / Valkey
 

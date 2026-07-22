@@ -36,21 +36,26 @@ const updateCache = async () => {
 
   const CACHE_HOST = process.env.CACHE_HOST || "https://cdn.jsdelivr.net";
 
+  const fetchAsset = async (url, binary) => {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`${url} responded with ${r.status}`);
+    return binary ? r.arrayBuffer() : r.text();
+  };
+
   try {
     const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] =
       await Promise.all([
-        fetch(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`).then((r) =>
-          r.text(),
-        ),
-        fetch(
+        fetchAsset(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`),
+        fetchAsset(
           `${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`,
-        ).then((r) => r.text()),
-        fetch(
+        ),
+        fetchAsset(
           `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`,
-        ).then((r) => r.arrayBuffer()),
-        fetch(
+          true,
+        ),
+        fetchAsset(
           `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
-        ).then((r) => r.text()),
+        ),
       ]);
 
     cacheConfig.lastUpdate = currentTime;
@@ -77,6 +82,10 @@ export const assetsServer = new Elysia({
   detail: { tags: ["Assets"] },
 })
   .onBeforeHandle(({ set }) => {
+    if (process.env.ENABLE_ASSETS_SERVER !== "true") {
+      set.status = 404;
+      return "Asset server is disabled. Set ENABLE_ASSETS_SERVER=true to enable it.";
+    }
     set.headers["Cache-Control"] = "max-age=31536000, immutable";
   })
   .get("/widget.js", async ({ set }) => {
@@ -84,7 +93,7 @@ export const assetsServer = new Elysia({
     const content = await db.get("asset:widget.js");
     if (!content) {
       set.status = 503;
-      return "Asset not cached yet";
+      return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";
     }
     return content;
   })
@@ -93,7 +102,7 @@ export const assetsServer = new Elysia({
     const content = await db.get("asset:floating.js");
     if (!content) {
       set.status = 503;
-      return "Asset not cached yet";
+      return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";
     }
     return content;
   })
@@ -102,7 +111,7 @@ export const assetsServer = new Elysia({
     const content = await db.getBuffer("asset:cap_wasm_bg.wasm");
     if (!content) {
       set.status = 503;
-      return "Asset not cached yet";
+      return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";
     }
     return content;
   })
@@ -111,7 +120,7 @@ export const assetsServer = new Elysia({
     const content = await db.get("asset:cap_wasm.js");
     if (!content) {
       set.status = 503;
-      return "Asset not cached yet";
+      return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";
     }
     return content;
   });

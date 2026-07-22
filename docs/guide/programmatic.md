@@ -8,7 +8,8 @@ You can use `new Cap({ ... })` in your client-side JavaScript to create a new Ca
 
 ```js
 const cap = new Cap({
-  apiEndpoint: "/api/",
+  apiEndpoint: "https://<your-instance>/<site-key>/",
+  // or: apiEndpoint: "/api/",
 });
 const solution = await cap.solve();
 
@@ -19,7 +20,8 @@ You can also set up [event listeners](widget.md#supported-events):
 
 ```js
 const cap = new Cap({
-  apiEndpoint: "/api/",
+  apiEndpoint: "https://<your-instance>/<site-key>/",
+  // or: apiEndpoint: "/api/",
 });
 
 cap.addEventListener("progress", (event) => {
