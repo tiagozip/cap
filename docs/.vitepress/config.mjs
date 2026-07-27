@@ -281,12 +281,9 @@ export default withMermaid({
     ["link", { rel: "preconnect", href: "https://cdn.jsdelivr.net" }],
     ["link", { rel: "preconnect", href: "https://a.tiago.zip" }],
     ["link", { rel: "preconnect", href: "https://fullres-script-proxy.tiag.workers.dev" }],
-    ["link", { rel: "preconnect", href: "https://media.ethicalads.io" }],
     ["link", { rel: "dns-prefetch", href: "https://cdn.jsdelivr.net" }],
     ["link", { rel: "dns-prefetch", href: "https://a.tiago.zip" }],
     ["link", { rel: "dns-prefetch", href: "https://fullres-script-proxy.tiag.workers.dev" }],
-    ["link", { rel: "dns-prefetch", href: "https://media.ethicalads.io" }],
-    ["link", { rel: "dns-prefetch", href: "https://server.ethicalads.io" }],
     [
       "meta",
       {
@@ -387,13 +384,6 @@ export default withMermaid({
       {
         src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.50",
         async: true,
-      },
-    ],
-    [
-      "script",
-      {
-        async: true,
-        src: "https://media.ethicalads.io/media/client/ethicalads.min.js",
       },
     ],
   ],
