@@ -326,7 +326,15 @@ function buildClientScript({
   const nKey = rVar();
   const outKey = rVar();
 
+  const layoutEl = rVar();
+  const layoutRect = rVar();
+
   const envChecks = [
+    // Layout-dependent probes: a fake DOM can stub innerText trees cheaply,
+    // but reproducing CSS box-model geometry (offsetWidth/offsetHeight and
+    // getBoundingClientRect agreement) requires a real layout engine.
+    `try { var ${layoutEl} = document.createElement('div'); ${layoutEl}.style.cssText = 'display:block;position:absolute;left:-9999px;top:0;width:137px;height:89px;padding:11px 13px;border:7px solid;margin:0;box-sizing:content-box;'; document.body.appendChild(${layoutEl}); var ${layoutRect} = ${layoutEl}.getBoundingClientRect(); var ${nKey}okw = ${layoutEl}.offsetWidth === 177 && ${layoutRect}.width === 177; var ${nKey}okh = ${layoutEl}.offsetHeight === 125 && ${layoutRect}.height === 125; document.body.removeChild(${layoutEl}); if (!${nKey}okw || !${nKey}okh) return null; } catch { return null }`,
+
     `try { const ${nKey}st = (new Error()).stack || ''; if (${nKey}st.indexOf('node:internal') !== -1 || ${nKey}st.indexOf('moduleEvaluation') !== -1 || ${nKey}st.indexOf('loadAndEvaluateModule') !== -1 || ${nKey}st.indexOf('file:///') !== -1 || ${nKey}st.indexOf('[eval]') !== -1 || /\\(native:/.test(${nKey}st)) return null; } catch { return null }`,
 
     `if (typeof HTMLElement !== 'function' || typeof Window !== 'function' || typeof Document !== 'function' || typeof Navigator !== 'function' || typeof Node !== 'function') return null; if (!(navigator instanceof Navigator) || !(document instanceof Document) || !(window instanceof Window) || !(document.body instanceof HTMLElement)) return null; if (globalThis !== window || window.self !== window || document.defaultView !== window) return null;`,
