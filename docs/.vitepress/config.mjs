@@ -134,6 +134,83 @@ const COMPARE_SIDEBAR = [
   },
 ];
 
+const ZH_COMPARE_SIDEBAR = [
+  {
+    text: "对比 Cap",
+    items: [
+      { text: "← 返回文档", link: "/zh/guide/" },
+      { text: "功能对比", link: "/zh/guide/alternatives.md" },
+      { text: "从 reCAPTCHA 迁移", link: "/zh/guide/alternatives/migrate-from-recaptcha.md" },
+    ],
+  },
+  {
+    text: "vs",
+    items: [
+      { text: "reCAPTCHA", link: "/zh/guide/alternatives/recaptcha.md" },
+      { text: "Turnstile", link: "/zh/guide/alternatives/turnstile.md" },
+      { text: "hCaptcha", link: "/zh/guide/alternatives/hcaptcha.md" },
+      { text: "Altcha", link: "/zh/guide/alternatives/altcha.md" },
+      { text: "FriendlyCaptcha", link: "/zh/guide/alternatives/friendlycaptcha.md" },
+      { text: "SilentShield", link: "/zh/guide/alternatives/silentshield.md" },
+      { text: "Anubis", link: "/zh/guide/alternatives/anubis.md" },
+    ],
+  },
+  {
+    text: "指南",
+    items: [
+      { text: "最佳 CAPTCHA 替代方案", link: "/zh/guide/best-captcha-alternatives.md" },
+      { text: "CAPTCHA 与转化率", link: "/zh/guide/captcha-conversion-rate.md" },
+      { text: "开源 CAPTCHA", link: "/zh/guide/open-source-captcha.md" },
+      { text: "移动端表单机器人防护", link: "/zh/guide/mobile-form-bot-protection.md" },
+    ],
+  },
+];
+
+const ZH_SIDEBAR = [
+  { text: "快速开始", link: "/zh/guide/index.md" },
+  { text: "功能对比", link: "/zh/guide/alternatives.md" },
+  {
+    text: "Standalone",
+    collapsed: false,
+    items: [
+      { text: "快速开始", link: "/zh/guide/standalone/index.md" },
+      { text: "API", link: "/zh/guide/standalone/api.md" },
+      { text: "配置选项", link: "/zh/guide/standalone/options.md" },
+    ],
+  },
+  {
+    text: "验证组件",
+    collapsed: false,
+    items: [
+      { text: "使用方法", link: "/zh/guide/widget.md" },
+      { text: "编程模式", link: "/zh/guide/programmatic.md" },
+      { text: "浮动模式", link: "/zh/guide/floating.md" },
+    ],
+  },
+  {
+    text: "库",
+    collapsed: true,
+    items: [
+      { text: "核心库", link: "/zh/guide/capjs-core.md" },
+      { text: "社区库", link: "/zh/guide/community.md" },
+    ],
+  },
+  {
+    text: "深入了解",
+    collapsed: true,
+    items: [
+      { text: "有效性", link: "/zh/guide/effectiveness.md" },
+      { text: "Instrumentation", link: "/zh/guide/instrumentation.md" },
+      { text: "RSW 时间锁谜题", link: "/zh/guide/rsw.md" },
+      { text: "Cap 是如何工作的？", link: "/zh/guide/workings.md" },
+    ],
+  },
+  { text: "性能基准", link: "/zh/guide/benchmark.md" },
+  { text: "合规", link: "/zh/guide/compliance.md" },
+  { text: "演示", link: "/zh/guide/demo.md" },
+  { text: "GitHub", link: "https://github.com/tiagozip/cap" },
+];
+
 const humanize = (s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 function breadcrumbList(pageData) {
@@ -169,6 +246,49 @@ export default withMermaid({
     "Cap is a lightweight, modern open-source CAPTCHA alternative using proof-of-work, time-lock and instrumentation challenges",
   lastUpdated: true,
   appearance: "force-dark",
+  locales: {
+    root: {
+      label: "English",
+      lang: "en-US",
+    },
+    zh: {
+      label: "简体中文",
+      lang: "zh-CN",
+      title: "Cap – 开源、可自托管的 reCAPTCHA 替代方案",
+      description:
+        "Cap 是一个轻量、现代的开源 CAPTCHA 替代方案，基于工作量证明、时间锁与 instrumentation 质询",
+      themeConfig: {
+        nav: [
+          { text: "首页", link: "/zh/" },
+          { text: "文档", link: "/zh/guide/" },
+          { text: "GitHub", link: "https://github.com/tiagozip/cap" },
+        ],
+        sidebar: {
+          "/zh/guide/best-captcha-alternatives": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/captcha-conversion-rate": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/open-source-captcha": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/mobile-form-bot-protection": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/alternatives/": ZH_COMPARE_SIDEBAR,
+          "/zh/": ZH_SIDEBAR,
+        },
+        editLink: {
+          pattern: "https://github.com/tiagozip/cap/edit/main/docs/:path",
+          text: "在 GitHub 上编辑此页",
+        },
+        outline: { label: "本页目录" },
+        docFooter: { prev: "上一页", next: "下一页" },
+        lastUpdated: { text: "最后更新于" },
+        returnToTopLabel: "返回顶部",
+        sidebarMenuLabel: "菜单",
+        darkModeSwitchLabel: "外观",
+        langMenuLabel: "切换语言",
+        footer: {
+          message: "基于 Apache 2.0 许可发布",
+          copyright: "<a href='https://tiago.zip' target='_blank'>made by tiago.zip</a>",
+        },
+      },
+    },
+  },
   vite: {
     plugins: [llmstxt()],
   },
