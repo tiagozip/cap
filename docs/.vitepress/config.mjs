@@ -435,7 +435,7 @@ export default withMermaid({
     [
       "script",
       {},
-      `(function(){try{if(location.pathname==='/'||location.pathname==='/index.html'){document.documentElement.classList.add('home-v2-active');}}catch(e){}})();`
+      `(function(){try{if(location.pathname==='/'||location.pathname==='/index.html'||location.pathname==='/zh/'||location.pathname==='/zh/index.html'){document.documentElement.classList.add('home-v2-active');}}catch(e){}})();`
     ],
     [
       "script",

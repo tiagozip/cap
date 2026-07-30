@@ -1,7 +1,14 @@
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+import { useData } from "vitepress";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
+import VPNavBarTranslations from "vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue";
 import { createVortex } from "../vortex/index.js";
+import { homeV2Strings } from "./homeV2.strings.js";
+
+const { localeIndex } = useData();
+const t = computed(() => homeV2Strings[localeIndex.value] ?? homeV2Strings.en);
+const lp = computed(() => (localeIndex.value === "root" ? "" : `/${localeIndex.value}`));
 
 const fromWidget = ref(false);
 const fromWidgetHost = ref("");
@@ -573,7 +580,7 @@ onBeforeUnmount(() => {
         v-if="fromWidget"
         class="widget-banner"
         role="region"
-        aria-label="From the Cap widget"
+        :aria-label="t.bannerRegionLabel"
       >
         <div class="wrap widget-banner-wrap">
           <span class="widget-banner-icon" aria-hidden="true">
@@ -592,20 +599,16 @@ onBeforeUnmount(() => {
           </span>
           <p class="widget-banner-text">
             <strong
-              >You just verified you're human with Cap<template
-                v-if="fromWidgetHost"
-                >&nbsp;on {{ fromWidgetHost }}</template
-              >.</strong
+              >{{ t.bannerVerified }}<template v-if="fromWidgetHost"
+                >{{ t.bannerHostPrefix }}{{ fromWidgetHost }}</template
+              >{{ t.bannerVerifiedEnd }}</strong
             >
-            <span class="widget-banner-sub"
-              >You can close this tab. Or stick around if you're curious what
-              Cap is.</span
-            >
+            <span class="widget-banner-sub">{{ t.bannerSub }}</span>
           </p>
           <button
             class="widget-banner-close"
             type="button"
-            aria-label="Dismiss"
+            :aria-label="t.bannerDismiss"
             @click="dismissWidgetBanner"
           >
             <svg
@@ -629,20 +632,23 @@ onBeforeUnmount(() => {
       <div class="wrap wrap-hero">
         <div class="inner">
           <div class="left">
-            <a class="brand" href="/" aria-label="Cap home">
+            <a class="brand" :href="lp + '/'" :aria-label="t.navBrandLabel">
               <img alt="" src="/logo.png" width="20" height="20" />
               <strong>Cap</strong>
             </a>
             <VPNavBarSearch class="homev2-search" />
           </div>
           <nav>
-            <a href="/guide/" data-cta="docs" data-cta-location="nav">Docs</a>
+            <a :href="lp + '/guide/'" data-cta="docs" data-cta-location="nav">{{
+              t.navDocs
+            }}</a>
             <a href="#features" data-cta="features" data-cta-location="nav"
-              >Features</a
+              >{{ t.navFeatures }}</a
             >
-            <a href="/guide/demo.html" data-cta="demo" data-cta-location="nav"
-              >Demo</a
+            <a :href="lp + '/guide/demo.html'" data-cta="demo" data-cta-location="nav"
+              >{{ t.navDemo }}</a
             >
+            <VPNavBarTranslations class="homev2-translations" />
             <a
               class="gh-link"
               href="https://github.com/tiagozip/cap"
@@ -674,22 +680,21 @@ onBeforeUnmount(() => {
       <div class="wrap hero-wrap">
         <div class="hero-copy">
           <h1>
-            Self-hosted CAPTCHA<br />
-            <span class="dim">for the modern web.</span>
+            {{ t.heroTitle }}<br />
+            <span class="dim">{{ t.heroTitleDim }}</span>
           </h1>
 
           <p class="lead">
-            No Google. No telemetry. No visual puzzles. <br />Switch from
-            reCAPTCHA in minutes.
+            {{ t.heroLead1 }}<br />{{ t.heroLead2 }}
           </p>
 
           <div class="actions">
             <a
               class="btn primary"
-              href="/guide/"
+              :href="lp + '/guide/'"
               data-cta="docs"
               data-cta-location="hero"
-              >Get started in 5 minutes <span class="arr">→</span></a
+              >{{ t.heroCtaStart }}<span class="arr">→</span></a
             >
             <button
               type="button"
@@ -697,7 +702,7 @@ onBeforeUnmount(() => {
               :data-copied="promptCopied"
               data-cta="agent-prompt"
               data-cta-location="hero"
-              title="Sets up your AI agent for Cap"
+              :title="t.heroCtaPromptTitle"
               @click="copyAgentPrompt"
             >
               <span class="agent-marks" aria-hidden="true">
@@ -721,7 +726,7 @@ onBeforeUnmount(() => {
                 </svg>
               </span>
               <span>{{
-                promptCopied ? "Prompt copied!" : "Copy agent prompt"
+                promptCopied ? t.heroCtaPromptCopied : t.heroCtaCopyPrompt
               }}</span>
             </button>
           </div>
@@ -739,7 +744,7 @@ onBeforeUnmount(() => {
             <div class="dash-frame">
               <img
                 src="/assets/screenshot.webp"
-                alt="Cap admin dashboard screenshot"
+                :alt="t.heroDashAlt"
                 width="2892"
                 height="1556"
                 fetchpriority="high"
@@ -753,7 +758,7 @@ onBeforeUnmount(() => {
       <div class="wrap">
         <div class="trust-zone">
           <div class="logoimg">
-            <span class="logobar-label">Trusted in production by</span>
+            <span class="logobar-label">{{ t.trustLabel }}</span>
             <span class="logoimg-row">
               <img
                 class="li li-bunny"
@@ -801,11 +806,8 @@ onBeforeUnmount(() => {
                   ></path>
                 </svg>
               </div>
-              <h3>Privacy-first. No tracking.</h3>
-              <p>
-                Zero telemetry. No third-party network. Your users' data stays
-                between you and them.
-              </p>
+              <h3>{{ t.featPrivacyTitle }}</h3>
+              <p>{{ t.featPrivacyBody }}</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
@@ -821,10 +823,8 @@ onBeforeUnmount(() => {
                   ></path>
                 </svg>
               </div>
-              <h3>250x smaller than hCaptcha.</h3>
-              <p>
-                ~20kb, zero dependencies. Loads in milliseconds, not seconds.
-              </p>
+              <h3>{{ t.featSizeTitle }}</h3>
+              <p>{{ t.featSizeBody }}</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
@@ -840,11 +840,8 @@ onBeforeUnmount(() => {
                   ></path>
                 </svg>
               </div>
-              <h3>No visual puzzles. Always invisible.</h3>
-              <p>
-                PoW, time-lock challenges and instrumentation run silently in
-                the background.
-              </p>
+              <h3>{{ t.featInvisibleTitle }}</h3>
+              <p>{{ t.featInvisibleBody }}</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
@@ -866,11 +863,8 @@ onBeforeUnmount(() => {
                   />
                 </svg>
               </div>
-              <h3>Free &amp; open-source</h3>
-              <p>
-                Apache 2.0 licensed. Audit it, fork it, self-host it. No vendor
-                can pull the rug.
-              </p>
+              <h3>{{ t.featOpenTitle }}</h3>
+              <p>{{ t.featOpenBody }}</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
@@ -886,11 +880,8 @@ onBeforeUnmount(() => {
                   ></path>
                 </svg>
               </div>
-              <h3>Built for privacy laws.</h3>
-              <p>
-                Designed to help you meet GDPR, CCPA, LGPD and more, with strict
-                privacy and accessibility standards baked in.
-              </p>
+              <h3>{{ t.featLawsTitle }}</h3>
+              <p>{{ t.featLawsBody }}</p>
             </div>
             <div class="feat-cell">
               <div class="icon">
@@ -906,11 +897,8 @@ onBeforeUnmount(() => {
                   ></path>
                 </svg>
               </div>
-              <h3>Fully customizable</h3>
-              <p>
-                Colors, size, position, icons, all controllable via CSS
-                variables. No iframe lock-in.
-              </p>
+              <h3>{{ t.featCustomTitle }}</h3>
+              <p>{{ t.featCustomBody }}</p>
             </div>
           </div>
         </div>
@@ -931,24 +919,21 @@ onBeforeUnmount(() => {
                 d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm-34.32,69.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z"
               ></path>
             </svg>
-            <h2>Compliant out of the box.</h2>
-            <p>
-              Open-source, self-hosted and privacy-first. We don't use cookies
-              or tracking and no data leaves your servers.
-            </p>
+            <h2>{{ t.cmplTitle }}</h2>
+            <p>{{ t.cmplBody }}</p>
 
             <a
               class="cmpl-link"
-              href="/guide/compliance.html"
+              :href="lp + '/guide/compliance.html'"
               data-cta="compliance"
               data-cta-location="home_compliance"
-              >See how Cap complies <span class="arr">↗</span></a
+              >{{ t.cmplLink }}<span class="arr">↗</span></a
             >
           </div>
 
           <div class="cmpl">
             <div class="cmpl-row">
-              <span class="cmpl-label">Privacy &amp; data</span>
+              <span class="cmpl-label">{{ t.cmplPrivacyLabel }}</span>
               <div class="cmpl-chips">
                 <span class="cmpl-chip"
                   ><img
@@ -1025,7 +1010,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="cmpl-row">
-              <span class="cmpl-label">Accessibility</span>
+              <span class="cmpl-label">{{ t.cmplAccessibilityLabel }}</span>
               <div class="cmpl-chips">
                 <span class="cmpl-chip"
                   ><span class="cmpl-globe" aria-hidden="true"
@@ -1080,7 +1065,7 @@ onBeforeUnmount(() => {
                       <path
                         d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"
                       ></path></svg></span
-                  >Internationalization (i18n)</span
+                  >{{ t.cmplI18nChip }}</span
                 >
 
                 <span class="cmpl-chip"
@@ -1095,7 +1080,7 @@ onBeforeUnmount(() => {
                       <path
                         d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"
                       ></path></svg></span
-                  >RTL support</span
+                  >{{ t.cmplRtlChip }}</span
                 >
               </div>
             </div>
@@ -1145,12 +1130,9 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <div class="speed-copy">
-            <h2>A fraction of the weight</h2>
-            <p>
-              Cap's widget is extremely lightweight and runs invisibly, shipping
-              only about 20 kB of JavaScript with no third-party scripts.
-            </p>
-            <p class="sizebars-note">Client bundle sizes (minified gzip)</p>
+            <h2>{{ t.speedTitle }}</h2>
+            <p>{{ t.speedBody }}</p>
+            <p class="sizebars-note">{{ t.speedNote }}</p>
           </div>
         </div>
       </section>
@@ -1158,13 +1140,10 @@ onBeforeUnmount(() => {
       <section class="block" id="testimonial">
         <figure class="quote-card wrap-wide">
           <blockquote class="quote-text">
-            Cap has been a good fit for AdGuard Temp Mail. We use it as an
-            <span class="hl">invisible, self-hosted CAPTCHA layer</span> with
-            <span class="hl"
-              >proof-of-work and browser instrumentation challenges</span
-            >, which helps us add abuse protection while keeping the experience
-            <span class="hl">lightweight and unobtrusive</span> for regular
-            users.
+            {{ t.quoteLead }}<span class="hl">{{ t.quoteHl1 }}</span
+            >{{ t.quoteMid1 }}<span class="hl">{{ t.quoteHl2 }}</span
+            >{{ t.quoteMid2 }}<span class="hl">{{ t.quoteHl3 }}</span
+            >{{ t.quoteEnd }}
           </blockquote>
           <figcaption class="quote-by">
             <img
@@ -1176,7 +1155,7 @@ onBeforeUnmount(() => {
               loading="lazy"
             />
             <span class="quote-sep" aria-hidden="true"></span>
-            <span class="quote-role">Head of PR, AdGuard</span>
+            <span class="quote-role">{{ t.quoteRole }}</span>
           </figcaption>
         </figure>
       </section>
@@ -1184,62 +1163,40 @@ onBeforeUnmount(() => {
       <section class="block" id="compare">
         <div class="wrap-wide">
           <div class="head">
-            <h2>How it compares</h2>
-            <p>
-              Cap is the free, open-source, self-hosted option, same detection
-              tier as the big names, without shipping your users' data to a
-              third party.
-            </p>
+            <h2>{{ t.compareTitle }}</h2>
+            <p>{{ t.compareBody }}</p>
             <a
               class="cmpl-link"
-              href="/guide/alternatives.html"
+              :href="lp + '/guide/alternatives.html'"
               data-cta="compare"
               data-cta-location="home_compare"
-              >See the full comparison <span class="arr">↗</span></a
+              >{{ t.compareLink }}<span class="arr">↗</span></a
             >
           </div>
           <div class="cmp">
             <div class="cmp-row">
-              <h3>Self-hosted</h3>
-              <p>
-                Runs entirely on your own server. reCAPTCHA, hCaptcha and
-                Turnstile are cloud-only.
-              </p>
+              <h3>{{ t.compareSelfTitle }}</h3>
+              <p>{{ t.compareSelfBody }}</p>
             </div>
             <div class="cmp-row">
-              <h3>Open source</h3>
-              <p>
-                Apache 2.0. Read it, fork it, own it. The big three are closed
-                source.
-              </p>
+              <h3>{{ t.compareOpenTitle }}</h3>
+              <p>{{ t.compareOpenBody }}</p>
             </div>
             <div class="cmp-row">
-              <h3>No visual puzzles</h3>
-              <p>
-                Invisible proof-of-work, no crosswalks. reCAPTCHA and hCaptcha
-                still show puzzles.
-              </p>
+              <h3>{{ t.comparePuzzlesTitle }}</h3>
+              <p>{{ t.comparePuzzlesBody }}</p>
             </div>
             <div class="cmp-row">
-              <h3>Zero third-party telemetry</h3>
-              <p>
-                Your visitors' data never leaves your server. Google, Cloudflare
-                and hCaptcha all phone home.
-              </p>
+              <h3>{{ t.compareTelemetryTitle }}</h3>
+              <p>{{ t.compareTelemetryBody }}</p>
             </div>
             <div class="cmp-row">
-              <h3>Free at scale</h3>
-              <p>
-                No quotas, no per-request fees. reCAPTCHA and hCaptcha meter or
-                charge.
-              </p>
+              <h3>{{ t.compareFreeTitle }}</h3>
+              <p>{{ t.compareFreeBody }}</p>
             </div>
             <div class="cmp-row">
-              <h3>Layered defense</h3>
-              <p>
-                Proof-of-work layered with dynamic JavaScript instrumentation
-                challenges
-              </p>
+              <h3>{{ t.compareLayersTitle }}</h3>
+              <p>{{ t.compareLayersBody }}</p>
             </div>
           </div>
         </div>
@@ -1248,7 +1205,7 @@ onBeforeUnmount(() => {
       <section class="block" id="widget-demo">
         <div class="wrap-wide">
           <div class="widget-demo-box">
-            <span class="widget-demo-title">Try solving a Cap challenge</span>
+            <span class="widget-demo-title">{{ t.widgetDemoTitle }}</span>
             <div class="widget-demo-stage">
               <span class="wd-widget-wrap">
                 <Demo />
@@ -1262,62 +1219,52 @@ onBeforeUnmount(() => {
         <div class="wrap">
           <div class="head">
             <h2>
-              Two independent layers.<br />Bypass one, the other still holds.
+              {{ t.layersTitle1 }}<br />{{ t.layersTitle2 }}
             </h2>
-            <p>
-              Every challenge solves proof-of-work and runs browser
-              instrumentation at the same time. Defeating one layer doesn't
-              defeat the other.
-            </p>
+            <p>{{ t.layersBody }}</p>
           </div>
           <div class="how-grid">
             <div class="how-card">
-              <span class="lbl">Layer 01</span>
-              <h3>PoW and time-locks</h3>
-              <p>
-                The client solves parallel SHA-256 hashes and time-lock
-                challenges tuned against GPU acceleration in WASM.
-              </p>
+              <span class="lbl">{{ t.layersPowLabel }}</span>
+              <h3>{{ t.layersPowTitle }}</h3>
+              <p>{{ t.layersPowBody }}</p>
               <div class="kv-stack">
                 <div class="kv-row">
                   <div>
-                    <span class="kv-k">hashes/s</span
+                    <span class="kv-k">{{ t.layersKvHashes }}</span
                     ><span class="kv-v kv-rate">2.41M</span>
                   </div>
                   <div>
-                    <span class="kv-k">target</span
+                    <span class="kv-k">{{ t.layersKvTarget }}</span
                     ><span class="kv-v kv-target">0x0000fffd…</span>
                   </div>
                 </div>
                 <div class="kv-row">
                   <div>
-                    <span class="kv-k">hashes/s</span
+                    <span class="kv-k">{{ t.layersKvHashes }}</span
                     ><span class="kv-v kv-rate">2.36M</span>
                   </div>
                   <div>
-                    <span class="kv-k">target</span
+                    <span class="kv-k">{{ t.layersKvTarget }}</span
                     ><span class="kv-v kv-target">0x0000ffff…</span>
                   </div>
                 </div>
                 <div class="kv-row">
                   <div>
-                    <span class="kv-k">hashes/s</span
+                    <span class="kv-k">{{ t.layersKvHashes }}</span
                     ><span class="kv-v kv-rate">2.44M</span>
                   </div>
                   <div>
-                    <span class="kv-k">target</span
+                    <span class="kv-k">{{ t.layersKvTarget }}</span
                     ><span class="kv-v kv-target">0x0000fff8…</span>
                   </div>
                 </div>
               </div>
             </div>
             <div class="how-card">
-              <span class="lbl">Layer 02</span>
-              <h3>JS instrumentation</h3>
-              <p>
-                A freshly-generated JS program runs complex JavaScript, DOM and
-                browser checks.
-              </p>
+              <span class="lbl">{{ t.layersJsLabel }}</span>
+              <h3>{{ t.layersJsTitle }}</h3>
+              <p>{{ t.layersJsBody }}</p>
               <div class="probe-log">
                 <div class="pl">
                   <span class="pi">01</span
@@ -1356,7 +1303,7 @@ onBeforeUnmount(() => {
         <div class="wrap">
           <div class="stats" id="homev2-stats" aria-live="polite">
             <div class="stats-row">
-              <span class="stats-label">CDN hits · 12mo</span>
+              <span class="stats-label">{{ t.statsLabel }}</span>
               <span class="stats-num odometer" id="homev2-stats-total"></span>
             </div>
             <svg
@@ -1375,81 +1322,63 @@ onBeforeUnmount(() => {
           <div class="closer">
             <div class="closer-strip">
               <div class="closer-cell">
-                <span class="ck">size</span>
+                <span class="ck">{{ t.closerSizeLabel }}</span>
                 <span class="cv">20<i>kb</i></span>
-                <span class="cd">vs 600 kb+ hCaptcha</span>
+                <span class="cd">{{ t.closerSizeNote }}</span>
               </div>
               <div class="closer-cell">
-                <span class="ck">trackers</span>
+                <span class="ck">{{ t.closerTrackersLabel }}</span>
                 <span class="cv">0</span>
-                <span class="cd">vs reCAPTCHA</span>
+                <span class="cd">{{ t.closerTrackersNote }}</span>
               </div>
               <div class="closer-cell">
-                <span class="ck">cost</span>
+                <span class="ck">{{ t.closerCostLabel }}</span>
                 <span class="cv">$0<i>/mo</i></span>
-                <span class="cd">vs $1k+ hCaptcha</span>
+                <span class="cd">{{ t.closerCostNote }}</span>
               </div>
               <div class="closer-cell">
-                <span class="ck">setup</span>
+                <span class="ck">{{ t.closerSetupLabel }}</span>
                 <span class="cv">15<i>min</i></span>
-                <span class="cd">docker container</span>
+                <span class="cd">{{ t.closerSetupNote }}</span>
               </div>
             </div>
 
             <dl class="faq">
               <div>
-                <dt>Is it GDPR-friendly?</dt>
+                <dt>{{ t.faqGdprQ }}</dt>
+                <dd>{{ t.faqGdprA }}</dd>
+              </div>
+              <div>
+                <dt>{{ t.faqMigrateQ }}</dt>
+                <dd>{{ t.faqMigrateA }}</dd>
+              </div>
+              <div>
+                <dt>{{ t.faqBotsQ }}</dt>
+                <dd>{{ t.faqBotsA }}</dd>
+              </div>
+              <div>
+                <dt>{{ t.faqCostQ }}</dt>
+                <dd>{{ t.faqCostA }}</dd>
+              </div>
+              <div>
+                <dt>{{ t.faqOpenQ }}</dt>
                 <dd>
-                  Yes. Cap doesn't phone home, doesn't set cookies, and doesn't
-                  fingerprint users. Your server sees the verification, no one
-                  else does.
+                  {{ t.faqOpenA1 }}<a :href="lp + '/guide/standalone/'">{{
+                    t.faqOpenLink
+                  }}</a
+                  >{{ t.faqOpenA2 }}
                 </dd>
               </div>
               <div>
-                <dt>Can I migrate from reCAPTCHA / hCaptcha?</dt>
+                <dt>{{ t.faqAltQ }}</dt>
                 <dd>
-                  Yes. Cap's siteverify API is compatible with reCAPTCHA and
-                  hCaptcha, but you'll need to swap your client-side code to use
-                  Cap's widget.
-                </dd>
-              </div>
-              <div>
-                <dt>How effective is it against real bots?</dt>
-                <dd>
-                  Cap's instrumentation combined with proof-of-work is very
-                  effective at making abuse extremely difficult to automate at
-                  scale.
-                </dd>
-              </div>
-              <div>
-                <dt>What does it cost to self-host?</dt>
-                <dd>
-                  Cap Standalone fits on a $5 VPS for most sites. There are no
-                  per-request fees, no egress to a third party, and no API
-                  quotas to hit.
-                </dd>
-              </div>
-              <div>
-                <dt>What is an open-source CAPTCHA?</dt>
-                <dd>
-                  An open-source CAPTCHA is bot protection whose code you can
-                  read, audit, and
-                  <a href="/guide/standalone/">self-host</a>, rather than a
-                  closed third-party service. Cap is licensed under Apache 2.0
-                  and runs entirely on your own infrastructure, so visitor data
-                  never reaches a vendor.
-                </dd>
-              </div>
-              <div>
-                <dt>What is the best open-source alternative to reCAPTCHA?</dt>
-                <dd>
-                  Cap is a privacy-first, self-hosted alternative to Google
-                  reCAPTCHA that uses proof-of-work and instrumentation instead
-                  of visual puzzles or tracking. Compare it against
-                  <a href="/guide/alternatives/recaptcha.html">reCAPTCHA</a>,
-                  <a href="/guide/alternatives/hcaptcha.html">hCaptcha</a>, and
-                  <a href="/guide/alternatives/turnstile.html">Turnstile</a> to
-                  find what fits your stack.
+                  {{ t.faqAltA1 }}<a :href="lp + '/guide/alternatives/recaptcha.html'"
+                    >reCAPTCHA</a
+                  >{{ t.faqAltSep1 }}<a :href="lp + '/guide/alternatives/hcaptcha.html'"
+                    >hCaptcha</a
+                  >{{ t.faqAltSep2
+                  }}<a :href="lp + '/guide/alternatives/turnstile.html'">Turnstile</a
+                  >{{ t.faqAltA2 }}
                 </dd>
               </div>
             </dl>
@@ -1460,32 +1389,29 @@ onBeforeUnmount(() => {
       <section class="block cta-block">
         <div class="wrap">
           <div class="cta">
-            <h2>Ditch reCAPTCHA this afternoon.</h2>
-            <p>
-              Drop the widget into your site, point it at a $5 VPS, and stop
-              paying anyone to see your users' traffic.
-            </p>
+            <h2>{{ t.ctaTitle }}</h2>
+            <p>{{ t.ctaBody }}</p>
             <div class="actions">
               <a
                 class="btn primary"
-                href="/guide/"
+                :href="lp + '/guide/'"
                 data-cta="docs"
                 data-cta-location="cta_block"
-                >Get started in 5 minutes</a
+                >{{ t.ctaStart }}</a
               >
               <a
                 class="btn"
-                href="/guide/demo.html"
+                :href="lp + '/guide/demo.html'"
                 data-cta="demo"
                 data-cta-location="cta_block"
-                >Try the demo <span class="arr">↗</span></a
+                >{{ t.ctaDemo }}<span class="arr">↗</span></a
               >
               <a
                 class="btn"
                 href="https://github.com/tiagozip/cap"
                 data-cta="github"
                 data-cta-location="cta_block"
-                >Star on GitHub</a
+                >{{ t.ctaGithub }}</a
               >
             </div>
           </div>
@@ -1497,13 +1423,12 @@ onBeforeUnmount(() => {
       <div class="wrap-wide ft-wrap">
         <div class="ft-top">
           <div class="ft-brand">
-            <a class="ft-logo" href="/" aria-label="Cap home">
+            <a class="ft-logo" :href="lp + '/'" :aria-label="t.navBrandLabel">
               <img alt="" src="/logo.png" width="26" height="26" />
               <strong>Cap</strong>
             </a>
             <p class="ft-tagline">
-              Self-hosted, open-source CAPTCHA.<br />
-              No Google. No telemetry. No puzzles.
+              {{ t.ftTagline1 }}<br />{{ t.ftTagline2 }}
             </p>
             <div class="ft-social">
               <a
@@ -1530,43 +1455,49 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="ft-cols">
-            <nav class="ft-col" aria-label="Product">
-              <span class="ft-col-title">Product</span>
-              <a href="/guide/" data-cta="docs" data-cta-location="footer"
-                >Quickstart</a
+            <nav class="ft-col" :aria-label="t.ftProductLabel">
+              <span class="ft-col-title">{{ t.ftProductLabel }}</span>
+              <a :href="lp + '/guide/'" data-cta="docs" data-cta-location="footer"
+                >{{ t.ftQuickstart }}</a
               >
               <a
-                href="/guide/standalone/"
+                :href="lp + '/guide/standalone/'"
                 data-cta="standalone"
                 data-cta-location="footer"
                 >Standalone</a
               >
               <a
-                href="/guide/widget.html"
+                :href="lp + '/guide/widget.html'"
                 data-cta="widget"
                 data-cta-location="footer"
-                >Widget</a
+                >{{ t.ftWidget }}</a
               >
               <a
-                href="/guide/demo.html"
+                :href="lp + '/guide/demo.html'"
                 data-cta="demo"
                 data-cta-location="footer"
-                >Demo</a
+                >{{ t.ftDemo }}</a
               >
             </nav>
-            <nav class="ft-col" aria-label="Compare">
-              <span class="ft-col-title">Compare</span>
-              <a href="/guide/alternatives/recaptcha.html">vs reCAPTCHA</a>
-              <a href="/guide/alternatives/turnstile.html">vs Turnstile</a>
-              <a href="/guide/alternatives/hcaptcha.html">vs hCaptcha</a>
-              <a href="/guide/alternatives.html">All comparisons</a>
+            <nav class="ft-col" :aria-label="t.ftCompareLabel">
+              <span class="ft-col-title">{{ t.ftCompareLabel }}</span>
+              <a :href="lp + '/guide/alternatives/recaptcha.html'">{{
+                t.ftVsRecaptcha
+              }}</a>
+              <a :href="lp + '/guide/alternatives/turnstile.html'">{{
+                t.ftVsTurnstile
+              }}</a>
+              <a :href="lp + '/guide/alternatives/hcaptcha.html'">{{
+                t.ftVsHcaptcha
+              }}</a>
+              <a :href="lp + '/guide/alternatives.html'">{{ t.ftAllComparisons }}</a>
             </nav>
-            <nav class="ft-col" aria-label="Learn">
-              <span class="ft-col-title">Learn</span>
-              <a href="/guide/workings.html">How it works</a>
-              <a href="/guide/effectiveness.html">Effectiveness</a>
-              <a href="/guide/compliance.html">Compliance</a>
-              <a href="/guide/community.html">Community</a>
+            <nav class="ft-col" :aria-label="t.ftLearnLabel">
+              <span class="ft-col-title">{{ t.ftLearnLabel }}</span>
+              <a :href="lp + '/guide/workings.html'">{{ t.ftHowItWorks }}</a>
+              <a :href="lp + '/guide/effectiveness.html'">{{ t.ftEffectiveness }}</a>
+              <a :href="lp + '/guide/compliance.html'">{{ t.ftCompliance }}</a>
+              <a :href="lp + '/guide/community.html'">{{ t.ftCommunity }}</a>
             </nav>
           </div>
         </div>
@@ -1576,9 +1507,7 @@ onBeforeUnmount(() => {
             >© 2026 <a href="https://tiago.zip">tiago.zip</a></span
           >
 
-          <p style="font-family: system-ui; opacity: 0.8">
-            Not legal advice. Compliance depends on your deployment.
-          </p>
+          <p style="font-family: system-ui; opacity: 0.8">{{ t.ftLegal }}</p>
         </div>
       </div>
     </footer>
@@ -3473,5 +3402,27 @@ html.home-v2-active main.main {
   #homev2 .quote-text {
     font-size: 22px;
   }
+}
+
+/* Language menu (reused VPNavBarTranslations) inside the homepage nav */
+#homev2 .homev2-translations {
+  display: flex !important;
+  align-items: center;
+}
+#homev2 .homev2-translations .button {
+  display: flex;
+  align-items: center;
+  height: auto;
+  padding: 0;
+  color: var(--fg-dim);
+  transition: color 0.18s ease;
+}
+#homev2 .homev2-translations .button:hover {
+  color: var(--fg);
+}
+#homev2 .homev2-translations .menu {
+  top: calc(100% - 2px);
+  padding-top: 10px;
+  z-index: 60;
 }
 </style>
