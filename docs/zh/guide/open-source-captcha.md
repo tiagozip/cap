@@ -3,9 +3,9 @@ title: "2026 年最佳开源 CAPTCHA 选项"
 description: "面向开发者的最佳开源、自托管 CAPTCHA 选项对比：Cap、ALTCHA、mCAPTCHA 和 Anubis，涵盖许可证、架构以及如何选择。"
 faq:
   - q: 最好的开源 CAPTCHA 是什么？
-    a: "如果你想要一套完整的方案——两层验证、仪表盘、兼容的 siteverify API——选 Cap。如果你只想要一个极简的库，选 ALTCHA。"
+    a: "想要一套完整的方案（两层验证、仪表盘、兼容的 siteverify API），选 Cap。只想要一个极简的库，选 ALTCHA。"
   - q: 我可以自托管 CAPTCHA 吗？
-    a: "可以，而且比听起来简单。Cap 只需一个 Docker 容器加 Valkey，一台 5 美元的 VPS 就能跑起来，大约五分钟即可完成部署。"
+    a: "可以，而且比听起来简单。Cap 只需一个 Docker 容器加 Valkey，一台 5 美元的 VPS 就能运行，大约五分钟即可完成部署。"
   - q: Cap 是免费的吗？
     a: "完全免费。Apache 2.0 许可，无配额，无付费版本，不限流量。"
   - q: Cap 比 ALTCHA 更好吗？
@@ -20,13 +20,13 @@ faq:
 
 ## 什么才算开源 CAPTCHA？
 
-仅有一个公开的验证组件仓库并不算数。对机器人防护而言，"开源"只有当你能审计并自己运行做出裁决的那部分代码时才有意义：
+仅有一个公开的验证组件仓库并不算数。对机器人防护而言，做出裁决的那部分代码你能审计、能自行运行，"开源"才有意义：
 
 - **客户端和服务端代码均已发布**，且采用 OSI 认可的许可证，质询逻辑不是黑盒。
-- **验证环节可自托管**，用户能否通过永远不取决于某个供应商的 API 是否在线、是否诚实、是否付得起。
+- **验证环节可自托管**，用户能不能通过，永远不取决于某家供应商的 API 是否在线、是否诚实、你是否付得起。
 - **没有隐藏的数据回传**，而且因为代码可读，你可以亲自验证这一点。
 
-不少商业 CAPTCHA 只开源客户端集成，服务端仍是专有的（例如 FriendlyCaptcha）。那只是源码可见的便利，不是开源 CAPTCHA：决策引擎依然是一个你租来的黑盒。
+不少商业 CAPTCHA 只开源客户端集成，服务端仍是专有的（比如 FriendlyCaptcha）。那只是源码可见的便利，不是开源 CAPTCHA：决策引擎依然是一个你租来的黑盒。
 
 ## 为什么要自托管 CAPTCHA？
 
@@ -40,7 +40,7 @@ faq:
 
 ### Cap
 
-Cap 是一套 Apache 2.0 许可下的完整开源 CAPTCHA 方案：约 20 KB 的 Web Component 验证组件，加上 [Cap Standalone](./standalone/index.md)——一个小巧的 Docker 部署（一个容器加 Valkey），提供 REST API、支持多站点密钥管理的仪表盘，以及与 reCAPTCHA API 形式兼容的 `/siteverify` 端点。
+Cap 是一套 Apache 2.0 许可下的完整开源 CAPTCHA 方案：约 20 KB 的 Web Component 验证组件，加上 [Cap Standalone](./standalone/index.md)：一个小巧的 Docker 部署（一个容器加 Valkey），提供 REST API、支持多站点密钥管理的仪表盘，以及与 reCAPTCHA API 形式兼容的 `/siteverify` 端点。
 
 防护来自两个相互独立的层：SHA-256 工作量证明（另有实验性的抗 GPU [RSW 时间锁](./rsw.md)），以及验证运行环境是真实浏览器的动态 [instrumentation 质询](./instrumentation.md)。攻破其中一层并不等于攻破另一层。
 
@@ -63,7 +63,7 @@ ALTCHA 是一个极简且维护良好的工作量证明验证组件（MIT 许可
 
 ### mCAPTCHA
 
-mCAPTCHA 率先实践了同样的可变难度 PoW 思路。它是完全开源的（核心为 AGPL-3.0，客户端库使用宽松许可证），但至今仍处于 1.0 之前，发布节奏缓慢，验证组件体积也比 Cap 和 ALTCHA 更大。作为研究对象没问题，但要在它之上构建，请先掂量一下成熟度。
+mCAPTCHA 率先实践了同样的可变难度 PoW 思路。它是完全开源的（核心为 AGPL-3.0，客户端库使用宽松许可证），但至今仍处于 1.0 之前，发布节奏缓慢，验证组件体积也比 Cap 和 ALTCHA 更大。作为研究对象没问题，但要在它之上构建，请先评估其成熟度。
 
 ### Anubis
 
@@ -95,11 +95,11 @@ Anubis 是一个开源的工作量证明*反爬虫墙*：它在反向代理层�
 
 ### 最好的开源 CAPTCHA 是什么？
 
-如果你想要一套完整的方案——两层验证、仪表盘、兼容的 siteverify API——选 Cap。如果你只想要一个极简的库，选 ALTCHA。
+想要一套完整的方案（两层验证、仪表盘、兼容的 siteverify API），选 Cap。只想要一个极简的库，选 ALTCHA。
 
 ### 我可以自托管 CAPTCHA 吗？
 
-可以，而且比听起来简单。Cap 只需一个 Docker 容器加 Valkey，一台 5 美元的 VPS 就能跑起来，大约五分钟即可完成部署。
+可以，而且比听起来简单。Cap 只需一个 Docker 容器加 Valkey，一台 5 美元的 VPS 就能运行，大约五分钟即可完成部署。
 
 ### Cap 是免费的吗？
 

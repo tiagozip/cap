@@ -197,7 +197,7 @@ export const homeV2Strings = {
     bannerVerified: "你刚刚通过 Cap 完成了人机验证",
     bannerHostPrefix: "\u00A0·\u00A0",
     bannerVerifiedEnd: "。",
-    bannerSub: "你可以关掉这个标签页了。要是好奇 Cap 是什么，也欢迎继续了解。",
+    bannerSub: "你可以关掉这个标签页了。如果好奇 Cap 是什么，欢迎继续了解。",
     bannerDismiss: "关闭",
 
     // Header nav
@@ -224,19 +224,19 @@ export const homeV2Strings = {
     featPrivacyTitle: "隐私优先，零追踪。",
     featPrivacyBody: "零遥测，不连第三方网络。用户数据只留在你和用户之间。",
     featSizeTitle: "体积仅为 hCaptcha 的 1/250。",
-    featSizeBody: "约 20kb，零依赖。加载以毫秒计，而不是数秒。",
+    featSizeBody: "约 20kb，零依赖。加载按毫秒算，不是按秒算。",
     featInvisibleTitle: "没有图形谜题，始终隐形。",
     featInvisibleBody:
       "工作量证明（PoW）、时间锁质询与 instrumentation 都在后台静默运行。",
     featOpenTitle: "免费且开源",
     featOpenBody:
-      "Apache 2.0 许可。想审计、想 fork、想自托管都行，没有厂商能说停就停。",
+      "Apache 2.0 许可。可审计、可 fork、可自托管，没有厂商能釜底抽薪。",
     featLawsTitle: "为隐私法规而生。",
     featLawsBody:
       "帮你满足 GDPR、CCPA、LGPD 等法规，严格的隐私与无障碍标准开箱即用。",
     featCustomTitle: "深度可定制",
     featCustomBody:
-      "颜色、尺寸、位置、图标，全都能用 CSS 变量控制，没有 iframe 枷锁。",
+      "颜色、尺寸、位置、图标，全都能用 CSS 变量控制，不被 iframe 锁死。",
 
     // Compliance
     cmplTitle: "开箱即合规。",
@@ -251,11 +251,11 @@ export const homeV2Strings = {
     // Bundle size
     speedTitle: "体积只是别人的零头",
     speedBody:
-      "Cap 的验证组件极其轻量、全程隐形，只需约 20 kB JavaScript，不带任何第三方脚本。",
+      "Cap 的验证组件很轻，全程隐形：约 20 kB JavaScript，零第三方脚本。",
     speedNote: "客户端包体积（minified gzip）",
 
     // Testimonial
-    quoteLead: "Cap 与 AdGuard Temp Mail 十分契合。我们将它用作",
+    quoteLead: "Cap 很适合 AdGuard Temp Mail。我们把它用作",
     quoteHl1: "隐形、自托管的 CAPTCHA 层",
     quoteMid1: "，搭配",
     quoteHl2: "工作量证明与浏览器 instrumentation 质询",
@@ -291,7 +291,7 @@ export const homeV2Strings = {
 
     // Two layers
     layersTitle1: "两道独立防线。",
-    layersTitle2: "绕过一道，另一道依然坚守。",
+    layersTitle2: "绕过一道，还有一道。",
     layersBody:
       "每次质询都会同时求解工作量证明并运行浏览器 instrumentation。攻破一层，另一层依然有效。",
     layersPowLabel: "防线 01",
@@ -327,7 +327,7 @@ export const homeV2Strings = {
       "能。Cap 的 siteverify API 兼容 reCAPTCHA 和 hCaptcha，只需把客户端代码换成 Cap 的验证组件。",
     faqBotsQ: "对真实机器人的防护效果如何？",
     faqBotsA:
-      "Cap 将 instrumentation 与工作量证明结合，能让滥用行为极难被规模化自动化，效果显著。",
+      "很有效。instrumentation 加上工作量证明，让滥用行为很难被大规模自动化。",
     faqCostQ: "自托管要花多少钱？",
     faqCostA:
       "对多数站点而言，一台 $5 的 VPS 就能跑 Cap Standalone。没有按请求收费，没有流向第三方的流量，也没有会触顶的 API 配额。",

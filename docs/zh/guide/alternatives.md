@@ -35,7 +35,7 @@ Cap 是一个免费、开源、自托管的 CAPTCHA（人机验证）替代方�
 
 Cloudflare Turnstile 是 Cap 的一个不错的替代品，但大量用户反馈它在 Brave、Librewolf 等隐私浏览器上会验证失败或无限循环，因为它的判定依赖指纹追踪信号，而这些浏览器会刻意破坏这类信号。
 
-此外，与 Turnstile 不同，Cap 是开源且自托管的。使用 Turnstile 时，如果 Cloudflare 的算法把某个用户标记为"可疑"，你无法推翻这个判定。Cap 把控制权交到你手上，难度和严格程度由你决定，而不是由第三方说了算。
+此外，与 Turnstile 不同，Cap 是开源且自托管的。使用 Turnstile 时，如果 Cloudflare 的算法把某个用户标记为"可疑"，你无法推翻这个判定。Cap 把控制权交到你手上，难度和严格程度由你决定，而不是由第三方裁定。
 
 [完整对比：Cap vs Cloudflare Turnstile →](./alternatives/turnstile.md)
 
@@ -51,13 +51,13 @@ reCAPTCHA v2（"我不是机器人"）对人类越来越难，而对 AI 求解�
 
 和 reCAPTCHA 大同小异。虽然它对机器人的抵抗力明显更强，但也给你的用户强加了沉重的"谜题税"。
 
-用户讨厌谜题，讨厌了就会离开。hCaptcha 质询的流失率可达 **5-15%**，具体取决于难度。此外，hCaptcha 的免费档为了节省自身成本，会激进地弹出谜题，这会伤害你的转化率。
+用户讨厌谜题，也会因此离开。hCaptcha 质询的流失率可达 **5-15%**，具体取决于难度。此外，hCaptcha 的免费档为了节省自身成本，会激进地弹出谜题，这会伤害你的转化率。
 
 [完整对比：Cap vs hCaptcha →](./alternatives/hcaptcha.md)
 
 ### Altcha
 
-Cap 比 Altcha 略小，并且包含进度显示、instrumentation 质询和更简洁的控制台等额外功能。如果你不需要这些，Altcha 仍然是一个可靠的选择。
+Cap 比 Altcha 略小，还额外提供进度显示、instrumentation 质询和更简洁的控制台。如果你不需要这些，Altcha 仍然是一个可靠的选择。
 
 [完整对比：Cap vs Altcha →](./alternatives/altcha.md)
 

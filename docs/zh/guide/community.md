@@ -4,13 +4,13 @@ description: "社区维护的 Cap 库：在更多语言和框架中使用这个�
 
 # 社区库
 
-想在不使用 Standalone 服务端的情况下，用其他语言使用 Cap？下面这些社区维护的库或许能帮到你。如果你想添加一个库，欢迎提交 pull request！
+不想运行 Standalone 服务端，又想在其他语言中使用 Cap？下面这些社区维护的库或许能帮到你。如果你想添加一个库，欢迎提交 pull request！
 
 **注意：** 这些库通常**不**支持种子质询（seeded challenges）或 instrumentation（浏览器环境检测）质询等新特性。
 
 ## 验证组件
 
-这些是对 Cap 验证组件的封装。通常并不是必需的——默认的验证组件在任何地方都能用——但它们可以带来更好的开发体验。
+这些是对 Cap 验证组件的封装。默认的验证组件在任何地方都能用，所以它们通常不是必需的，但可以带来更好的开发体验。
 
 ### React
 
@@ -73,9 +73,9 @@ description: "社区维护的 Cap 库：在更多语言和框架中使用这个�
 
 - **[clysss/capito](https://github.com/clysss/capito)**：Capito Cap PHP 服务端
 - **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)**：Cap 工作量证明验证服务端的 PHP 移植版
-- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**：将 Cap 集成到评论、登录、注册和 WooCommerce 结账流程的 WordPress 插件——同时支持可见的验证组件和不可见（编程模式）两种方式
-- **[laravel-cap](https://github.com/oli217/laravel-cap)**：Cap 的 Laravel 集成——提供 Blade 指令、中间件、验证规则和用于服务端令牌验证的 facade（`composer require oliweb/laravel-cap`）
-- **[statamic-cap](https://github.com/oli217/statamic-cap)**：将 Cap 集成到表单的 Statamic 插件——支持验证组件渲染、自动令牌校验和灵活的控制面板配置（`composer require oliweb/statamic-cap`）
+- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**：将 Cap 集成到评论、登录、注册和 WooCommerce 结账流程的 WordPress 插件，同时支持可见的验证组件和不可见（编程模式）两种方式
+- **[laravel-cap](https://github.com/oli217/laravel-cap)**：Cap 的 Laravel 集成，提供 Blade 指令、中间件、验证规则和用于服务端令牌验证的 facade（`composer require oliweb/laravel-cap`）
+- **[statamic-cap](https://github.com/oli217/statamic-cap)**：将 Cap 集成到表单的 Statamic 插件，支持验证组件渲染、自动令牌校验和灵活的控制面板配置（`composer require oliweb/statamic-cap`）
 - **[cap-captcha-wordpress](https://github.com/forge28labs/cap-captcha-wordpress)**：将 Cap 集成到认证流程和新评论中的 WordPress 插件。可通过 WordPress 管理后台配置（实例、密钥和颜色）。
 
 ## 客户端

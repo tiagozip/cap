@@ -7,11 +7,11 @@ head:
 
 # @cap.js/server
 
-::: warning 旧版库——已被 [`capjs-core`](./capjs-core.md) 取代
-`@cap.js/server` 已不再是推荐的 Cap 服务端库。新项目应使用 [`capjs-core`](./capjs-core.md)：它是无状态的（不依赖文件系统、没有内存令牌列表，可运行在 Cloudflare Workers / Lambda / 边缘环境），使用带签名的 JWT，也是 [Cap Standalone](./standalone/index.md) 内部所采用的库。参见[迁移对照表](./capjs-core.md#how-it-differs-from-cap-js-server)。
+::: warning 旧版库：已被 [`capjs-core`](./capjs-core.md) 取代
+`@cap.js/server` 已不再是推荐的 Cap 服务端库。新项目应使用 [`capjs-core`](./capjs-core.md)：它是无状态的（不依赖文件系统、没有内存令牌列表，可运行在 Cloudflare Workers / Lambda / 边缘环境），使用带签名的 JWT，也是 [Cap Standalone](./standalone/index.md) 内部使用的库。参见[迁移对照表](./capjs-core.md#how-it-differs-from-cap-js-server)。
 :::
 
-`@cap.js/server` 是 Cap 用于创建和校验质询的服务端库。使用你偏好的包管理器安装：
+`@cap.js/server` 是 Cap 用于创建和校验质询的服务端库。用你常用的包管理器安装：
 
 ::: code-group
 
@@ -206,7 +206,7 @@ fastify.listen({ port: 3000 });
 
 :::
 
-在这个示例中，Cap API 位于 `/cap/`——把它设置为验证组件的 `data-cap-api-endpoint`（[见验证组件文档](./widget.md)）。
+在这个示例中，Cap API 位于 `/cap/`，将它填入验证组件的 `data-cap-api-endpoint` 即可（[见验证组件文档](./widget.md)）。
 
 当有人完成 CAPTCHA 并把令牌发回你的后端后，你就可以校验令牌并继续执行业务逻辑。
 
@@ -258,7 +258,7 @@ if (!success) throw new Error("invalid cap token");
 }
 ```
 
-你随时可以通过访问或修改 `cap.config` 对象来读取或设置 `Cap` 类的选项。
+`Cap` 类的选项随时可以通过 `cap.config` 对象读取或修改。
 
 #### `await cap.createChallenge({ ... })`
 

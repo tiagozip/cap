@@ -4,7 +4,7 @@ description: "Cap 验证组件的浮动模式会隐藏这个开源 CAPTCHA，直
 
 # 浮动模式
 
-Cap 可以自动隐藏 CAPTCHA，直到按钮被按下。要使用此功能，请在触发元素上添加 `data-cap-floating` 属性，其值为你想使用的 `cap-widget` 元素的查询选择器。
+Cap 可以自动隐藏 CAPTCHA，等按钮被按下时再显示。用法是在触发元素上添加 `data-cap-floating` 属性，值为你想使用的 `cap-widget` 元素的查询选择器。
 
 ```html
 <cap-widget

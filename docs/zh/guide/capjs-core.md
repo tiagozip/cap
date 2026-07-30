@@ -7,7 +7,7 @@ description: "capjs-core 是 Cap 的无状态服务端库，用于生成和验�
 
 Cap 包含一个无状态的服务端库，用于生成和验证基于 JWT 的质询，Standalone 内部也使用它。
 
-对于大多数用户，我们推荐使用 [Cap Standalone](./standalone/index.md)——它运行在 Docker 上，开箱即用。只有在以下情况下我们才建议直接使用核心库：无法运行 Docker、希望把质询生成嵌入到现有服务中，或需要部署到没有持久化存储的环境（Cloudflare Workers、Lambda、边缘函数）。
+对大多数用户，我们推荐使用 [Cap Standalone](./standalone/index.md)，它运行在 Docker 中，开箱即用。只有以下情况才建议直接使用核心库：无法运行 Docker、希望把质询生成嵌入到现有服务中，或需要部署到没有持久化存储的环境（Cloudflare Workers、Lambda、边缘函数）。
 
 ## 安装
 
@@ -61,20 +61,20 @@ if (result.success) {
 }
 ```
 
-验证组件调用 `generateChallenge` 获取 `{ challenge, token, expires, instrumentation }`，在客户端求解工作量证明，然后把 `{ token, solutions, instr }` POST 回来。你再调用 `validateChallenge` 进行验证。
+验证组件调用 `generateChallenge` 获取 `{ challenge, token, expires, instrumentation }`，在客户端求解工作量证明，然后把 `{ token, solutions, instr }` POST 回来。你再调用 `validateChallenge` 验证。
 
 ## 与 `@cap.js/server` 的区别
 
 | 方面         | `@cap.js/server`               | `capjs-core`                        |
 | ------------ | ------------------------------ | ----------------------------------- |
 | 状态         | 内存 + 文件系统令牌存储        | 无状态。质询令牌是签名的 JWT        |
-| 构造函数     | `new Cap({ ... })`             | 无——每次调用传入 `secret`           |
+| 构造函数     | `new Cap({ ... })`             | 无，每次调用传入 `secret`           |
 | 重放防护     | 内置令牌列表并定期清理         | 通过 `consumeNonce` 回调按需开启    |
-| 清理钩子     | `SIGINT`/`beforeExit` 时落盘   | 无——TTL 编码在 JWT 的 `exp` 中      |
+| 清理钩子     | `SIGINT`/`beforeExit` 时落盘   | 无，TTL 编码在 JWT 的 `exp` 中      |
 | 文件系统     | 持久化必需                     | 完全不使用                          |
 | Worker 兼容  | 否（依赖文件系统）             | 是                                  |
 
-与旧库不同，`capjs-core` 不会替你验证兑换令牌——它返回一个由你自行存储的 `tokenKey`，以及一个交给用户的 `token`。之后需要验证时，从用户提交的令牌重新推导出 key 并查询：
+与旧库不同，`capjs-core` 不会替你验证兑换令牌：它返回一个 `tokenKey` 由你自己存储，再返回一个 `token` 交给用户。之后需要验证时，从用户提交的令牌重新推导出 key 并查询：
 
 ```js
 import { createHash } from "node:crypto";
@@ -187,7 +187,7 @@ const consumeNonce = async (sigHex, ttlMs) => {
 
 ## Instrumentation
 
-向 `generateChallenge` 传入 `instrumentation: true`（或选项对象）即可获得一段经 deflate+base64 处理的客户端脚本。验证组件运行它并回传一份指纹，`validateChallenge` 再对其进行校验。
+向 `generateChallenge` 传入 `instrumentation: true`（或选项对象）即可获得一段经 deflate+base64 处理的客户端脚本。验证组件运行它并回传一份指纹，再由 `validateChallenge` 校验。
 
 ```js
 const ch = await generateChallenge(SECRET, {
@@ -200,7 +200,7 @@ const ch = await generateChallenge(SECRET, {
 
 开启 `blockAutomatedBrowsers` 后，脚本会运行 realm 逃逸检测与行为检测，识别 headless Chromium、自动化框架标记以及 JS 沙箱伪装。详见 [Instrumentation](./instrumentation.md)。
 
-混淆级别越高，生成速度越慢。级别 4–7 会加入自定义字符串表间接寻址和 esbuild 压缩。级别 8–10 会叠加 `javascript-obfuscator`（字符串数组、控制流扁平化、死代码注入）——这些级别每次生成质询会阻塞事件循环数十毫秒，因此仅建议用于低流量路由，或提供你自己的、运行在 worker 池中的 `instrumentationGenerator`。
+混淆级别越高，生成速度越慢。级别 4–7 会加入自定义字符串表间接寻址和 esbuild 压缩。级别 8–10 会叠加 `javascript-obfuscator`（字符串数组、控制流扁平化、死代码注入）。这些级别每次生成质询会阻塞事件循环数十毫秒，只建议用于低流量路由，或自行提供一个运行在 worker 池中的 `instrumentationGenerator`。
 
 ## 无状态部署模式
 

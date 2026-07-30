@@ -1,11 +1,11 @@
 ---
 outline: [2, 3, 4]
-description: "Cap 的客户端验证组件基于原生 Web Component 和 WASM 来请求、求解并展示工作量证明质询。这是这款开源 CAPTCHA 的客户端文档。"
+description: "Cap 的客户端验证组件基于原生 Web Component 和 WASM，负责请求、求解并展示工作量证明质询。这是这款开源 CAPTCHA 的客户端文档。"
 ---
 
 # 验证组件
 
-Cap 的客户端验证组件负责请求、求解并展示质询，基于原生 Web Component 和 Rust 风格的 WASM 实现。它还内置了[编程模式](./programmatic)。
+Cap 的客户端验证组件负责请求、求解并展示质询，基于原生 Web Component 和 Rust 编写的 WASM。它还内置了[编程模式](./programmatic)。
 
 ## 安装
 
@@ -264,10 +264,10 @@ window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
 
 如果你的页面启用了严格的 Content-Security-Policy，可以提供 nonce，避免组件注入的 `<style>` 和 `<script>` 元素被拦截：
 
-- `window.CAP_CSS_NONCE` —— 应用到组件的 `<style>` 标签。当 `CAP_SCRIPT_NONCE` 未设置时，也会作为注入脚本的备用 nonce。
-- `window.CAP_SCRIPT_NONCE` —— 应用到组件注入的脚本：pako 解压回退脚本和 instrumentation（浏览器环境检测）质询 iframe。
+- `window.CAP_CSS_NONCE`：应用到组件的 `<style>` 标签。当 `CAP_SCRIPT_NONCE` 未设置时，也会作为注入脚本的备用 nonce。
+- `window.CAP_SCRIPT_NONCE`：应用到组件注入的脚本，即 pako 解压回退脚本和 instrumentation（浏览器环境检测）质询 iframe。
 
-你还可以通过 `window.CAP_CUSTOM_WASM_URL` 设置自定义的 WASM 地址（例如 Standalone 静态资源服务器的地址）。
+你还可以通过 `window.CAP_CUSTOM_WASM_URL` 设置自定义的 WASM 地址（比如 Standalone 静态资源服务器的地址）。
 
 要禁用触感反馈（移动设备上的振动），可以全局设置 `window.CAP_DISABLE_HAPTICS = true`，或给单个组件添加 `data-cap-disable-haptics` 属性：
 

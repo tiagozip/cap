@@ -11,7 +11,7 @@ Altcha 还有一个名为 **Altcha Sentinel** 的商业产品，在开源验证�
 
 ## 快速结论
 
-如果你想要一个极简、库形态的 PoW CAPTCHA（人机验证），扔进 Node 项目就可以不管了，开源版 Altcha 很棒。如果你想要一个开箱即用的自托管服务，带控制台、多站点密钥支持、在 PoW 之上叠加 instrumentation 质询，还有能显示求解进度的界面（并且不用为 Sentinel 付费），那 Cap 更合适。
+如果你想要一个极简、库形态的 PoW CAPTCHA（人机验证），集成进 Node 项目后基本不用再过问，开源版 Altcha 很棒。如果你想要一个开箱即用的自托管服务，带控制台、多站点密钥支持、在 PoW 之上叠加 instrumentation 质询，还有能显示求解进度的界面（并且不用为 Sentinel 付费），那 Cap 更合适。
 
 ## Altcha 合适的场景
 
@@ -22,9 +22,9 @@ Altcha 还有一个名为 **Altcha Sentinel** 的商业产品，在开源验证�
 ## Cap 更胜一筹的场景
 
 - **两层独立验证，免费。** Cap 同时运行工作量证明*和*动态 JavaScript [instrumentation 质询](../instrumentation.md)，两者都包含在内。攻破其中一层并不等于攻破另一层。开源版 Altcha 只有 PoW；第二层（基于机器学习）需要为 Sentinel 付费。
-- **带控制台的 Standalone 服务端，免费。** Cap 提供单个 Docker 容器即可部署的方案，附带 Web 控制台、多站点密钥管理、数据分析，以及兼容 reCAPTCHA 的 siteverify 端点。Altcha 的开源部分需要你自己拼装这些；一体化体验只在 Sentinel 中提供。
+- **带控制台的 Standalone 服务端，免费。** Cap 一个 Docker 容器就能部署，自带 Web 控制台、多站点密钥管理、数据分析，以及兼容 reCAPTCHA 的 siteverify 端点。Altcha 的开源部分需要你自己拼装这些；一体化的体验只有 Sentinel 才有。
 - **验证组件更小。** Cap 约 20 KB，Altcha gzip 后约 34 KB。
-- **进度显示。** Cap 的验证组件会以百分比向用户展示求解进度，在短暂等待期间提供有意义的体验反馈。
+- **进度显示。** Cap 的验证组件会以百分比向用户展示求解进度，短暂的等待中也有明确的反馈。
 - **浮动模式和编程模式。** Cap 可以完全隐藏，或悬浮在按钮上直到表单提交。Altcha 的展示模式更简单。
 - **外观可定制。** Cap 通过 CSS 变量暴露颜色、尺寸、位置和图标。Altcha 的定制能力更有限。
 

@@ -4,7 +4,7 @@ description: "Cap Standalone 是自托管这款开源 CAPTCHA 后端的最简单
 
 # Cap Standalone
 
-Cap Standalone 是自托管 Cap 后端的推荐方式。它运行在 Bun 上，空闲内存占用约 50 MB。它内置了 instrumentation（浏览器环境检测）质询支持，可以显著提高机器人的作弊门槛；提供兼容 reCAPTCHA 的 siteverify API；还带有一个用于管理多个站点密钥的 Web 控制台。
+Cap Standalone 是自托管 Cap 后端的推荐方式。它运行在 Bun 上，空闲内存占用约 50 MB，内置 instrumentation（浏览器环境检测）质询，能显著提高机器人的作弊门槛；提供兼容 reCAPTCHA 的 siteverify API；还带有一个管理多个站点密钥的 Web 控制台。
 
 我们推荐使用 [Docker](https://docs.docker.com/get-docker/) 来运行 Cap Standalone。
 
@@ -59,9 +59,9 @@ docker compose up -d
 
 打开 `http://localhost:3000`（或你服务器 3000 端口对应的 IP/域名）进入控制台。用管理员密钥登录，创建一个站点密钥，并记下**站点密钥（site key）**和对应的**秘密密钥（secret key）**，两者都会用到。
 
-新建站点密钥时，instrumentation 质询默认开启。我们建议保持开启，因为它能显著提高机器人的作弊门槛。你还可以启用无头浏览器检测以获得额外防护。
+新建站点密钥时，instrumentation 质询默认开启。我们建议保持开启，因为它能显著提高机器人的作弊门槛。如需额外防护，可以启用无头浏览器检测。
 
-你的 Cap Standalone 实例必须能从公网访问，验证组件才能与它通信。如果你使用了反向代理，请查阅[选项指南](/zh/guide/standalone/options.md)以正确配置速率限制。
+你的 Cap Standalone 实例必须能从公网访问，验证组件才能与它通信。如果部署在反向代理后面，请按[选项指南](/zh/guide/standalone/options.md)配置速率限制。
 
 ## 使用
 
@@ -73,8 +73,8 @@ docker compose up -d
 https://<instance_url>/<site_key>/
 ```
 
-- `<instance_url>` —— 你的 Cap Standalone 实例的公开 URL
-- `<site_key>` —— 控制台中的站点密钥
+- `<instance_url>`：你的 Cap Standalone 实例的公开 URL
+- `<site_key>`：控制台中的站点密钥
 
 示例：
 
@@ -82,7 +82,7 @@ https://<instance_url>/<site_key>/
 <cap-widget data-cap-api-endpoint="https://cap.example.com/d9256640cb53/"></cap-widget>
 ```
 
-建议阅读[验证组件文档](../widget.md)，了解更多细节以及多种框架的示例代码。
+更多细节和各框架的示例代码，见[验证组件文档](../widget.md)。
 
 ### 服务端
 

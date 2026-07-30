@@ -5,25 +5,25 @@ description: "Google 正在把 reCAPTCHA 迁入 Google Cloud，并自动迁移 C
 
 # 从 reCAPTCHA 迁移到 Cap
 
-Google 正在把 reCAPTCHA 迁入 Google Cloud，并把 Classic 密钥自动迁移到带账单的项目上。也就是说，无论如何你都得动一动现有的集成。好消息是：这正是告别 Google 那套基于追踪的 CAPTCHA（人机验证）、换用更快、私密且免费方案的绝佳时机。
+Google 正在把 reCAPTCHA 迁入 Google Cloud，并把 Classic 密钥自动迁移到带账单的项目上。也就是说，无论如何你都得调整现有的集成。好消息是：正好借这个机会告别 Google 那套基于追踪的 CAPTCHA（人机验证），换成更快、更私密还免费的方案。
 
-对于真正重要的那部分，Cap 是即插即用的替代品；对于其他几乎所有方面，它都是一次升级。
+真正关键的那部分，Cap 可以直接替换；其余几乎每一处，都是升级。
 
 ## 为什么团队纷纷换用 Cap
 
 - **Turnstile 级别的检测，却不依赖第三方。** Cap 将工作量证明与 instrumentation 质询（浏览器环境检测）结合，后者正是 YouTube 和 Twitter/X 在超大规模下使用的浏览器验证技术。它与 Cloudflare Turnstile 处于同一检测梯队，同时保持完全自托管。
 - **经过大规模验证。** 仅 **2026 年第一季度就解决了约 10 亿次质询**（据 JSDelivr 统计），并被 **AdGuard**、**Bunny.net** 等团队用于生产环境。这不是一个实验品。
-- **体积只有零头，而且是隐形的。** Cap 的验证组件 gzip 后约 21 KB，而 reCAPTCHA 的客户端有 200 到 600 KB，通常能缩小 10 倍以上。默认质询在后台 2 到 3 秒内解完，没有红绿灯谜题，用户不需要点任何东西。
+- **体积不到十分之一，而且是隐形的。** Cap 的验证组件 gzip 后约 21 KB，而 reCAPTCHA 的客户端有 200 到 600 KB，通常能缩小 10 倍以上。默认质询在后台 2 到 3 秒内解完，没有红绿灯谜题，用户不需要点任何东西。
 - **真正免费，不计量。** 不需要 Google Cloud 项目，不需要绑定账单账户，没有按评估收费。一个 Docker 容器加一个 Valkey 实例，一台 5 美元的 VPS 就能承载大多数负载。
 - **默认私密。** reCAPTCHA 会从 `google.com` 加载脚本并把用户信号发送给 Google。Cap 不向任何地方发送数据，没有任何第三方内容触碰你的页面。
 - **控制权在你手里。** reCAPTCHA v3 会悄悄惩罚使用 VPN、Tor 和隐私浏览器的用户，且投诉无门。用 Cap，难度由你设定，每个真实用户永远有一条走得通的路。
-- **永远开源。** Apache 2.0。可审计、可分叉、可部署。没有哪家供应商能单方面对你改条款。
+- **永远开源。** Apache 2.0。可审计、可分叉、可部署。没有哪家供应商能单方面更改条款。
 
 完整分析见 [Cap vs reCAPTCHA](./recaptcha.md)。
 
 ## reCAPTCHA 正在发生什么变化
 
-如果你想了解迁移邮件为什么现在纷纷到来，背景如下：
+想知道迁移邮件为什么现在纷纷到来，背景如下：
 
 - 旧版 reCAPTCHA 管理控制台已无法创建新密钥。
 - 现有的 reCAPTCHA Classic 密钥正被自动迁移到 Google Cloud 项目中，Google 从 2025 年底一直执行到 2026 年。
@@ -97,7 +97,7 @@ const { success } = await (
 
 ## 哪些兼容，哪些不兼容
 
-我们更希望你清清楚楚地迁移，而不是在生产环境里踩到意外。兼容性是实打实的，但并非逐字节一致：
+我们更希望你在了解全部差异后再迁移，而不是在生产环境里遇到意外。兼容性是真实的，但并非逐字节一致：
 
 | | reCAPTCHA | Cap |
 | --- | --- | --- |
@@ -111,7 +111,7 @@ const { success } = await (
 
 - 只检查 `response.success` 的代码，换掉 URL 和密钥后即可工作。这是最常见的情况，只是一行改动。
 - 检查 `error-codes`、`challenge_ts`、`hostname` 或 v3 `score` 的代码需要更新。Cap 是一个验证系统，不是行为风险评分，所以这些字段不存在。
-- 如果你的后端 SDK 把 Google 的验证 URL 写死了，换成一个允许自定义端点的 SDK，或者直接调用 `/siteverify`——总共就两个参数。
+- 如果你的后端 SDK 把 Google 的验证 URL 写死了，换成一个允许自定义端点的 SDK，或者直接调用 `/siteverify`，总共就两个参数。
 
 ## 零停机迁移
 
@@ -119,7 +119,7 @@ const { success } = await (
 
 ## 另请参阅
 
-- [在线演示](../demo.md) —— 亲自解一次 Cap 质询，再和 reCAPTCHA 比比耗时
-- [Cap vs reCAPTCHA](./recaptcha.md) —— 完整对比
-- [Cap 如何检测机器人](../effectiveness.md) —— 工作量证明 + instrumentation 模型
-- [快速上手](../index.md) —— 五分钟从零部署 Cap
+- [在线演示](../demo.md)：亲自解一次 Cap 质询，再与 reCAPTCHA 对比耗时
+- [Cap vs reCAPTCHA](./recaptcha.md)：完整对比
+- [Cap 如何检测机器人](../effectiveness.md)：工作量证明 + instrumentation 模型
+- [快速上手](../index.md)：五分钟从零部署 Cap

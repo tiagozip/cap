@@ -4,7 +4,7 @@ description: "Cap 的编程模式：调用 new Cap() 和 solve()，直接在你�
 
 # 编程模式
 
-你可以在客户端 JavaScript 中使用 `new Cap({ ... })` 创建一个新的 Cap 实例，并使用 `solve()` 方法求解质询。
+在客户端 JavaScript 中，你可以用 `new Cap({ ... })` 创建一个 Cap 实例，再用 `solve()` 方法求解质询。
 
 ```js
 const cap = new Cap({
@@ -29,7 +29,7 @@ cap.addEventListener("progress", (event) => {
 });
 ```
 
-在幕后，Cap 会创建一个隐藏的 `cap-widget` 元素，并用它来求解质询。
+实际上，Cap 会在内部创建一个隐藏的 `cap-widget` 元素，用它来求解质询。
 
 ## 支持的方法与参数
 
@@ -37,7 +37,7 @@ cap.addEventListener("progress", (event) => {
 
 #### `new Cap({ ... })`
 
-创建一个新的 Cap 实例。如果提供了第二个参数，将使用该元素，而不是在内存中新建一个。
+创建一个新的 Cap 实例。如果传入第二个参数，会直接使用该元素，而不在内存中新建。
 
 **参数**
 
