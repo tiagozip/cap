@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import llmstxt from "vitepress-plugin-llms";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import { homeV2Strings } from "./theme/components/homeV2.strings.js";
 
 const GITHUB_STARS = 6632;
 
@@ -65,32 +66,23 @@ const ORGANIZATION = {
   subjectOf: { "@id": "https://trycap.dev/about.html" },
 };
 
-const FAQ_ITEMS = [
+// FAQ JSON-LD is derived from the strings actually rendered by HomeV2 so the
+// schema can never drift from the visible content (a Google requirement for
+// FAQ rich results). Composite answers are concatenated exactly as the
+// template renders them, including link texts.
+const faqItemsFromStrings = (s) => [
+  [s.faqGdprQ, s.faqGdprA.trim()],
+  [s.faqMigrateQ, s.faqMigrateA.trim()],
+  [s.faqBotsQ, s.faqBotsA.trim()],
+  [s.faqCostQ, s.faqCostA.trim()],
+  [s.faqOpenQ, `${s.faqOpenA1}${s.faqOpenLink}${s.faqOpenA2}`.trim()],
   [
-    "Is it GDPR-friendly?",
-    "Yes. Cap doesn't phone home, doesn't set cookies, and doesn't fingerprint users. Your server sees the verification, no one else does.",
+    s.faqAltQ,
+    `${s.faqAltA1}reCAPTCHA${s.faqAltSep1}hCaptcha${s.faqAltSep2}Turnstile${s.faqAltA2}`.trim(),
   ],
-  [
-    "Can I migrate from reCAPTCHA / hCaptcha?",
-    "Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll need to swap your client-side code to use Cap's widget.",
-  ],
-  [
-    "How effective is it against real bots?",
-    "Cap's instrumentation combined with proof-of-work is very effective at making abuse extremely difficult to automate at scale.",
-  ],
-  [
-    "What does it cost to self-host?",
-    "Cap Standalone fits on a $5 VPS for most sites. There are no per-request fees, no egress to a third party, and no API quotas to hit.",
-  ],
-  [
-    "What is an open-source CAPTCHA?",
-    "An open-source CAPTCHA is bot protection whose code you can read, audit, and self-host, rather than a closed third-party service. Cap is licensed under Apache 2.0 and runs entirely on your own infrastructure, so visitor data never reaches a vendor.",
-  ],
-  [
-    "What is the best open-source alternative to reCAPTCHA?",
-    "Cap is a privacy-first, self-hosted alternative to Google reCAPTCHA that uses proof-of-work and instrumentation instead of visual puzzles or tracking. Compare it against reCAPTCHA, hCaptcha, and Turnstile to find what fits your stack.",
-  ]
 ];
+
+const FAQ_ITEMS = faqItemsFromStrings(homeV2Strings.en);
 
 const FAQ_PAGE = {
   "@context": "https://schema.org",
@@ -102,32 +94,7 @@ const FAQ_PAGE = {
   })),
 };
 
-const ZH_FAQ_ITEMS = [
-  [
-    "Cap 符合 GDPR 吗？",
-    "符合。Cap 不会向外部回传数据，不设 Cookie，也不对用户做指纹追踪。验证只发生在你自己的服务器上，任何第三方都无法看到。",
-  ],
-  [
-    "可以从 reCAPTCHA / hCaptcha 迁移吗？",
-    "可以。Cap 的 siteverify API 与 reCAPTCHA、hCaptcha 兼容，只需把客户端代码替换为 Cap 的验证组件。",
-  ],
-  [
-    "面对真实机器人的效果如何？",
-    "Cap 将 instrumentation 与工作量证明结合，能让滥用行为很难被大规模自动化。",
-  ],
-  [
-    "自托管的成本是多少？",
-    "对大多数站点，Cap Standalone 在一台 5 美元的 VPS 上即可运行。没有按请求计费，没有流向第三方的数据，也没有 API 配额限制。",
-  ],
-  [
-    "什么是开源 CAPTCHA？",
-    "开源 CAPTCHA 指代码可阅读、可审计、可自托管的人机验证方案，而不是封闭的第三方服务。Cap 基于 Apache 2.0 许可，完全运行在你自己的基础设施上，访客数据不会流向任何厂商。",
-  ],
-  [
-    "reCAPTCHA 最好的开源替代方案是什么？",
-    "Cap 是一个隐私优先、可自托管的 Google reCAPTCHA 替代方案，用工作量证明和 instrumentation 取代视觉谜题与跟踪。可以对比 reCAPTCHA、hCaptcha 和 Turnstile，选择适合你技术栈的方案。",
-  ],
-];
+const ZH_FAQ_ITEMS = faqItemsFromStrings(homeV2Strings.zh);
 
 const ZH_FAQ_PAGE = {
   "@context": "https://schema.org",
@@ -258,20 +225,45 @@ const ZH_SIDEBAR = [
 
 const humanize = (s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+const ZH_SEG_NAMES = {
+  alternatives: "对比",
+  middleware: "中间件",
+  standalone: "Standalone",
+  troubleshooting: "故障排查",
+};
+
 function breadcrumbList(pageData) {
-  const rel = pageData.relativePath;
+  const isZh = pageData.relativePath.startsWith("zh/");
+  const rel = pageData.relativePath.replace(/^zh\//, "");
   const segs = rel
     .replace(/index\.md$/, "")
     .replace(/\.md$/, "")
     .split("/")
     .filter(Boolean);
   if (segs[0] !== "guide") return null;
-  const items = [{ "@type": "ListItem", position: 1, name: "Home", item: "https://trycap.dev/" }];
-  let acc = "https://trycap.dev";
+  const prefix = isZh ? "/zh" : "";
+  const items = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: isZh ? "首页" : "Home",
+      item: `https://trycap.dev${prefix}/`,
+    },
+  ];
+  let acc = `https://trycap.dev${prefix}`;
   segs.forEach((seg, i) => {
     acc += `/${seg}`;
     const isLast = i === segs.length - 1;
-    const name = seg === "guide" ? "Docs" : isLast ? pageData.title : humanize(seg);
+    const name =
+      seg === "guide"
+        ? isZh
+          ? "文档"
+          : "Docs"
+        : isLast
+          ? pageData.title
+          : isZh
+            ? (ZH_SEG_NAMES[seg] ?? humanize(seg))
+            : humanize(seg);
     const item = isLast
       ? acc + (rel.endsWith("index.md") ? "/" : ".html")
       : seg === "guide"
@@ -387,16 +379,19 @@ export default withMermaid({
       head.push(jsonLd(SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(FAQ_PAGE));
     } else if (pageData.relativePath === "zh/index.md") {
       head.push(jsonLd(ZH_SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(ZH_FAQ_PAGE));
-    } else if (pageData.relativePath === "about.md") {
+    } else if (pageData.relativePath.replace(/^zh\//, "") === "about.md") {
+      const isZh = pageData.relativePath.startsWith("zh/");
+      const aboutUrl = `https://trycap.dev/${isZh ? "zh/" : ""}about.html`;
       head.push(
         jsonLd(ORGANIZATION),
         jsonLd({
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          "@id": "https://trycap.dev/about.html",
-          name: "About Cap",
-          url: "https://trycap.dev/about.html",
+          "@id": aboutUrl,
+          name: isZh ? "关于 Cap" : "About Cap",
+          url: aboutUrl,
           description,
+          ...(isZh && { inLanguage: "zh-CN" }),
           mainEntity: { "@id": "https://trycap.dev/#organization" },
           ...(modified && { dateModified: modified }),
         }),
@@ -570,12 +565,14 @@ export default withMermaid({
         appId: "B8THEYC8QW",
         apiKey: "ebdc4d8bd68e388cbeca09c14b982a85",
         indexName: "cap-tiagorangel",
+        // Note: no per-locale `searchParameters.facetFilters` needed here.
+        // VitePress's VPAlgoliaSearchBox strips any user-provided `lang:*`
+        // facet filter and always injects `lang:<current locale lang>` itself,
+        // so English pages query with lang:en-US and zh pages with lang:zh-CN
+        // automatically (requires `lang` to be a facet attribute on the index).
         locales: {
           zh: {
             placeholder: "搜索文档",
-            searchParameters: {
-              facetFilters: ["lang:zh-CN"],
-            },
             translations: {
               button: { buttonText: "搜索", buttonAriaLabel: "搜索" },
               modal: {
