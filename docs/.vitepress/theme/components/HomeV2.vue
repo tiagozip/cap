@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount, ref } from "vue";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
 import { createVortex } from "../vortex/index.js";
+import FooterGlow from "./FooterGlow.vue";
 
 const fromWidget = ref(false);
 const fromWidgetHost = ref("");
@@ -1581,6 +1582,8 @@ onBeforeUnmount(() => {
           </p>
         </div>
       </div>
+
+      <FooterGlow />
     </footer>
   </div>
 </template>
