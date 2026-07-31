@@ -4,6 +4,7 @@ import { useData } from "vitepress";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
 import VPNavBarTranslations from "vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue";
 import { createVortex } from "../vortex/index.js";
+import FooterGlow from "./FooterGlow.vue";
 import { homeV2Strings } from "./homeV2.strings.js";
 
 const { localeIndex } = useData();
@@ -1510,6 +1511,8 @@ onBeforeUnmount(() => {
           <p style="font-family: system-ui; opacity: 0.8">{{ t.ftLegal }}</p>
         </div>
       </div>
+
+      <FooterGlow />
     </footer>
   </div>
 </template>
