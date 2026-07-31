@@ -102,6 +102,51 @@ const FAQ_PAGE = {
   })),
 };
 
+const ZH_FAQ_ITEMS = [
+  [
+    "Cap 符合 GDPR 吗？",
+    "符合。Cap 不会向外部回传数据，不设 Cookie，也不对用户做指纹追踪。验证只发生在你自己的服务器上，任何第三方都无法看到。",
+  ],
+  [
+    "可以从 reCAPTCHA / hCaptcha 迁移吗？",
+    "可以。Cap 的 siteverify API 与 reCAPTCHA、hCaptcha 兼容，只需把客户端代码替换为 Cap 的验证组件。",
+  ],
+  [
+    "面对真实机器人的效果如何？",
+    "Cap 将 instrumentation 与工作量证明结合，能让滥用行为很难被大规模自动化。",
+  ],
+  [
+    "自托管的成本是多少？",
+    "对大多数站点，Cap Standalone 在一台 5 美元的 VPS 上即可运行。没有按请求计费，没有流向第三方的数据，也没有 API 配额限制。",
+  ],
+  [
+    "什么是开源 CAPTCHA？",
+    "开源 CAPTCHA 指代码可阅读、可审计、可自托管的人机验证方案，而不是封闭的第三方服务。Cap 基于 Apache 2.0 许可，完全运行在你自己的基础设施上，访客数据不会流向任何厂商。",
+  ],
+  [
+    "reCAPTCHA 最好的开源替代方案是什么？",
+    "Cap 是一个隐私优先、可自托管的 Google reCAPTCHA 替代方案，用工作量证明和 instrumentation 取代视觉谜题与跟踪。可以对比 reCAPTCHA、hCaptcha 和 Turnstile，选择适合你技术栈的方案。",
+  ],
+];
+
+const ZH_FAQ_PAGE = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  inLanguage: "zh-CN",
+  mainEntity: ZH_FAQ_ITEMS.map(([name, text]) => ({
+    "@type": "Question",
+    name,
+    acceptedAnswer: { "@type": "Answer", text },
+  })),
+};
+
+const ZH_SOFTWARE_APPLICATION = {
+  ...SOFTWARE_APPLICATION,
+  inLanguage: "zh-CN",
+  description:
+    "Cap 是一个免费、开源的 CAPTCHA 替代方案。可自托管、隐私优先、无 Google。基于工作量证明与 instrumentation，无视觉谜题。Apache 2.0 许可。",
+};
+
 const COMPARE_SIDEBAR = [
   {
     text: "Compare Cap",
@@ -255,6 +300,7 @@ export default withMermaid({
       label: "简体中文",
       lang: "zh-CN",
       title: "Cap – 开源、可自托管的 reCAPTCHA 替代方案",
+      titleTemplate: ":title – Cap 人机验证",
       description:
         "Cap 是一个轻量、现代的开源 CAPTCHA 替代方案，基于工作量证明、时间锁与 instrumentation 质询",
       themeConfig: {
@@ -290,7 +336,7 @@ export default withMermaid({
     },
   },
   vite: {
-    plugins: [llmstxt()],
+    plugins: [llmstxt({ ignoreFiles: ["zh/**"] })],
   },
   srcExclude: ["public/**"],
   transformPageData(pageData) {
@@ -320,6 +366,14 @@ export default withMermaid({
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
     ];
+    const toUrl = (rel) =>
+      `https://trycap.dev/${rel}`.replace(/index\.md$/, "").replace(/\.md$/, ".html");
+    const baseRel = pageData.relativePath.replace(/^zh\//, "");
+    head.push(
+      ["link", { rel: "alternate", hreflang: "en", href: toUrl(baseRel) }],
+      ["link", { rel: "alternate", hreflang: "zh-CN", href: toUrl(`zh/${baseRel}`) }],
+      ["link", { rel: "alternate", hreflang: "x-default", href: toUrl(baseRel) }],
+    );
     const dates = gitDates(pageData.relativePath);
     const published = pageData.frontmatter.datePublished || dates?.published;
     const modified = dates?.modified;
@@ -331,6 +385,8 @@ export default withMermaid({
     }
     if (pageData.relativePath === "index.md") {
       head.push(jsonLd(SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(FAQ_PAGE));
+    } else if (pageData.relativePath === "zh/index.md") {
+      head.push(jsonLd(ZH_SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(ZH_FAQ_PAGE));
     } else if (pageData.relativePath === "about.md") {
       head.push(
         jsonLd(ORGANIZATION),
@@ -514,6 +570,30 @@ export default withMermaid({
         appId: "B8THEYC8QW",
         apiKey: "ebdc4d8bd68e388cbeca09c14b982a85",
         indexName: "cap-tiagorangel",
+        locales: {
+          zh: {
+            placeholder: "搜索文档",
+            searchParameters: {
+              facetFilters: ["lang:zh-CN"],
+            },
+            translations: {
+              button: { buttonText: "搜索", buttonAriaLabel: "搜索" },
+              modal: {
+                searchBox: {
+                  cancelButtonText: "取消",
+                  resetButtonTitle: "清除查询",
+                },
+                noResultsScreen: { noResultsText: "没有找到相关结果" },
+                footer: {
+                  selectText: "选择",
+                  navigateText: "切换",
+                  closeText: "关闭",
+                  searchByText: "搜索服务由",
+                },
+              },
+            },
+          },
+        },
       },
     },
     logo: "/logo.png",
