@@ -12,7 +12,19 @@ import "./style.css";
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
-  enhanceApp({ app }) {
+  enhanceApp({ app, router, siteData }) {
+    if (typeof window !== "undefined") {
+      const known = Object.keys(siteData.value.locales).filter((k) => k !== "root");
+      const remember = (path) => {
+        const seg = path.split("/")[1];
+        try {
+          localStorage.setItem("cap-locale", known.includes(seg) ? seg : "root");
+        } catch {}
+      };
+      remember(location.pathname);
+      router.onAfterRouteChange = (href) => remember(new URL(href, location.origin).pathname);
+    }
+
     app.component("Benchmark", Benchmark);
     app.component("Compliance", Compliance);
     app.component("Demo", Demo);

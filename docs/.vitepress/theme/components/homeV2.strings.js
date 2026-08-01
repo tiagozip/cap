@@ -370,4 +370,565 @@ export const homeV2Strings = {
     ftCommunity: "社区",
     ftLegal: "本页不构成法律建议。是否合规取决于你的部署方式。",
   },
+  de: {
+    // Widget referral banner
+    bannerRegionLabel: "Vom Cap-Widget",
+    bannerVerified: "Du hast dich gerade mit Cap als Mensch verifiziert",
+    bannerHostPrefix: " auf ",
+    bannerVerifiedEnd: ".",
+    bannerSub:
+      "Du kannst diesen Tab schließen. Oder bleib, wenn dich interessiert, was Cap ist.",
+    bannerDismiss: "Schließen",
+
+    // Header nav
+    navBrandLabel: "Cap Startseite",
+    navDocs: "Doku",
+    navFeatures: "Features",
+    navDemo: "Demo",
+
+    // Hero
+    heroTitle: "Selbst gehostetes CAPTCHA",
+    heroTitleDim: "für das moderne Web.",
+    heroLead1: "Kein Google. Keine Telemetrie. Keine Bilderrätsel.",
+    heroLead2: "In Minuten von reCAPTCHA umsteigen.",
+    heroCtaStart: "In 5 Minuten loslegen ",
+    heroCtaPromptTitle: "Richtet deinen KI-Agenten für Cap ein",
+    heroCtaPromptCopied: "Prompt kopiert!",
+    heroCtaCopyPrompt: "Agent-Prompt kopieren",
+    heroDashAlt: "Screenshot des Cap-Admin-Dashboards",
+
+    // Trust bar
+    trustLabel: "Im Produktivbetrieb im Einsatz bei",
+
+    // Feature grid
+    featPrivacyTitle: "Datenschutz zuerst. Kein Tracking.",
+    featPrivacyBody:
+      "Null Telemetrie. Kein Drittanbieter-Netzwerk. Die Daten deiner Nutzer bleiben zwischen euch.",
+    featSizeTitle: "250x kleiner als hCaptcha.",
+    featSizeBody:
+      "~20 kb, keine Abhängigkeiten. Lädt in Millisekunden, nicht in Sekunden.",
+    featInvisibleTitle: "Keine Bilderrätsel. Immer unsichtbar.",
+    featInvisibleBody:
+      "PoW, Time-Lock-Challenges und Instrumentation laufen still im Hintergrund.",
+    featOpenTitle: "Kostenlos & quelloffen",
+    featOpenBody:
+      "Apache-2.0-Lizenz. Prüfen, forken, selbst hosten. Kein Anbieter kann dir den Boden unter den Füßen wegziehen.",
+    featLawsTitle: "Für Datenschutzgesetze gebaut.",
+    featLawsBody:
+      "Entwickelt, damit du DSGVO, CCPA, LGPD und mehr erfüllst, mit strengen Datenschutz- und Barrierefreiheitsstandards von Haus aus.",
+    featCustomTitle: "Vollständig anpassbar",
+    featCustomBody:
+      "Farben, Größe, Position, Icons, alles über CSS-Variablen steuerbar. Kein iframe-Lock-in.",
+
+    // Compliance
+    cmplTitle: "Von Haus aus konform.",
+    cmplBody:
+      "Quelloffen, selbst gehostet und datenschutzfreundlich. Keine Cookies, kein Tracking, und keine Daten verlassen deine Server.",
+    cmplLink: "So erfüllt Cap die Vorgaben ",
+    cmplPrivacyLabel: "Datenschutz & Daten",
+    cmplAccessibilityLabel: "Barrierefreiheit",
+    cmplI18nChip: "Internationalisierung (i18n)",
+    cmplRtlChip: "RTL-Unterstützung",
+
+    // Bundle size
+    speedTitle: "Ein Bruchteil des Gewichts",
+    speedBody:
+      "Das Cap-Widget ist extrem leichtgewichtig und läuft unsichtbar: nur rund 20 kB JavaScript, ohne Drittanbieter-Skripte.",
+    speedNote: "Client-Bundle-Größen (minified, gzip)",
+
+    // Testimonial
+    quoteLead: "Cap passt gut zu AdGuard Temp Mail. Wir nutzen es als ",
+    quoteHl1: "unsichtbare, selbst gehostete CAPTCHA-Schicht",
+    quoteMid1: " mit ",
+    quoteHl2: "Proof-of-Work- und Browser-Instrumentation-Challenges",
+    quoteMid2:
+      ", was uns hilft, Missbrauchsschutz zu ergänzen und die Erfahrung dabei ",
+    quoteHl3: "leichtgewichtig und unaufdringlich",
+    quoteEnd: " für normale Nutzer zu halten. ",
+    quoteRole: "Head of PR, AdGuard",
+
+    // Comparison
+    compareTitle: "Im Vergleich",
+    compareBody:
+      "Cap ist die kostenlose, quelloffene, selbst gehostete Option: dieselbe Erkennungsklasse wie die großen Namen, ohne die Daten deiner Nutzer an Dritte zu schicken.",
+    compareLink: "Zum vollständigen Vergleich ",
+    compareSelfTitle: "Selbst gehostet",
+    compareSelfBody:
+      "Läuft vollständig auf deinem eigenen Server. reCAPTCHA, hCaptcha und Turnstile gibt es nur in der Cloud.",
+    compareOpenTitle: "Open Source",
+    compareOpenBody:
+      "Apache 2.0. Lies es, forke es, besitze es. Die großen drei sind Closed Source.",
+    comparePuzzlesTitle: "Keine Bilderrätsel",
+    comparePuzzlesBody:
+      "Unsichtbarer Proof-of-Work, keine Zebrastreifen. reCAPTCHA und hCaptcha zeigen weiterhin Rätsel.",
+    compareTelemetryTitle: "Null Drittanbieter-Telemetrie",
+    compareTelemetryBody:
+      "Die Daten deiner Besucher verlassen nie deinen Server. Google, Cloudflare und hCaptcha funken alle nach Hause.",
+    compareFreeTitle: "Kostenlos in jeder Größenordnung",
+    compareFreeBody:
+      "Keine Kontingente, keine Gebühren pro Anfrage. reCAPTCHA und hCaptcha deckeln oder kassieren.",
+    compareLayersTitle: "Gestaffelte Verteidigung",
+    compareLayersBody:
+      "Proof-of-Work kombiniert mit dynamischen JavaScript-Instrumentation-Challenges",
+
+    // Widget demo
+    widgetDemoTitle: "Löse selbst eine Cap-Challenge",
+
+    // Two layers
+    layersTitle1: "Zwei unabhängige Schichten.",
+    layersTitle2: "Umgehst du eine, hält die andere.",
+    layersBody:
+      "Jede Challenge löst Proof-of-Work und führt gleichzeitig Browser-Instrumentation aus. Eine Schicht zu knacken knackt die andere nicht.",
+    layersPowLabel: "Schicht 01",
+    layersPowTitle: "PoW und Time-Locks",
+    layersPowBody:
+      "Der Client löst parallele SHA-256-Hashes und Time-Lock-Challenges, in WASM und gezielt gegen GPU-Beschleunigung ausgelegt.",
+    layersKvHashes: "Hashes/s",
+    layersKvTarget: "Ziel",
+    layersJsLabel: "Schicht 02",
+    layersJsTitle: "JS-Instrumentation",
+    layersJsBody:
+      "Ein frisch generiertes JS-Programm führt komplexe JavaScript-, DOM- und Browser-Checks aus.",
+
+    // Stats
+    statsLabel: "CDN-Abrufe · 12 Mon.",
+
+    // Closer strip
+    closerSizeLabel: "Größe",
+    closerSizeNote: "vs. 600 kb+ bei hCaptcha",
+    closerTrackersLabel: "Tracker",
+    closerTrackersNote: "vs. reCAPTCHA",
+    closerCostLabel: "Kosten",
+    closerCostNote: "vs. $1k+ bei hCaptcha",
+    closerSetupLabel: "Setup",
+    closerSetupNote: "ein Docker-Container",
+
+    // FAQ
+    faqGdprQ: "Ist es DSGVO-freundlich?",
+    faqGdprA:
+      "Ja. Cap funkt nicht nach Hause, setzt keine Cookies und erstellt keine Fingerprints. Nur dein Server sieht die Verifizierung, sonst niemand.",
+    faqMigrateQ: "Kann ich von reCAPTCHA / hCaptcha migrieren?",
+    faqMigrateA:
+      "Ja. Caps siteverify-API ist zu reCAPTCHA und hCaptcha kompatibel, du musst nur den Client-Code auf Caps Widget umstellen.",
+    faqBotsQ: "Wie wirksam ist es gegen echte Bots?",
+    faqBotsA:
+      "Caps Instrumentation in Kombination mit Proof-of-Work macht es sehr schwer, Missbrauch in großem Maßstab zu automatisieren.",
+    faqCostQ: "Was kostet das Selbst-Hosten?",
+    faqCostA:
+      "Cap Standalone läuft für die meisten Websites auf einem 5-$-VPS. Keine Gebühren pro Anfrage, kein Traffic zu Dritten und keine API-Kontingente, an die du stößt.",
+    faqOpenQ: "Was ist ein Open-Source-CAPTCHA?",
+    faqOpenA1:
+      "Ein Open-Source-CAPTCHA ist Bot-Schutz, dessen Code du lesen, prüfen und ",
+    faqOpenLink: "selbst hosten",
+    faqOpenA2:
+      " kannst, statt eines geschlossenen Drittanbieterdienstes. Cap steht unter der Apache-2.0-Lizenz und läuft vollständig auf deiner eigenen Infrastruktur, Besucherdaten erreichen also nie einen Anbieter.",
+    faqAltQ: "Was ist die beste Open-Source-Alternative zu reCAPTCHA?",
+    faqAltA1:
+      "Cap ist eine datenschutzfreundliche, selbst gehostete Alternative zu Google reCAPTCHA, die Proof-of-Work und Instrumentation statt Bilderrätseln oder Tracking nutzt. Vergleiche es mit ",
+    faqAltSep1: ", ",
+    faqAltSep2: " und ",
+    faqAltA2: ", um herauszufinden, was zu deinem Stack passt.",
+
+    // Bottom CTA
+    ctaTitle: "Wirf reCAPTCHA noch heute Nachmittag raus.",
+    ctaBody:
+      "Widget einbauen, auf einen 5-$-VPS zeigen und aufhören, jemanden dafür zu bezahlen, den Traffic deiner Nutzer zu sehen.",
+    ctaStart: "In 5 Minuten loslegen",
+    ctaDemo: "Demo ausprobieren ",
+    ctaGithub: "Auf GitHub sternen",
+
+    // Footer
+    ftTagline1: "Selbst gehostetes, quelloffenes CAPTCHA.",
+    ftTagline2: "Kein Google. Keine Telemetrie. Keine Rätsel.",
+    ftProductLabel: "Produkt",
+    ftQuickstart: "Schnellstart",
+    ftWidget: "Widget",
+    ftDemo: "Demo",
+    ftCompareLabel: "Vergleich",
+    ftVsRecaptcha: "vs reCAPTCHA",
+    ftVsTurnstile: "vs Turnstile",
+    ftVsHcaptcha: "vs hCaptcha",
+    ftAllComparisons: "Alle Vergleiche",
+    ftLearnLabel: "Lernen",
+    ftHowItWorks: "Funktionsweise",
+    ftEffectiveness: "Wirksamkeit",
+    ftCompliance: "Compliance",
+    ftCommunity: "Community",
+    ftLegal:
+      "Keine Rechtsberatung. Die Konformität hängt von deinem Deployment ab.",
+  },
+  fr: {
+    // Widget referral banner
+    bannerRegionLabel: "Depuis le widget Cap",
+    bannerVerified: "Vous venez de prouver que vous êtes humain avec Cap",
+    bannerHostPrefix: " sur ",
+    bannerVerifiedEnd: ".",
+    bannerSub:
+      "Vous pouvez fermer cet onglet. Ou rester, si vous êtes curieux de savoir ce qu'est Cap.",
+    bannerDismiss: "Fermer",
+
+    // Header nav
+    navBrandLabel: "Accueil Cap",
+    navDocs: "Docs",
+    navFeatures: "Fonctionnalités",
+    navDemo: "Démo",
+
+    // Hero
+    heroTitle: "Le CAPTCHA auto-hébergé",
+    heroTitleDim: "pour le web moderne.",
+    heroLead1: "Pas de Google. Pas de télémétrie. Pas de puzzles visuels.",
+    heroLead2: "Quittez reCAPTCHA en quelques minutes.",
+    heroCtaStart: "Démarrer en 5 minutes ",
+    heroCtaPromptTitle: "Configure votre agent IA pour Cap",
+    heroCtaPromptCopied: "Prompt copié !",
+    heroCtaCopyPrompt: "Copier le prompt agent",
+    heroDashAlt: "Capture d'écran du tableau de bord Cap",
+
+    // Trust bar
+    trustLabel: "Utilisé en production par",
+
+    // Feature grid
+    featPrivacyTitle: "Vie privée d'abord. Aucun pistage.",
+    featPrivacyBody:
+      "Zéro télémétrie. Aucun réseau tiers. Les données de vos utilisateurs restent entre vous et eux.",
+    featSizeTitle: "250x plus léger que hCaptcha.",
+    featSizeBody:
+      "~20 ko, zéro dépendance. Se charge en millisecondes, pas en secondes.",
+    featInvisibleTitle: "Aucun puzzle visuel. Toujours invisible.",
+    featInvisibleBody:
+      "La preuve de travail, les défis à verrou temporel et l'instrumentation tournent silencieusement en arrière-plan.",
+    featOpenTitle: "Gratuit et open source",
+    featOpenBody:
+      "Sous licence Apache 2.0. Auditez-le, forkez-le, hébergez-le. Aucun éditeur ne peut vous couper l'herbe sous le pied.",
+    featLawsTitle: "Pensé pour les lois sur la vie privée.",
+    featLawsBody:
+      "Conçu pour vous aider à respecter le RGPD, le CCPA, la LGPD et d'autres, avec des standards stricts de confidentialité et d'accessibilité intégrés.",
+    featCustomTitle: "Entièrement personnalisable",
+    featCustomBody:
+      "Couleurs, taille, position, icônes : tout se pilote via des variables CSS. Aucun enfermement dans une iframe.",
+
+    // Compliance
+    cmplTitle: "Conforme dès l'installation.",
+    cmplBody:
+      "Open source, auto-hébergé et respectueux de la vie privée. Ni cookies ni pistage, et aucune donnée ne quitte vos serveurs.",
+    cmplLink: "Voir comment Cap est conforme ",
+    cmplPrivacyLabel: "Vie privée et données",
+    cmplAccessibilityLabel: "Accessibilité",
+    cmplI18nChip: "Internationalisation (i18n)",
+    cmplRtlChip: "Prise en charge RTL",
+
+    // Bundle size
+    speedTitle: "Une fraction du poids",
+    speedBody:
+      "Le widget Cap est extrêmement léger et s'exécute de façon invisible : environ 20 ko de JavaScript, sans aucun script tiers.",
+    speedNote: "Taille des bundles client (minifiés, gzip)",
+
+    // Testimonial
+    quoteLead: "Cap convient très bien à AdGuard Temp Mail. Nous l'utilisons comme ",
+    quoteHl1: "couche CAPTCHA invisible et auto-hébergée",
+    quoteMid1: " avec des ",
+    quoteHl2: "défis de preuve de travail et d'instrumentation du navigateur",
+    quoteMid2:
+      ", ce qui nous aide à renforcer la protection contre les abus tout en gardant une expérience ",
+    quoteHl3: "légère et discrète",
+    quoteEnd: " pour les utilisateurs normaux. ",
+    quoteRole: "Head of PR, AdGuard",
+
+    // Comparison
+    compareTitle: "Le comparatif",
+    compareBody:
+      "Cap est l'option gratuite, open source et auto-hébergée : le même niveau de détection que les grands noms, sans envoyer les données de vos utilisateurs à un tiers.",
+    compareLink: "Voir le comparatif complet ",
+    compareSelfTitle: "Auto-hébergé",
+    compareSelfBody:
+      "Tourne entièrement sur votre propre serveur. reCAPTCHA, hCaptcha et Turnstile n'existent qu'en cloud.",
+    compareOpenTitle: "Open source",
+    compareOpenBody:
+      "Apache 2.0. Lisez-le, forkez-le, il est à vous. Les trois grands sont propriétaires.",
+    comparePuzzlesTitle: "Aucun puzzle visuel",
+    comparePuzzlesBody:
+      "Preuve de travail invisible, plus de passages piétons à cliquer. reCAPTCHA et hCaptcha affichent toujours des puzzles.",
+    compareTelemetryTitle: "Zéro télémétrie tierce",
+    compareTelemetryBody:
+      "Les données de vos visiteurs ne quittent jamais votre serveur. Google, Cloudflare et hCaptcha renvoient tous des données.",
+    compareFreeTitle: "Gratuit à toute échelle",
+    compareFreeBody:
+      "Aucun quota, aucun frais par requête. reCAPTCHA et hCaptcha limitent ou facturent.",
+    compareLayersTitle: "Défense en profondeur",
+    compareLayersBody:
+      "Preuve de travail combinée à des défis d'instrumentation JavaScript dynamiques",
+
+    // Widget demo
+    widgetDemoTitle: "Essayez de résoudre un défi Cap",
+
+    // Two layers
+    layersTitle1: "Deux couches indépendantes.",
+    layersTitle2: "Contournez l'une, l'autre tient toujours.",
+    layersBody:
+      "Chaque défi résout une preuve de travail et exécute en même temps l'instrumentation du navigateur. Vaincre une couche ne vainc pas l'autre.",
+    layersPowLabel: "Couche 01",
+    layersPowTitle: "PoW et verrous temporels",
+    layersPowBody:
+      "Le client résout en parallèle des hachages SHA-256 et des défis à verrou temporel, en WASM et calibrés contre l'accélération GPU.",
+    layersKvHashes: "hachages/s",
+    layersKvTarget: "cible",
+    layersJsLabel: "Couche 02",
+    layersJsTitle: "Instrumentation JS",
+    layersJsBody:
+      "Un programme JS généré à la volée exécute des vérifications JavaScript, DOM et navigateur complexes.",
+
+    // Stats
+    statsLabel: "requêtes CDN · 12 mois",
+
+    // Closer strip
+    closerSizeLabel: "taille",
+    closerSizeNote: "contre 600 ko+ pour hCaptcha",
+    closerTrackersLabel: "traqueurs",
+    closerTrackersNote: "contre reCAPTCHA",
+    closerCostLabel: "coût",
+    closerCostNote: "contre 1 000 $+ pour hCaptcha",
+    closerSetupLabel: "installation",
+    closerSetupNote: "un conteneur Docker",
+
+    // FAQ
+    faqGdprQ: "Est-ce compatible avec le RGPD ?",
+    faqGdprA:
+      "Oui. Cap ne renvoie rien vers l'extérieur, ne pose pas de cookies et ne prend pas d'empreinte des utilisateurs. Seul votre serveur voit la vérification.",
+    faqMigrateQ: "Puis-je migrer depuis reCAPTCHA / hCaptcha ?",
+    faqMigrateA:
+      "Oui. L'API siteverify de Cap est compatible avec reCAPTCHA et hCaptcha, il vous suffit de remplacer votre code client par le widget Cap.",
+    faqBotsQ: "Quelle est son efficacité face à de vrais bots ?",
+    faqBotsA:
+      "L'instrumentation de Cap combinée à la preuve de travail rend l'automatisation des abus à grande échelle extrêmement difficile.",
+    faqCostQ: "Combien coûte l'auto-hébergement ?",
+    faqCostA:
+      "Cap Standalone tient sur un VPS à 5 $ pour la plupart des sites. Aucun frais par requête, aucun transfert vers un tiers et aucun quota d'API à atteindre.",
+    faqOpenQ: "Qu'est-ce qu'un CAPTCHA open source ?",
+    faqOpenA1:
+      "Un CAPTCHA open source est une protection anti-bot dont vous pouvez lire et auditer le code, et que vous pouvez ",
+    faqOpenLink: "auto-héberger",
+    faqOpenA2:
+      ", au lieu d'un service tiers fermé. Cap est sous licence Apache 2.0 et tourne entièrement sur votre propre infrastructure : les données des visiteurs n'atteignent jamais un éditeur.",
+    faqAltQ: "Quelle est la meilleure alternative open source à reCAPTCHA ?",
+    faqAltA1:
+      "Cap est une alternative auto-hébergée et respectueuse de la vie privée à Google reCAPTCHA, qui utilise la preuve de travail et l'instrumentation plutôt que des puzzles visuels ou du pistage. Comparez-le à ",
+    faqAltSep1: ", ",
+    faqAltSep2: " et ",
+    faqAltA2: " pour trouver ce qui convient à votre stack.",
+
+    // Bottom CTA
+    ctaTitle: "Abandonnez reCAPTCHA cet après-midi.",
+    ctaBody:
+      "Ajoutez le widget à votre site, pointez-le vers un VPS à 5 $ et arrêtez de payer qui que ce soit pour voir le trafic de vos utilisateurs.",
+    ctaStart: "Démarrer en 5 minutes",
+    ctaDemo: "Essayer la démo ",
+    ctaGithub: "Mettre une étoile sur GitHub",
+
+    // Footer
+    ftTagline1: "Le CAPTCHA auto-hébergé et open source.",
+    ftTagline2: "Pas de Google. Pas de télémétrie. Pas de puzzles.",
+    ftProductLabel: "Produit",
+    ftQuickstart: "Démarrage rapide",
+    ftWidget: "Widget",
+    ftDemo: "Démo",
+    ftCompareLabel: "Comparer",
+    ftVsRecaptcha: "vs reCAPTCHA",
+    ftVsTurnstile: "vs Turnstile",
+    ftVsHcaptcha: "vs hCaptcha",
+    ftAllComparisons: "Tous les comparatifs",
+    ftLearnLabel: "Comprendre",
+    ftHowItWorks: "Fonctionnement",
+    ftEffectiveness: "Efficacité",
+    ftCompliance: "Conformité",
+    ftCommunity: "Communauté",
+    ftLegal:
+      "Ceci n'est pas un avis juridique. La conformité dépend de votre déploiement.",
+  },
+  th: {
+    // Widget referral banner
+    bannerRegionLabel: "จากวิดเจ็ต Cap",
+    bannerVerified: "คุณเพิ่งยืนยันว่าเป็นมนุษย์ด้วย Cap",
+    bannerHostPrefix: " บน ",
+    bannerVerifiedEnd: "",
+    bannerSub:
+      "คุณปิดแท็บนี้ได้เลย หรือจะอยู่ต่อถ้าอยากรู้ว่า Cap คืออะไร",
+    bannerDismiss: "ปิด",
+
+    // Header nav
+    navBrandLabel: "หน้าแรก Cap",
+    navDocs: "เอกสาร",
+    navFeatures: "ฟีเจอร์",
+    navDemo: "เดโม",
+
+    // Hero
+    heroTitle: "CAPTCHA แบบโฮสต์เอง",
+    heroTitleDim: "สำหรับเว็บยุคใหม่",
+    heroLead1: "ไม่มี Google ไม่มีเทเลเมทรี ไม่มีปริศนาภาพ",
+    heroLead2: "ย้ายจาก reCAPTCHA ได้ในไม่กี่นาที",
+    heroCtaStart: "เริ่มใช้ใน 5 นาที ",
+    heroCtaPromptTitle: "ตั้งค่า AI agent ของคุณให้ใช้ Cap",
+    heroCtaPromptCopied: "คัดลอกพรอมต์แล้ว!",
+    heroCtaCopyPrompt: "คัดลอกพรอมต์สำหรับ agent",
+    heroDashAlt: "ภาพหน้าจอแดชบอร์ดผู้ดูแลระบบ Cap",
+
+    // Trust bar
+    trustLabel: "ใช้งานจริงบนโปรดักชันโดย",
+
+    // Feature grid
+    featPrivacyTitle: "ให้ความสำคัญกับความเป็นส่วนตัว ไม่มีการติดตาม",
+    featPrivacyBody:
+      "ไม่มีเทเลเมทรี ไม่เชื่อมต่อเครือข่ายบุคคลที่สาม ข้อมูลผู้ใช้อยู่ระหว่างคุณกับผู้ใช้เท่านั้น",
+    featSizeTitle: "เล็กกว่า hCaptcha 250 เท่า",
+    featSizeBody:
+      "ประมาณ 20kb ไม่มี dependency โหลดเสร็จในหลักมิลลิวินาที ไม่ใช่หลักวินาที",
+    featInvisibleTitle: "ไม่มีปริศนาภาพ ทำงานแบบล่องหนเสมอ",
+    featInvisibleBody:
+      "PoW, time-lock challenge และ instrumentation ทำงานเงียบ ๆ อยู่เบื้องหลัง",
+    featOpenTitle: "ฟรีและโอเพนซอร์ส",
+    featOpenBody:
+      "ใช้สัญญาอนุญาต Apache 2.0 ตรวจสอบโค้ดได้ fork ได้ โฮสต์เองได้ ไม่มีผู้ให้บริการรายไหนดึงพรมออกจากใต้เท้าคุณได้",
+    featLawsTitle: "ออกแบบมาเพื่อกฎหมายความเป็นส่วนตัว",
+    featLawsBody:
+      "ช่วยให้คุณปฏิบัติตาม GDPR, CCPA, LGPD และอื่น ๆ พร้อมมาตรฐานความเป็นส่วนตัวและการเข้าถึงที่เข้มงวดตั้งแต่ต้น",
+    featCustomTitle: "ปรับแต่งได้เต็มที่",
+    featCustomBody:
+      "สี ขนาด ตำแหน่ง ไอคอน ควบคุมได้ทั้งหมดผ่านตัวแปร CSS ไม่ถูกล็อกอยู่ใน iframe",
+
+    // Compliance
+    cmplTitle: "สอดคล้องกับข้อกำหนดตั้งแต่แกะกล่อง",
+    cmplBody:
+      "โอเพนซอร์ส โฮสต์เอง และให้ความสำคัญกับความเป็นส่วนตัว ไม่ใช้คุกกี้ ไม่ติดตาม และไม่มีข้อมูลออกจากเซิร์ฟเวอร์ของคุณ",
+    cmplLink: "ดูว่า Cap สอดคล้องอย่างไร ",
+    cmplPrivacyLabel: "ความเป็นส่วนตัวและข้อมูล",
+    cmplAccessibilityLabel: "การเข้าถึง",
+    cmplI18nChip: "การรองรับหลายภาษา (i18n)",
+    cmplRtlChip: "รองรับ RTL",
+
+    // Bundle size
+    speedTitle: "น้ำหนักเพียงเศษเสี้ยว",
+    speedBody:
+      "วิดเจ็ต Cap เบามากและทำงานแบบล่องหน ส่ง JavaScript เพียงราว 20 kB โดยไม่มีสคริปต์จากบุคคลที่สาม",
+    speedNote: "ขนาดบันเดิลฝั่งไคลเอนต์ (minified gzip)",
+
+    // Testimonial
+    quoteLead: "Cap เข้ากับ AdGuard Temp Mail ได้ดี เราใช้มันเป็น",
+    quoteHl1: "ชั้น CAPTCHA แบบล่องหนที่โฮสต์เอง",
+    quoteMid1: " ร่วมกับ",
+    quoteHl2: "challenge แบบ proof-of-work และ browser instrumentation",
+    quoteMid2:
+      " ซึ่งช่วยให้เราเพิ่มการป้องกันการใช้งานในทางที่ผิด ขณะที่ยังคงประสบการณ์ที่",
+    quoteHl3: "เบาและไม่รบกวน",
+    quoteEnd: "สำหรับผู้ใช้ทั่วไป",
+    quoteRole: "Head of PR, AdGuard",
+
+    // Comparison
+    compareTitle: "เทียบกับเจ้าอื่น",
+    compareBody:
+      "Cap คือตัวเลือกที่ฟรี โอเพนซอร์ส และโฮสต์เองได้ ระดับการตรวจจับเทียบเท่าเจ้าใหญ่ โดยไม่ต้องส่งข้อมูลผู้ใช้ให้บุคคลที่สาม",
+    compareLink: "ดูการเปรียบเทียบทั้งหมด ",
+    compareSelfTitle: "โฮสต์เอง",
+    compareSelfBody:
+      "ทำงานบนเซิร์ฟเวอร์ของคุณทั้งหมด ส่วน reCAPTCHA, hCaptcha และ Turnstile มีแต่บนคลาวด์",
+    compareOpenTitle: "โอเพนซอร์ส",
+    compareOpenBody:
+      "Apache 2.0 อ่านโค้ดได้ fork ได้ เป็นของคุณเอง ขณะที่สามเจ้าใหญ่ปิดซอร์สทั้งหมด",
+    comparePuzzlesTitle: "ไม่มีปริศนาภาพ",
+    comparePuzzlesBody:
+      "proof-of-work แบบล่องหน ไม่ต้องกดเลือกทางม้าลาย ส่วน reCAPTCHA และ hCaptcha ยังแสดงปริศนาอยู่",
+    compareTelemetryTitle: "ไม่มีเทเลเมทรีจากบุคคลที่สาม",
+    compareTelemetryBody:
+      "ข้อมูลผู้เข้าชมไม่เคยออกจากเซิร์ฟเวอร์ของคุณ ขณะที่ Google, Cloudflare และ hCaptcha ล้วนส่งข้อมูลกลับ",
+    compareFreeTitle: "ฟรีไม่ว่าจะสเกลแค่ไหน",
+    compareFreeBody:
+      "ไม่มีโควตา ไม่มีค่าธรรมเนียมต่อคำขอ ส่วน reCAPTCHA และ hCaptcha จำกัดปริมาณหรือคิดเงิน",
+    compareLayersTitle: "ป้องกันหลายชั้น",
+    compareLayersBody:
+      "proof-of-work ซ้อนกับ challenge แบบ JavaScript instrumentation ที่สร้างขึ้นใหม่ทุกครั้ง",
+
+    // Widget demo
+    widgetDemoTitle: "ลองแก้ challenge ของ Cap ดู",
+
+    // Two layers
+    layersTitle1: "สองชั้นที่เป็นอิสระต่อกัน",
+    layersTitle2: "ผ่านชั้นหนึ่งไปได้ อีกชั้นก็ยังอยู่",
+    layersBody:
+      "ทุก challenge จะแก้ proof-of-work และรัน browser instrumentation ไปพร้อมกัน การเจาะชั้นหนึ่งได้ไม่ได้แปลว่าเจาะอีกชั้นได้",
+    layersPowLabel: "ชั้นที่ 01",
+    layersPowTitle: "PoW และ time-lock",
+    layersPowBody:
+      "ไคลเอนต์แก้แฮช SHA-256 แบบขนานและ time-lock challenge ใน WASM ซึ่งปรับมาเพื่อรับมือกับการเร่งความเร็วด้วย GPU",
+    layersKvHashes: "แฮช/วินาที",
+    layersKvTarget: "เป้าหมาย",
+    layersJsLabel: "ชั้นที่ 02",
+    layersJsTitle: "JS instrumentation",
+    layersJsBody:
+      "โปรแกรม JS ที่สร้างขึ้นใหม่ทุกครั้งจะรันการตรวจสอบ JavaScript, DOM และเบราว์เซอร์ที่ซับซ้อน",
+
+    // Stats
+    statsLabel: "คำขอ CDN · 12 เดือน",
+
+    // Closer strip
+    closerSizeLabel: "ขนาด",
+    closerSizeNote: "เทียบกับ hCaptcha 600 kb+",
+    closerTrackersLabel: "ตัวติดตาม",
+    closerTrackersNote: "เทียบกับ reCAPTCHA",
+    closerCostLabel: "ค่าใช้จ่าย",
+    closerCostNote: "เทียบกับ hCaptcha $1k+",
+    closerSetupLabel: "การติดตั้ง",
+    closerSetupNote: "คอนเทนเนอร์ Docker",
+
+    // FAQ
+    faqGdprQ: "รองรับ GDPR หรือไม่?",
+    faqGdprA:
+      "รองรับ Cap ไม่ส่งข้อมูลกลับ ไม่ตั้งคุกกี้ และไม่เก็บลายนิ้วมือผู้ใช้ มีแค่เซิร์ฟเวอร์ของคุณที่เห็นผลการยืนยัน ไม่มีใครอื่นเห็น",
+    faqMigrateQ: "ย้ายจาก reCAPTCHA / hCaptcha ได้ไหม?",
+    faqMigrateA:
+      "ได้ API siteverify ของ Cap เข้ากันได้กับ reCAPTCHA และ hCaptcha เพียงเปลี่ยนโค้ดฝั่งไคลเอนต์มาใช้วิดเจ็ตของ Cap",
+    faqBotsQ: "ได้ผลแค่ไหนกับบอทจริง ๆ?",
+    faqBotsA:
+      "instrumentation ของ Cap เมื่อรวมกับ proof-of-work ทำให้การใช้งานในทางที่ผิดแบบอัตโนมัติในสเกลใหญ่ทำได้ยากมาก",
+    faqCostQ: "โฮสต์เองมีค่าใช้จ่ายเท่าไร?",
+    faqCostA:
+      "สำหรับเว็บส่วนใหญ่ Cap Standalone รันบน VPS ราคา $5 ได้สบาย ไม่มีค่าธรรมเนียมต่อคำขอ ไม่มีทราฟฟิกออกไปหาบุคคลที่สาม และไม่มีโควตา API ให้ชน",
+    faqOpenQ: "CAPTCHA แบบโอเพนซอร์สคืออะไร?",
+    faqOpenA1:
+      "CAPTCHA แบบโอเพนซอร์สคือระบบป้องกันบอทที่คุณอ่านโค้ด ตรวจสอบ และ",
+    faqOpenLink: "โฮสต์เอง",
+    faqOpenA2:
+      "ได้ แทนที่จะเป็นบริการปิดจากบุคคลที่สาม Cap ใช้สัญญาอนุญาต Apache 2.0 และรันบนโครงสร้างพื้นฐานของคุณทั้งหมด ข้อมูลผู้เข้าชมจึงไม่ถูกส่งไปถึงผู้ให้บริการรายใด",
+    faqAltQ: "ทางเลือกโอเพนซอร์สที่ดีที่สุดแทน reCAPTCHA คืออะไร?",
+    faqAltA1:
+      "Cap เป็นทางเลือกแทน Google reCAPTCHA ที่โฮสต์เองได้และให้ความสำคัญกับความเป็นส่วนตัว โดยใช้ proof-of-work และ instrumentation แทนปริศนาภาพหรือการติดตาม ลองเทียบกับ ",
+    faqAltSep1: ", ",
+    faqAltSep2: " และ ",
+    faqAltA2: " เพื่อดูว่าตัวไหนเหมาะกับสแตกของคุณ",
+
+    // Bottom CTA
+    ctaTitle: "เลิกใช้ reCAPTCHA ได้ตั้งแต่บ่ายนี้",
+    ctaBody:
+      "วางวิดเจ็ตลงในเว็บของคุณ ชี้ไปที่ VPS ราคา $5 แล้วเลิกจ่ายเงินให้ใครก็ตามเพื่อแลกกับการให้เขาเห็นทราฟฟิกของผู้ใช้คุณ",
+    ctaStart: "เริ่มใช้ใน 5 นาที",
+    ctaDemo: "ลองเดโม ",
+    ctaGithub: "ให้ดาวบน GitHub",
+
+    // Footer
+    ftTagline1: "CAPTCHA แบบโฮสต์เองและโอเพนซอร์ส",
+    ftTagline2: "ไม่มี Google ไม่มีเทเลเมทรี ไม่มีปริศนา",
+    ftProductLabel: "ผลิตภัณฑ์",
+    ftQuickstart: "เริ่มต้นใช้งาน",
+    ftWidget: "วิดเจ็ต",
+    ftDemo: "เดโม",
+    ftCompareLabel: "เปรียบเทียบ",
+    ftVsRecaptcha: "vs reCAPTCHA",
+    ftVsTurnstile: "vs Turnstile",
+    ftVsHcaptcha: "vs hCaptcha",
+    ftAllComparisons: "การเปรียบเทียบทั้งหมด",
+    ftLearnLabel: "ทำความเข้าใจ",
+    ftHowItWorks: "หลักการทำงาน",
+    ftEffectiveness: "ประสิทธิภาพ",
+    ftCompliance: "การปฏิบัติตามข้อกำหนด",
+    ftCommunity: "ชุมชน",
+    ftLegal:
+      "ข้อมูลนี้ไม่ใช่คำแนะนำทางกฎหมาย การปฏิบัติตามข้อกำหนดขึ้นอยู่กับการติดตั้งใช้งานของคุณ",
+  },
 };

@@ -1821,7 +1821,7 @@ html.home-v2-active main.main {
 #homev2 header.top nav a:hover {
   color: var(--fg);
 }
-#homev2 header.top nav a:hover::after {
+#homev2 header.top nav a:not(.homev2-translations a):hover::after {
   transform: scaleX(1);
 }
 #homev2 header.top nav a.gh-link {
@@ -3407,7 +3407,6 @@ html.home-v2-active main.main {
   }
 }
 
-/* Language menu (reused VPNavBarTranslations) inside the homepage nav */
 #homev2 .homev2-translations {
   display: flex !important;
   align-items: center;
@@ -3419,6 +3418,10 @@ html.home-v2-active main.main {
   padding: 0;
   color: var(--fg-dim);
   transition: color 0.18s ease;
+
+  .text {
+    color: var(--fg-dim);
+  }
 }
 #homev2 .homev2-translations .button:hover {
   color: var(--fg);
