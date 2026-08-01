@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import llmstxt from "vitepress-plugin-llms";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import { homeV2Strings } from "./theme/components/homeV2.strings.js";
 
 const GITHUB_STARS = 6632;
 
@@ -65,32 +66,23 @@ const ORGANIZATION = {
   subjectOf: { "@id": "https://trycap.dev/about.html" },
 };
 
-const FAQ_ITEMS = [
+// FAQ JSON-LD is derived from the strings actually rendered by HomeV2 so the
+// schema can never drift from the visible content (a Google requirement for
+// FAQ rich results). Composite answers are concatenated exactly as the
+// template renders them, including link texts.
+const faqItemsFromStrings = (s) => [
+  [s.faqGdprQ, s.faqGdprA.trim()],
+  [s.faqMigrateQ, s.faqMigrateA.trim()],
+  [s.faqBotsQ, s.faqBotsA.trim()],
+  [s.faqCostQ, s.faqCostA.trim()],
+  [s.faqOpenQ, `${s.faqOpenA1}${s.faqOpenLink}${s.faqOpenA2}`.trim()],
   [
-    "Is it GDPR-friendly?",
-    "Yes. Cap doesn't phone home, doesn't set cookies, and doesn't fingerprint users. Your server sees the verification, no one else does.",
+    s.faqAltQ,
+    `${s.faqAltA1}reCAPTCHA${s.faqAltSep1}hCaptcha${s.faqAltSep2}Turnstile${s.faqAltA2}`.trim(),
   ],
-  [
-    "Can I migrate from reCAPTCHA / hCaptcha?",
-    "Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll need to swap your client-side code to use Cap's widget.",
-  ],
-  [
-    "How effective is it against real bots?",
-    "Cap's instrumentation combined with proof-of-work is very effective at making abuse extremely difficult to automate at scale.",
-  ],
-  [
-    "What does it cost to self-host?",
-    "Cap Standalone fits on a $5 VPS for most sites. There are no per-request fees, no egress to a third party, and no API quotas to hit.",
-  ],
-  [
-    "What is an open-source CAPTCHA?",
-    "An open-source CAPTCHA is bot protection whose code you can read, audit, and self-host, rather than a closed third-party service. Cap is licensed under Apache 2.0 and runs entirely on your own infrastructure, so visitor data never reaches a vendor.",
-  ],
-  [
-    "What is the best open-source alternative to reCAPTCHA?",
-    "Cap is a privacy-first, self-hosted alternative to Google reCAPTCHA that uses proof-of-work and instrumentation instead of visual puzzles or tracking. Compare it against reCAPTCHA, hCaptcha, and Turnstile to find what fits your stack.",
-  ]
 ];
+
+const FAQ_ITEMS = faqItemsFromStrings(homeV2Strings.en);
 
 const FAQ_PAGE = {
   "@context": "https://schema.org",
@@ -100,6 +92,26 @@ const FAQ_PAGE = {
     name,
     acceptedAnswer: { "@type": "Answer", text },
   })),
+};
+
+const ZH_FAQ_ITEMS = faqItemsFromStrings(homeV2Strings.zh);
+
+const ZH_FAQ_PAGE = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  inLanguage: "zh-CN",
+  mainEntity: ZH_FAQ_ITEMS.map(([name, text]) => ({
+    "@type": "Question",
+    name,
+    acceptedAnswer: { "@type": "Answer", text },
+  })),
+};
+
+const ZH_SOFTWARE_APPLICATION = {
+  ...SOFTWARE_APPLICATION,
+  inLanguage: "zh-CN",
+  description:
+    "Cap 是一个免费、开源的 CAPTCHA 替代方案。可自托管、隐私优先、无 Google。基于工作量证明与 instrumentation，无视觉谜题。Apache 2.0 许可。",
 };
 
 const COMPARE_SIDEBAR = [
@@ -134,22 +146,124 @@ const COMPARE_SIDEBAR = [
   },
 ];
 
+const ZH_COMPARE_SIDEBAR = [
+  {
+    text: "对比 Cap",
+    items: [
+      { text: "← 返回文档", link: "/zh/guide/" },
+      { text: "功能对比", link: "/zh/guide/alternatives.md" },
+      { text: "从 reCAPTCHA 迁移", link: "/zh/guide/alternatives/migrate-from-recaptcha.md" },
+    ],
+  },
+  {
+    text: "vs",
+    items: [
+      { text: "reCAPTCHA", link: "/zh/guide/alternatives/recaptcha.md" },
+      { text: "Turnstile", link: "/zh/guide/alternatives/turnstile.md" },
+      { text: "hCaptcha", link: "/zh/guide/alternatives/hcaptcha.md" },
+      { text: "Altcha", link: "/zh/guide/alternatives/altcha.md" },
+      { text: "FriendlyCaptcha", link: "/zh/guide/alternatives/friendlycaptcha.md" },
+      { text: "SilentShield", link: "/zh/guide/alternatives/silentshield.md" },
+      { text: "Anubis", link: "/zh/guide/alternatives/anubis.md" },
+    ],
+  },
+  {
+    text: "指南",
+    items: [
+      { text: "最佳 CAPTCHA 替代方案", link: "/zh/guide/best-captcha-alternatives.md" },
+      { text: "CAPTCHA 与转化率", link: "/zh/guide/captcha-conversion-rate.md" },
+      { text: "开源 CAPTCHA", link: "/zh/guide/open-source-captcha.md" },
+      { text: "移动端表单机器人防护", link: "/zh/guide/mobile-form-bot-protection.md" },
+    ],
+  },
+];
+
+const ZH_SIDEBAR = [
+  { text: "快速开始", link: "/zh/guide/index.md" },
+  { text: "功能对比", link: "/zh/guide/alternatives.md" },
+  {
+    text: "Standalone",
+    collapsed: false,
+    items: [
+      { text: "快速开始", link: "/zh/guide/standalone/index.md" },
+      { text: "API", link: "/zh/guide/standalone/api.md" },
+      { text: "配置选项", link: "/zh/guide/standalone/options.md" },
+    ],
+  },
+  {
+    text: "验证组件",
+    collapsed: false,
+    items: [
+      { text: "使用方法", link: "/zh/guide/widget.md" },
+      { text: "编程模式", link: "/zh/guide/programmatic.md" },
+      { text: "浮动模式", link: "/zh/guide/floating.md" },
+    ],
+  },
+  {
+    text: "库",
+    collapsed: true,
+    items: [
+      { text: "核心库", link: "/zh/guide/capjs-core.md" },
+      { text: "社区库", link: "/zh/guide/community.md" },
+    ],
+  },
+  {
+    text: "深入了解",
+    collapsed: true,
+    items: [
+      { text: "有效性", link: "/zh/guide/effectiveness.md" },
+      { text: "Instrumentation", link: "/zh/guide/instrumentation.md" },
+      { text: "RSW 时间锁谜题", link: "/zh/guide/rsw.md" },
+      { text: "Cap 是如何工作的？", link: "/zh/guide/workings.md" },
+    ],
+  },
+  { text: "性能基准", link: "/zh/guide/benchmark.md" },
+  { text: "合规", link: "/zh/guide/compliance.md" },
+  { text: "演示", link: "/zh/guide/demo.md" },
+  { text: "GitHub", link: "https://github.com/tiagozip/cap" },
+];
+
 const humanize = (s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
+const ZH_SEG_NAMES = {
+  alternatives: "对比",
+  middleware: "中间件",
+  standalone: "Standalone",
+  troubleshooting: "故障排查",
+};
+
 function breadcrumbList(pageData) {
-  const rel = pageData.relativePath;
+  const isZh = pageData.relativePath.startsWith("zh/");
+  const rel = pageData.relativePath.replace(/^zh\//, "");
   const segs = rel
     .replace(/index\.md$/, "")
     .replace(/\.md$/, "")
     .split("/")
     .filter(Boolean);
   if (segs[0] !== "guide") return null;
-  const items = [{ "@type": "ListItem", position: 1, name: "Home", item: "https://trycap.dev/" }];
-  let acc = "https://trycap.dev";
+  const prefix = isZh ? "/zh" : "";
+  const items = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: isZh ? "首页" : "Home",
+      item: `https://trycap.dev${prefix}/`,
+    },
+  ];
+  let acc = `https://trycap.dev${prefix}`;
   segs.forEach((seg, i) => {
     acc += `/${seg}`;
     const isLast = i === segs.length - 1;
-    const name = seg === "guide" ? "Docs" : isLast ? pageData.title : humanize(seg);
+    const name =
+      seg === "guide"
+        ? isZh
+          ? "文档"
+          : "Docs"
+        : isLast
+          ? pageData.title
+          : isZh
+            ? (ZH_SEG_NAMES[seg] ?? humanize(seg))
+            : humanize(seg);
     const item = isLast
       ? acc + (rel.endsWith("index.md") ? "/" : ".html")
       : seg === "guide"
@@ -169,8 +283,52 @@ export default withMermaid({
     "Cap is a lightweight, modern open-source CAPTCHA alternative using proof-of-work, time-lock and instrumentation challenges",
   lastUpdated: true,
   appearance: "force-dark",
+  locales: {
+    root: {
+      label: "English",
+      lang: "en-US",
+    },
+    zh: {
+      label: "简体中文",
+      lang: "zh-CN",
+      title: "Cap – 开源、可自托管的 reCAPTCHA 替代方案",
+      titleTemplate: ":title – Cap 人机验证",
+      description:
+        "Cap 是一个轻量、现代的开源 CAPTCHA 替代方案，基于工作量证明、时间锁与 instrumentation 质询",
+      themeConfig: {
+        nav: [
+          { text: "首页", link: "/zh/" },
+          { text: "文档", link: "/zh/guide/" },
+          { text: "GitHub", link: "https://github.com/tiagozip/cap" },
+        ],
+        sidebar: {
+          "/zh/guide/best-captcha-alternatives": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/captcha-conversion-rate": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/open-source-captcha": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/mobile-form-bot-protection": ZH_COMPARE_SIDEBAR,
+          "/zh/guide/alternatives/": ZH_COMPARE_SIDEBAR,
+          "/zh/": ZH_SIDEBAR,
+        },
+        editLink: {
+          pattern: "https://github.com/tiagozip/cap/edit/main/docs/:path",
+          text: "在 GitHub 上编辑此页",
+        },
+        outline: { label: "本页目录" },
+        docFooter: { prev: "上一页", next: "下一页" },
+        lastUpdated: { text: "最后更新于" },
+        returnToTopLabel: "返回顶部",
+        sidebarMenuLabel: "菜单",
+        darkModeSwitchLabel: "外观",
+        langMenuLabel: "切换语言",
+        footer: {
+          message: "基于 Apache 2.0 许可发布",
+          copyright: "<a href='https://tiago.zip' target='_blank'>made by tiago.zip</a>",
+        },
+      },
+    },
+  },
   vite: {
-    plugins: [llmstxt()],
+    plugins: [llmstxt({ ignoreFiles: ["zh/**"] })],
   },
   srcExclude: ["public/**"],
   transformPageData(pageData) {
@@ -200,6 +358,14 @@ export default withMermaid({
       ["meta", { name: "twitter:title", content: title }],
       ["meta", { name: "twitter:description", content: description }],
     ];
+    const toUrl = (rel) =>
+      `https://trycap.dev/${rel}`.replace(/index\.md$/, "").replace(/\.md$/, ".html");
+    const baseRel = pageData.relativePath.replace(/^zh\//, "");
+    head.push(
+      ["link", { rel: "alternate", hreflang: "en", href: toUrl(baseRel) }],
+      ["link", { rel: "alternate", hreflang: "zh-CN", href: toUrl(`zh/${baseRel}`) }],
+      ["link", { rel: "alternate", hreflang: "x-default", href: toUrl(baseRel) }],
+    );
     const dates = gitDates(pageData.relativePath);
     const published = pageData.frontmatter.datePublished || dates?.published;
     const modified = dates?.modified;
@@ -211,16 +377,21 @@ export default withMermaid({
     }
     if (pageData.relativePath === "index.md") {
       head.push(jsonLd(SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(FAQ_PAGE));
-    } else if (pageData.relativePath === "about.md") {
+    } else if (pageData.relativePath === "zh/index.md") {
+      head.push(jsonLd(ZH_SOFTWARE_APPLICATION), jsonLd(ORGANIZATION), jsonLd(ZH_FAQ_PAGE));
+    } else if (pageData.relativePath.replace(/^zh\//, "") === "about.md") {
+      const isZh = pageData.relativePath.startsWith("zh/");
+      const aboutUrl = `https://trycap.dev/${isZh ? "zh/" : ""}about.html`;
       head.push(
         jsonLd(ORGANIZATION),
         jsonLd({
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          "@id": "https://trycap.dev/about.html",
-          name: "About Cap",
-          url: "https://trycap.dev/about.html",
+          "@id": aboutUrl,
+          name: isZh ? "关于 Cap" : "About Cap",
+          url: aboutUrl,
           description,
+          ...(isZh && { inLanguage: "zh-CN" }),
           mainEntity: { "@id": "https://trycap.dev/#organization" },
           ...(modified && { dateModified: modified }),
         }),
@@ -315,7 +486,7 @@ export default withMermaid({
     [
       "script",
       {},
-      `(function(){try{if(location.pathname==='/'||location.pathname==='/index.html'){document.documentElement.classList.add('home-v2-active');}}catch(e){}})();`
+      `(function(){try{if(location.pathname==='/'||location.pathname==='/index.html'||location.pathname==='/zh/'||location.pathname==='/zh/index.html'){document.documentElement.classList.add('home-v2-active');}}catch(e){}})();`
     ],
     [
       "script",
@@ -394,6 +565,32 @@ export default withMermaid({
         appId: "B8THEYC8QW",
         apiKey: "ebdc4d8bd68e388cbeca09c14b982a85",
         indexName: "cap-tiagorangel",
+        // Note: no per-locale `searchParameters.facetFilters` needed here.
+        // VitePress's VPAlgoliaSearchBox strips any user-provided `lang:*`
+        // facet filter and always injects `lang:<current locale lang>` itself,
+        // so English pages query with lang:en-US and zh pages with lang:zh-CN
+        // automatically (requires `lang` to be a facet attribute on the index).
+        locales: {
+          zh: {
+            placeholder: "搜索文档",
+            translations: {
+              button: { buttonText: "搜索", buttonAriaLabel: "搜索" },
+              modal: {
+                searchBox: {
+                  cancelButtonText: "取消",
+                  resetButtonTitle: "清除查询",
+                },
+                noResultsScreen: { noResultsText: "没有找到相关结果" },
+                footer: {
+                  selectText: "选择",
+                  navigateText: "切换",
+                  closeText: "关闭",
+                  searchByText: "搜索服务由",
+                },
+              },
+            },
+          },
+        },
       },
     },
     logo: "/logo.png",
