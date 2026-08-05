@@ -151,6 +151,25 @@ const DOC_PROP_MARKERS = [
   "__webdriver_script_func",
   "__webdriver_script_function",
 ];
+const NAV_OWN_PROP_MARKERS = [
+  "webdriver",
+  "userAgent",
+  "appVersion",
+  "userAgentData",
+  "platform",
+  "vendor",
+  "product",
+  "productSub",
+  "languages",
+  "language",
+  "plugins",
+  "mimeTypes",
+  "hardwareConcurrency",
+  "deviceMemory",
+  "maxTouchPoints",
+  "permissions",
+  "connection",
+];
 const ATTR_SUBSTRING_MARKERS = ["selenium", "webdriver", "driver"];
 const STACK_SUBSTRING_MARKERS = ["pptr:", "UtilityScript.", "PhantomJS"];
 const WINDOW_PREFIX_MARKERS = ["puppeteer_", "cdc_", "$cdc_"];
@@ -179,6 +198,7 @@ function hashWith(seed) {
 function buildBlockChecks(b, id, hF, hSet, h) {
   const winHashes = WINDOW_PROP_MARKERS.map(h);
   const docHashes = DOC_PROP_MARKERS.map(h);
+  const navOwnHashes = NAV_OWN_PROP_MARKERS.map(h);
   const attrSubHashes = ATTR_SUBSTRING_MARKERS.map(h);
   const stackSubHashes = STACK_SUBSTRING_MARKERS.map(h);
   const winPrefixHashes = WINDOW_PREFIX_MARKERS.map(h);
@@ -187,16 +207,19 @@ function buildBlockChecks(b, id, hF, hSet, h) {
   const webglRendererHash = h(WEBGL_RENDERER_MARKER);
   const productSubGeckoHash = h(PRODUCTSUB_GECKO);
   const sequentumHash = h(SEQUENTUM_MARKER);
-  
+
   const checks = [];
 
   checks.push(
     `if (!${b}) { try { var d = Object.getOwnPropertyDescriptors(navigator); var __wh = ${h("webdriver")}; for (const k in d) { if (${hF}(k) === __wh) { ${b} = true; break; } } if (!${b}) { var p = Object.getPrototypeOf(navigator); while (p && !${b}) { for (const k of Object.getOwnPropertyNames(p)) { if (${hF}(k) === __wh) { try { if (navigator[k]) ${b} = true; } catch {} break; } } p = Object.getPrototypeOf(p); } } } catch { ${b} = true; } }`,
   );
 
-  checks.push(
-    `if (!${b} && Object.getOwnPropertyNames(navigator).length !== 0) ${b} = true;`,
-  );
+  {
+    const a = rVar();
+    checks.push(
+      `if (!${b}) { try { var ${a} = ${JSON.stringify(navOwnHashes)}; for (const k of Object.getOwnPropertyNames(navigator)) { if (${hSet}(${a}, ${hF}(k))) { ${b} = true; break; } } } catch { ${b} = true; } }`,
+    );
+  }
 
   {
     const a = rVar();

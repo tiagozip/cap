@@ -169,4 +169,19 @@ describe("verifyInstrumentationResult", () => {
     expect(decompressed).not.toContain("navigator.plugins.length === 0");
     expect(decompressed).not.toContain("navigator.languages.length === 0");
   });
+
+  test("regression: any navigator own property must not block (#294)", async () => {
+    for (let i = 0; i < 25; i++) {
+      const r = await generateInstrumentation({
+        blockAutomatedBrowsers: true,
+        obfuscationLevel: 1,
+      });
+      const decompressed = inflateRawSync(
+        Buffer.from(r.instrumentation, "base64"),
+      ).toString("utf8");
+      expect(decompressed).not.toContain(
+        "Object.getOwnPropertyNames(navigator).length !== 0",
+      );
+    }
+  });
 });
