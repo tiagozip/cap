@@ -310,7 +310,7 @@ function renderIntegrationTab(key) {
 <!-- pin a version in production, e.g. @cap.js/widget@3 -->
 
 <cap-widget data-cap-api-endpoint="${endpoint}"></cap-widget>`;
-  const nodeSnippet = `const res = await fetch("${origin}/siteverify", {
+  const nodeSnippet = `const res = await fetch("${origin}/${sk}/siteverify", {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({ secret: process.env.CAP_SECRET, response: token }),
