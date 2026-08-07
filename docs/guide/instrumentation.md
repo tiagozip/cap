@@ -6,7 +6,7 @@ description: "Cap's instrumentation challenges run server-generated JS to verify
 
 Instrumentation challenges are Cap's second layer of verification, running silently alongside the core proof-of-work system and present on Cap Standalone.
 
-They generate a unique JavaScript program on every request that is executed inside the visitor's browser. The output is checked server-side, allowing Cap to confirm that a genuine browser environment is present before accepting a token.
+They generate a unique JavaScript program on every request that is executed inside the visitor's browser. The output is checked server-side, allowing Cap to verify that the script ran against a browser-shaped environment before accepting a token. Note that this is a best-effort signal, not proof of a genuine browser: the computation is deterministic given the script, so a sufficiently complete fake DOM can in principle reproduce it outside a browser.
 
 ## How they work
 
@@ -18,7 +18,7 @@ All of these checks run inside an iframe, which `postMessage`s the answers back 
 
 ## Why DOM operations
 
-Pure arithmetic can be replicated in a non-browser environment by simply running the JavaScript. DOM operations cannot - or at least, not cheaply. Constructing real element trees, reading values through the browser's layout engine, and tearing them down again exercises a part of the browser that non-browser runtimes often stub out, do incorrectly, or skip entirely for performance. This makes the challenge harder to replay outside a genuine rendering engine.
+Pure arithmetic can be replicated in a non-browser environment by simply running the JavaScript. DOM operations make this harder - but only if they exercise semantics a fake DOM cannot cheaply reproduce. Simple `innerText` round-trips and element-tree walks can be stubbed correctly with a small fake DOM, so on their own they are a speed bump rather than a barrier. Layout-dependent reads (CSS box-model geometry via `offsetWidth`/`offsetHeight`/`getBoundingClientRect`) require an actual layout engine and raise the replay cost significantly. This is why the built-in probes include layout-dependent checks, and why instrumentation should always be paired with proof-of-work.
 
 Instrumentation challenges often also mix these with a preset list of checks.
 
