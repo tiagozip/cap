@@ -1,4 +1,4 @@
----
+q---
 outline: deep
 description: "Set up Cap, the open-source self-hosted CAPTCHA, in about five minutes. Run the server with Docker, drop in the widget, verify tokens. No Google, no telemetry, no visual puzzles."
 ---
