@@ -23,6 +23,9 @@ RUN mkdir -p data && chown bun:bun data
 
 EXPOSE 3000/tcp
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD bun -e "fetch('http://127.0.0.1:' + (process.env.SERVER_PORT || 3000) + '/health/ready').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+
 USER bun
 
 ENTRYPOINT [ "bun", "run", "./src/index.js" ]

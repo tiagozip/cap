@@ -15,3 +15,15 @@ Authorization: Bot YOUR_API_KEY
 ```
 
 You can see a list of all available API endpoints and their required bodies by going to `http://localhost:3000/swagger`
+
+## Health endpoints
+
+Health endpoints do not require authorization:
+
+| Endpoint | Success | Failure | Purpose |
+| --- | --- | --- | --- |
+| `GET /health/live` | `200` | — | Confirms the HTTP process can respond |
+| `GET /health/ready` | `200` | `503` | Checks startup initialization and Redis/Valkey |
+| `GET /health` | `200` | `503` | Alias for `/health/ready` |
+
+An unhealthy response identifies the unavailable component without exposing internal errors or Redis credentials.

@@ -4,7 +4,9 @@ import { Elysia, file } from "elysia";
 import { assetsServer } from "./assets.js";
 import { auth } from "./auth.js";
 import { capServer } from "./cap.js";
+import { db } from "./db.js";
 import { isDemoMode } from "./demo.js";
+import { createHealthServer } from "./health.js";
 import { loadIPDB } from "./ipdb.js";
 import { loadRswKeypair, startRswRefresh } from "./rsw-store.js";
 import { server } from "./server.js";
@@ -20,6 +22,12 @@ import { publicStatic } from "./static.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
+let initializationComplete = false;
+
+const healthServer = createHealthServer({
+  checkRedis: () => db.send("PING", []),
+  isInitialized: () => initializationComplete,
+});
 
 new Elysia({
   serve: {
@@ -52,6 +60,10 @@ new Elysia({
           {
             name: "Assets",
             description: "Reading static assets from the assets server",
+          },
+          {
+            name: "Health",
+            description: "Liveness and readiness checks",
           },
         ],
         info: {
@@ -134,6 +146,7 @@ new Elysia({
     }),
   )
   .use(publicStatic)
+  .use(healthServer)
   .get("/", async ({ cookie }) => {
     if (isDemoMode()) return file("./public/index.html");
     return file(
@@ -155,6 +168,7 @@ await loadHeaders();
 await loadRatelimit();
 await loadCorsDefault();
 await loadFiltering();
+initializationComplete = true;
 loadRswKeypair().catch((e) =>
   console.warn("[cap] RSW keypair load:", e.message),
 );

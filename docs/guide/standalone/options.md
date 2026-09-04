@@ -86,6 +86,16 @@ The recommended setup uses Valkey (a Redis-compatible store) via the docker-comp
 
 If you share a single Redis instance across multiple Cap deployments (or with other apps), set `REDIS_PREFIX` to namespace all keys. For example, `REDIS_PREFIX=cap:` stores sessions as `cap:session:...`, metrics as `cap:metrics:...`, and so on. It's empty by default, so existing deployments are unaffected.
 
+## Health checks
+
+Cap Standalone exposes unauthenticated health endpoints for container orchestrators and monitoring systems:
+
+- `GET /health/live` returns `200` while the HTTP process can respond. Use it as a Kubernetes liveness probe.
+- `GET /health/ready` checks startup initialization and the Redis/Valkey connection. It returns `200` when Cap can serve traffic and `503` otherwise. Use it as a readiness probe.
+- `GET /health` is an alias for `/health/ready` and is used by the Docker image's built-in health check.
+
+Readiness responses contain only component states and do not expose connection strings or internal errors.
+
 ## Error messages
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.
