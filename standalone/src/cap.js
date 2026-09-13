@@ -160,6 +160,37 @@ export function invalidateBlockCache(siteKey) {
   else _blockCache.clear();
 }
 
+// Every challenge and redeem needs the site key's `config` and `jwtSecret`,
+// and the rate limiter reads `config` again first, so a single request did
+// 2-3 Redis round-trips for fields that only change through the admin API.
+// Cache them briefly (like the block rules) and invalidate on admin writes.
+// Misses are not cached: the site key comes from the URL, so caching unknown
+// keys would let arbitrary requests grow this map.
+const _keyCache = new Map();
+const KEY_CACHE_TTL = 5_000;
+
+async function getKeyFields(siteKey) {
+  const cached = _keyCache.get(siteKey);
+  if (cached && Date.now() - cached.ts < KEY_CACHE_TTL) return cached.fields;
+
+  const [config, jwtSecret] = await db.hmget(`key:${siteKey}`, [
+    "config",
+    "jwtSecret",
+  ]);
+  const fields = { config: config ?? null, jwtSecret: jwtSecret ?? null };
+  if (fields.config) _keyCache.set(siteKey, { fields, ts: Date.now() });
+  return fields;
+}
+
+export function invalidateKeyCache(siteKey) {
+  if (siteKey) _keyCache.delete(siteKey);
+  else _keyCache.clear();
+}
+
+const fnf = (p) => {
+  p.catch(() => {});
+};
+
 async function isBlocked(siteKey, ip) {
   const entries = await loadBlockRules(siteKey);
   if (entries.length === 0) return false;
@@ -206,7 +237,7 @@ export const capServer = new Elysia({
       duration: 5_000,
       getLimits: async (params) => {
         if (params?.siteKey) {
-          const configStr = await db.hget(`key:${params.siteKey}`, "config");
+          const { config: configStr } = await getKeyFields(params.siteKey);
           if (configStr) {
             try {
               const config = JSON.parse(configStr);
@@ -245,12 +276,9 @@ export const capServer = new Elysia({
   .post(
     "/:siteKey/challenge",
     async ({ set, params, request, server: srv }) => {
-      const fields = await db.hmget(`key:${params.siteKey}`, [
-        "config",
-        "jwtSecret",
-      ]);
+      const fields = await getKeyFields(params.siteKey);
 
-      if (!fields[0]) {
+      if (!fields.config) {
         set.status = 404;
         return { error: "Invalid site key or secret" };
       }
@@ -265,10 +293,6 @@ export const capServer = new Elysia({
       } catch (e) {
         console.error("[cap] isBlocked check failed:", e);
       }
-
-      const fnf = (p) => {
-        p.catch(() => {});
-      };
 
       (async () => {
         if (!ip) return;
@@ -320,8 +344,8 @@ export const capServer = new Elysia({
         }
       } catch {}
 
-      const keyConfig = JSON.parse(fields[0]);
-      const jwtSecret = fields[1];
+      const keyConfig = JSON.parse(fields.config);
+      const jwtSecret = fields.jwtSecret;
 
       if (!jwtSecret) {
         set.status = 500;
@@ -417,18 +441,18 @@ export const capServer = new Elysia({
 
   .post("/:siteKey/redeem", async ({ body, set, params }) => {
     const bucket = hourlyBucket();
-    const failAndTrack = async (status, response) => {
+    const failAndTrack = (status, response) => {
       set.status = status;
-      await db.hincrby(`metrics:failed:${params.siteKey}`, bucket, 1);
+      fnf(db.hincrby(`metrics:failed:${params.siteKey}`, bucket, 1));
       return response;
     };
 
-    if (!body || !body.token || !body.solutions) {
+    if (!body?.token || !body.solutions) {
       set.status = 400;
       return { error: "Missing required fields" };
     }
 
-    const jwtSecret = await db.hget(`key:${params.siteKey}`, "jwtSecret");
+    const { jwtSecret } = await getKeyFields(params.siteKey);
     if (!jwtSecret) {
       set.status = 404;
       return { error: "Invalid site key" };
@@ -542,19 +566,25 @@ export const capServer = new Elysia({
     const redeemToken = result.token;
     const tokenExpires = result.expires;
     const tokenTtlSecs = Math.ceil(TOKEN_TTL_MS / 1000);
-    await db.set(`token:${redeemToken}`, String(tokenExpires));
-    await db.expire(`token:${redeemToken}`, tokenTtlSecs);
+    // One round-trip instead of SET then EXPIRE, and no window in which the
+    // token exists without a TTL.
+    await db.send("SET", [
+      `token:${redeemToken}`,
+      String(tokenExpires),
+      "EX",
+      String(tokenTtlSecs),
+    ]);
 
-    await db.hincrby(`metrics:verified:${params.siteKey}`, bucket, 1);
+    // Metrics do not affect the response; don't make the client wait on them
+    // (the challenge route already writes its metrics fire-and-forget).
+    fnf(db.hincrby(`metrics:verified:${params.siteKey}`, bucket, 1));
 
     if (result.iat) {
       const latencyMs = Date.now() - result.iat;
-      await db.hincrby(
-        `metrics:latency_sum:${params.siteKey}`,
-        bucket,
-        latencyMs,
+      fnf(
+        db.hincrby(`metrics:latency_sum:${params.siteKey}`, bucket, latencyMs),
       );
-      await db.hincrby(`metrics:latency_count:${params.siteKey}`, bucket, 1);
+      fnf(db.hincrby(`metrics:latency_count:${params.siteKey}`, bucket, 1));
     }
 
     return {

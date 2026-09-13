@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Elysia, t } from "elysia";
 import { authBeforeHandle } from "./auth.js";
-import { invalidateBlockCache } from "./cap.js";
+import { invalidateBlockCache, invalidateKeyCache } from "./cap.js";
 import { db, hgetall } from "./db.js";
 import {
   demoGetBlockedIps,
@@ -510,6 +510,7 @@ export const server = new Elysia({
       ]);
 
       invalidateCorsCache(params.siteKey);
+      invalidateKeyCache(params.siteKey);
 
       return { success: true };
     },
@@ -564,6 +565,7 @@ export const server = new Elysia({
         db.srem("keys", sk),
       ]);
       invalidateBlockCache(params.siteKey);
+      invalidateKeyCache(params.siteKey);
 
       return { success: true };
     },

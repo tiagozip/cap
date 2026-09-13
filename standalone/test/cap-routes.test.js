@@ -24,7 +24,7 @@ if (!redisAvailable) {
   process.env.REDIS_URL = REDIS_URL;
 
   // Lazy-load standalone modules after redis is confirmed
-  const { capServer } = await import("../src/cap.js");
+  const { capServer, invalidateKeyCache } = await import("../src/cap.js");
   const { db } = await import("../src/db.js");
   const { generateChallenge: cgChallenge } = await import("capjs-core");
   const { createHash } = await import("node:crypto");
@@ -128,6 +128,41 @@ if (!redisAvailable) {
       );
       expect(res.status).toBe(404);
     });
+
+    test("serves cached key config until the cache is invalidated", async () => {
+      const issue = () =>
+        app
+          .handle(
+            new Request(`http://localhost/${SITE_KEY}/challenge`, {
+              method: "POST",
+            }),
+          )
+          .then((r) => r.json());
+      const base = {
+        challengeCount: 3,
+        saltSize: 16,
+        difficulty: 2,
+        instrumentation: false,
+      };
+      expect((await issue()).challenge.c).toBe(3);
+      await db.send("HSET", [
+        `key:${SITE_KEY}`,
+        "config",
+        JSON.stringify({ ...base, challengeCount: 5 }),
+      ]);
+      try {
+        expect((await issue()).challenge.c).toBe(3);
+        invalidateKeyCache(SITE_KEY);
+        expect((await issue()).challenge.c).toBe(5);
+      } finally {
+        await db.send("HSET", [
+          `key:${SITE_KEY}`,
+          "config",
+          JSON.stringify(base),
+        ]);
+        invalidateKeyCache(SITE_KEY);
+      }
+    });
   });
 
   describe("standalone /:siteKey/redeem", () => {
@@ -174,6 +209,9 @@ if (!redisAvailable) {
       const body = await r.json();
       expect(body.success).toBe(true);
       expect(body.token.startsWith(`${SITE_KEY}:`)).toBe(true);
+      const ttl = await db.send("TTL", [`token:${body.token}`]);
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(2 * 60 * 60);
     }, 30_000);
 
     test("rejects replay (already_redeemed)", async () => {
