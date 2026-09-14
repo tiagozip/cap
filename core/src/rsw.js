@@ -18,6 +18,39 @@ function modpow(b, e, m) {
   return r;
 }
 
+// Fixed-base windowed exponentiation. mint() raises the same four bases (g, h mod p and
+// mod q) to a fresh 256-bit exponent on every challenge, so precompute
+// table[j][d] = base^(d * 2^(W*j)): each power then costs ~EXP_BITS/W modular
+// multiplications and no squarings (vs ~1.5*EXP_BITS for square-and-multiply).
+// W=8: 32 rows x 256 entries x 4 bases of 1024-bit ints (~4 MB), built once per minter.
+const FB_W = 8;
+const FB_EXP_BITS = 256;
+const FB_MASK = (1n << BigInt(FB_W)) - 1n;
+
+function fixedBaseTable(base, m) {
+  const rows = [];
+  let bj = base % m;
+  for (let j = 0; j < FB_EXP_BITS / FB_W; j++) {
+    const row = new Array(1 << FB_W);
+    row[0] = 1n;
+    row[1] = bj;
+    for (let d = 2; d < 1 << FB_W; d++) row[d] = (row[d - 1] * bj) % m;
+    rows.push(row);
+    bj = (row[(1 << FB_W) - 1] * bj) % m;
+  }
+  return { rows, base, m };
+}
+
+function fixedBasePow(t, e) {
+  if (e >> BigInt(FB_EXP_BITS)) return modpow(t.base, e, t.m); // outside the table's range
+  let r = 1n;
+  for (let j = 0; e > 0n; j++, e >>= BigInt(FB_W)) {
+    const d = Number(e & FB_MASK);
+    if (d) r = (r * t.rows[j][d]) % t.m;
+  }
+  return r;
+}
+
 function modinv(a, m) {
   let [old_r, r] = [a % m, m];
   let [old_s, s] = [1n, 0n];
@@ -128,14 +161,18 @@ export function buildRswMinter({ N, p, q, t, g }, opts = {}) {
 
   const gp = G % p;
   const gq = G % q;
+  const tgp = fixedBaseTable(gp, p);
+  const tgq = fixedBaseTable(gq, q);
+  const thp = fixedBaseTable(hp, p);
+  const thq = fixedBaseTable(hq, q);
 
   function mintFromR(r) {
     const rp = r % pm1;
     const rq = r % qm1;
-    const xp = modpow(gp, rp, p);
-    const xq = modpow(gq, rq, q);
-    const yp = modpow(hp, rp, p);
-    const yq = modpow(hq, rq, q);
+    const xp = fixedBasePow(tgp, rp);
+    const xq = fixedBasePow(tgq, rq);
+    const yp = fixedBasePow(thp, rp);
+    const yq = fixedBasePow(thq, rq);
     return { x: crtCombine(xp, xq), y: crtCombine(yp, yq) };
   }
 
