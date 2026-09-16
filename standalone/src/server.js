@@ -17,6 +17,7 @@ import {
   getStatus as getIPDBStatus,
 } from "./ipdb.js";
 import { ensureRswKeypair, getRswStatus } from "./rsw-store.js";
+import { hashSecret } from "./secret-hash.js";
 import {
   invalidateCorsCache,
   setCorsDefault,
@@ -168,7 +169,7 @@ export const server = new Elysia({
         "name",
         body?.name || siteKey,
         "secretHash",
-        await Bun.password.hash(secretKey),
+        hashSecret(secretKey),
         "jwtSecret",
         jwtSecret,
         "config",
@@ -592,7 +593,7 @@ export const server = new Elysia({
 
       await db.hmset(`key:${params.siteKey}`, [
         "secretHash",
-        await Bun.password.hash(newSecretKey),
+        hashSecret(newSecretKey),
       ]);
 
       return {

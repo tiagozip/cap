@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 
 import { db } from "./db.js";
+import { hashSecret, verifySecret } from "./secret-hash.js";
 
 export const siteverifyServer = new Elysia({
   detail: {
@@ -35,11 +36,16 @@ export const siteverifyServer = new Elysia({
     return { success: false, error: "Invalid site key or secret" };
   }
 
-  const isValidSecret = await Bun.password.verify(secret, secretHash);
+  const { valid, legacy } = await verifySecret(secret, secretHash);
 
-  if (!isValidSecret) {
+  if (!valid) {
     set.status = 403;
     return { success: false, error: "Invalid site key or secret" };
+  }
+
+  // Upgrade legacy password-KDF hashes to SHA-256
+  if (legacy) {
+    await db.hset(`key:${sitekey}`, "secretHash", hashSecret(secret));
   }
 
   const tokenKey = `token:${response}`;
