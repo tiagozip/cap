@@ -5,15 +5,11 @@ import Demo from "./components/Demo.vue";
 import DemoReply from "./components/DemoReply.vue";
 import DemoTabs from "./components/DemoTabs.vue";
 import HomeV2 from "./components/HomeV2.vue";
-import HomeV3 from "./components/HomeV3.vue";
-import Layout from "./Layout.vue";
 import "./style.css";
-import "./docs.css";
 
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
-  Layout,
   enhanceApp({ app, router, siteData }) {
     if (typeof window !== "undefined") {
       const known = Object.keys(siteData.value.locales).filter((k) => k !== "root");
@@ -33,6 +29,5 @@ export default {
     app.component("DemoReply", DemoReply);
     app.component("DemoTabs", DemoTabs);
     app.component("HomeV2", HomeV2);
-    app.component("HomeV3", HomeV3);
   },
 };
