@@ -190,6 +190,20 @@ export const homeV2Strings = {
     ftCompliance: "Compliance",
     ftCommunity: "Community",
     ftLegal: " Not legal advice. Compliance depends on your deployment. ",
+
+    thTitle: "A real challenge, live",
+    thIdle: "Click the checkbox to run a real challenge",
+    thStepChallenge: "challenge fetched",
+    thStepPow: "proof-of-work",
+    thStepInstr: "instrumentation",
+    thStepToken: "token issued",
+    thWorkers: "workers",
+    thSolvedIn: "solved in",
+    thAgain: "Run again",
+    seqVerify: "your server verifies",
+    dashTitle: "A dashboard you host yourself.",
+    dashBody: "Cap Standalone is one container with a REST API and an admin dashboard: site keys, solve analytics, rate limits and CORS, all on your own server.",
+    dashLink: "Set up Standalone",
   },
   zh: {
     // Widget referral banner
@@ -369,6 +383,20 @@ export const homeV2Strings = {
     ftCompliance: "合规",
     ftCommunity: "社区",
     ftLegal: "本页不构成法律建议。是否合规取决于你的部署方式。",
+
+    thTitle: "真实的验证，实时进行",
+    thIdle: "点击复选框，运行一次真实的验证",
+    thStepChallenge: "已获取质询",
+    thStepPow: "工作量证明",
+    thStepInstr: "instrumentation",
+    thStepToken: "已签发令牌",
+    thWorkers: "worker",
+    thSolvedIn: "耗时",
+    thAgain: "再来一次",
+    seqVerify: "你的服务器完成验证",
+    dashTitle: "由你自己托管的控制台。",
+    dashBody: "Cap Standalone 只是一个容器，内置 REST API 和管理控制台：站点密钥、验证分析、速率限制和 CORS，全部运行在你自己的服务器上。",
+    dashLink: "部署 Standalone",
   },
   de: {
     // Widget referral banner
@@ -556,6 +584,20 @@ export const homeV2Strings = {
     ftCommunity: "Community",
     ftLegal:
       "Keine Rechtsberatung. Die Konformität hängt von deinem Deployment ab.",
+
+    thTitle: "Eine echte Challenge, live",
+    thIdle: "Klick die Checkbox, um eine echte Challenge zu lösen",
+    thStepChallenge: "Challenge geladen",
+    thStepPow: "Proof-of-Work",
+    thStepInstr: "Instrumentation",
+    thStepToken: "Token ausgestellt",
+    thWorkers: "Worker",
+    thSolvedIn: "gelöst in",
+    thAgain: "Nochmal",
+    seqVerify: "dein Server verifiziert",
+    dashTitle: "Ein Dashboard, das du selbst hostest.",
+    dashBody: "Cap Standalone ist ein einzelner Container mit REST-API und Admin-Dashboard: Site-Keys, Solve-Statistiken, Rate-Limits und CORS, alles auf deinem eigenen Server.",
+    dashLink: "Standalone einrichten",
   },
   fr: {
     // Widget referral banner
@@ -743,6 +785,20 @@ export const homeV2Strings = {
     ftCommunity: "Communauté",
     ftLegal:
       "Ceci n'est pas un avis juridique. La conformité dépend de votre déploiement.",
+
+    thTitle: "Un vrai défi, en direct",
+    thIdle: "Cochez la case pour lancer un vrai défi",
+    thStepChallenge: "défi récupéré",
+    thStepPow: "preuve de travail",
+    thStepInstr: "instrumentation",
+    thStepToken: "jeton émis",
+    thWorkers: "workers",
+    thSolvedIn: "résolu en",
+    thAgain: "Relancer",
+    seqVerify: "votre serveur vérifie",
+    dashTitle: "Un tableau de bord que vous hébergez vous-même.",
+    dashBody: "Cap Standalone tient dans un seul conteneur avec une API REST et un tableau de bord d'administration : clés de site, statistiques de résolution, limites de débit et CORS, le tout sur votre propre serveur.",
+    dashLink: "Installer Standalone",
   },
   th: {
     // Widget referral banner
@@ -930,5 +986,19 @@ export const homeV2Strings = {
     ftCommunity: "ชุมชน",
     ftLegal:
       "ข้อมูลนี้ไม่ใช่คำแนะนำทางกฎหมาย การปฏิบัติตามข้อกำหนดขึ้นอยู่กับการติดตั้งใช้งานของคุณ",
+
+    thTitle: "ชาเลนจ์ของจริง แบบสด",
+    thIdle: "คลิกช่องทำเครื่องหมายเพื่อรันชาเลนจ์จริง",
+    thStepChallenge: "ดึงชาเลนจ์แล้ว",
+    thStepPow: "proof-of-work",
+    thStepInstr: "instrumentation",
+    thStepToken: "ออกโทเค็นแล้ว",
+    thWorkers: "workers",
+    thSolvedIn: "แก้เสร็จใน",
+    thAgain: "รันอีกครั้ง",
+    seqVerify: "เซิร์ฟเวอร์ของคุณตรวจสอบ",
+    dashTitle: "แดชบอร์ดที่คุณโฮสต์เอง",
+    dashBody: "Cap Standalone คือคอนเทนเนอร์เดียวที่มี REST API และแดชบอร์ดผู้ดูแล: site key สถิติการแก้ชาเลนจ์ rate limit และ CORS ทั้งหมดอยู่บนเซิร์ฟเวอร์ของคุณเอง",
+    dashLink: "ติดตั้ง Standalone",
   },
 };

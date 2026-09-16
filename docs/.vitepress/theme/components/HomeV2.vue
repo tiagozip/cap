@@ -4,12 +4,31 @@ import { useData } from "vitepress";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
 import VPNavBarTranslations from "vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue";
 import { createVortex } from "../vortex/index.js";
-import FooterGlow from "./FooterGlow.vue";
 import { homeV2Strings } from "./homeV2.strings.js";
 
 const { localeIndex } = useData();
 const t = computed(() => homeV2Strings[localeIndex.value] ?? homeV2Strings.en);
 const lp = computed(() => (localeIndex.value === "root" ? "" : `/${localeIndex.value}`));
+
+const faqOpen = ref(0);
+const faq = computed(() => {
+  const s = t.value;
+  const p = lp.value;
+  return [
+    { q: s.faqGdprQ, a: s.faqGdprA },
+    { q: s.faqMigrateQ, a: s.faqMigrateA },
+    { q: s.faqBotsQ, a: s.faqBotsA },
+    { q: s.faqCostQ, a: s.faqCostA },
+    {
+      q: s.faqOpenQ,
+      html: `${s.faqOpenA1}<a href="${p}/guide/standalone/">${s.faqOpenLink}</a>${s.faqOpenA2}`,
+    },
+    {
+      q: s.faqAltQ,
+      html: `${s.faqAltA1}<a href="${p}/guide/alternatives/recaptcha.html">reCAPTCHA</a>${s.faqAltSep1}<a href="${p}/guide/alternatives/hcaptcha.html">hCaptcha</a>${s.faqAltSep2}<a href="${p}/guide/alternatives/turnstile.html">Turnstile</a>${s.faqAltA2}`,
+    },
+  ];
+});
 
 const fromWidget = ref(false);
 const fromWidgetHost = ref("");
@@ -1345,41 +1364,25 @@ onBeforeUnmount(() => {
             </div>
 
             <dl class="faq">
-              <div>
-                <dt>{{ t.faqGdprQ }}</dt>
-                <dd>{{ t.faqGdprA }}</dd>
-              </div>
-              <div>
-                <dt>{{ t.faqMigrateQ }}</dt>
-                <dd>{{ t.faqMigrateA }}</dd>
-              </div>
-              <div>
-                <dt>{{ t.faqBotsQ }}</dt>
-                <dd>{{ t.faqBotsA }}</dd>
-              </div>
-              <div>
-                <dt>{{ t.faqCostQ }}</dt>
-                <dd>{{ t.faqCostA }}</dd>
-              </div>
-              <div>
-                <dt>{{ t.faqOpenQ }}</dt>
-                <dd>
-                  {{ t.faqOpenA1 }}<a :href="lp + '/guide/standalone/'">{{
-                    t.faqOpenLink
-                  }}</a
-                  >{{ t.faqOpenA2 }}
-                </dd>
-              </div>
-              <div>
-                <dt>{{ t.faqAltQ }}</dt>
-                <dd>
-                  {{ t.faqAltA1 }}<a :href="lp + '/guide/alternatives/recaptcha.html'"
-                    >reCAPTCHA</a
-                  >{{ t.faqAltSep1 }}<a :href="lp + '/guide/alternatives/hcaptcha.html'"
-                    >hCaptcha</a
-                  >{{ t.faqAltSep2
-                  }}<a :href="lp + '/guide/alternatives/turnstile.html'">Turnstile</a
-                  >{{ t.faqAltA2 }}
+              <div v-for="(item, i) in faq" :key="i" :class="{ open: faqOpen === i }">
+                <dt>
+                  <button
+                    type="button"
+                    :aria-expanded="faqOpen === i"
+                    :aria-controls="`faq-a-${i}`"
+                    @click="faqOpen = faqOpen === i ? -1 : i"
+                  >
+                    <span>{{ item.q }}</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </dt>
+                <dd :id="`faq-a-${i}`">
+                  <div class="faq-a">
+                    <p v-if="item.html" v-html="item.html"></p>
+                    <p v-else>{{ item.a }}</p>
+                  </div>
                 </dd>
               </div>
             </dl>
@@ -1423,38 +1426,6 @@ onBeforeUnmount(() => {
     <footer>
       <div class="wrap-wide ft-wrap">
         <div class="ft-top">
-          <div class="ft-brand">
-            <a class="ft-logo" :href="lp + '/'" :aria-label="t.navBrandLabel">
-              <img alt="" src="/logo.png" width="26" height="26" />
-              <strong>Cap</strong>
-            </a>
-            <p class="ft-tagline">
-              {{ t.ftTagline1 }}<br />{{ t.ftTagline2 }}
-            </p>
-            <div class="ft-social">
-              <a
-                class="ft-soc gh-link"
-                href="https://github.com/tiagozip/cap"
-                aria-label="GitHub"
-                data-cta="github"
-                data-cta-location="footer"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  width="15"
-                  height="15"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z"
-                  />
-                </svg>
-                <span class="homev2-gh-stars">6.2k</span>
-              </a>
-            </div>
-          </div>
-
           <div class="ft-cols">
             <nav class="ft-col" :aria-label="t.ftProductLabel">
               <span class="ft-col-title">{{ t.ftProductLabel }}</span>
@@ -1504,15 +1475,11 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="ft-bottom">
-          <span class="ft-copy"
-            >© 2026 <a href="https://tiago.zip">tiago.zip</a></span
-          >
-
-          <p style="font-family: system-ui; opacity: 0.8">{{ t.ftLegal }}</p>
+          <span class="ft-copy">© 2026 <a href="https://tiago.zip">tiago.zip</a></span>
+          <span class="ft-legal">{{ t.ftLegal }}</span>
         </div>
       </div>
 
-      <FooterGlow />
     </footer>
   </div>
 </template>
@@ -2546,71 +2513,16 @@ html.home-v2-active main.main {
 #homev2 .ft-wrap {
   position: relative;
   z-index: 1;
+  max-width: 640px;
 }
-
 #homev2 .ft-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
-  gap: 56px;
-  padding-bottom: 56px;
-}
-
-#homev2 .ft-logo {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 18px;
-}
-#homev2 .ft-logo img {
-  width: 26px;
-  height: 26px;
-  transform: translateY(5px);
-  border-radius: 0 !important;
-}
-#homev2 .ft-logo strong {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-#homev2 .ft-tagline {
-  margin: 18px 0 0;
-  max-width: 30ch;
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--fg-dim);
-}
-#homev2 .ft-social {
-  display: flex;
-  gap: 10px;
-  margin-top: 22px;
-}
-#homev2 .ft-soc {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 34px;
-  padding: 0 13px;
-  border: 1px solid var(--line);
-  border-radius: 100px;
-  background: color-mix(in oklab, var(--surface) 60%, transparent);
-  color: var(--fg-dim);
-  font-family: var(--mono);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  transition:
-    color 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease;
-}
-#homev2 .ft-soc:hover {
-  color: var(--fg);
-  border-color: color-mix(in oklab, var(--accent) 45%, var(--line));
-  background: color-mix(in oklab, var(--accent) 9%, transparent);
+  padding-bottom: 32px;
 }
 
 #homev2 .ft-cols {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
 }
 #homev2 .ft-col {
   display: flex;
@@ -2618,16 +2530,14 @@ html.home-v2-active main.main {
   gap: 13px;
 }
 #homev2 .ft-col-title {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--fg-mute);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 #homev2 .ft-col a {
   position: relative;
   width: fit-content;
+  white-space: nowrap;
   font-size: 13.5px;
   color: var(--fg-dim);
   transition:
@@ -2655,15 +2565,12 @@ html.home-v2-active main.main {
 
 #homev2 .ft-bottom {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 22px;
-  padding: 22px 0 36px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 0 32px;
   border-top: 1px solid var(--line);
-  font-family: var(--mono);
   font-size: 12px;
+  line-height: 1.5;
   color: var(--fg-mute);
 }
 #homev2 .ft-copy a {
@@ -2672,11 +2579,6 @@ html.home-v2-active main.main {
 }
 #homev2 .ft-copy a:hover {
   color: var(--fg);
-}
-@media (prefers-reduced-motion: reduce) {
-  #homev2 .ft-hashtrack {
-    animation: none;
-  }
 }
 
 #homev2 .stats {
@@ -2816,28 +2718,86 @@ html.home-v2-active main.main {
 
 #homev2 .faq {
   margin: 48px 0 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px 40px;
+  border-top: 1px solid var(--line);
 }
 #homev2 .faq > div {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-bottom: 1px solid var(--line);
 }
-#homev2 .faq dt {
+#homev2 .faq dt button {
+  all: unset;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 0;
+  cursor: pointer;
+  font: inherit;
   font-size: 15px;
   font-weight: 500;
-  color: var(--fg);
   letter-spacing: -0.005em;
+  color: var(--fg);
+  box-sizing: border-box;
+}
+#homev2 .faq dt button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+#homev2 .faq dt button svg {
+  flex: none;
+  color: var(--fg-mute);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.2s ease;
+}
+#homev2 .faq > div.open dt button svg {
+  transform: rotate(45deg);
+  color: var(--fg);
 }
 #homev2 .faq dd {
   margin: 0;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#homev2 .faq > div.open dd {
+  grid-template-rows: 1fr;
+}
+#homev2 .faq-a {
+  overflow: hidden;
+  min-height: 0;
+}
+#homev2 .faq-a p {
+  margin: 0;
+  padding: 0 0 20px;
+  max-width: 62ch;
   font-size: 14px;
-  color: var(--fg-dim);
   line-height: 1.6;
-  max-width: 44ch;
+  color: var(--fg-dim);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.25s ease,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#homev2 .faq > div.open .faq-a p {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.06s;
+}
+#homev2 .faq-a a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent) 35%, transparent);
+  text-underline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  #homev2 .faq dd,
+  #homev2 .faq-a p,
+  #homev2 .faq dt button svg {
+    transition: none;
+  }
 }
 
 @media (max-width: 860px) {
@@ -2855,10 +2815,6 @@ html.home-v2-active main.main {
   }
   #homev2 .closer-cell:nth-child(-n + 2) {
     border-bottom: 1px dashed var(--line);
-  }
-  #homev2 .faq {
-    grid-template-columns: 1fr;
-    gap: 24px;
   }
   #homev2 section.block {
     padding: 64px 0 0;
@@ -2974,11 +2930,6 @@ html.home-v2-active main.main {
     margin-top: 12px;
     padding-top: 56px;
   }
-  #homev2 .ft-top {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    padding-bottom: 40px;
-  }
   #homev2 .how-card {
     padding: 20px;
     min-height: 0;
@@ -2994,13 +2945,12 @@ html.home-v2-active main.main {
   #homev2 .hero-stage {
     margin-top: 40px;
   }
-  #homev2 .ft-cols {
-    gap: 24px 20px;
-  }
 }
 @media (max-width: 480px) {
   #homev2 .ft-cols {
-    grid-template-columns: 1fr 1fr;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 28px 40px;
   }
 }
 @media (max-width: 420px) {
