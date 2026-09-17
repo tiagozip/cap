@@ -17,6 +17,7 @@ import {
 } from "./settings-cache.js";
 import { siteverifyServer } from "./siteverify.js";
 import { publicStatic } from "./static.js";
+import { pluginGracefulShutdown } from "./graceful-shutdown.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
@@ -27,6 +28,7 @@ new Elysia({
     hostname: serverHostname,
   },
 })
+  .use(pluginGracefulShutdown())
   .use(
     swagger({
       scalarConfig: {

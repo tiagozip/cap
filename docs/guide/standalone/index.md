@@ -63,6 +63,29 @@ Instrumentation challenges are enabled by default when creating new site keys. W
 
 Your Cap Standalone instance must be publicly reachable from the internet so the widget can communicate with it. If you're using a reverse proxy, review the [options guide](/guide/standalone/options.md) to configure rate-limiting correctly.
 
+## Monitoring
+
+The Docker image includes a health check that verifies Cap is ready to receive traffic. Check it with:
+
+```bash
+docker inspect --format '{{.State.Health.Status}}' cap
+```
+
+For Kubernetes, keep liveness independent and use readiness to stop traffic while the application is shutting down:
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /livez
+    port: 3000
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 3000
+```
+
+See [health checks](./options.md#health-checks) for endpoint behavior and status codes.
+
 ## Usage
 
 ### Client-side
