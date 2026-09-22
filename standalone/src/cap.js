@@ -178,7 +178,7 @@ async function getKeyFields(siteKey) {
     "jwtSecret",
   ]);
   const fields = { config: config ?? null, jwtSecret: jwtSecret ?? null };
-  if (fields.config) _keyCache.set(siteKey, { fields, ts: Date.now() });
+  if (fields.config !== null) _keyCache.set(siteKey, { fields, ts: Date.now() });
   return fields;
 }
 
