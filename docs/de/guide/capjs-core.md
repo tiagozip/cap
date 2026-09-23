@@ -263,24 +263,22 @@ Bun.serve({
 });
 ```
 
-## RSW-Challenges
+## HashWX-Challenges {#format-2-hashwx}
 
-Seit v0.1.1 und Widget v0.1.51 verstehen beide Seiten ein reicheres Wire-Format, das mehrere Challenge-Protokolle in einer Antwort unterstützt: SHA-256-PoW (der Standard), das neue [RSW-Time-Lock-Puzzle](./rsw.md) und Instrumentation.
+Seit v0.1.1 und Widget v0.1.51 verstehen beide Seiten ein reicheres Wire-Format, das mehrere Challenge-Protokolle in einer Antwort unterstützt: SHA-256-PoW (der Standard), [HashWX](./hashwx.md), das abgekündigte RSW-Time-Lock-Puzzle und Instrumentation.
 
-### Minimales Opt-in {#format-2-rsw-opt-in}
+### Minimales Opt-in
 
 ```js
-import { generateChallenge, generateRswKeypair, validateChallenge } from "capjs-core";
+import { generateChallenge, validateChallenge } from "capjs-core";
 
 const SECRET = process.env.CAP_SECRET;
-const KEYPAIR = generateRswKeypair(2048); // einmal beim Start, unbedingt persistieren!
 
 app.post("/api/challenge", async () => {
   return await generateChallenge(SECRET, {
     format: 2,
-    protocols: ["rsw", "instrumentation"],
-    keypair: KEYPAIR,
-    t: 75_000, // optional. wir empfehlen, es bei 75_000 zu belassen
+    protocols: ["hashwx", "instrumentation"],
+    hashwxDifficulty: 1_000_000, // optional, das ist der Standard
   });
 });
 
@@ -288,3 +286,7 @@ app.post("/api/redeem", async (req) => {
   return await validateChallenge(SECRET, req.body, { consumeNonce });
 });
 ```
+
+HashWX braucht kein Schlüsselmaterial und kein Setup beim Start. Die erste Verifizierung kompiliert das eingebettete WebAssembly-Modul, was ein paar Millisekunden dauert; ruf beim Start `hashwxReady()` auf, dann trifft das nicht den ersten Request.
+
+`hashwxDifficulty` ist die erwartete Anzahl Hashes, die ein Client berechnen muss, verteilt auf `hashwxChallengeCount` unabhängige Teil-Challenges (Standard `4`). Eine einzelne Challenge hat eine exponentialverteilte Lösungszeit, ein Besucher wartet also 30 ms und der nächste drei Sekunden. Bei gleicher Gesamtschwierigkeit senken vier Teil-Challenges das p90 um etwa ein Viertel und machen den Median etwa ein Drittel langsamer, denn die erwartete Arbeit eines Angreifers bleibt in beiden Fällen `d` Hashes. Siehe [Kosten auf dem Client](./hashwx.md#cost). Jede weitere Teil-Challenge kostet bei der Verifikation etwa 20 µs. `hashwxNoncesPerHash` (Standard `65_536`) wird ebenfalls akzeptiert.

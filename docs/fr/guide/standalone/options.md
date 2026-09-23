@@ -18,8 +18,8 @@ Les versions disponibles sont les publications npm de [`@cap.js/widget`](https:/
 
 ```env
 ENABLE_ASSETS_SERVER=true
-WIDGET_VERSION=0.1.56
-WASM_VERSION=0.0.7
+WIDGET_VERSION=0.1.58
+WASM_VERSION=0.0.8
 ```
 
 Vos assets seront servis depuis les chemins suivants :
@@ -27,6 +27,7 @@ Vos assets seront servis depuis les chemins suivants :
 - `/assets/widget.js`
 - `/assets/floating.js`
 - `/assets/cap_wasm_bg.wasm`
+- `/assets/hashwx.wasm`
 - `/assets/cap_wasm.js`
 
 Utilisez-les dans votre application en pointant la source du script du widget vers le chemin approprié :
@@ -41,11 +42,14 @@ Pour le mode flottant :
 <script src="https://<server url>/assets/floating.js"></script>
 ```
 
-Et en définissant `window.CAP_CUSTOM_WASM_URL` sur le chemin du fichier `cap_wasm_bg.wasm` :
+Et en définissant `window.CAP_CUSTOM_WASM_URL` et `window.CAP_CUSTOM_HASHWX_URL` sur les chemins des fichiers `cap_wasm_bg.wasm` et `hashwx.wasm` :
 
 ```js
 window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
+window.CAP_CUSTOM_HASHWX_URL = "https://<server url>/assets/hashwx.wasm";
 ```
+
+`hashwx.wasm` est inclus à partir de `@cap.js/wasm` 0.0.8. Avec une `WASM_VERSION` plus ancienne, `/assets/hashwx.wasm` répond 503. Ne définissez alors pas `CAP_CUSTOM_HASHWX_URL`, et le widget le chargera depuis jsdelivr.
 
 Par défaut, ces fichiers sont récupérés depuis `process.env.CACHE_HOST` (dont la valeur par défaut est `https://cdn.jsdelivr.net`). Changez-la avec la variable d'environnement `CACHE_HOST` au lancement du serveur.
 
@@ -90,18 +94,20 @@ Si vous partagez une même instance Redis entre plusieurs déploiements Cap (ou 
 
 Les messages d'erreur sont masqués par défaut et journalisés dans la console à la place. Pour désactiver la journalisation des erreurs, définissez `DISABLE_ERROR_LOGGING=true`. Pour désactiver le masquage, définissez `SHOW_ERRORS=true`.
 
-## Verrous temporels RSW {#rsw-time-lock-puzzles}
+## Preuve de travail HashWX {#hashwx-proof-of-work}
 
-Standalone prend en charge le [verrou temporel RSW](../rsw.md) comme alternative optionnelle et résistante aux GPU à la preuve de travail SHA-256. Il se configure par clé de site : certaines clés peuvent donc utiliser RSW pendant que d'autres restent sur les défis SHA-256 par défaut.
+Standalone utilise [HashWX](../hashwx.md), une preuve de travail résistante aux GPU, comme protocole de défi par défaut des nouvelles clés. Il se configure par clé de site : certaines clés peuvent donc utiliser SHA-256 pendant que d'autres restent sur HashWX. Les clés créées avant que HashWX ne devienne le défaut gardent le protocole qu'elles avaient jusqu'à ce que vous le changiez.
 
-Pour l'activer, ouvrez l'onglet **Configuration** d'une clé et basculez le **Challenge protocol** sur « RSW time-lock puzzle ». La première fois que vous activez RSW sur une clé, Standalone génère un module de 2048 bits (environ 1 à 3 secondes) et le stocke dans Redis. Le même couple de clés est réutilisé pour toutes les clés RSW ; vous n'avez pas à le gérer manuellement.
+Pour changer de protocole, ouvrez l'onglet **Configuration** d'une clé et faites votre choix sous **Challenge protocol**. HashWX ne demande aucune préparation : il n'y a pas de couple de clés à générer ni à conserver.
 
-La difficulté se règle avec le curseur **RSW squarings** (le paramètre `t`, soit le nombre d'élévations au carré séquentielles que le client doit calculer). La valeur par défaut est `75_000`, soit environ 300 à 800 ms de travail côté client sur du matériel récent. Baissez-la pour des défis moins coûteux, augmentez-la pour un bridage plus fort. La plage valide est `10_000`-`300_000`.
+La difficulté se règle avec le curseur **HashWX difficulty**, le nombre de hachages qu'un client doit calculer en moyenne. La valeur par défaut est `1_000_000`, répartie sur quatre sous-défis, ce qui a donné une médiane de 578 ms sur un ordinateur de bureau à 8 cœurs sous Chrome et de 1,1 à 5,9 s sur téléphone. Consultez [les mesures sur téléphone](../hashwx.md#phones) avant de l'augmenter. La plage valide est `50_000`-`5_000_000`.
 
-Vous pouvez redéfinir la taille du module au démarrage avec `RSW_BITS=2048` (valeur par défaut). Des tailles plus petites ne servent qu'aux tests.
+Les clients sans WebAssembly ne peuvent pas résoudre HashWX. Si vous devez les prendre en charge, basculez cette clé sur la preuve de travail SHA-256, qui dispose d'un repli en JavaScript pur.
+
+Les verrous temporels RSW restent sélectionnables pour les déploiements existants, mais ils sont dépréciés : un GPU en résout environ 170 fois plus par seconde qu'un CPU, ils n'apportent donc pas la résistance aux GPU pour laquelle ils avaient été ajoutés. Le curseur **RSW difficulty** règle `t`, le nombre d'élévations au carré séquentielles, dans la plage `10_000`-`300_000`, et `RSW_BITS=2048` redéfinit la taille du module au démarrage.
 
 ::: tip
-RSW est optionnel et encore expérimental. Le pipeline Cap par défaut utilise toujours la preuve de travail SHA-256. Le widget détecte automatiquement les défis RSW d'après le format d'échange : basculer l'interrupteur est le seul changement à faire.
+Le widget détecte automatiquement le protocole d'après le format d'échange : changer une clé est le seul changement à faire. En dehors de Standalone, cap-core reste sur la preuve de travail SHA-256 tant que vous n'activez rien d'autre.
 :::
 
 ## Défis d'instrumentation

@@ -24,7 +24,30 @@ Instrumentation challenges often also mix these with a preset list of checks.
 
 ## Automated browser detection
 
-Instrumentation challenges can also optionally attempt to block automated webdrivers. While we do a very large amount of checks for these, they are not foolproof. Even commercial, closed-source CAPTCHAs, like Turnstile, can be bypassed by attackers by using patched stealth browsers.
+With `blockAutomatedBrowsers` enabled, the instrumentation script also collects a small vector of browser facts (text metrics, window geometry, `navigator.webdriver`, engine markers) and ships it back with the computation result. The server runs the detector over that vector. A client-side-only check is a suggestion that a stealth browser patches out, so nothing here trusts the client's own verdict.
+
+Seven checks can fail a request. Every one of them targets the automation layer or tampering, never which browser build you run. Widevine, H.264, `userAgentData` brand and similar build identity signals are not used to block, because a person on ungoogled-chromium looks identical to a stealth driver on the same binary in those fields.
+
+| Check | What it catches | Why it is safe for humans |
+| --- | --- | --- |
+| `geometry_quantized` | Camoufox snaps text advance widths to whole pixels. Real Blink, Gecko and WebKit return fractional widths, and Firefox's resist-fingerprinting mode does not round them either. | Requires at least 5 of 17 font stacks to be whole pixels **and** at least 2 distinct integer values, so a single-font system cannot trip it. |
+| `webdriver_true` | Plain Selenium, Playwright, Puppeteer, rebrowser. | Spec-defined automation flag. No shipping browser sets it. |
+| `webdriver_stripped` | Stealth patches that delete `navigator.webdriver` on Chromium. | Real Chrome always exposes it as `false`. |
+| `gecko_contradiction` | Spoofers exposing `navigator.deviceMemory` or `userAgentData` on a Gecko engine. | Firefox has never shipped either API. |
+| `window_exceeds_screen` | CDP `Emulation.setDeviceMetricsOverride` shrinks `screen` to the viewport and leaves the window taller than the display. | Skipped when `screen.isExtended` is true, so a taller second monitor passes. |
+| `viewport_override` | Viewport exactly equal to the screen while browser chrome is present. | Skipped on mobile, where a full-screen viewport is normal. |
+| `headless_token` | `HeadlessChrome` in the UA or `userAgentData.brands`. | No consumer browser exposes it. |
+
+Two more signals are collected but never block:
+
+- `native_tamper`: `Function.prototype.toString` on canvas, WebGL and permissions methods is no longer `[native code]`. This catches puppeteer-stealth and selenium-stealth, but privacy extensions (Canvas Blocker, Chameleon, Trace) patch the exact same methods. It is returned as a risk flag so you can raise proof-of-work difficulty instead of blocking.
+- Browser-surface clusters (no `window.chrome`, no plugins, no PDF viewer) are not used at all. Mobile Chrome and Android WebView legitimately match all three.
+
+When a request is blocked, `validateChallenge` returns `reason: "instr_automated_browser"` with a `blockedBy` array naming the failed checks. Successful validations carry `riskFlags`. Cap Standalone surfaces the same reason as `automated_browser_detected`.
+
+Known gaps: `undetected-chromedriver` and `nodriver` driving a headful stock Chrome pass all seven checks. Headless Firefox passes too, since Gecko has no `HeadlessChrome` equivalent. Even commercial CAPTCHAs like Turnstile are bypassed by these tools, and proof-of-work remains the layer that makes such traffic expensive.
+
+Open false-positive risks that have not been measured yet: Tor Browser's text metric rounding against `geometry_quantized`, and mixed-DPI multi-monitor setups against `window_exceeds_screen`. If you run either and see blocks, please open an issue with the `blockedBy` value.
 
 ## Relationship to proof-of-work
 

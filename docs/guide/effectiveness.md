@@ -22,7 +22,7 @@ Cap's proof-of-work is heavily inspired by [Hashcash](https://www.researchgate.n
 
 ## Making GPUs useless
 
-SHA-256 is reasonable as a general PoW algorithm, but it can be significantly optimized on GPUs. That's why we also support experimental GPU-resistant algorithms like [RSW time-locks](./rsw.md).
+SHA-256 is reasonable as a general PoW algorithm, but a GPU clears roughly 150 times as many of them per second as a CPU. That's why new keys default to [HashWX](./hashwx.md), where the gap is about 2x.
 
 ## See also
 

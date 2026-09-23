@@ -4,7 +4,7 @@ description: "Comment Cap fonctionne en interne : le CAPTCHA auto-hébergé gén
 
 # Comment fonctionne Cap ?
 
-Ceci est une explication plutôt technique du fonctionnement des défis SHA-256 et d'instrumentation de Cap. Elle ne couvre pas les [verrous temporels RSW](./rsw.md). Si vous cherchez une vue d'ensemble plus générale, consultez la page [Efficacité](./effectiveness.md).
+Ceci est une explication plutôt technique du fonctionnement des défis SHA-256 et d'instrumentation de Cap. Elle ne couvre pas [HashWX](./hashwx.md). Si vous cherchez une vue d'ensemble plus générale, consultez la page [Efficacité](./effectiveness.md).
 
 ---
 

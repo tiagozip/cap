@@ -263,24 +263,22 @@ Bun.serve({
 });
 ```
 
-## Défis RSW
+## Défis HashWX {#format-2-hashwx}
 
-Depuis la v0.1.1 et le widget v0.1.51, les deux parties comprennent un format d'échange plus riche, capable de gérer plusieurs protocoles de défi dans une seule réponse : la preuve de travail SHA-256 (par défaut), le nouveau [verrou temporel RSW](./rsw.md) et l'instrumentation.
+Depuis la v0.1.1 et le widget v0.1.51, les deux parties comprennent un format d'échange plus riche, capable de gérer plusieurs protocoles de défi dans une seule réponse : la preuve de travail SHA-256 (par défaut), [HashWX](./hashwx.md), le verrou temporel RSW désormais déprécié et l'instrumentation.
 
-### Activation minimale {#format-2-rsw-opt-in}
+### Activation minimale
 
 ```js
-import { generateChallenge, generateRswKeypair, validateChallenge } from "capjs-core";
+import { generateChallenge, validateChallenge } from "capjs-core";
 
 const SECRET = process.env.CAP_SECRET;
-const KEYPAIR = generateRswKeypair(2048); // une fois au démarrage, pensez à le conserver !
 
 app.post("/api/challenge", async () => {
   return await generateChallenge(SECRET, {
     format: 2,
-    protocols: ["rsw", "instrumentation"],
-    keypair: KEYPAIR,
-    t: 75_000, // facultatif. nous recommandons de le laisser à 75_000
+    protocols: ["hashwx", "instrumentation"],
+    hashwxDifficulty: 1_000_000, // facultatif, c'est la valeur par défaut
   });
 });
 
@@ -288,3 +286,7 @@ app.post("/api/redeem", async (req) => {
   return await validateChallenge(SECRET, req.body, { consumeNonce });
 });
 ```
+
+HashWX ne demande aucun matériel de clé ni aucune préparation au démarrage. La première vérification compile le module WebAssembly embarqué, ce qui prend quelques millisecondes ; appelez `hashwxReady()` au démarrage pour sortir ce coût de la première requête.
+
+`hashwxDifficulty` est le nombre de hachages qu'un client doit calculer en moyenne, réparti sur `hashwxChallengeCount` sous-défis indépendants (par défaut `4`). Un défi unique a un temps de résolution qui suit une loi exponentielle : un visiteur attend 30 ms et le suivant trois secondes. À difficulté totale égale, quatre sous-défis réduisent le p90 d'environ un quart et rendent la médiane environ un tiers plus lente, puisque le travail attendu d'un attaquant reste de `d` hachages dans les deux cas. Voir [le coût côté client](./hashwx.md#cost). Chaque sous-défi supplémentaire ajoute environ 20 µs à la vérification. `hashwxNoncesPerHash` (par défaut `65_536`) est également accepté.

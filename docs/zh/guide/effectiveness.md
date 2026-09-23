@@ -22,7 +22,7 @@ Cap 的工作量证明深受 [Hashcash](https://www.researchgate.net/publication
 
 ## 让 GPU 无用武之地
 
-作为通用的 PoW 算法，SHA-256 是合理的选择，但它在 GPU 上可以被大幅优化。因此我们还支持实验性的抗 GPU 算法，例如 [RSW 时间锁](./rsw.md)。
+作为通用的 PoW 算法，SHA-256 是合理的选择，但 GPU 每秒能清掉的数量大约是 CPU 的 150 倍。因此新建的密钥默认使用 [HashWX](./hashwx.md)，它的差距只有约 2 倍。
 
 ## 延伸阅读
 

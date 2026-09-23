@@ -108,7 +108,9 @@ The `token` is a signed JWT containing the challenge config. `expires` is the JW
 
 ### `validateChallenge(secret, body, opts?)`
 
-Returns `Promise<{ success: true, token, tokenKey, expires, scope, iat } | { success: false, reason, instr_error? }>`.
+Returns `Promise<{ success: true, token, tokenKey, expires, scope, iat, riskFlags } | { success: false, reason, instr_error?, blockedBy? }>`.
+
+`riskFlags` lists non-gating automation signals from instrumentation (currently only `native_tamper`), useful for raising difficulty on the next challenge. `blockedBy` is set when `reason` is `instr_automated_browser` and names the detection checks that failed.
 
 `body`:
 
@@ -198,7 +200,9 @@ const ch = await generateChallenge(SECRET, {
 });
 ```
 
-When `blockAutomatedBrowsers` is on, the script runs realm-escape and behavioral checks that detect headless Chromium, automation framework markers, and JS-sandbox impersonation. See [Instrumentation](./instrumentation.md) for details.
+When `blockAutomatedBrowsers` is on, the script runs realm-escape and marker checks in the browser and ships a probe vector (text metrics, window geometry, `navigator.webdriver`, engine markers) that the server evaluates with `detectAutomation`. The server-side verdict is what blocks. See [Instrumentation](./instrumentation.md) for the full check list and what each one is safe against.
+
+`detectAutomation(vector)` is exported for callers who want to run the detector over a vector they collected themselves. It returns `{ pass, checks, blockedBy, riskFlags }`.
 
 Higher obfuscation levels are slower to generate. Levels 4–7 add a custom string-table indirection plus esbuild minification. Levels 8–10 layer in `javascript-obfuscator` (string-array, control-flow flattening, dead-code injection) — these block the event loop for tens of milliseconds per challenge, so use them only for low-volume routes or supply your own `instrumentationGenerator` that runs in a worker pool.
 
@@ -263,24 +267,22 @@ Bun.serve({
 });
 ```
 
-## RSW challenges
+## HashWX challenges {#format-2-hashwx}
 
-Since v0.1.1 and widget v0.1.51, both pieces understand a richer wire format that supports multiple challenge protocols in a single response: SHA-256 PoW (the default), the new [RSW time-lock puzzle](./rsw.md), and instrumentation.
+Since v0.1.1 and widget v0.1.51, both pieces understand a richer wire format that supports multiple challenge protocols in a single response: SHA-256 PoW (the default), [HashWX](./hashwx.md), the deprecated RSW time-lock puzzle, and instrumentation.
 
 ### Minimum opt-in
 
 ```js
-import { generateChallenge, generateRswKeypair, validateChallenge } from "capjs-core";
+import { generateChallenge, validateChallenge } from "capjs-core";
 
 const SECRET = process.env.CAP_SECRET;
-const KEYPAIR = generateRswKeypair(2048); // once at boot, persist this!
 
 app.post("/api/challenge", async () => {
   return await generateChallenge(SECRET, {
     format: 2,
-    protocols: ["rsw", "instrumentation"],
-    keypair: KEYPAIR,
-    t: 75_000, // optional. we recommend keeping it at 75_000
+    protocols: ["hashwx", "instrumentation"],
+    hashwxDifficulty: 1_000_000, // optional, this is the default
   });
 });
 
@@ -288,3 +290,7 @@ app.post("/api/redeem", async (req) => {
   return await validateChallenge(SECRET, req.body, { consumeNonce });
 });
 ```
+
+HashWX needs no key material and no setup at boot. The first verification compiles the embedded WebAssembly module, which takes a few milliseconds; call `hashwxReady()` at startup to move that off the first request.
+
+`hashwxDifficulty` is the expected number of hashes a client must compute, split across `hashwxChallengeCount` independent sub-challenges (default `4`). One challenge on its own has an exponentially distributed solve time, so one visitor waits 30 ms and the next waits three seconds. At the same total difficulty, four sub-challenges cut the p90 by about a quarter and make the median about a third slower, since the attacker's expected work stays `d` hashes either way. See [client cost](./hashwx.md#cost). Each extra sub-challenge adds about 20 µs to verification. `hashwxNoncesPerHash` (default `65_536`) is also accepted.

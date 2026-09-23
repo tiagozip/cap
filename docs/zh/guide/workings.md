@@ -4,7 +4,7 @@ description: "Cap 的底层工作原理：这个自托管 CAPTCHA 生成基于�
 
 # Cap 是如何工作的？
 
-顺带一提，本页介绍 Cap 的 SHA-256 与 instrumentation（浏览器环境检测）质询的工作原理，内容偏技术细节，不涉及 [RSW 时间锁](./rsw.md)。更宏观的概览见[有效性](./effectiveness.md)页面。
+顺带一提，本页介绍 Cap 的 SHA-256 与 instrumentation（浏览器环境检测）质询的工作原理，内容偏技术细节，不涉及 [HashWX](./hashwx.md)。更宏观的概览见[有效性](./effectiveness.md)页面。
 
 ---
 

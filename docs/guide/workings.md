@@ -4,7 +4,7 @@ description: "How Cap works under the hood: the self-hosted CAPTCHA generates se
 
 # How does Cap work?
 
-By the way, this is a more technical explanation of how Cap's SHA-256 and instrumentation challenges work. It doesn't include [RSW time-locks](./rsw.md). If you're looking for a more general overview, check out the [Effectiveness](./effectiveness.md) page.
+By the way, this is a more technical explanation of how Cap's SHA-256 and instrumentation challenges work. It doesn't include [HashWX](./hashwx.md). If you're looking for a more general overview, check out the [Effectiveness](./effectiveness.md) page.
 
 ---
 

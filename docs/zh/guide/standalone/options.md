@@ -18,8 +18,8 @@ description: "Cap Standalone（自托管开源 CAPTCHA）的配置选项与环�
 
 ```env
 ENABLE_ASSETS_SERVER=true
-WIDGET_VERSION=0.1.56
-WASM_VERSION=0.0.7
+WIDGET_VERSION=0.1.58
+WASM_VERSION=0.0.8
 ```
 
 资源将从以下路径提供：
@@ -27,6 +27,7 @@ WASM_VERSION=0.0.7
 - `/assets/widget.js`
 - `/assets/floating.js`
 - `/assets/cap_wasm_bg.wasm`
+- `/assets/hashwx.wasm`
 - `/assets/cap_wasm.js`
 
 在你的应用中，将验证组件的脚本地址指向相应路径即可使用，例如：
@@ -41,11 +42,14 @@ WASM_VERSION=0.0.7
 <script src="https://<server url>/assets/floating.js"></script>
 ```
 
-并将 `window.CAP_CUSTOM_WASM_URL` 设置为 `cap_wasm_bg.wasm` 文件的路径，例如：
+并将 `window.CAP_CUSTOM_WASM_URL` 和 `window.CAP_CUSTOM_HASHWX_URL` 分别设置为 `cap_wasm_bg.wasm` 和 `hashwx.wasm` 文件的路径，例如：
 
 ```js
 window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
+window.CAP_CUSTOM_HASHWX_URL = "https://<server url>/assets/hashwx.wasm";
 ```
+
+`hashwx.wasm` 从 `@cap.js/wasm` 0.0.8 起才包含在包里。如果 `WASM_VERSION` 更旧，`/assets/hashwx.wasm` 会返回 503，这时请不要设置 `CAP_CUSTOM_HASHWX_URL`，验证组件会从 jsdelivr 加载它。
 
 默认情况下，这些资源从 `process.env.CACHE_HOST`（默认为 `https://cdn.jsdelivr.net`）获取。运行服务端时可通过设置 `CACHE_HOST` 环境变量来更改。
 
@@ -90,18 +94,20 @@ Cap Standalone 使用 Redis（或 Valkey）存储所有数据。将 `REDIS_URL` 
 
 错误信息默认会被隐去，转而输出到控制台日志。要禁用错误日志，设置 `DISABLE_ERROR_LOGGING=true`；要禁用错误信息隐去，设置 `SHOW_ERRORS=true`。
 
-## RSW 时间锁谜题
+## HashWX 工作量证明 {#hashwx-proof-of-work}
 
-Standalone 支持 [RSW 时间锁谜题](../rsw.md)：一种抗 GPU 的 SHA-256 PoW 替代方案，需要手动启用。它按站点密钥配置，因此可以让部分密钥使用 RSW，其余密钥继续使用默认的 SHA-256 质询。
+Standalone 把抗 GPU 的工作量证明 [HashWX](../hashwx.md) 作为新建密钥的默认质询协议。它按站点密钥配置，因此个别密钥可以用 SHA-256，其余的继续留在 HashWX 上。在 HashWX 成为默认之前创建的密钥会保持原有设置，直到你手动更改。
 
-要启用它，打开某个密钥的 **Configuration** 标签页，将 **Challenge protocol** 切换为 "RSW time-lock puzzle"。首次在任意密钥上启用 RSW 时，Standalone 会生成一个 2048 位的模数（约 1-3 秒）并存入 Redis。所有启用 RSW 的密钥复用同一个密钥对，无需手动管理。
+要更换协议，打开某个密钥的 **Configuration** 标签页，在 **Challenge protocol** 下选择一个。HashWX 不需要任何准备工作：没有密钥对要生成，也没有东西要持久化。
 
-难度由 **RSW squarings** 滑块控制，也就是 `t` 参数：客户端必须连续计算的平方次数。默认值为 `75_000`，在现代硬件上大约相当于 300-800ms 的客户端计算量。调低可以让质询更轻量，调高则限流更强。有效范围为 `10_000`-`300_000`。
+难度由 **HashWX difficulty** 滑块控制，也就是客户端预期要计算的哈希次数。默认值为 `1_000_000`，拆分为四个子质询，在 8 核台式机的 Chrome 上测得中位数为 578 毫秒，在手机上为 1.1 到 5.9 秒。调高之前请先看看[手机上的测量结果](../hashwx.md#phones)。有效范围为 `50_000`-`5_000_000`。
 
-你可以在启动时通过 `RSW_BITS=2048`（默认值）覆盖模数大小。更小的值仅适用于测试。
+没有 WebAssembly 的客户端解不了 HashWX。如果你需要支持它们，请把那个密钥改用 SHA-256 工作量证明，它有纯 JS 的回退方案。
+
+RSW 时间锁谜题对现有部署仍然可选，但已被弃用：GPU 每秒能清掉的数量大约是 CPU 的 170 倍，所以它并没有带来当初引入时想要的抗 GPU 能力。**RSW difficulty** 滑块设置的是 `t`，即顺序平方的次数，范围为 `10_000`-`300_000`，另外 `RSW_BITS=2048` 可在启动时覆盖模数大小。
 
 ::: tip 提示
-RSW 是可选功能，目前仍处于实验阶段。Cap 的默认流程仍然使用 SHA-256 PoW。验证组件会根据传输格式自动识别 RSW 质询，因此你只需要打开这个开关，无需其他改动。
+验证组件会根据传输格式自动识别协议，所以切换密钥是你唯一需要做的改动。在 Standalone 之外，cap-core 的默认仍然是 SHA-256 PoW，除非你手动启用。
 :::
 
 ## Instrumentation 质询

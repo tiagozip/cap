@@ -267,7 +267,7 @@ window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
 - `window.CAP_CSS_NONCE` — ใช้กับแท็ก `<style>` ของวิดเจ็ต และใช้เป็น nonce สำรองสำหรับสคริปต์ที่แทรกเข้าไปด้วย หากไม่ได้ตั้ง `CAP_SCRIPT_NONCE`
 - `window.CAP_SCRIPT_NONCE` — ใช้กับสคริปต์ที่วิดเจ็ตแทรกเข้าไป ได้แก่ ตัวสำรองสำหรับคลายบีบอัดด้วย pako และ iframe ของ challenge แบบ instrumentation
 
-คุณยังตั้ง URL ของ WASM เองได้ (เช่นของ asset server ในโหมด Standalone) ด้วย `window.CAP_CUSTOM_WASM_URL`
+คุณยังตั้ง URL ของ WASM เองได้ (เช่นของ asset server ในโหมด Standalone) ด้วย `window.CAP_CUSTOM_WASM_URL` และตั้ง URL ของ HashWX ได้ด้วย `window.CAP_CUSTOM_HASHWX_URL`
 
 หากต้องการปิดการสั่นตอบสนอง (การสั่นบนอุปกรณ์มือถือ) ให้ตั้ง `window.CAP_DISABLE_HAPTICS = true` แบบทั่วทั้งหน้า หรือเพิ่มแอตทริบิวต์ `data-cap-disable-haptics` ให้วิดเจ็ตแต่ละตัว:
 

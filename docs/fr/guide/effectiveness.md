@@ -22,7 +22,7 @@ La preuve de travail de Cap s'inspire largement de [Hashcash](https://www.resear
 
 ## Rendre les GPU inutiles
 
-SHA-256 est un choix raisonnable comme algorithme de preuve de travail générique, mais il peut être fortement optimisé sur GPU. C'est pourquoi nous prenons aussi en charge des algorithmes expérimentaux résistants aux GPU, comme les [verrous temporels RSW](./rsw.md).
+SHA-256 est un choix raisonnable comme algorithme de preuve de travail générique, mais un GPU en résout environ 150 fois plus par seconde qu'un CPU. C'est pourquoi les nouvelles clés utilisent [HashWX](./hashwx.md) par défaut, où l'écart tombe à environ 2x.
 
 ## Voir aussi
 

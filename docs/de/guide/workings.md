@@ -4,7 +4,7 @@ description: "Wie Cap unter der Haube funktioniert: Das selbst gehostete CAPTCHA
 
 # Wie funktioniert Cap?
 
-Das hier ist übrigens eine eher technische Erklärung, wie Caps SHA-256- und Instrumentation-Challenges funktionieren. [RSW-Time-Locks](./rsw.md) sind nicht enthalten. Wenn du einen allgemeineren Überblick suchst, schau dir die Seite [Wirksamkeit](./effectiveness.md) an.
+Das hier ist übrigens eine eher technische Erklärung, wie Caps SHA-256- und Instrumentation-Challenges funktionieren. [HashWX](./hashwx.md) ist nicht enthalten. Wenn du einen allgemeineren Überblick suchst, schau dir die Seite [Wirksamkeit](./effectiveness.md) an.
 
 ---
 

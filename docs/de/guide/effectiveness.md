@@ -22,7 +22,7 @@ Caps Proof-of-Work ist stark von [Hashcash](https://www.researchgate.net/publica
 
 ## GPUs nutzlos machen
 
-SHA-256 ist als allgemeiner PoW-Algorithmus vernünftig, lässt sich auf GPUs aber deutlich optimieren. Deshalb unterstützen wir zusätzlich experimentelle GPU-resistente Algorithmen wie [RSW-Time-Locks](./rsw.md).
+SHA-256 ist als allgemeiner PoW-Algorithmus vernünftig, aber eine GPU schafft davon pro Sekunde rund 150-mal so viele wie eine CPU. Deshalb nutzen neue Keys standardmäßig [HashWX](./hashwx.md), wo der Abstand bei etwa 2x liegt.
 
 ## Siehe auch
 

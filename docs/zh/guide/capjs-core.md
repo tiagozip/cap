@@ -263,24 +263,22 @@ Bun.serve({
 });
 ```
 
-## RSW 质询
+## HashWX 质询 {#format-2-hashwx}
 
-自 v0.1.1 和验证组件 v0.1.51 起，两者都支持一种更丰富的传输格式，可在单个响应中承载多种质询协议：SHA-256 PoW（默认）、新的 [RSW 时间锁谜题](./rsw.md)，以及 instrumentation。
+自 v0.1.1 和验证组件 v0.1.51 起，两者都支持一种更丰富的传输格式，可在单个响应中承载多种质询协议：SHA-256 PoW（默认）、[HashWX](./hashwx.md)、已弃用的 RSW 时间锁谜题，以及 instrumentation。
 
 ### 最小启用方式
 
 ```js
-import { generateChallenge, generateRswKeypair, validateChallenge } from "capjs-core";
+import { generateChallenge, validateChallenge } from "capjs-core";
 
 const SECRET = process.env.CAP_SECRET;
-const KEYPAIR = generateRswKeypair(2048); // 启动时生成一次，务必持久化！
 
 app.post("/api/challenge", async () => {
   return await generateChallenge(SECRET, {
     format: 2,
-    protocols: ["rsw", "instrumentation"],
-    keypair: KEYPAIR,
-    t: 75_000, // 可选。我们建议保持 75_000
+    protocols: ["hashwx", "instrumentation"],
+    hashwxDifficulty: 1_000_000, // 可选，这就是默认值
   });
 });
 
@@ -288,3 +286,7 @@ app.post("/api/redeem", async (req) => {
   return await validateChallenge(SECRET, req.body, { consumeNonce });
 });
 ```
+
+HashWX 不需要密钥材料，启动时也不用做任何准备。第一次验证会编译内置的 WebAssembly 模块，耗时几毫秒；在启动阶段调用 `hashwxReady()` 就能把这部分开销从首个请求里挪走。
+
+`hashwxDifficulty` 是客户端预期要计算的哈希次数，会拆分到 `hashwxChallengeCount` 个互相独立的子质询上（默认 `4`）。单个质询的求解时间服从指数分布，所以一位访客等 30 毫秒，下一位可能要等三秒。总难度相同时，拆成四个子质询会让 p90 减少约四分之一，中位数则慢三分之一左右，因为攻击者的预期工作量无论怎么拆都是 `d` 次哈希。详见[客户端开销](./hashwx.md#cost)。每多一个子质询，验证开销大约增加 20 µs。此外还接受 `hashwxNoncesPerHash`（默认 `65_536`）。

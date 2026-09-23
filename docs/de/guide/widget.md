@@ -267,7 +267,7 @@ Wenn du das Widget unter einer strikten Content-Security-Policy auslieferst, kan
 - `window.CAP_CSS_NONCE` — wird auf den `<style>`-Tag des Widgets angewendet. Dient außerdem als Fallback-Nonce für eingefügte Skripte, falls `CAP_SCRIPT_NONCE` nicht gesetzt ist.
 - `window.CAP_SCRIPT_NONCE` — wird auf die Skripte angewendet, die das Widget einfügt: den pako-Dekomprimierungs-Fallback und das Iframe für die Instrumentation-Challenge.
 
-Mit `window.CAP_CUSTOM_WASM_URL` kannst du außerdem eine eigene WASM-URL setzen (etwa die des Standalone-Asset-Servers).
+Mit `window.CAP_CUSTOM_WASM_URL` kannst du außerdem eine eigene WASM-URL setzen (etwa die des Standalone-Asset-Servers), und mit `window.CAP_CUSTOM_HASHWX_URL` die für HashWX.
 
 Um haptisches Feedback (Vibration auf Mobilgeräten) abzuschalten, setze global `window.CAP_DISABLE_HAPTICS = true` oder ergänze das Attribut `data-cap-disable-haptics` an einzelnen Widgets:
 

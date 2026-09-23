@@ -42,7 +42,7 @@ Several commercial CAPTCHAs open-source their client integrations while keeping 
 
 Cap is a full open-source CAPTCHA stack under Apache 2.0: a ~20 KB web-component widget plus [Cap Standalone](./standalone/index.md), a small Docker deployment (one container plus Valkey) exposing a REST API, a dashboard with multi-site-key management, and a `/siteverify` endpoint compatible with reCAPTCHA's API shape.
 
-Protection comes from two independent layers: SHA-256 proof-of-work (with experimental GPU-resistant [RSW time-locks](./rsw.md)) and dynamic [instrumentation challenges](./instrumentation.md) that verify the environment is a real browser. Defeating one layer doesn't defeat the other.
+Protection comes from two independent layers: GPU-resistant [HashWX proof of work](./hashwx.md) and dynamic [instrumentation challenges](./instrumentation.md) that verify the environment is a real browser. Defeating one layer doesn't defeat the other.
 
 If you'd rather embed than deploy, [capjs-core](./capjs-core.md) is Cap's stateless server library: it generates and verifies challenges inside your own service and runs on Cloudflare Workers, Lambda, and other edge environments with no persistent storage.
 
@@ -82,7 +82,7 @@ Anubis is an open-source proof-of-work *scraper wall*: it gates an entire site o
 | Standalone server + dashboard | ✅ | ❌ | ✅ | ❌ |
 | reCAPTCHA-compatible siteverify | ✅ | ❌ | ❌ | ❌ |
 | Widget size | ~20 KB | ~34 KB | larger | n/a (transparent) |
-| GPU-resistant PoW option | ✅ [RSW](./rsw.md) | ❌ | ❌ | ❌ |
+| GPU-resistant PoW option | ✅ [HashWX](./hashwx.md) | ❌ | ❌ | ❌ |
 
 ## How to choose
 

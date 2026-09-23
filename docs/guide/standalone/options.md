@@ -18,8 +18,8 @@ The available versions are the published npm releases of [`@cap.js/widget`](http
 
 ```env
 ENABLE_ASSETS_SERVER=true
-WIDGET_VERSION=0.1.56
-WASM_VERSION=0.0.7
+WIDGET_VERSION=0.1.58
+WASM_VERSION=0.0.8
 ```
 
 Your assets will be served from the following paths:
@@ -27,6 +27,7 @@ Your assets will be served from the following paths:
 - `/assets/widget.js`
 - `/assets/floating.js`
 - `/assets/cap_wasm_bg.wasm`
+- `/assets/hashwx.wasm`
 - `/assets/cap_wasm.js`
 
 You can use these in your app by setting the widget's script source to the appropriate path, like this:
@@ -41,11 +42,14 @@ For the floating mode, use:
 <script src="https://<server url>/assets/floating.js"></script>
 ```
 
-And by setting `window.CAP_CUSTOM_WASM_URL` to the path of the `cap_wasm_bg.wasm` file, like this:
+And by setting `window.CAP_CUSTOM_WASM_URL` and `window.CAP_CUSTOM_HASHWX_URL` to the paths of the `cap_wasm_bg.wasm` and `hashwx.wasm` files, like this:
 
 ```js
 window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
+window.CAP_CUSTOM_HASHWX_URL = "https://<server url>/assets/hashwx.wasm";
 ```
+
+`hashwx.wasm` ships in `@cap.js/wasm` 0.0.8 and newer. With an older `WASM_VERSION`, `/assets/hashwx.wasm` responds with a 503, so leave `CAP_CUSTOM_HASHWX_URL` unset and the widget will load it from jsdelivr.
 
 By default, these fetch from `process.env.CACHE_HOST` (which defaults to `https://cdn.jsdelivr.net`). You can change this by setting the `CACHE_HOST` env variable when running the server.
 
@@ -90,18 +94,20 @@ If you share a single Redis instance across multiple Cap deployments (or with ot
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.
 
-## RSW time-lock puzzles
+## HashWX proof of work
 
-Standalone supports the [RSW time-lock puzzle](../rsw.md) as an opt-in, GPU-resistant alternative to SHA-256 PoW. It's configured per site key, so individual keys can use RSW while others stay on the default SHA-256 challenges.
+Standalone uses [HashWX](../hashwx.md), a GPU-resistant proof of work, as the default challenge protocol for new keys. It's configured per site key, so individual keys can use SHA-256 while others stay on HashWX. Keys created before HashWX became the default keep whatever they were on until you change them.
 
-To enable it, open a key's **Configuration** tab and switch the **Challenge protocol** to "RSW time-lock puzzle". The first time you enable RSW on any key, Standalone generates a 2048-bit modulus (~1-3 seconds) and stores it in Redis. The same keypair is reused for all RSW-enabled keys; you don't need to manage it manually.
+To change the protocol, open a key's **Configuration** tab and pick one under **Challenge protocol**. HashWX needs no setup: there's no keypair to generate or persist.
 
-Difficulty is controlled by the **RSW squarings** slider (the `t` parameter — the number of sequential squarings the client must compute). Defaults to `75_000`, which is roughly 300-800ms of client-side work on modern hardware. Lower it for cheaper challenges, raise it for stronger throttling. The valid range is `10_000`-`300_000`.
+Difficulty is controlled by the **HashWX difficulty** slider, the expected number of hashes a client must compute. It defaults to `1_000_000`, split into four sub-challenges, which measured a 578 ms median on an 8-core desktop in Chrome and 1.1 to 5.9 s on phones. See [the phone measurements](../hashwx.md#phones) before you raise it. The valid range is `50_000`-`5_000_000`.
 
-You can override the modulus size at boot with `RSW_BITS=2048` (default). Smaller sizes are useful only for testing.
+Clients without WebAssembly cannot solve HashWX. If you need to support them, put that key on SHA-256 proof of work instead, which has a pure-JS fallback.
+
+RSW time-lock puzzles are still selectable for existing deployments, but they are deprecated: a GPU clears about 170 times as many of them per second as a CPU, so they do not deliver the GPU resistance they were added for. The **RSW difficulty** slider sets `t`, the number of sequential squarings, in the range `10_000`-`300_000`, and `RSW_BITS=2048` overrides the modulus size at boot.
 
 ::: tip
-RSW is opt-in and currently experimental. The default Cap pipeline still uses SHA-256 PoW. The widget auto-detects RSW challenges from the wire format, so flipping the toggle is the only change you need to make.
+The widget auto-detects the protocol from the wire format, so switching a key is the only change you need to make. Outside Standalone, cap-core still defaults to SHA-256 PoW unless you opt in.
 :::
 
 ## Instrumentation challenges

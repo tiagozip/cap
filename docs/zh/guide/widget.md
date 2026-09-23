@@ -267,7 +267,7 @@ window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
 - `window.CAP_CSS_NONCE`：应用到组件的 `<style>` 标签。当 `CAP_SCRIPT_NONCE` 未设置时，也会作为注入脚本的备用 nonce。
 - `window.CAP_SCRIPT_NONCE`：应用到组件注入的脚本，即 pako 解压回退脚本和 instrumentation（浏览器环境检测）质询 iframe。
 
-你还可以通过 `window.CAP_CUSTOM_WASM_URL` 设置自定义的 WASM 地址（比如 Standalone 静态资源服务器的地址）。
+你还可以通过 `window.CAP_CUSTOM_WASM_URL` 设置自定义的 WASM 地址（比如 Standalone 静态资源服务器的地址），HashWX 的地址则通过 `window.CAP_CUSTOM_HASHWX_URL` 设置。
 
 要禁用触感反馈（移动设备上的振动），可以全局设置 `window.CAP_DISABLE_HAPTICS = true`，或给单个组件添加 `data-cap-disable-haptics` 属性：
 

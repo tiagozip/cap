@@ -263,24 +263,22 @@ Bun.serve({
 });
 ```
 
-## challenge แบบ RSW
+## challenge แบบ HashWX {#format-2-hashwx}
 
-ตั้งแต่ v0.1.1 และวิดเจ็ต v0.1.51 ทั้งสองฝั่งเข้าใจรูปแบบข้อมูลที่ยืดหยุ่นขึ้น ซึ่งรองรับโปรโตคอล challenge หลายแบบในคำตอบเดียว ได้แก่ PoW แบบ SHA-256 (ค่าเริ่มต้น), [ปริศนา time-lock แบบ RSW](./rsw.md) ตัวใหม่ และ instrumentation
+ตั้งแต่ v0.1.1 และวิดเจ็ต v0.1.51 ทั้งสองฝั่งเข้าใจรูปแบบข้อมูลที่ยืดหยุ่นขึ้น ซึ่งรองรับโปรโตคอล challenge หลายแบบในคำตอบเดียว ได้แก่ PoW แบบ SHA-256 (ค่าเริ่มต้น), [HashWX](./hashwx.md), ปริศนา time-lock แบบ RSW ที่เลิกใช้แล้ว และ instrumentation
 
-### การเปิดใช้ขั้นต่ำ {#format-2-rsw-opt-in}
+### การเปิดใช้ขั้นต่ำ
 
 ```js
-import { generateChallenge, generateRswKeypair, validateChallenge } from "capjs-core";
+import { generateChallenge, validateChallenge } from "capjs-core";
 
 const SECRET = process.env.CAP_SECRET;
-const KEYPAIR = generateRswKeypair(2048); // ทำครั้งเดียวตอนบูต และต้องเก็บไว้!
 
 app.post("/api/challenge", async () => {
   return await generateChallenge(SECRET, {
     format: 2,
-    protocols: ["rsw", "instrumentation"],
-    keypair: KEYPAIR,
-    t: 75_000, // ไม่บังคับ เราแนะนำให้คงไว้ที่ 75_000
+    protocols: ["hashwx", "instrumentation"],
+    hashwxDifficulty: 1_000_000, // ไม่บังคับ นี่คือค่าเริ่มต้น
   });
 });
 
@@ -288,3 +286,7 @@ app.post("/api/redeem", async (req) => {
   return await validateChallenge(SECRET, req.body, { consumeNonce });
 });
 ```
+
+HashWX ไม่ต้องใช้สาระกุญแจและไม่ต้องตั้งค่าอะไรตอนบูต การตรวจสอบครั้งแรกจะคอมไพล์มอดูล WebAssembly ที่ฝังมาด้วย ซึ่งใช้เวลาไม่กี่มิลลิวินาที ให้เรียก `hashwxReady()` ตอนเริ่มระบบเพื่อย้ายงานส่วนนั้นออกจากคำขอแรก
+
+`hashwxDifficulty` คือจำนวนครั้งที่คาดว่าไคลเอนต์ต้องแฮช โดยแบ่งออกเป็น `hashwxChallengeCount` challenge ย่อยที่เป็นอิสระต่อกัน (ค่าเริ่มต้น `4`) challenge เดียวมีเวลาแก้ที่กระจายแบบเอกซ์โพเนนเชียล ผู้เยี่ยมชมคนหนึ่งจึงอาจรอ 30 มิลลิวินาที ขณะที่คนถัดไปรอถึงสามวินาที ที่ความยากรวมเท่ากัน การแบ่งเป็นสี่ challenge ย่อยจะลด p90 ลงราวหนึ่งในสี่ และทำให้ค่ามัธยฐานช้าลงราวหนึ่งในสาม เพราะงานที่คาดหวังของผู้โจมตียังคงเป็น `d` แฮชไม่ว่าจะแบ่งอย่างไร ดู[ต้นทุนฝั่งไคลเอนต์](./hashwx.md#cost) challenge ย่อยแต่ละอันที่เพิ่มขึ้นทำให้การตรวจสอบช้าลงราว 20 µs นอกจากนี้ยังรับ `hashwxNoncesPerHash` (ค่าเริ่มต้น `65_536`) ด้วย

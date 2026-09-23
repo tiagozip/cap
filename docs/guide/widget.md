@@ -267,7 +267,7 @@ If you serve the widget under a strict Content-Security-Policy, you can supply n
 - `window.CAP_CSS_NONCE` — applied to the widget's `<style>` tag. Also used as a fallback nonce for injected scripts if `CAP_SCRIPT_NONCE` is unset.
 - `window.CAP_SCRIPT_NONCE` — applied to the scripts the widget injects: the pako decompression fallback and the instrumentation challenge iframe.
 
-You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL`.
+You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL`, and the HashWX one with `window.CAP_CUSTOM_HASHWX_URL`.
 
 To disable haptic feedback (vibrations on mobile devices), set `window.CAP_DISABLE_HAPTICS = true` globally or add the `data-cap-disable-haptics` attribute to individual widgets:
 

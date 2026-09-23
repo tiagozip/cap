@@ -42,7 +42,7 @@ faq:
 
 Cap 是一套 Apache 2.0 许可下的完整开源 CAPTCHA 方案：约 20 KB 的 Web Component 验证组件，加上 [Cap Standalone](./standalone/index.md)：一个小巧的 Docker 部署（一个容器加 Valkey），提供 REST API、支持多站点密钥管理的仪表盘，以及与 reCAPTCHA API 形式兼容的 `/siteverify` 端点。
 
-防护来自两个相互独立的层：SHA-256 工作量证明（另有实验性的抗 GPU [RSW 时间锁](./rsw.md)），以及验证运行环境是真实浏览器的动态 [instrumentation 质询](./instrumentation.md)。攻破其中一层并不等于攻破另一层。
+防护来自两个相互独立的层：抗 GPU 的 [HashWX 工作量证明](./hashwx.md)，以及验证运行环境是真实浏览器的动态 [instrumentation 质询](./instrumentation.md)。攻破其中一层并不等于攻破另一层。
 
 如果你更想嵌入而非部署，[capjs-core](./capjs-core.md) 是 Cap 的无状态服务端库：它在你自己的服务内部生成和验证质询，可运行于 Cloudflare Workers、Lambda 等无持久化存储的边缘环境。
 
@@ -82,7 +82,7 @@ Anubis 是一个开源的工作量证明*反爬虫墙*：它在反向代理层�
 | 独立服务端 + 仪表盘 | ✅ | ❌ | ✅ | ❌ |
 | 兼容 reCAPTCHA 的 siteverify | ✅ | ❌ | ❌ | ❌ |
 | 验证组件体积 | 约 20 KB | 约 34 KB | 更大 | 不适用（透明） |
-| 抗 GPU 的 PoW 选项 | ✅ [RSW](./rsw.md) | ❌ | ❌ | ❌ |
+| 抗 GPU 的 PoW 选项 | ✅ [HashWX](./hashwx.md) | ❌ | ❌ | ❌ |
 
 ## 如何选择
 
