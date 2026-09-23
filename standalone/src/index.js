@@ -4,7 +4,9 @@ import { Elysia, file } from "elysia";
 import { assetsServer } from "./assets.js";
 import { auth } from "./auth.js";
 import { capServer } from "./cap.js";
+import { db } from "./db.js";
 import { isDemoMode } from "./demo.js";
+import { healthServer } from "./health.js";
 import { loadIPDB } from "./ipdb.js";
 import { loadRswKeypair, startRswRefresh } from "./rsw-store.js";
 import { server } from "./server.js";
@@ -21,8 +23,9 @@ import { publicStatic } from "./static.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
+const SHUTDOWN_TIMEOUT_MS = 8_000;
 
-new Elysia({
+const app = new Elysia({
   serve: {
     port: serverPort,
     hostname: serverHostname,
@@ -58,6 +61,11 @@ new Elysia({
             name: "Share",
             description:
               "Read-only stats for a site key via a share link token. No authentication required",
+          },
+          {
+            name: "Health",
+            description:
+              "Liveness and Redis readiness checks. No authentication required",
           },
         ],
         info: {
@@ -140,6 +148,7 @@ new Elysia({
     }),
   )
   .use(publicStatic)
+  .use(healthServer)
   .get("/", async ({ cookie }) => {
     if (isDemoMode()) return file("./public/index.html");
     return file(
@@ -157,6 +166,22 @@ new Elysia({
   .listen(serverPort);
 
 console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}`);
+
+let shuttingDown = false;
+for (const signal of ["SIGTERM", "SIGINT"]) {
+  process.on(signal, async () => {
+    if (shuttingDown) process.exit(1);
+    shuttingDown = true;
+    console.log(`🧢 ${signal} received, finishing in-flight requests`);
+    setTimeout(() => {
+      console.error("🧢 requests still running after 8 s, exiting anyway");
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS).unref();
+    await app.stop();
+    db.close();
+    process.exit(0);
+  });
+}
 
 await loadHeaders();
 await loadRatelimit();
