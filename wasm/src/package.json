@@ -1,6 +1,6 @@
 {
   "name": "@cap.js/wasm",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "WASM solver for Cap, a lightweight, modern open-source CAPTCHA alternative designed using SHA-256 PoW.",
   "keywords": [
     "algorithm",
@@ -51,6 +51,13 @@
     "url": "git+https://github.com/tiagozip/cap.git"
   },
   "main": "./node/cap_wasm.js",
+  "files": [
+    "browser",
+    "node",
+    "rust/src",
+    "rust/Cargo.toml",
+    "rust/Cargo.lock"
+  ],
   "scripts": {
     "npm:publish": "bun publish --access public"
   }
