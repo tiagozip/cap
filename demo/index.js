@@ -3,6 +3,12 @@ import fs from "node:fs/promises";
 import { generateChallenge, validateChallenge } from "capjs-core";
 import { Elysia, file } from "elysia";
 import { transform } from "lightningcss";
+import {
+  keys as i18nKeyList,
+  shipped as i18nShipped,
+  shippedKeys as i18nShippedKeys,
+  translations as i18nTranslations,
+} from "../widget/src/src/i18n/translations.js";
 
 const SECRET = process.env.CAP_SECRET || randomBytes(32).toString("hex");
 
@@ -36,6 +42,18 @@ const processCSS = async () => {
   return code.toString();
 };
 
+const keepIdx = i18nShippedKeys.map((k) => {
+  const i = i18nKeyList.indexOf(k);
+  if (i === -1) throw new Error(`shippedKey '${k}' not in keys`);
+  return i;
+});
+const i18nRows = {};
+for (const code of i18nShipped) {
+  if (!i18nTranslations[code]) throw new Error(`shipped lang '${code}' missing`);
+  i18nRows[code] = keepIdx.map((i) => i18nTranslations[code][i]).join("/");
+}
+const i18nJSON = JSON.stringify(i18nRows);
+
 const app = new Elysia();
 
 app.get("/", () => file("./index.html"));
@@ -46,8 +64,10 @@ app.get("/cap.js", async ({ set }) => {
   const css = await processCSS();
 
   const bundle = main
-    .replace("%%workerScript%%", JSON.stringify(worker))
-    .replace("%%capCSS%%", css);
+    .replace("%%workerScript%%", () => JSON.stringify(worker))
+    .replace("%%capCSS%%", () => css)
+    .replace("%%i18nKeys%%", () => i18nShippedKeys.join(","))
+    .replace("%%i18nData%%", () => i18nJSON);
 
   set.headers = { "Content-Type": "application/javascript" };
   return bundle;
