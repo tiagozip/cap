@@ -1,6 +1,15 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  setDefaultTimeout,
+  test,
+} from "bun:test";
 import { RedisClient } from "bun";
 import { Elysia } from "elysia";
+
+setDefaultTimeout(60_000);
 
 const REDIS_URL =
   process.env.REDIS_URL || process.env.VALKEY_URL || "redis://127.0.0.1:6379";
