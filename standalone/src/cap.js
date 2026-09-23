@@ -15,6 +15,17 @@ const DEFAULT_RSW_T = 75_000;
 const MIN_RSW_T = 10_000;
 const MAX_RSW_T = 300_000;
 
+const DEFAULT_HASHWX_D = 1_000_000;
+const MIN_HASHWX_D = 50_000;
+const MAX_HASHWX_D = 5_000_000;
+
+export function resolveProtocol(keyConfig) {
+  const proto = keyConfig?.protocol;
+  if (proto === "hashwx" || proto === "rsw" || proto === "sha256-pow")
+    return proto;
+  return keyConfig?.rsw ? "rsw" : "sha256-pow";
+}
+
 function hourlyBucket() {
   return String(Math.floor(Date.now() / 1000 / 3600) * 3600);
 }
@@ -160,6 +171,35 @@ export function invalidateBlockCache(siteKey) {
   else _blockCache.clear();
 }
 
+const _keyCache = new Map();
+const KEY_CACHE_TTL = 5_000;
+const KEY_CACHE_MAX = 5_000;
+
+async function getKeyFields(siteKey) {
+  const cached = _keyCache.get(siteKey);
+  if (cached && Date.now() - cached.ts < KEY_CACHE_TTL) return cached.fields;
+
+  const [config, jwtSecret] = await db.hmget(`key:${siteKey}`, [
+    "config",
+    "jwtSecret",
+  ]);
+  const fields = { config: config ?? null, jwtSecret: jwtSecret ?? null };
+  if (fields.config) {
+    if (_keyCache.size >= KEY_CACHE_MAX) _keyCache.clear();
+    _keyCache.set(siteKey, { fields, ts: Date.now() });
+  }
+  return fields;
+}
+
+export function invalidateKeyCache(siteKey) {
+  if (siteKey) _keyCache.delete(siteKey);
+  else _keyCache.clear();
+}
+
+const fnf = (promise) => {
+  promise.catch(() => {});
+};
+
 async function isBlocked(siteKey, ip) {
   const entries = await loadBlockRules(siteKey);
   if (entries.length === 0) return false;
@@ -206,7 +246,7 @@ export const capServer = new Elysia({
       duration: 5_000,
       getLimits: async (params) => {
         if (params?.siteKey) {
-          const configStr = await db.hget(`key:${params.siteKey}`, "config");
+          const { config: configStr } = await getKeyFields(params.siteKey);
           if (configStr) {
             try {
               const config = JSON.parse(configStr);
@@ -245,12 +285,9 @@ export const capServer = new Elysia({
   .post(
     "/:siteKey/challenge",
     async ({ set, params, request, server: srv }) => {
-      const fields = await db.hmget(`key:${params.siteKey}`, [
-        "config",
-        "jwtSecret",
-      ]);
+      const fields = await getKeyFields(params.siteKey);
 
-      if (!fields[0]) {
+      if (!fields.config) {
         set.status = 404;
         return { error: "Invalid site key or secret" };
       }
@@ -265,10 +302,6 @@ export const capServer = new Elysia({
       } catch (e) {
         console.error("[cap] isBlocked check failed:", e);
       }
-
-      const fnf = (p) => {
-        p.catch(() => {});
-      };
 
       (async () => {
         if (!ip) return;
@@ -320,8 +353,8 @@ export const capServer = new Elysia({
         }
       } catch {}
 
-      const keyConfig = JSON.parse(fields[0]);
-      const jwtSecret = fields[1];
+      const keyConfig = JSON.parse(fields.config);
+      const jwtSecret = fields.jwtSecret;
 
       if (!jwtSecret) {
         set.status = 500;
@@ -361,8 +394,25 @@ export const capServer = new Elysia({
           }
         : false;
 
+      const protocol = resolveProtocol(keyConfig);
+
       let challengeOpts;
-      if (keyConfig.rsw) {
+      if (protocol === "hashwx") {
+        const rawD = Number(keyConfig.hashwxDifficulty) || DEFAULT_HASHWX_D;
+        challengeOpts = {
+          format: 2,
+          protocols: keyConfig.instrumentation
+            ? ["hashwx", "instrumentation"]
+            : ["hashwx"],
+          hashwxDifficulty: Math.min(
+            MAX_HASHWX_D,
+            Math.max(MIN_HASHWX_D, Math.round(rawD)),
+          ),
+          expiresMs: CHALLENGE_TTL_MS,
+          scope: params.siteKey,
+          instrumentation: instrumentationOpts,
+        };
+      } else if (protocol === "rsw") {
         let keypair = getRswKeypair();
         if (!keypair) {
           try {
@@ -417,9 +467,9 @@ export const capServer = new Elysia({
 
   .post("/:siteKey/redeem", async ({ body, set, params }) => {
     const bucket = hourlyBucket();
-    const failAndTrack = async (status, response) => {
+    const failAndTrack = (status, response) => {
       set.status = status;
-      await db.hincrby(`metrics:failed:${params.siteKey}`, bucket, 1);
+      fnf(db.hincrby(`metrics:failed:${params.siteKey}`, bucket, 1));
       return response;
     };
 
@@ -428,7 +478,7 @@ export const capServer = new Elysia({
       return { error: "Missing required fields" };
     }
 
-    const jwtSecret = await db.hget(`key:${params.siteKey}`, "jwtSecret");
+    const { jwtSecret } = await getKeyFields(params.siteKey);
     if (!jwtSecret) {
       set.status = 404;
       return { error: "Invalid site key" };
@@ -542,19 +592,21 @@ export const capServer = new Elysia({
     const redeemToken = result.token;
     const tokenExpires = result.expires;
     const tokenTtlSecs = Math.ceil(TOKEN_TTL_MS / 1000);
-    await db.set(`token:${redeemToken}`, String(tokenExpires));
-    await db.expire(`token:${redeemToken}`, tokenTtlSecs);
+    await db.send("SET", [
+      `token:${redeemToken}`,
+      String(tokenExpires),
+      "EX",
+      String(tokenTtlSecs),
+    ]);
 
-    await db.hincrby(`metrics:verified:${params.siteKey}`, bucket, 1);
+    fnf(db.hincrby(`metrics:verified:${params.siteKey}`, bucket, 1));
 
     if (result.iat) {
       const latencyMs = Date.now() - result.iat;
-      await db.hincrby(
-        `metrics:latency_sum:${params.siteKey}`,
-        bucket,
-        latencyMs,
+      fnf(
+        db.hincrby(`metrics:latency_sum:${params.siteKey}`, bucket, latencyMs),
       );
-      await db.hincrby(`metrics:latency_count:${params.siteKey}`, bucket, 1);
+      fnf(db.hincrby(`metrics:latency_count:${params.siteKey}`, bucket, 1));
     }
 
     return {

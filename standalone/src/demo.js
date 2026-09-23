@@ -6,6 +6,9 @@ const DEMO_KEYS = [
     traffic: 2_800_000,
     failRate: 0.06,
     config: {
+      protocol: "hashwx",
+      hashwxDifficulty: 1_000_000,
+      rsw: false,
       difficulty: 4,
       challengeCount: 80,
       saltSize: 32,
@@ -26,6 +29,9 @@ const DEMO_KEYS = [
     traffic: 420_000,
     failRate: 0.04,
     config: {
+      protocol: "hashwx",
+      hashwxDifficulty: 250_000,
+      rsw: false,
       difficulty: 3,
       challengeCount: 50,
       saltSize: 32,
@@ -46,6 +52,8 @@ const DEMO_KEYS = [
     traffic: 890_000,
     failRate: 0.09,
     config: {
+      protocol: "rsw",
+      rsw: true,
       difficulty: 5,
       challengeCount: 120,
       saltSize: 32,
@@ -66,6 +74,8 @@ const DEMO_KEYS = [
     traffic: 3_500_000,
     failRate: 0.14,
     config: {
+      protocol: "hashwx",
+      hashwxDifficulty: 2_000_000,
       difficulty: 4,
       challengeCount: 80,
       saltSize: 32,

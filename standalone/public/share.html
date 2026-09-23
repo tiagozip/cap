@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="./public/logo-small.webp" />
+    <title>Cap stats</title>
+    <link rel="stylesheet" href="./public/assets/style.css" />
+  </head>
+  <body class="share-body">
+    <div class="share-page">
+      <header class="share-header">
+        <div class="share-title">
+          <img src="./public/logo-small.webp" alt="" class="share-logo" />
+          <div>
+            <h1 id="shareName">Loading…</h1>
+          </div>
+        </div>
+        <div class="filters-row share-filters" id="shareFilters" hidden>
+          <select class="time-select" id="timeSelect">
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days" selected>Last 7 days</option>
+            <option value="last28days">Last 30 days</option>
+            <option value="last91days">Last 3 months</option>
+            <option value="alltime">All time</option>
+          </select>
+          <span class="date-range" id="dateRange"></span>
+          <button class="refresh-btn" id="refreshBtn" aria-label="Refresh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0118.8-4.3M22 12.5a10 10 0 01-18.8 4.2"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="share-error" id="shareError" hidden></div>
+
+      <main id="shareMain" hidden>
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-bar blue"></div>
+            <div class="stat-label">Challenges</div>
+            <div class="stat-value" id="statChallenges">0</div>
+            <div id="trendChallenges"></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-bar green"></div>
+            <div class="stat-label">Verified</div>
+            <div class="stat-value" id="statVerified">0</div>
+            <div id="trendVerified"></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-bar red"></div>
+            <div class="stat-label">Failed</div>
+            <div class="stat-value" id="statFailed">0</div>
+            <div id="trendFailed"></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-bar purple"></div>
+            <div class="stat-label">Avg. duration</div>
+            <div class="stat-value" id="statLatency">&mdash;</div>
+          </div>
+        </div>
+
+        <div class="chart-container">
+          <canvas id="chart"></canvas>
+          <div class="chart-loading" id="chartLoading">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-loader-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9" /></svg>
+          </div>
+        </div>
+
+        <div class="insights-grid">
+          <div class="insight-panel">
+            <div class="insight-panel-header"><h3 class="insight-panel-title">Location</h3></div>
+            <div class="insight-panel-body" id="locationBody"></div>
+          </div>
+          <div class="insight-panel">
+            <div class="insight-panel-header"><h3 class="insight-panel-title">Networks</h3></div>
+            <div class="insight-panel-body" id="networksBody"></div>
+          </div>
+          <div class="insight-panel">
+            <div class="insight-panel-header"><h3 class="insight-panel-title">Platform</h3></div>
+            <div class="insight-panel-body" id="platformBody"></div>
+          </div>
+          <div class="insight-panel">
+            <div class="insight-panel-header"><h3 class="insight-panel-title">OS</h3></div>
+            <div class="insight-panel-body" id="osBody"></div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="share-footer">
+        <a class="share-cta" href="https://trycap.dev" target="_blank" rel="noreferrer">
+          <img src="./public/logo-small.webp" alt="" class="share-cta-logo" />
+          <span class="share-cta-text">
+            <span class="share-cta-title">Powered by Cap</span>
+            <span class="share-cta-sub">Free, privacy-first, self-hosted CAPTCHA alternative.</span>
+          </span>
+          <span class="share-cta-btn">
+            Get Cap for your site
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+        <span class="share-expires" id="shareExpires"></span>
+      </footer>
+    </div>
+
+    <script src="./public/assets/chart.js@4.5.0.min.js"></script>
+    <script src="./public/js/geo.js"></script>
+    <script src="./public/js/share.js"></script>
+  </body>
+</html>

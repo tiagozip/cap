@@ -43,20 +43,35 @@ const updateCache = async () => {
   };
 
   try {
-    const [widgetSource, floatingSource, wasmSource, wasmLoaderSource] =
-      await Promise.all([
-        fetchAsset(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`),
-        fetchAsset(
-          `${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`,
-        ),
-        fetchAsset(
-          `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`,
-          true,
-        ),
-        fetchAsset(
-          `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
-        ),
-      ]);
+    const [
+      widgetSource,
+      floatingSource,
+      wasmSource,
+      wasmLoaderSource,
+      hashwxSource,
+    ] = await Promise.all([
+      fetchAsset(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`),
+      fetchAsset(
+        `${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`,
+      ),
+      fetchAsset(
+        `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`,
+        true,
+      ),
+      fetchAsset(
+        `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm.min.js`,
+      ),
+      fetchAsset(
+        `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/hashwx.wasm`,
+        true,
+      ).catch((e) => {
+        console.warn(
+          `📦 [asset server] no hashwx.wasm in @cap.js/wasm@${WASM_VERSION}, HashWX keys will fall back to jsdelivr:`,
+          e.message,
+        );
+        return null;
+      }),
+    ]);
 
     cacheConfig.lastUpdate = currentTime;
     cacheConfig.versions.widget = WIDGET_VERSION;
@@ -68,6 +83,9 @@ const updateCache = async () => {
       db.set("asset:floating.js", floatingSource),
       db.set("asset:cap_wasm_bg.wasm", Buffer.from(wasmSource)),
       db.set("asset:cap_wasm.js", wasmLoaderSource),
+      hashwxSource
+        ? db.set("asset:hashwx.wasm", Buffer.from(hashwxSource))
+        : db.del("asset:hashwx.wasm"),
     ]);
   } catch (e) {
     console.error("📦 [asset server] failed to update assets cache:", e);
@@ -109,6 +127,15 @@ export const assetsServer = new Elysia({
   .get("/cap_wasm_bg.wasm", async ({ set }) => {
     set.headers["Content-Type"] = "application/wasm";
     const content = await db.getBuffer("asset:cap_wasm_bg.wasm");
+    if (!content) {
+      set.status = 503;
+      return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";
+    }
+    return content;
+  })
+  .get("/hashwx.wasm", async ({ set }) => {
+    set.headers["Content-Type"] = "application/wasm";
+    const content = await db.getBuffer("asset:hashwx.wasm");
     if (!content) {
       set.status = 503;
       return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";

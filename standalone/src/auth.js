@@ -54,7 +54,8 @@ export const auth = new Elysia({
     return { success: true, session_token, hashed_token: hashedToken, expires };
   });
 
-export const authBeforeHandle = async ({ set, headers }) => {
+export const authBeforeHandle = async (ctx) => {
+  const { set, headers } = ctx;
   const { authorization } = headers;
 
   set.headers["X-Content-Type-Options"] = "nosniff";
@@ -70,7 +71,11 @@ export const authBeforeHandle = async ({ set, headers }) => {
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
 
-    const fields = await db.hmget(`apikey:${id}`, ["tokenHash"]);
+    const fields = await db.hmget(`apikey:${id}`, [
+      "tokenHash",
+      "siteKeys",
+      "readonly",
+    ]);
     const tokenHash = fields?.[0];
 
     if (!tokenHash) {
@@ -86,6 +91,10 @@ export const authBeforeHandle = async ({ set, headers }) => {
       return { success: false, error: "Unauthorized. Invalid bot token." };
     }
 
+    ctx.scope = {
+      siteKeys: fields[1] ? JSON.parse(fields[1]) : null,
+      readonly: fields[2] === "true",
+    };
     return;
   }
 

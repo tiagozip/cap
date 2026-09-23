@@ -15,6 +15,7 @@ import {
   loadHeaders,
   loadRatelimit,
 } from "./settings-cache.js";
+import { shareServer } from "./share.js";
 import { siteverifyServer } from "./siteverify.js";
 import { publicStatic } from "./static.js";
 
@@ -32,7 +33,7 @@ new Elysia({
       scalarConfig: {
         customCss: `.section-header-wrapper .section-header.tight { margin-top: 10px; }`,
       },
-      exclude: ["/", "/auth/login"],
+      exclude: ["/", "/auth/login", "/share"],
       documentation: {
         tags: [
           {
@@ -52,6 +53,11 @@ new Elysia({
           {
             name: "Assets",
             description: "Reading static assets from the assets server",
+          },
+          {
+            name: "Share",
+            description:
+              "Read-only stats for a site key via a share link token. No authentication required",
           },
         ],
         info: {
@@ -144,6 +150,7 @@ new Elysia({
   })
   .use(auth)
   .use(server)
+  .use(shareServer)
   .use(assetsServer)
   .use(capServer)
   .use(siteverifyServer)

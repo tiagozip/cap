@@ -8,6 +8,7 @@ let corsSettings = null;
 let filteringSettings = null;
 let hasGeoSource = false;
 let demoMode = false;
+let ipdbStatus = null;
 
 const keysList = document.getElementById("keysList");
 const searchInput = document.getElementById("searchInput");
@@ -405,11 +406,18 @@ function wireIntegrationCopy(root) {
   });
 }
 
+function keyProtocolOf(config) {
+  const proto = config?.protocol;
+  if (proto === "hashwx" || proto === "rsw" || proto === "sha256-pow") return proto;
+  return config?.rsw ? "rsw" : "sha256-pow";
+}
+
 function renderKeyDetail() {
   welcomeScreen.style.display = "none";
   keyDetail.style.display = "flex";
   const key = selectedKey;
   const s = key.stats;
+  const keyProtocol = keyProtocolOf(key.config);
 
   keyDetail.innerHTML = `
     <div class="detail-header">
@@ -553,11 +561,12 @@ function renderKeyDetail() {
           <div class="edit-field" style="margin-top:8px">
             <label>Challenge protocol</label>
             <select id="cfgChallengeProtocol">
-              <option value="sha256-pow" ${!key.config.rsw ? "selected" : ""}>SHA-256</option>
-              <option value="rsw" ${key.config.rsw ? "selected" : ""}>RSW (experimental)</option>
+              <option value="hashwx" ${keyProtocol === "hashwx" ? "selected" : ""}>HashWX proof of work</option>
+              <option value="rsw" ${keyProtocol === "rsw" ? "selected" : ""}>RSW time-lock puzzle</option>
+              <option value="sha256-pow" ${keyProtocol === "sha256-pow" ? "selected" : ""}>SHA-256 proof of work</option>
             </select>
           </div>
-          <div class="edit-row" id="shaPowFields" style="display:${key.config.rsw ? "none" : "flex"}">
+          <div class="edit-row" id="shaPowFields" style="display:${keyProtocol === "sha256-pow" ? "flex" : "none"}">
             <div class="edit-field">
               <label>Difficulty</label>
               <input type="number" id="cfgDifficulty" value="${key.config.difficulty}" min="1" max="8">
@@ -567,11 +576,18 @@ function renderKeyDetail() {
               <input type="number" id="cfgChallengeCount" value="${key.config.challengeCount}" min="1" max="500">
             </div>
           </div>
-          <div class="config-row" id="rswTField" style="display:${key.config.rsw ? "flex" : "none"}">
+          <div class="config-row" id="rswTField" style="display:${keyProtocol === "rsw" ? "flex" : "none"}">
             <div class="range-field" style="flex:1">
               <label>RSW difficulty <span class="range-value" id="rswTHint">${(key.config?.rswT ?? 75000).toLocaleString()}</span></label>
               <span class="range-hint">Higher difficulty means slower solve time</span>
               <input type="range" id="cfgRswT" min="10000" max="300000" step="5000" value="${key.config.rswT ?? 75000}">
+            </div>
+          </div>
+          <div class="config-row" id="hashwxDField" style="display:${keyProtocol === "hashwx" ? "flex" : "none"}">
+            <div class="range-field" style="flex:1">
+              <label>HashWX difficulty <span class="range-value" id="hashwxDHint">${(key.config?.hashwxDifficulty ?? 1000000).toLocaleString()}</span></label>
+              <span class="range-hint">Expected hashes per solve. Higher difficulty means slower solve time</span>
+              <input type="range" id="cfgHashwxD" min="50000" max="5000000" step="50000" value="${key.config.hashwxDifficulty ?? 1000000}">
             </div>
           </div>
           <h3 class="config-section-title" style="margin-top:16px">Instrumentation</h3>
@@ -684,6 +700,20 @@ function renderKeyDetail() {
           </div>
         </div>
 
+        <div class="config-section-header">
+          <h3 class="config-section-title">Share links</h3>
+          <button class="add-block-rule-btn" id="createShareBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            New link
+          </button>
+        </div>
+        <p class="config-section-hint">Anyone with a link can view this key's stats. No login, no access to configuration or secrets.</p>
+        <div class="config-card">
+          <div id="shareLinksList" class="blocked-ips-list">
+            <div class="blocked-ips-loading">${spinnerSvg}</div>
+          </div>
+        </div>
+
         <div class="danger-zone">
           <h3 class="config-section-title danger">Danger zone</h3>
           <div class="danger-actions-col">
@@ -732,7 +762,10 @@ function renderKeyDetail() {
           c.classList.remove("active");
         }
       });
-      if (currentTab === "configuration") loadBlockedIps();
+      if (currentTab === "configuration") {
+        loadBlockedIps();
+        loadShareLinks();
+      }
       if (currentTab === "integration") {
         const t = document.getElementById("integrationTab");
         if (t) wireIntegrationCopy(t);
@@ -773,7 +806,10 @@ function renderKeyDetail() {
 
   loadGeoStats();
 
-  if (currentTab === "configuration") loadBlockedIps();
+  if (currentTab === "configuration") {
+    loadBlockedIps();
+    loadShareLinks();
+  }
 
   function getKeyCorsEntries() {
     return [...document.querySelectorAll("#keyCorsOriginsList .key-cors-origin-input")]
@@ -801,8 +837,9 @@ function renderKeyDetail() {
     const instrumentation = document.getElementById("cfgInstrumentation").checked;
     const obfuscationLevel = parseInt(document.getElementById("cfgObfuscationLevel").value, 10);
     const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
-    const rsw = document.getElementById("cfgChallengeProtocol").value === "rsw";
+    const protocol = document.getElementById("cfgChallengeProtocol").value;
     const rswT = parseInt(document.getElementById("cfgRswT").value, 10);
+    const hashwxDifficulty = parseInt(document.getElementById("cfgHashwxD").value, 10);
     const dirty =
       name !== key.name ||
       difficulty !== key.config.difficulty ||
@@ -810,8 +847,9 @@ function renderKeyDetail() {
       instrumentation !== key.config.instrumentation ||
       obfuscationLevel !== (key.config.obfuscationLevel ?? 5) ||
       blockAutomatedBrowsers !== key.config.blockAutomatedBrowsers ||
-      rsw !== !!key.config.rsw ||
-      rswT !== (key.config.rswT ?? 75000);
+      protocol !== keyProtocolOf(key.config) ||
+      rswT !== (key.config.rswT ?? 75000) ||
+      hashwxDifficulty !== (key.config.hashwxDifficulty ?? 1000000);
     document.getElementById("saveMainConfigBtn").disabled = !dirty;
   }
 
@@ -953,30 +991,35 @@ function renderKeyDetail() {
   document.getElementById("cfgBlockAutomatedBrowsers")?.addEventListener("change", checkMainDirty);
 
   document.getElementById("cfgChallengeProtocol")?.addEventListener("change", (e) => {
-    const isRsw = e.target.value === "rsw";
-    document.getElementById("shaPowFields").style.display = isRsw ? "none" : "flex";
-    document.getElementById("rswTField").style.display = isRsw ? "flex" : "none";
-    if (isRsw) {
-      const sl = document.getElementById("cfgRswT");
-      if (sl) updateRangeFill(sl);
-    }
+    const proto = e.target.value;
+    document.getElementById("shaPowFields").style.display =
+      proto === "sha256-pow" ? "flex" : "none";
+    document.getElementById("rswTField").style.display = proto === "rsw" ? "flex" : "none";
+    document.getElementById("hashwxDField").style.display =
+      proto === "hashwx" ? "flex" : "none";
+    const active = document.getElementById(proto === "rsw" ? "cfgRswT" : "cfgHashwxD");
+    if (active) updateRangeFill(active);
     checkMainDirty();
   });
-  const rswSlider = document.getElementById("cfgRswT");
-  if (rswSlider) {
-    updateRangeFill(rswSlider);
-    rswSlider.addEventListener("input", (e) => {
-      document.getElementById("rswTHint").textContent =
+  const bindRange = (sliderId, hintId) => {
+    const slider = document.getElementById(sliderId);
+    if (!slider) return;
+    updateRangeFill(slider);
+    slider.addEventListener("input", (e) => {
+      document.getElementById(hintId).textContent =
         Number(e.target.value).toLocaleString();
       updateRangeFill(e.target);
       checkMainDirty();
     });
-  }
+  };
+  bindRange("cfgRswT", "rswTHint");
+  bindRange("cfgHashwxD", "hashwxDHint");
 
   document.getElementById("saveMainConfigBtn")?.addEventListener("click", saveMainConfig);
   document.getElementById("saveSecurityConfigBtn")?.addEventListener("click", saveSecurityConfig);
   document.getElementById("rotateSecretBtn")?.addEventListener("click", rotateSecret);
   document.getElementById("deleteKeyBtn")?.addEventListener("click", deleteKey);
+  document.getElementById("createShareBtn")?.addEventListener("click", openCreateShareModal);
   document.getElementById("addBlockRuleBtn")?.addEventListener("click", openAddBlockRuleModal);
 }
 
@@ -1161,220 +1204,6 @@ function renderChart(chartData) {
     },
   });
 }
-
-const countryNames = {
-  AD: "Andorra",
-  AE: "United Arab Emirates",
-  AF: "Afghanistan",
-  AG: "Antigua and Barbuda",
-  AL: "Albania",
-  AM: "Armenia",
-  AO: "Angola",
-  AR: "Argentina",
-  AT: "Austria",
-  AU: "Australia",
-  AZ: "Azerbaijan",
-  BA: "Bosnia and Herzegovina",
-  BB: "Barbados",
-  BD: "Bangladesh",
-  BE: "Belgium",
-  BF: "Burkina Faso",
-  BG: "Bulgaria",
-  BH: "Bahrain",
-  BI: "Burundi",
-  BJ: "Benin",
-  BN: "Brunei",
-  BO: "Bolivia",
-  BR: "Brazil",
-  BS: "Bahamas",
-  BT: "Bhutan",
-  BW: "Botswana",
-  BY: "Belarus",
-  BZ: "Belize",
-  CA: "Canada",
-  CD: "Democratic Republic of the Congo",
-  CF: "Central African Republic",
-  CG: "Republic of the Congo",
-  CH: "Switzerland",
-  CI: "Ivory Coast",
-  CL: "Chile",
-  CM: "Cameroon",
-  CN: "China",
-  CO: "Colombia",
-  CR: "Costa Rica",
-  CU: "Cuba",
-  CV: "Cape Verde",
-  CY: "Cyprus",
-  CZ: "Czech Republic",
-  DE: "Germany",
-  DJ: "Djibouti",
-  DK: "Denmark",
-  DM: "Dominica",
-  DO: "Dominican Republic",
-  DZ: "Algeria",
-  EC: "Ecuador",
-  EE: "Estonia",
-  EG: "Egypt",
-  ER: "Eritrea",
-  ES: "Spain",
-  ET: "Ethiopia",
-  FI: "Finland",
-  FJ: "Fiji",
-  FM: "Micronesia",
-  FR: "France",
-  GA: "Gabon",
-  GB: "United Kingdom",
-  GD: "Grenada",
-  GE: "Georgia",
-  GH: "Ghana",
-  GM: "Gambia",
-  GN: "Guinea",
-  GQ: "Equatorial Guinea",
-  GR: "Greece",
-  GT: "Guatemala",
-  GW: "Guinea-Bissau",
-  GY: "Guyana",
-  HK: "Hong Kong",
-  HN: "Honduras",
-  HR: "Croatia",
-  HT: "Haiti",
-  HU: "Hungary",
-  ID: "Indonesia",
-  IE: "Ireland",
-  IL: "Israel",
-  IN: "India",
-  IQ: "Iraq",
-  IR: "Iran",
-  IS: "Iceland",
-  IT: "Italy",
-  JM: "Jamaica",
-  JO: "Jordan",
-  JP: "Japan",
-  KE: "Kenya",
-  KG: "Kyrgyzstan",
-  KH: "Cambodia",
-  KI: "Kiribati",
-  KM: "Comoros",
-  KN: "Saint Kitts and Nevis",
-  KP: "North Korea",
-  KR: "South Korea",
-  KW: "Kuwait",
-  KZ: "Kazakhstan",
-  LA: "Laos",
-  LB: "Lebanon",
-  LC: "Saint Lucia",
-  LI: "Liechtenstein",
-  LK: "Sri Lanka",
-  LR: "Liberia",
-  LS: "Lesotho",
-  LT: "Lithuania",
-  LU: "Luxembourg",
-  LV: "Latvia",
-  LY: "Libya",
-  MA: "Morocco",
-  MC: "Monaco",
-  MD: "Moldova",
-  ME: "Montenegro",
-  MG: "Madagascar",
-  MH: "Marshall Islands",
-  MK: "North Macedonia",
-  ML: "Mali",
-  MM: "Myanmar",
-  MN: "Mongolia",
-  MO: "Macau",
-  MR: "Mauritania",
-  MT: "Malta",
-  MU: "Mauritius",
-  MV: "Maldives",
-  MW: "Malawi",
-  MX: "Mexico",
-  MY: "Malaysia",
-  MZ: "Mozambique",
-  NA: "Namibia",
-  NE: "Niger",
-  NG: "Nigeria",
-  NI: "Nicaragua",
-  NL: "Netherlands",
-  NO: "Norway",
-  NP: "Nepal",
-  NR: "Nauru",
-  NZ: "New Zealand",
-  OM: "Oman",
-  PA: "Panama",
-  PE: "Peru",
-  PG: "Papua New Guinea",
-  PH: "Philippines",
-  PK: "Pakistan",
-  PL: "Poland",
-  PR: "Puerto Rico",
-  PS: "Palestine",
-  PT: "Portugal",
-  PW: "Palau",
-  PY: "Paraguay",
-  QA: "Qatar",
-  RO: "Romania",
-  RS: "Serbia",
-  RU: "Russia",
-  RW: "Rwanda",
-  SA: "Saudi Arabia",
-  SB: "Solomon Islands",
-  SC: "Seychelles",
-  SD: "Sudan",
-  SE: "Sweden",
-  SG: "Singapore",
-  SI: "Slovenia",
-  SK: "Slovakia",
-  SL: "Sierra Leone",
-  SM: "San Marino",
-  SN: "Senegal",
-  SO: "Somalia",
-  SR: "Suriname",
-  SS: "South Sudan",
-  ST: "São Tomé and Príncipe",
-  SV: "El Salvador",
-  SY: "Syria",
-  SZ: "Eswatini",
-  TD: "Chad",
-  TG: "Togo",
-  TH: "Thailand",
-  TJ: "Tajikistan",
-  TL: "East Timor",
-  TM: "Turkmenistan",
-  TN: "Tunisia",
-  TO: "Tonga",
-  TR: "Turkey",
-  TT: "Trinidad and Tobago",
-  TV: "Tuvalu",
-  TW: "Taiwan",
-  TZ: "Tanzania",
-  UA: "Ukraine",
-  UG: "Uganda",
-  US: "United States",
-  UY: "Uruguay",
-  UZ: "Uzbekistan",
-  VA: "Vatican City",
-  VC: "Saint Vincent and the Grenadines",
-  VE: "Venezuela",
-  VN: "Vietnam",
-  VU: "Vanuatu",
-  WS: "Samoa",
-  XK: "Kosovo",
-  YE: "Yemen",
-  ZA: "South Africa",
-  ZM: "Zambia",
-  ZW: "Zimbabwe",
-};
-
-const countryFlags = (code) => {
-  if (!code || code.length !== 2) return "";
-  return `<img src="${url(`public/assets/flags/${code.toLowerCase()}.svg`)}" alt="${code}" class="country-flag" onerror="this.style.display='none'">`;
-};
-
-const countryFlagEmoji = (code) => {
-  if (!code || code.length !== 2) return "";
-  const offset = 0x1f1e6;
-  return String.fromCodePoint(code.charCodeAt(0) - 65 + offset, code.charCodeAt(1) - 65 + offset);
-};
 
 const countryCentroids = {
   US: [39, -98],
@@ -2245,6 +2074,123 @@ async function loadBlockedIps() {
   });
 }
 
+async function loadShareLinks() {
+  const container = document.getElementById("shareLinksList");
+  if (!container) return;
+  if (demoMode) {
+    container.innerHTML = '<div class="blocked-ips-empty">Share links are not available in demo mode</div>';
+    return;
+  }
+  container.innerHTML = `<div class="blocked-ips-loading">${spinnerSvg}</div>`;
+
+  const data = await api("GET", `/keys/${selectedKey.siteKey}/shares`);
+
+  if (!Array.isArray(data)) {
+    container.innerHTML = `<div class="blocked-ips-empty">${escapeHtml(data?.error || "Couldn't load share links")}</div>`;
+    return;
+  }
+
+  if (data.length === 0) {
+    container.innerHTML = '<div class="blocked-ips-empty">No share links yet</div>';
+    return;
+  }
+
+  container.innerHTML = data
+    .map(
+      (share) => `<div class="blocked-ip-row">
+      <div class="blocked-ip-info">
+        <span class="blocked-ip-addr">${share.name ? escapeHtml(share.name) : '<span class="share-untitled">Untitled link</span>'}</span>
+        <span class="blocked-ip-meta">${share.id.slice(0, 8)} \u2022 created ${formatRelative(share.created)} \u2022 ${share.expires ? `expires ${formatDate(share.expires)}` : "never expires"}</span>
+      </div>
+      <button class="blocked-ip-unblock" data-id="${share.id}">Revoke</button>
+    </div>`,
+    )
+    .join("");
+
+  container.querySelectorAll(".blocked-ip-unblock").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      showConfirmModal(
+        "Revoke share link?",
+        "Anyone using this link will lose access immediately.",
+        "Revoke",
+        async () => {
+          await api("DELETE", `/keys/${selectedKey.siteKey}/shares/${btn.dataset.id}`);
+          loadShareLinks();
+        },
+        true,
+      );
+    });
+  });
+}
+
+function openCreateShareModal() {
+  const modal = createModal(
+    "New share link",
+    `
+    <div class="modal-body">
+      <div class="modal-field"><label for="shareName">Label</label>
+      <input type="text" id="shareName" placeholder="e.g. Acme marketing team (optional)"></div>
+      <div class="modal-field"><label for="shareExpiry">Expires</label>
+      <select id="shareExpiry">
+        <option value="0">Never</option>
+        <option value="604800">In 7 days</option>
+        <option value="2592000">In 30 days</option>
+        <option value="7776000">In 90 days</option>
+      </select>
+      <p class="hint">The link shows challenge, verification and location stats for this key only. It can't change anything.</p>
+      <p class="hint modal-error" id="shareError" hidden></p></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn primary" id="createShareSubmit">Create link</button>
+    </div>`,
+  );
+
+  const nameInput = modal.querySelector("#shareName");
+  const submitBtn = modal.querySelector("#createShareSubmit");
+  nameInput.focus();
+  nameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitBtn.click();
+  });
+
+  submitBtn.addEventListener("click", async () => {
+    submitBtn.disabled = true;
+    const expiresIn = Number(modal.querySelector("#shareExpiry").value);
+    const res = await api("POST", `/keys/${selectedKey.siteKey}/shares`, {
+      name: nameInput.value.trim() || undefined,
+      expiresIn: expiresIn || undefined,
+    });
+    if (!res.token) {
+      submitBtn.disabled = false;
+      const err = modal.querySelector("#shareError");
+      err.textContent = res.demo ? "Share links are not available in demo mode." : res.error || "Failed to create share link.";
+      err.hidden = false;
+      return;
+    }
+    closeModal();
+    const link = `${url("share")}#${res.token}`;
+    const done = createModal(
+      "Share link created",
+      `<div class="modal-body"><div class="modal-field"><label>Link</label>
+      <input type="text" value="${escapeHtml(link)}" readonly onclick="this.select()">
+      <p class="hint">Copy it now, it won't be shown again. You can revoke it at any time from this page.</p></div></div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeModal()">Done</button>
+        <button class="modal-btn primary" id="copyShareLink">Copy link</button>
+      </div>`,
+    );
+    done.querySelector("#copyShareLink").addEventListener("click", async (e) => {
+      try {
+        await navigator.clipboard.writeText(link);
+        e.currentTarget.textContent = "Copied!";
+      } catch {
+        done.querySelector("input").select();
+      }
+    });
+    loadShareLinks();
+  });
+}
+
 function openAddBlockRuleModal() {
   const modal = createModal(
     "Add block rule",
@@ -2343,8 +2289,10 @@ async function saveMainConfig() {
   const instrumentation = document.getElementById("cfgInstrumentation").checked;
   const obfuscationLevel = parseInt(document.getElementById("cfgObfuscationLevel").value, 10);
   const blockAutomatedBrowsers = document.getElementById("cfgBlockAutomatedBrowsers").checked;
-  const rsw = document.getElementById("cfgChallengeProtocol").value === "rsw";
+  const protocol = document.getElementById("cfgChallengeProtocol").value;
+  const rsw = protocol === "rsw";
   const rswT = parseInt(document.getElementById("cfgRswT").value, 10);
+  const hashwxDifficulty = parseInt(document.getElementById("cfgHashwxD").value, 10);
 
   if (!name || difficulty < 1 || challengeCount < 1) {
     showModal(
@@ -2355,7 +2303,7 @@ async function saveMainConfig() {
     return;
   }
 
-  if (rsw) {
+  if (rsw && !demoMode) {
     btn.innerHTML = "Preparing RSW keypair…";
     const gen = await api("POST", "/settings/rsw/ensure");
     if (!gen?.exists) {
@@ -2379,6 +2327,8 @@ async function saveMainConfig() {
     blockAutomatedBrowsers,
     rsw,
     rswT,
+    protocol,
+    hashwxDifficulty,
   });
 
   if (res.success) {
@@ -2393,6 +2343,8 @@ async function saveMainConfig() {
       blockAutomatedBrowsers,
       rsw,
       rswT,
+      protocol,
+      hashwxDifficulty,
     };
     renderKeysList(searchInput.value);
   } else {
@@ -3206,7 +3158,7 @@ async function openSettings() {
         <div class="apikey-item">
           <div class="apikey-info">
             <div class="apikey-name">${escapeHtml(k.name)}</div>
-            <div class="apikey-meta">${k.id.slice(0, 12)}... \u2022 created ${formatRelative(k.created)}</div>
+            <div class="apikey-meta">${k.readonly ? '<span class="block-type-badge blue">read-only</span>' : ""}${k.siteKeys ? `<span class="block-type-badge purple">${k.siteKeys.length} site key${k.siteKeys.length === 1 ? "" : "s"}</span>` : ""}${k.id.slice(0, 12)}... \u2022 created ${formatRelative(k.created)}</div>
           </div>
           <button class="apikey-action" data-id="${k.id}">Delete</button>
         </div>`,
@@ -3248,28 +3200,71 @@ function openCreateApiKeyModal() {
     <div class="modal-body">
       <div class="modal-field"><label for="apiKeyName">Key name</label>
       <input type="text" id="apiKeyName"></div>
+      <div class="modal-field"><label for="apiKeyAccess">Site key access</label>
+      <select id="apiKeyAccess">
+        <option value="all">All site keys</option>
+        <option value="scoped">Only selected site keys</option>
+      </select></div>
+      <div class="scope-list" id="apiKeyScopeList" style="display:none">
+        ${
+          keys.length
+            ? keys
+                .map(
+                  (k) => `<label class="scope-item">
+            <input type="checkbox" value="${escapeHtml(k.siteKey)}">
+            <span class="scope-item-name">${escapeHtml(k.name)}</span>
+            <span class="scope-item-key">${escapeHtml(k.siteKey)}</span>
+          </label>`,
+                )
+                .join("")
+            : '<div class="empty-list">No site keys yet</div>'
+        }
+      </div>
+      <div class="switch-field">
+        <label class="switch">
+          <input type="checkbox" id="apiKeyReadonly">
+          <span class="switch-track"></span>
+        </label>
+        <label for="apiKeyReadonly" class="switch-label">
+          Read-only
+          <span class="hint">Can list keys and read stats, but can't create, change or delete anything.</span>
+        </label>
+      </div>
+      <p class="hint modal-error" id="apiKeyError" hidden></p>
     </div>
     <div class="modal-footer">
       <button class="modal-btn secondary" onclick="closeModal(); openSettings()">Cancel</button>
-      <button class="modal-btn primary" id="createApiKeySubmit">Create</button>
+      <button class="modal-btn primary" id="createApiKeySubmit" disabled>Create</button>
     </div>`,
   );
 
   const input = modal.querySelector("#apiKeyName");
+  const access = modal.querySelector("#apiKeyAccess");
+  const scopeList = modal.querySelector("#apiKeyScopeList");
   const submitBtn = modal.querySelector("#createApiKeySubmit");
+  const selectedSiteKeys = () =>
+    [...scopeList.querySelectorAll("input:checked")].map((c) => c.value);
+  const refresh = () => {
+    const scoped = access.value === "scoped";
+    scopeList.style.display = scoped ? "" : "none";
+    submitBtn.disabled = !input.value.trim() || (scoped && selectedSiteKeys().length === 0);
+  };
   input.select();
   input.focus();
-  input.addEventListener("input", () => {
-    submitBtn.disabled = !input.value.trim();
-  });
+  input.addEventListener("input", refresh);
+  access.addEventListener("change", refresh);
+  scopeList.addEventListener("change", refresh);
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && input.value.trim()) submitBtn.click();
+    if (e.key === "Enter" && !submitBtn.disabled) submitBtn.click();
   });
 
   submitBtn.addEventListener("click", async () => {
     submitBtn.disabled = true;
+    const scoped = access.value === "scoped";
     const res = await api("POST", "/settings/apikeys", {
       name: input.value.trim(),
+      siteKeys: scoped ? selectedSiteKeys() : undefined,
+      readonly: modal.querySelector("#apiKeyReadonly").checked || undefined,
     });
     if (res.apiKey) {
       closeModal();
@@ -3281,7 +3276,10 @@ function openCreateApiKeyModal() {
         <div class="modal-footer"><button class="modal-btn primary" onclick="closeModal(); openSettings()">Done</button></div>`,
       );
     } else {
-      showModal("Error", '<div class="modal-body"><p>Failed to create API key.</p></div>');
+      submitBtn.disabled = false;
+      const err = modal.querySelector("#apiKeyError");
+      err.textContent = res.error || "Failed to create API key.";
+      err.hidden = false;
     }
   });
 }

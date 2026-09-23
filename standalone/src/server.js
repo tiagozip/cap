@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Elysia, t } from "elysia";
 import { authBeforeHandle } from "./auth.js";
-import { invalidateBlockCache } from "./cap.js";
+import { invalidateBlockCache, invalidateKeyCache } from "./cap.js";
 import { db, hgetall } from "./db.js";
 import {
   demoGetBlockedIps,
@@ -25,6 +25,13 @@ import {
   setHeaders,
   setRatelimit,
 } from "./settings-cache.js";
+import {
+  createShare,
+  deleteSharesForKey,
+  listShares,
+  revokeShare,
+} from "./share.js";
+import { geoStats, keyStats } from "./stats.js";
 
 const keyDefaults = {
   difficulty: 4,
@@ -35,6 +42,8 @@ const keyDefaults = {
   blockAutomatedBrowsers: false,
   rsw: false,
   rswT: 75_000,
+  protocol: "hashwx",
+  hashwxDifficulty: 1_000_000,
 };
 
 const sumSolutions = (data, startBucket, endBucket) => {
@@ -50,6 +59,27 @@ const sumSolutions = (data, startBucket, endBucket) => {
     }
   }
   return sum;
+};
+
+const readMethods = new Set(["GET", "HEAD"]);
+
+const scopeGuard = ({ scope, request, params, set, route }) => {
+  if (!scope) return;
+  if (scope.readonly && !readMethods.has(request.method)) {
+    set.status = 403;
+    return { success: false, error: "Forbidden. This API key is read-only." };
+  }
+  if (!scope.siteKeys) return;
+  if (params?.siteKey) {
+    if (scope.siteKeys.includes(params.siteKey)) return;
+  } else if (readMethods.has(request.method) && route === "/server/keys") {
+    return;
+  }
+  set.status = 403;
+  return {
+    success: false,
+    error: "Forbidden. This API key is not scoped to this site key.",
+  };
 };
 
 const demoWriteGuard = ({ request }) => {
@@ -71,10 +101,11 @@ export const server = new Elysia({
   },
 })
   .onBeforeHandle(isDemoMode() ? () => {} : authBeforeHandle)
+  .onBeforeHandle(scopeGuard)
   .onBeforeHandle(demoWriteGuard)
   .get(
     "/keys",
-    async () => {
+    async ({ scope }) => {
       if (isDemoMode()) return demoGetKeys();
 
       const now = Math.floor(Date.now() / 1000);
@@ -83,7 +114,9 @@ export const server = new Elysia({
       const currentStart = now - day;
       const previousStart = now - 2 * day;
 
-      const siteKeys = await db.smembers("keys");
+      const siteKeys = (await db.smembers("keys")).filter(
+        (sk) => !scope?.siteKeys || scope.siteKeys.includes(sk),
+      );
       const keys = await Promise.all(
         siteKeys.map(async (sk) => {
           const fields = await db.hmget(`key:${sk}`, [
@@ -153,8 +186,11 @@ export const server = new Elysia({
         ...keyDefaults,
         instrumentation: body?.instrumentation ?? false,
         blockAutomatedBrowsers: body?.blockAutomatedBrowsers ?? false,
-        rsw: body?.rsw ?? false,
+        rsw: body?.rsw ?? keyDefaults.rsw,
         rswT: body?.rswT ?? keyDefaults.rswT,
+        protocol: body?.protocol ?? keyDefaults.protocol,
+        hashwxDifficulty:
+          body?.hashwxDifficulty ?? keyDefaults.hashwxDifficulty,
       };
 
       if (
@@ -179,6 +215,12 @@ export const server = new Elysia({
       ]);
       await db.sadd("keys", siteKey);
 
+      if (config.protocol === "rsw") {
+        ensureRswKeypair().catch((e) =>
+          console.warn("[cap] RSW keypair generation:", e.message),
+        );
+      }
+
       return {
         siteKey,
         secretKey,
@@ -192,6 +234,16 @@ export const server = new Elysia({
         corsOrigins: t.Optional(t.Array(t.String())),
         rsw: t.Optional(t.Boolean()),
         rswT: t.Optional(t.Number({ minimum: 10000, maximum: 300000 })),
+        protocol: t.Optional(
+          t.Union([
+            t.Literal("sha256-pow"),
+            t.Literal("rsw"),
+            t.Literal("hashwx"),
+          ]),
+        ),
+        hashwxDifficulty: t.Optional(
+          t.Number({ minimum: 50000, maximum: 5000000 }),
+        ),
       }),
       detail: {
         tags: ["Keys"],
@@ -225,172 +277,6 @@ export const server = new Elysia({
       };
 
       const chartDuration = query.chartDuration || "today";
-      const now = Math.floor(Date.now() / 1000);
-      const day = 86400;
-
-      let bucketSize, startTime, endTime;
-      switch (chartDuration) {
-        case "today":
-          bucketSize = 3600;
-          startTime = Math.floor(now / day) * day;
-          endTime = Math.floor(now / 3600) * 3600 + 3600;
-          break;
-        case "yesterday":
-          bucketSize = 3600;
-          startTime = Math.floor(now / day) * day - day;
-          endTime = startTime + day;
-          break;
-        case "last7days":
-          bucketSize = day;
-          startTime = Math.floor((now - 7 * day) / day) * day;
-          endTime = Math.floor(now / day) * day + day;
-          break;
-        case "last28days":
-          bucketSize = day;
-          startTime = Math.floor((now - 28 * day) / day) * day;
-          endTime = Math.floor(now / day) * day + day;
-          break;
-        case "last91days":
-          bucketSize = day;
-          startTime = Math.floor((now - 91 * day) / day) * day;
-          endTime = Math.floor(now / day) * day + day;
-          break;
-        case "alltime":
-          bucketSize = day;
-          startTime = 0;
-          endTime = now + day;
-          break;
-        default:
-          bucketSize = 3600;
-          startTime = now - day;
-          endTime = now + 3600;
-      }
-
-      const periodLen = endTime - startTime;
-      let prevStartTime = null,
-        prevEndTime = null;
-      if (chartDuration !== "alltime") {
-        prevEndTime = startTime;
-        prevStartTime = startTime - periodLen;
-      }
-
-      const [verifiedH, failedH, ratelimitedH, latSumH, latCountH] =
-        await Promise.all([
-          hgetall(`metrics:verified:${sk}`),
-          hgetall(`metrics:failed:${sk}`),
-          hgetall(`metrics:ratelimited:${sk}`),
-          hgetall(`metrics:latency_sum:${sk}`),
-          hgetall(`metrics:latency_count:${sk}`),
-        ]);
-
-      const sumRange = (hash, start, end) => {
-        let s = 0;
-        for (const [b, v] of Object.entries(hash)) {
-          const bn = Number(b);
-          if (bn >= start && (end === undefined || bn < end)) s += Number(v);
-        }
-        return s;
-      };
-
-      const aggregateDaily = (hash, start, end) => {
-        const m = new Map();
-        for (const [b, v] of Object.entries(hash)) {
-          const bn = Number(b);
-          if (bn >= start && (end === undefined || bn < end)) {
-            const dayB = Math.floor(bn / day) * day;
-            m.set(dayB, (m.get(dayB) || 0) + Number(v));
-          }
-        }
-        return m;
-      };
-
-      const chartData = [];
-      if (bucketSize === day) {
-        const veM = aggregateDaily(verifiedH, startTime, endTime);
-        const faM = aggregateDaily(failedH, startTime, endTime);
-        const rlM = aggregateDaily(ratelimitedH, startTime, endTime);
-
-        const numDays =
-          chartDuration === "last7days"
-            ? 7
-            : chartDuration === "last28days"
-              ? 28
-              : chartDuration === "last91days"
-                ? 91
-                : undefined;
-        if (numDays) {
-          const currentDayStart = Math.floor(now / day) * day;
-          for (let i = 0; i < numDays; i++) {
-            const b = currentDayStart - (numDays - 1 - i) * day;
-            const verified = veM.get(b) || 0;
-            const failed = faM.get(b) || 0;
-            chartData.push({
-              bucket: b,
-              challenges: verified + failed,
-              verified,
-              failed,
-              rateLimited: rlM.get(b) || 0,
-            });
-          }
-        } else {
-          const allBuckets = new Set([
-            ...veM.keys(),
-            ...faM.keys(),
-            ...rlM.keys(),
-          ]);
-          for (const b of [...allBuckets].sort((a, c) => a - c)) {
-            const verified = veM.get(b) || 0;
-            const failed = faM.get(b) || 0;
-            chartData.push({
-              bucket: b,
-              challenges: verified + failed,
-              verified,
-              failed,
-              rateLimited: rlM.get(b) || 0,
-            });
-          }
-        }
-      } else {
-        const startHour = Math.floor(startTime / 3600);
-        const endHour = Math.floor((endTime - 1) / 3600);
-        for (let h = startHour; h <= endHour; h++) {
-          const b = h * 3600;
-          const bs = String(b);
-          const verified = Number(verifiedH[bs] || 0);
-          const failed = Number(failedH[bs] || 0);
-          chartData.push({
-            bucket: b,
-            challenges: verified + failed,
-            verified,
-            failed,
-            rateLimited: Number(ratelimitedH[bs] || 0),
-          });
-        }
-      }
-
-      const totalVerified = sumRange(verifiedH, startTime, endTime);
-      const totalFailed = sumRange(failedH, startTime, endTime);
-      const totalRateLimited = sumRange(ratelimitedH, startTime, endTime);
-      const totalLatSum = sumRange(latSumH, startTime, endTime);
-      const totalLatCount = sumRange(latCountH, startTime, endTime);
-      const avgLatency =
-        totalLatCount > 0 ? Math.round(totalLatSum / totalLatCount) : 0;
-
-      let prevStats = null;
-      if (prevStartTime !== null) {
-        const pVerified = sumRange(verifiedH, prevStartTime, prevEndTime);
-        const pFailed = sumRange(failedH, prevStartTime, prevEndTime);
-        const pRateLimited = sumRange(ratelimitedH, prevStartTime, prevEndTime);
-        const pLatSum = sumRange(latSumH, prevStartTime, prevEndTime);
-        const pLatCount = sumRange(latCountH, prevStartTime, prevEndTime);
-        prevStats = {
-          challenges: pVerified + pFailed,
-          verified: pVerified,
-          failed: pFailed,
-          avgLatency: pLatCount > 0 ? Math.round(pLatSum / pLatCount) : 0,
-          rateLimited: pRateLimited,
-        };
-      }
 
       return {
         key: {
@@ -399,19 +285,7 @@ export const server = new Elysia({
           created: key.created,
           config: JSON.parse(key.config),
         },
-        stats: {
-          challenges: totalVerified + totalFailed,
-          verified: totalVerified,
-          failed: totalFailed,
-          avgLatency,
-          rateLimited: totalRateLimited,
-        },
-        prevStats,
-        chartData: {
-          duration: chartDuration,
-          bucketSize,
-          data: chartData,
-        },
+        ...(await keyStats(sk, chartDuration)),
       };
     },
     {
@@ -459,6 +333,8 @@ export const server = new Elysia({
         requiredHeaders,
         rsw,
         rswT,
+        protocol,
+        hashwxDifficulty,
       } = body;
 
       const config = {
@@ -498,6 +374,14 @@ export const server = new Elysia({
             : (existingConfig.requiredHeaders ?? null),
         rsw: rsw ?? existingConfig.rsw ?? false,
         rswT: rswT ?? existingConfig.rswT ?? keyDefaults.rswT,
+        protocol:
+          protocol ??
+          existingConfig.protocol ??
+          ((rsw ?? existingConfig.rsw) ? "rsw" : "sha256-pow"),
+        hashwxDifficulty:
+          hashwxDifficulty ??
+          existingConfig.hashwxDifficulty ??
+          keyDefaults.hashwxDifficulty,
       };
 
       const currentName = await db.hget(`key:${params.siteKey}`, "name");
@@ -510,6 +394,7 @@ export const server = new Elysia({
       ]);
 
       invalidateCorsCache(params.siteKey);
+      invalidateKeyCache(params.siteKey);
 
       return { success: true };
     },
@@ -532,6 +417,16 @@ export const server = new Elysia({
         requiredHeaders: t.Optional(t.Union([t.Array(t.String()), t.Null()])),
         rsw: t.Optional(t.Boolean()),
         rswT: t.Optional(t.Number({ minimum: 10000, maximum: 300000 })),
+        protocol: t.Optional(
+          t.Union([
+            t.Literal("sha256-pow"),
+            t.Literal("rsw"),
+            t.Literal("hashwx"),
+          ]),
+        ),
+        hashwxDifficulty: t.Optional(
+          t.Number({ minimum: 50000, maximum: 5000000 }),
+        ),
       }),
       detail: {
         tags: ["Keys"],
@@ -562,8 +457,10 @@ export const server = new Elysia({
         db.del(`metrics:os:${sk}`),
         db.del(`blocked:${sk}`),
         db.srem("keys", sk),
+        deleteSharesForKey(sk),
       ]);
       invalidateBlockCache(params.siteKey);
+      invalidateKeyCache(params.siteKey);
 
       return { success: true };
     },
@@ -628,51 +525,57 @@ export const server = new Elysia({
         );
       }
 
-      const sk = params.siteKey;
-      const [countryData, asnData, platformData, osData] = await Promise.all([
-        hgetall(`metrics:country:${sk}`),
-        hgetall(`metrics:asn:${sk}`),
-        hgetall(`metrics:platform:${sk}`),
-        hgetall(`metrics:os:${sk}`),
-      ]);
-
-      const countries = Object.entries(countryData)
-        .map(([code, count]) => ({ code, count: Number(count) }))
-        .sort((a, b) => b.count - a.count);
-
-      const totalCountry = countries.reduce((s, c) => s + c.count, 0);
-
-      const asns = Object.entries(asnData)
-        .map(([name, count]) => ({ name, count: Number(count) }))
-        .sort((a, b) => b.count - a.count);
-
-      const totalAsn = asns.reduce((s, a) => s + a.count, 0);
-
-      const platforms = Object.entries(platformData)
-        .map(([name, count]) => ({ name, count: Number(count) }))
-        .sort((a, b) => b.count - a.count);
-
-      const totalPlatform = platforms.reduce((s, p) => s + p.count, 0);
-
-      const oses = Object.entries(osData)
-        .map(([name, count]) => ({ name, count: Number(count) }))
-        .sort((a, b) => b.count - a.count);
-
-      const totalOs = oses.reduce((s, o) => s + o.count, 0);
-
-      return {
-        countries,
-        totalCountry,
-        asns,
-        totalAsn,
-        platforms,
-        totalPlatform,
-        oses,
-        totalOs,
-      };
+      return geoStats(params.siteKey);
     },
     {
       params: t.Object({ siteKey: t.String() }),
+      detail: { tags: ["Keys"] },
+    },
+  )
+  .get(
+    "/keys/:siteKey/shares",
+    async ({ params, set }) => {
+      if (isDemoMode()) return [];
+      if (!(await db.exists(`key:${params.siteKey}`))) {
+        set.status = 404;
+        return { success: false, error: "Key not found" };
+      }
+      return listShares(params.siteKey);
+    },
+    {
+      params: t.Object({ siteKey: t.String() }),
+      detail: { tags: ["Keys"] },
+    },
+  )
+  .post(
+    "/keys/:siteKey/shares",
+    async ({ params, body, set }) => {
+      if (!(await db.exists(`key:${params.siteKey}`))) {
+        set.status = 404;
+        return { success: false, error: "Key not found" };
+      }
+      return createShare(params.siteKey, body);
+    },
+    {
+      params: t.Object({ siteKey: t.String() }),
+      body: t.Object({
+        name: t.Optional(t.String({ maxLength: 64 })),
+        expiresIn: t.Optional(t.Number({ minimum: 0, maximum: 315_360_000 })),
+      }),
+      detail: { tags: ["Keys"] },
+    },
+  )
+  .delete(
+    "/keys/:siteKey/shares/:id",
+    async ({ params, set }) => {
+      if (!(await revokeShare(params.siteKey, params.id))) {
+        set.status = 404;
+        return { success: false, error: "Share link not found" };
+      }
+      return { success: true };
+    },
+    {
+      params: t.Object({ siteKey: t.String(), id: t.String() }),
       detail: { tags: ["Keys"] },
     },
   )
@@ -854,16 +757,31 @@ export const server = new Elysia({
       const ids = await db.smembers("apikeys");
       const apikeys = await Promise.all(
         ids.map(async (id) => {
-          const fields = await db.hmget(`apikey:${id}`, ["name", "created"]);
-          return { id, name: fields[0], created: Number(fields[1]) };
+          const fields = await db.hmget(`apikey:${id}`, [
+            "name",
+            "created",
+            "siteKeys",
+            "readonly",
+          ]);
+          return {
+            id,
+            name: fields[0],
+            created: Number(fields[1]),
+            siteKeys: fields[2] ? JSON.parse(fields[2]) : null,
+            readonly: fields[3] === "true",
+          };
         }),
       );
 
-      return apikeys.map((key) => ({
-        name: key.name,
-        id: key.id,
-        created: new Date(key.created).toISOString(),
-      }));
+      return apikeys
+        .sort((a, b) => b.created - a.created)
+        .map((key) => ({
+          name: key.name,
+          id: key.id,
+          created: new Date(key.created).toISOString(),
+          siteKeys: key.siteKeys,
+          readonly: key.readonly,
+        }));
     },
     {
       detail: {
@@ -873,7 +791,15 @@ export const server = new Elysia({
   )
   .post(
     "/settings/apikeys",
-    async ({ body }) => {
+    async ({ body, set }) => {
+      const siteKeys = [...new Set(body.siteKeys || [])];
+      for (const sk of siteKeys) {
+        if (!(await db.exists(`key:${sk}`))) {
+          set.status = 400;
+          return { success: false, error: `Unknown site key: ${sk}` };
+        }
+      }
+
       const id = randomBytes(16).toString("hex");
       const token = randomBytes(32)
         .toString("base64")
@@ -890,6 +816,8 @@ export const server = new Elysia({
         await Bun.password.hash(token),
         "created",
         String(Date.now()),
+        ...(siteKeys.length ? ["siteKeys", JSON.stringify(siteKeys)] : []),
+        ...(body.readonly ? ["readonly", "true"] : []),
       ]);
       await db.sadd("apikeys", id);
 
@@ -900,6 +828,8 @@ export const server = new Elysia({
     {
       body: t.Object({
         name: t.String(),
+        siteKeys: t.Optional(t.Array(t.String())),
+        readonly: t.Optional(t.Boolean()),
       }),
       detail: {
         tags: ["Settings"],

@@ -68,7 +68,11 @@ if (!redisAvailable) {
   const originalRedisUrl = process.env.REDIS_URL;
   process.env.REDIS_URL = `redis://127.0.0.1:${proxyPort}`;
   const { db } = await import("../src/db.js?reconnect");
-  process.env.REDIS_URL = originalRedisUrl;
+  if (originalRedisUrl === undefined) {
+    delete process.env.REDIS_URL;
+  } else {
+    process.env.REDIS_URL = originalRedisUrl;
+  }
 
   afterAll(async () => {
     try {

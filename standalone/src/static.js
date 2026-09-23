@@ -1,5 +1,6 @@
 import path from "node:path";
 import { Elysia } from "elysia";
+import { isDemoMode } from "./demo.js";
 
 const PUBLIC_ROOT = path.resolve("./public");
 
@@ -7,6 +8,10 @@ const UNAUTHED_ALLOWLIST = new Set([
   "logo-small.webp",
   "assets/ibm-plex-sans.woff2",
   "assets/lilex-regular.woff2",
+  "assets/style.css",
+  "assets/chart.js@4.5.0.min.js",
+  "js/geo.js",
+  "js/share.js",
 ]);
 
 const resolveSafePath = (rel) => {
@@ -19,7 +24,7 @@ const resolveSafePath = (rel) => {
 
 export const publicStatic = new Elysia().get(
   "/public/*",
-  async ({ cookie, set, request, redirect, headers }) => {
+  async ({ cookie, set, request, redirect }) => {
     const rawPath = new URL(request.url).pathname.replace(/^\/public\/?/, "");
     let rel;
     try {
@@ -35,8 +40,9 @@ export const publicStatic = new Elysia().get(
       return { success: false, error: "Not found" };
     }
 
-    const allowUnauthed = UNAUTHED_ALLOWLIST.has(rel);
-    const authed = cookie.cap_authed?.value === "yes";
+    const allowUnauthed =
+      UNAUTHED_ALLOWLIST.has(rel) || rel.startsWith("assets/flags/");
+    const authed = cookie.cap_authed?.value === "yes" || isDemoMode();
 
     if (!allowUnauthed && !authed) {
       set.status = 401;
@@ -50,11 +56,11 @@ export const publicStatic = new Elysia().get(
       return { success: false, error: "Not found" };
     }
 
-    headers["content-type"] = f.type || "application/octet-stream";
-    headers["cache-control"] = allowUnauthed
+    set.headers["content-type"] = f.type || "application/octet-stream";
+    set.headers["cache-control"] = allowUnauthed
       ? "public, max-age=86400"
       : "private, max-age=3600";
-    headers["x-content-type-options"] = "nosniff";
+    set.headers["x-content-type-options"] = "nosniff";
 
     return f;
   },
