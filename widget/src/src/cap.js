@@ -1,5 +1,5 @@
 (() => {
-  const WASM_VERSION = "0.0.7";
+  const WASM_VERSION = "0.0.8";
   const _browserHasHaptics =
     "vibrate" in navigator &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -209,7 +209,7 @@
               blockReason: d.blockReason || "automated_browser",
             });
           } else if (d.result) {
-            resolve(d.result);
+            resolve({ ...d.result, vp: [window.innerWidth, window.innerHeight] });
           } else {
             resolve({ __timeout: true });
           }
@@ -267,6 +267,52 @@
     return wasmModulePromise;
   };
 
+  const firstFulfilled = (tasks) =>
+    new Promise((resolve, reject) => {
+      let pending = tasks.length;
+      let firstError = null;
+      for (const task of tasks) {
+        task.then(resolve, (err) => {
+          if (!firstError) firstError = err;
+          pending--;
+          if (pending === 0) reject(firstError);
+        });
+      }
+    });
+
+  const MAX_HASHWX_DIFFICULTY = 1_000_000_000;
+  const MAX_HASHWX_NONCES_PER_HASH = 1_048_576;
+
+  let hashwxModulePromise = null;
+
+  const getHashwxModule = () => {
+    if (hashwxModulePromise) return hashwxModulePromise;
+
+    const wasmUrl =
+      window.CAP_CUSTOM_HASHWX_URL ||
+      `https://cdn.jsdelivr.net/npm/@cap.js/wasm@${WASM_VERSION}/browser/hashwx.wasm`;
+
+    const t0 = performance.now();
+    log.debug(T("wasm"), "fetching", wasmUrl);
+    hashwxModulePromise = fetch(wasmUrl)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Failed to fetch hashwx wasm: ${r.status}`);
+        return r.arrayBuffer();
+      })
+      .then((buf) => WebAssembly.compile(buf))
+      .then((mod) => {
+        log.debug(T("wasm"), `hashwx ready in ${since(t0)}`);
+        return mod;
+      })
+      .catch((e) => {
+        hashwxModulePromise = null;
+        log.warn(T("wasm"), `hashwx load failed (${since(t0)}):`, e.message || e);
+        throw e;
+      });
+
+    return hashwxModulePromise;
+  };
+
   if (
     typeof WebAssembly === "object" &&
     typeof WebAssembly.compile === "function"
@@ -291,6 +337,9 @@
     );
     return _sharedWorkerUrl;
   }
+
+  const WORKER_STOP_GRACE_MS = 250;
+  const HASHWX_SETTLE_MS = 1000;
 
   class WorkerPool {
     constructor(size) {
@@ -412,15 +461,31 @@
       }
     }
 
-    terminate() {
+    stopAll() {
       for (const w of this._workers) {
         try {
-          w.terminate();
+          w.postMessage({ kind: "stop" });
         } catch {}
       }
+    }
+
+    terminate() {
+      const workers = this._workers;
       this._workers = [];
       this._idle = [];
       this._queue = [];
+      for (const w of workers) {
+        try {
+          w.postMessage({ kind: "stop" });
+        } catch {}
+      }
+      setTimeout(() => {
+        for (const w of workers) {
+          try {
+            w.terminate();
+          } catch {}
+        }
+      }, WORKER_STOP_GRACE_MS);
     }
   }
 
@@ -565,6 +630,9 @@
         this.#speculative.challengeResp = resp;
 
         if (resp.format === 2 && Array.isArray(resp.challenges)) {
+          if (resp.challenges.some((ch) => ch?.protocol === "hashwx")) {
+            getHashwxModule().catch(() => {});
+          }
           this.#speculative.state = "idle";
           this.#speculative.notify();
           return;
@@ -1225,22 +1293,53 @@
           !(
             ch.protocol === "sha256-pow" ||
             ch.protocol === "rsw" ||
+            ch.protocol === "hashwx" ||
             ch.protocol === "instrumentation"
           )
         ) {
-          // Unknown protocol = older widget on a newer server. Fall back to
-          // erroring out -- the host can detect this and serve format-1.
           throw _err("challenge_unsupported", `unsupported format-2 protocol '${ch?.protocol}'`);
         }
       }
 
-      let wasmModule = null;
+      let needsCapWasm = false;
+      let hashwxCount = 0;
+      for (const ch of challenges) {
+        if (ch.protocol === "sha256-pow") needsCapWasm = true;
+        else if (ch.protocol === "hashwx") {
+          hashwxCount++;
+          const { c, d, n } = ch.payload ?? {};
+          if (
+            typeof c !== "string" ||
+            !/^[0-9a-f]{64}$/i.test(c) ||
+            !Number.isInteger(d) ||
+            d < 1 ||
+            d > MAX_HASHWX_DIFFICULTY ||
+            !Number.isInteger(n) ||
+            n < 1 ||
+            n > MAX_HASHWX_NONCES_PER_HASH
+          ) {
+            throw _err("challenge_unsupported", "malformed hashwx challenge payload");
+          }
+        }
+      }
+      const needsHashwx = hashwxCount > 0;
+
       const wasmSupported =
         typeof WebAssembly === "object" &&
         typeof WebAssembly.instantiate === "function";
-      if (wasmSupported) {
+
+      let wasmModule = null;
+      if (wasmSupported && needsCapWasm) {
         try { wasmModule = await getWasmModule(); }
         catch (e) { log.warn(T("wasm"), "unavailable, falling back to JS solver:", e.message || e); }
+      }
+
+      let hashwxModule = null;
+      if (needsHashwx) {
+        if (!wasmSupported) {
+          throw _err("challenge_unsupported", "hashwx requires WebAssembly");
+        }
+        hashwxModule = await getHashwxModule();
       }
 
       const poolSize = Math.max(1, Math.min(this.#workersCount, challenges.length));
@@ -1248,14 +1347,42 @@
       pool.setWasm(wasmModule);
       pool._ensureSize(poolSize);
 
+      const hashwxWorkers = Math.max(1, this.#workersCount);
+      const hashwxQueued = hashwxCount > hashwxWorkers;
+      const hashwxStripes = hashwxQueued ? 1 : hashwxWorkers;
+      let hashwxPool = needsHashwx ? new WorkerPool(hashwxWorkers) : null;
+      if (hashwxPool) hashwxPool._ensureSize(hashwxWorkers);
+
+      const reclaimStripes = async (stripes) => {
+        hashwxPool.stopAll();
+        let timer;
+        const settled = await Promise.race([
+          Promise.allSettled(stripes).then(() => true),
+          new Promise((resolve) => {
+            timer = setTimeout(() => resolve(false), HASHWX_SETTLE_MS);
+          }),
+        ]);
+        clearTimeout(timer);
+        if (settled) return;
+        log.warn(T("solve"), "hashwx workers did not stop in time, replacing the pool");
+        hashwxPool.terminate();
+        hashwxPool = new WorkerPool(hashwxWorkers);
+        hashwxPool._ensureSize(hashwxWorkers);
+      };
+
       const TASK_TIMEOUT_MS = 60_000;
-      const withTimeout = (promise, label) => Promise.race([
-        promise,
-        new Promise((_, rej) => setTimeout(
-          () => rej(new Error(`[cap] ${label} timed out after ${TASK_TIMEOUT_MS}ms`)),
-          TASK_TIMEOUT_MS,
-        )),
-      ]);
+      const withTimeout = (promise, label) => {
+        let timer;
+        return Promise.race([
+          promise,
+          new Promise((_, rej) => {
+            timer = setTimeout(
+              () => rej(new Error(`[cap] ${label} timed out after ${TASK_TIMEOUT_MS}ms`)),
+              TASK_TIMEOUT_MS,
+            );
+          }),
+        ]).finally(() => clearTimeout(timer));
+      };
 
       const inFlight = new Array(challenges.length).fill(0);
       const emit = () => {
@@ -1264,9 +1391,82 @@
         this.dispatchEvent("progress", { progress: visual });
       };
 
+      const solveHashwx = async (ch, idx) => {
+        const { c, d, n } = ch.payload;
+        const expected = Math.max(1, d);
+        const striped = new Array(hashwxStripes).fill(0);
+        const stripes = [];
+        try {
+          for (let s = 0; s < hashwxStripes; s++) {
+            const stripe = s;
+            const task = hashwxPool.runMsg(
+              {
+                kind: "hashwx",
+                hashwxModule,
+                c,
+                d,
+                n,
+                workerIndex: stripe,
+                workerCount: hashwxStripes,
+              },
+              (hashes) => {
+                striped[stripe] = hashes;
+                let sum = 0;
+                for (const v of striped) sum += v;
+                inFlight[idx] = Math.min(0.99, sum / expected);
+                emit();
+              },
+            );
+            task.catch(() => {});
+            stripes.push(task);
+          }
+          const data = await withTimeout(
+            firstFulfilled(stripes).catch((err) => {
+              throw _err(
+                "solve_failed",
+                err?.message || "every hashwx worker failed",
+              );
+            }),
+            `hashwx worker #${idx}`,
+          );
+          solutions[idx] = { nonce: data.nonce };
+          log.debug(
+            T("solve"),
+            `hashwx #${idx}: ${data.hashes} hashes in ${data.durationMs}ms`,
+            `compiled=${data.compiled}`,
+          );
+          inFlight[idx] = 0;
+          completed++;
+          emit();
+        } catch (err) {
+          await reclaimStripes(stripes);
+          throw err;
+        }
+        return stripes;
+      };
+
+      const hashwxJobs = [];
+      challenges.forEach((ch, idx) => {
+        if (ch.protocol === "hashwx") hashwxJobs.push({ ch, idx });
+      });
+      const hashwxSequence = hashwxJobs.length
+        ? hashwxQueued
+          ? Promise.all(hashwxJobs.map((job) => solveHashwx(job.ch, job.idx)))
+          : (async () => {
+              for (let i = 0; i < hashwxJobs.length; i++) {
+                const stripes = await solveHashwx(
+                  hashwxJobs[i].ch,
+                  hashwxJobs[i].idx,
+                );
+                if (i < hashwxJobs.length - 1) await reclaimStripes(stripes);
+              }
+            })()
+        : null;
+
       try {
-        await raceAbort(Promise.all(
-          challenges.map((ch, idx) => {
+        await raceAbort(Promise.all([
+          hashwxSequence,
+          ...challenges.map((ch, idx) => {
             if (ch.protocol === "sha256-pow") {
               return withTimeout(
                 pool.run(ch.payload.salt, ch.payload.target),
@@ -1293,7 +1493,9 @@
                 emit();
               });
             }
-            
+
+            if (ch.protocol === "hashwx") return null;
+
             return runInstrumentationChallenge(ch.payload.blob).then((out) => {
               if (out?.__timeout) solutions[idx] = { timeout: true };
               else if (out?.__blocked) solutions[idx] = { blocked: true };
@@ -1303,9 +1505,10 @@
               emit();
             });
           }),
-        ), signal);
+        ]), signal);
       } finally {
         pool.terminate();
+        if (hashwxPool) hashwxPool.terminate();
       }
 
       return solutions;
@@ -1695,6 +1898,11 @@
         clearTimeout(this.#resetTimer);
         this.#resetTimer = null;
       }
+      if (this.#speculativeTimer) {
+        clearTimeout(this.#speculativeTimer);
+        this.#speculativeTimer = null;
+      }
+      if (this.#speculative) this.#resetSpeculativeState();
       this.token = null;
       this.dispatchEvent("reset");
       this.#setToken("");

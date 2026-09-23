@@ -2,6 +2,7 @@ declare global {
   interface Window {
     CAP_CUSTOM_FETCH?: typeof fetch;
     CAP_CUSTOM_WASM_URL?: string;
+    CAP_CUSTOM_HASHWX_URL?: string;
     CAP_PAKO_URL?: string;
     CAP_CSS_NONCE?: string;
     CAP_SCRIPT_NONCE?: string;
