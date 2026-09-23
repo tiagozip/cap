@@ -90,6 +90,40 @@ Cap Standalone ใช้ Redis (หรือ Valkey) สำหรับการ
 
 ถ้าคุณใช้ Redis อินสแตนซ์เดียวร่วมกันหลาย Cap (หรือร่วมกับแอปอื่น) ให้ตั้ง `REDIS_PREFIX` เพื่อแยก namespace ของคีย์ทั้งหมด เช่น `REDIS_PREFIX=cap:` จะเก็บ session เป็น `cap:session:...` และเก็บ metric เป็น `cap:metrics:...` เป็นต้น ค่าเริ่มต้นคือว่าง ระบบที่ใช้งานอยู่แล้วจึงไม่ได้รับผลกระทบ
 
+## การตรวจสุขภาพและการปิดระบบ {#health-checks-and-shutdown}
+
+Cap Standalone มีเอนด์พอยต์สองตัวที่ไม่ต้องยืนยันตัวตน สำหรับระบบ orchestration และการมอนิเตอร์สถานะ:
+
+- `GET /health` ตอบ `200 {"status":"ok"}` เมื่อ Redis ตอบ `PING` ภายใน 2 วินาที และตอบ `503 {"status":"unavailable"}` ในกรณีอื่น ใช้สำหรับ readiness check และการแจ้งเตือน
+- `GET /health/live` ตอบ `200` ตราบใดที่โปรเซสยังทำงานอยู่ แม้ Redis จะล่ม ใช้สำหรับ liveness check เพื่อไม่ให้ระบบ orchestration รีสตาร์ต Cap วนซ้ำระหว่างที่ Redis มีปัญหา
+
+การตรวจที่เข้ามาภายในวินาทีเดียวกันจะใช้ `PING` ร่วมกันครั้งเดียว การเรียก `/health` บ่อย ๆ จึงไม่เพิ่มภาระให้ Redis
+
+ใน Kubernetes:
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 3000
+```
+
+ถ้าใช้ Docker Compose ให้เพิ่มส่วนนี้ในเซอร์วิส `cap` ส่วน Docker อย่างเดียวจะแค่ทำเครื่องหมายว่าคอนเทนเนอร์ unhealthy แต่จะไม่รีสตาร์ตให้
+
+```yaml
+healthcheck:
+  test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+```
+
+เมื่อได้รับ `SIGTERM` หรือ `SIGINT` Cap จะหยุดรับการเชื่อมต่อใหม่ รอให้คำขอที่กำลังทำงานอยู่เสร็จ ปิดการเชื่อมต่อ Redis แล้วออกด้วยรหัส 0 ถ้าผ่านไป 8 วินาทีแล้วยังมีคำขอทำงานอยู่ Cap จะออกด้วยรหัส 1 ทันที จึงจบได้ภายในเวลาหยุดเริ่มต้น 10 วินาทีของ Docker เสมอ ถ้าได้รับสัญญาณครั้งที่สองจะออกทันที
+
 ## ข้อความแสดงข้อผิดพลาด
 
 ข้อความแสดงข้อผิดพลาดจะถูกปิดบังโดยค่าเริ่มต้น และบันทึกลงคอนโซลแทน หากต้องการปิดการบันทึกข้อผิดพลาด ให้ตั้ง `DISABLE_ERROR_LOGGING=true` และหากต้องการปิดการปิดบังข้อความ ให้ตั้ง `SHOW_ERRORS=true`

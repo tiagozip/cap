@@ -90,6 +90,40 @@ Cap Standalone 使用 Redis（或 Valkey）存储所有数据。将 `REDIS_URL` 
 
 如果多个 Cap 部署（或其他应用）共用同一个 Redis 实例，请设置 `REDIS_PREFIX` 为所有键添加命名空间。比如 `REDIS_PREFIX=cap:` 会把会话存为 `cap:session:...`、指标存为 `cap:metrics:...` 等。默认值为空，因此现有部署不受影响。
 
+## 健康检查与关闭 {#health-checks-and-shutdown}
+
+Cap Standalone 提供两个无需认证的端点，供编排系统和可用性监控使用：
+
+- `GET /health`：Redis 在 2 秒内响应 `PING` 时返回 `200 {"status":"ok"}`，否则返回 `503 {"status":"unavailable"}`。可用于就绪检查和告警。
+- `GET /health/live`：只要进程在运行就返回 `200`，即使 Redis 已宕机。可用于存活检查，避免编排系统在 Redis 故障期间反复重启 Cap。
+
+同一秒内到达的检查共享同一次 `PING`，所以轮询 `/health` 不会给 Redis 增加负担。
+
+在 Kubernetes 中：
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 3000
+```
+
+使用 Docker Compose 时，把下面的配置加到 `cap` 服务里。单独使用 Docker 时，它只会把容器标记为 unhealthy，不会自动重启。
+
+```yaml
+healthcheck:
+  test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+```
+
+收到 `SIGTERM` 或 `SIGINT` 后，Cap 会停止接受新连接，等正在处理的请求完成，关闭 Redis 连接，然后以退出码 0 退出。如果 8 秒后仍有请求在运行，Cap 会以退出码 1 直接退出，这样总能在 Docker 默认的 10 秒停止超时之内结束。再收到一次信号会立即退出。
+
 ## 错误信息
 
 错误信息默认会被隐去，转而输出到控制台日志。要禁用错误日志，设置 `DISABLE_ERROR_LOGGING=true`；要禁用错误信息隐去，设置 `SHOW_ERRORS=true`。

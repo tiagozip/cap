@@ -90,6 +90,40 @@ Das empfohlene Setup nutzt Valkey (einen Redis-kompatiblen Store) über die dock
 
 Teilst du eine einzelne Redis-Instanz über mehrere Cap-Deployments (oder mit anderen Apps) hinweg, setze `REDIS_PREFIX`, um alle Keys zu namespacen. `REDIS_PREFIX=cap:` speichert Sessions etwa als `cap:session:...`, Metriken als `cap:metrics:...` und so weiter. Standardmäßig ist der Wert leer, bestehende Deployments sind also nicht betroffen.
 
+## Health-Checks und Herunterfahren {#health-checks-and-shutdown}
+
+Cap Standalone hat zwei Endpunkte ohne Authentifizierung für Orchestrierung und Uptime-Monitoring:
+
+- `GET /health` liefert `200 {"status":"ok"}`, wenn Redis innerhalb von 2 Sekunden auf ein `PING` antwortet, sonst `503 {"status":"unavailable"}`. Nutze ihn für Readiness-Checks und Alarme.
+- `GET /health/live` liefert `200`, solange der Prozess läuft, auch wenn Redis ausgefallen ist. Nutze ihn für Liveness-Checks, damit eine Orchestrierung Cap während eines Redis-Ausfalls nicht in einer Schleife neu startet.
+
+Checks, die in derselben Sekunde eintreffen, teilen sich ein `PING`. Häufiges Abfragen von `/health` belastet Redis also nicht.
+
+In Kubernetes:
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 3000
+```
+
+Mit Docker Compose ergänzt du das beim Dienst `cap`. Docker allein markiert den Container nur als unhealthy und startet ihn nicht neu.
+
+```yaml
+healthcheck:
+  test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+```
+
+Bei `SIGTERM` oder `SIGINT` nimmt Cap keine neuen Verbindungen mehr an, lässt laufende Anfragen zu Ende laufen, schließt die Redis-Verbindung und beendet sich mit Code 0. Läuft nach 8 Sekunden noch eine Anfrage, beendet sich Cap trotzdem mit Code 1 und bleibt so innerhalb von Dockers Standard-Stop-Timeout von 10 Sekunden. Ein zweites Signal beendet den Prozess sofort.
+
 ## Fehlermeldungen
 
 Fehlermeldungen werden standardmäßig redigiert und stattdessen auf die Konsole geloggt. Um das Error-Logging abzuschalten, setze `DISABLE_ERROR_LOGGING=true`. Um die Redigierung abzuschalten, setze `SHOW_ERRORS=true`.

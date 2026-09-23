@@ -90,6 +90,40 @@ The recommended setup uses Valkey (a Redis-compatible store) via the docker-comp
 
 If you share a single Redis instance across multiple Cap deployments (or with other apps), set `REDIS_PREFIX` to namespace all keys. For example, `REDIS_PREFIX=cap:` stores sessions as `cap:session:...`, metrics as `cap:metrics:...`, and so on. It's empty by default, so existing deployments are unaffected.
 
+## Health checks and shutdown
+
+Cap Standalone has two unauthenticated endpoints for orchestrators and uptime monitors:
+
+- `GET /health` returns `200 {"status":"ok"}` when Redis answers a `PING` within 2 seconds, and `503 {"status":"unavailable"}` otherwise. Use it for readiness checks and alerts.
+- `GET /health/live` returns `200` as long as the process is running, even while Redis is down. Use it for liveness checks, so an orchestrator doesn't restart Cap in a loop during a Redis outage.
+
+Checks that arrive within the same second share one `PING`, so polling `/health` adds no load on Redis.
+
+In Kubernetes:
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 3000
+```
+
+With Docker Compose, add this to the `cap` service. Plain Docker only marks the container as unhealthy, it doesn't restart it.
+
+```yaml
+healthcheck:
+  test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+```
+
+On `SIGTERM` or `SIGINT`, Cap stops accepting connections, lets requests already in progress finish, closes its Redis connection and exits with code 0. If a request is still running after 8 seconds, Cap exits with code 1 anyway, which keeps it inside Docker's default 10-second stop timeout. A second signal exits immediately.
+
 ## Error messages
 
 Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.

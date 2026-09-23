@@ -90,6 +90,40 @@ La configuration recommandée utilise Valkey (un magasin compatible Redis) via l
 
 Si vous partagez une même instance Redis entre plusieurs déploiements Cap (ou avec d'autres applications), définissez `REDIS_PREFIX` pour préfixer toutes les clés. Par exemple, `REDIS_PREFIX=cap:` stocke les sessions sous `cap:session:...`, les métriques sous `cap:metrics:...`, et ainsi de suite. La valeur est vide par défaut, les déploiements existants ne sont donc pas affectés.
 
+## Contrôles de santé et arrêt {#health-checks-and-shutdown}
+
+Cap Standalone expose deux points d'accès sans authentification pour les orchestrateurs et la surveillance de disponibilité :
+
+- `GET /health` renvoie `200 {"status":"ok"}` quand Redis répond à un `PING` en moins de 2 secondes, et `503 {"status":"unavailable"}` sinon. Utilisez-le pour les contrôles de disponibilité (readiness) et les alertes.
+- `GET /health/live` renvoie `200` tant que le processus tourne, même quand Redis est indisponible. Utilisez-le pour les contrôles de vivacité (liveness), afin qu'un orchestrateur ne redémarre pas Cap en boucle pendant une panne de Redis.
+
+Les contrôles qui arrivent dans la même seconde partagent un seul `PING`, donc interroger `/health` souvent n'ajoute pas de charge sur Redis.
+
+Avec Kubernetes :
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 3000
+```
+
+Avec Docker Compose, ajoutez ceci au service `cap`. Docker seul marque le conteneur comme unhealthy sans le redémarrer.
+
+```yaml
+healthcheck:
+  test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+  interval: 30s
+  timeout: 5s
+  retries: 3
+```
+
+À la réception de `SIGTERM` ou `SIGINT`, Cap cesse d'accepter des connexions, laisse se terminer les requêtes en cours, ferme sa connexion Redis et quitte avec le code 0. Si une requête tourne encore au bout de 8 secondes, Cap quitte quand même avec le code 1, ce qui le maintient dans le délai d'arrêt par défaut de 10 secondes de Docker. Un second signal le fait quitter immédiatement.
+
 ## Messages d'erreur
 
 Les messages d'erreur sont masqués par défaut et journalisés dans la console à la place. Pour désactiver la journalisation des erreurs, définissez `DISABLE_ERROR_LOGGING=true`. Pour désactiver le masquage, définissez `SHOW_ERRORS=true`.
