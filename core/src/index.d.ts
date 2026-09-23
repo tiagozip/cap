@@ -19,7 +19,7 @@ export interface GeneratedInstrumentation {
   instrumentation: string;
 }
 
-export type ProtocolName = "sha256-pow" | "rsw" | "instrumentation";
+export type ProtocolName = "sha256-pow" | "rsw" | "hashwx" | "instrumentation";
 
 export interface RswKeypair {
   N: bigint;
@@ -71,6 +71,13 @@ export interface GenerateChallengeOptions {
   t?: number;
   /** Alternative to `keypair`: pass a pre-built minter (advanced). */
   rsw?: RswMinter;
+
+  /** Expected number of HashWX hashes per solve, across all sub-challenges. Default 1_000_000. */
+  hashwxDifficulty?: number;
+  /** Nonces covered by each generated hash function. Default 65_536. */
+  hashwxNoncesPerHash?: number;
+  /** Independent sub-challenges the difficulty is split across. Default 4. */
+  hashwxChallengeCount?: number;
 }
 
 export interface Format2ChallengeEntry {
@@ -94,14 +101,56 @@ export interface Format2ChallengeResult {
 
 export type ChallengeResult = Format1ChallengeResult | Format2ChallengeResult;
 
+export interface ProbeVector {
+  ua?: string | null;
+  productSub?: string | null;
+  webdriver?: boolean | null;
+  oscpu?: string | null;
+  deviceMemory?: number | null;
+  uaDataPresent?: boolean | null;
+  uaData?: { mobile?: boolean; brands?: string[] } | null;
+  plugins?: { length: number } | null;
+  pdfViewerEnabled?: boolean | null;
+  engine?: { hasMozInnerScreenX: boolean; hasChrome: boolean } | null;
+  screen?: { width: number; height: number } | null;
+  innerWH?: [number, number] | null;
+  outerWH?: [number, number] | null;
+  isExtended?: boolean | null;
+  fontWidths?: number[] | null;
+  tamper?: Record<string, boolean> | null;
+}
+
+export interface DetectionCheck {
+  id: string;
+  passed: boolean;
+  detail: string;
+  gating: boolean;
+}
+
+export interface DetectionResult {
+  pass: boolean;
+  checks: DetectionCheck[];
+  blockedBy: string[];
+  riskFlags: string[];
+}
+
 export interface InstrumentationPayload {
   i: string;
   state: Record<string, number>;
+  p?: ProbeVector;
+  vp?: [number, number];
   ts?: number;
 }
 
-export interface Format2SolutionShaPow { nonce: number | string }
-export interface Format2SolutionRsw { y: string }
+export interface Format2SolutionShaPow {
+  nonce: number | string;
+}
+export interface Format2SolutionRsw {
+  y: string;
+}
+export interface Format2SolutionHashwx {
+  nonce: number | string;
+}
 export interface Format2SolutionInstrumentation {
   instr?: InstrumentationPayload;
   blocked?: boolean;
@@ -110,6 +159,7 @@ export interface Format2SolutionInstrumentation {
 export type Format2Solution =
   | Format2SolutionShaPow
   | Format2SolutionRsw
+  | Format2SolutionHashwx
   | Format2SolutionInstrumentation;
 
 export interface ValidateChallengeBody {
@@ -143,12 +193,16 @@ export interface ValidateChallengeSuccess {
   expires: number;
   scope: string | null;
   iat?: number;
+  /** Non-gating automation signals (e.g. `native_tamper`). Raise difficulty, do not block. */
+  riskFlags: string[];
 }
 
 export interface ValidateChallengeFailure {
   success: false;
   reason: string;
   instr_error?: boolean;
+  /** Ids of the gating detection checks that failed, when reason is `instr_automated_browser`. */
+  blockedBy?: string[];
   error?: string;
 }
 
@@ -184,3 +238,42 @@ export function buildRswMinter(
   args: { N: bigint; p: bigint; q: bigint; t: number; g?: bigint },
   opts?: { bits?: number },
 ): RswMinter;
+
+// ─── HashWX (format-2) helpers ─────────────────────────────────────────────
+export const DEFAULT_HASHWX_DIFFICULTY: number;
+export const DEFAULT_HASHWX_NONCES_PER_HASH: number;
+export const DEFAULT_HASHWX_CHALLENGE_COUNT: number;
+
+export interface HashwxState {
+  exports: WebAssembly.Exports;
+  ctx: number;
+  seedPtr: number;
+}
+
+/** Compiles and initializes the embedded HashWX wasm. Called automatically on
+ *  first verification; await it at boot to move the cost off the first
+ *  request. Resolves to a state handle reusable with `hashwxHash`. */
+export function hashwxReady(): Promise<HashwxState>;
+
+/** Largest 64-bit hash accepted at the given difficulty. */
+export function hashwxTarget(difficulty: number | bigint): bigint;
+
+/** sha256(challenge || u64le(block)), the seed for one generated hash
+ *  function. Each seed covers `hashwxNoncesPerHash` consecutive nonces. */
+export function hashwxSeed(
+  challenge: Uint8Array,
+  block: number | bigint,
+): Uint8Array;
+
+/** Generates the hash function for `seed` and runs it over `nonce`. Returns an
+ *  unsigned 64-bit value; a solution needs it at or below `hashwxTarget(d)`. */
+export function hashwxHash(
+  state: HashwxState,
+  seed: Uint8Array,
+  nonce: bigint,
+): bigint;
+
+/** Pure server-side automation detector over the probe vector the
+ *  instrumentation script ships back. Exposed for testing and for callers
+ *  that run their own instrumentation pipeline. */
+export function detectAutomation(vector: ProbeVector): DetectionResult;

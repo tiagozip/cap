@@ -1,5 +1,6 @@
 import { randomBytes, randomInt } from "node:crypto";
 import { deflateRawSync } from "node:zlib";
+import { detectAutomation } from "./detect.js";
 
 let _obfuscator = null;
 async function getObfuscator() {
@@ -184,6 +185,54 @@ const WEBGL_RENDERER_MARKER = "Mesa OffScreen";
 const PRODUCTSUB_GECKO = "20030107";
 const SEQUENTUM_MARKER = "Sequentum";
 
+const PROBE_FONT_STACKS = [
+  "sans-serif",
+  "serif",
+  "monospace",
+  "Arial",
+  "'Times New Roman'",
+  "'Courier New'",
+  "'Segoe UI'",
+  "'SF Pro Text'",
+  "'Helvetica Neue'",
+  "'Ubuntu'",
+  "'DejaVu Sans'",
+  "'Roboto'",
+  "Tahoma",
+  "Calibri",
+  "'Cantarell'",
+  "'Liberation Sans'",
+  "'Noto Sans'",
+];
+
+function buildProbe(P) {
+  const sf = rVar();
+  const nat = rVar();
+  const fields = [
+    `${sf}("ua",function(){return navigator.userAgent});`,
+    `${sf}("productSub",function(){return navigator.productSub});`,
+    `${sf}("webdriver",function(){return navigator.webdriver});`,
+    `${sf}("oscpu",function(){return navigator.oscpu===undefined?"__undefined":navigator.oscpu});`,
+    `${sf}("deviceMemory",function(){return navigator.deviceMemory});`,
+    `${sf}("uaDataPresent",function(){return !!navigator.userAgentData});`,
+    `${sf}("uaData",function(){var u=navigator.userAgentData;return u?{mobile:u.mobile,brands:(u.brands||[]).map(function(b){return b.brand+"/"+b.version})}:null});`,
+    `${sf}("plugins",function(){return {length:navigator.plugins.length}});`,
+    `${sf}("pdfViewerEnabled",function(){return navigator.pdfViewerEnabled});`,
+    `${sf}("engine",function(){return {hasMozInnerScreenX:typeof window.mozInnerScreenX!=="undefined",hasChrome:typeof window.chrome!=="undefined"}});`,
+    `${sf}("screen",function(){return {width:screen.width,height:screen.height}});`,
+    `${sf}("outerWH",function(){return [outerWidth,outerHeight]});`,
+    `${sf}("isExtended",function(){return screen.isExtended===undefined?null:screen.isExtended});`,
+    `${sf}("fontWidths",function(){var sp=document.createElement("span");sp.style.cssText="position:absolute;left:-9999px;top:-9999px;font-size:72px;white-space:nowrap";sp.textContent="mmmmmmmmmmlli WwWwGg @#Xj";document.body.appendChild(sp);var st=${JSON.stringify(PROBE_FONT_STACKS)};var out=[];for(var i=0;i<st.length;i++){sp.style.fontFamily=st[i];out.push(Math.round(sp.getBoundingClientRect().width*100)/100)}document.body.removeChild(sp);return out});`,
+    `${sf}("tamper",function(){return {getParameterWebGL:${nat}(WebGLRenderingContext.prototype.getParameter),toDataURL:${nat}(HTMLCanvasElement.prototype.toDataURL),getImageData:${nat}(CanvasRenderingContext2D.prototype.getImageData),permissionsQuery:navigator.permissions?${nat}(navigator.permissions.query):true,fnToString:${nat}(Function.prototype.toString)}});`,
+  ];
+  shuffle(fields);
+  return (
+    `var ${P}={};function ${sf}(k,f){try{${P}[k]=f()}catch(e){${P}[k]=null}}` +
+    `function ${nat}(fn){try{return /\\{\\s*\\[native code\\]\\s*\\}/.test(Function.prototype.toString.call(fn))}catch(e){return true}}` +
+    fields.join("")
+  );
+}
+
 function hashWith(seed) {
   return (s) => {
     let h = seed >>> 0;
@@ -348,6 +397,7 @@ function buildClientScript({
   const dvKey = rVar();
   const nKey = rVar();
   const outKey = rVar();
+  const pKey = rVar();
 
   const envChecks = [
     `try { const ${nKey}st = (new Error()).stack || ''; if (${nKey}st.indexOf('node:internal') !== -1 || ${nKey}st.indexOf('moduleEvaluation') !== -1 || ${nKey}st.indexOf('loadAndEvaluateModule') !== -1 || ${nKey}st.indexOf('file:///') !== -1 || ${nKey}st.indexOf('[eval]') !== -1 || /\\(native:/.test(${nKey}st)) return null; } catch { return null }`,
@@ -367,7 +417,7 @@ function buildClientScript({
 
   return `(function(){window.onload=async function(){try {${helpers}const ${dvKey}=await (async function(){${shuffle(envChecks).join("")}${blockChecks}
       var ${vars[0]}=${initVals[0]};var ${vars[1]}=${initVals[1]};var ${vars[2]}=${initVals[2]};var ${vars[3]}=${initVals[3]};${clientEqs}
-      var ${outKey}={};${outKey}["${vars[0]}"]=${vars[0]};${outKey}["${vars[1]}"]=${vars[1]};${outKey}["${vars[2]}"]=${vars[2]};${outKey}["${vars[3]}"]=${vars[3]};return ${outKey};})();if (!${dvKey} || typeof ${dvKey} !== 'object') return;parent.postMessage({type: 'cap:instr',nonce:${JSON.stringify(id)},result:{i:${JSON.stringify(id)},state:${dvKey},ts:Date.now()}},'*');} catch {}};})();`;
+      var ${outKey}={};${outKey}["${vars[0]}"]=${vars[0]};${outKey}["${vars[1]}"]=${vars[1]};${outKey}["${vars[2]}"]=${vars[2]};${outKey}["${vars[3]}"]=${vars[3]};return ${outKey};})();if (!${dvKey} || typeof ${dvKey} !== 'object') return;${buildProbe(pKey)}parent.postMessage({type: 'cap:instr',nonce:${JSON.stringify(id)},result:{i:${JSON.stringify(id)},state:${dvKey},p:${pKey},ts:Date.now()}},'*');} catch {}};})();`;
 }
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
@@ -557,5 +607,34 @@ export function verifyInstrumentationResult(challengeMeta, payload) {
     return { valid: false, reason: "failed_challenge" };
   }
 
-  return { valid: true };
+  const probe = payload.p;
+  if (probe && typeof probe === "object") {
+    const vector =
+      Array.isArray(payload.vp) && payload.vp.length === 2
+        ? { ...probe, innerWH: payload.vp }
+        : probe;
+    const d = detectAutomation(vector, {
+      fontStackCount: PROBE_FONT_STACKS.length,
+    });
+    if (challengeMeta.blockAutomatedBrowsers && !d.pass) {
+      return {
+        valid: false,
+        reason: "instr_automated_browser",
+        blockedBy: d.blockedBy,
+        checks: d.checks,
+      };
+    }
+    return {
+      valid: true,
+      riskFlags: d.riskFlags,
+      blockedBy: d.blockedBy,
+      checks: d.checks,
+    };
+  }
+
+  if (challengeMeta.blockAutomatedBrowsers) {
+    return { valid: false, reason: "instr_probe_missing" };
+  }
+
+  return { valid: true, riskFlags: [] };
 }

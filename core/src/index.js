@@ -10,7 +10,25 @@ import {
   sha256Bytes,
   sha256Hex,
 } from "./crypto.js";
-import { generateInstrumentation, verifyInstrumentationResult } from "./instrumentation.js";
+import {
+  generateInstrumentation,
+  verifyInstrumentationResult,
+} from "./instrumentation.js";
+
+export { detectAutomation } from "./detect.js";
+
+import { mintHashwxChallenges, verifyHashwxSolution } from "./hashwx.js";
+
+export {
+  DEFAULT_HASHWX_CHALLENGE_COUNT,
+  DEFAULT_HASHWX_DIFFICULTY,
+  DEFAULT_HASHWX_NONCES_PER_HASH,
+  hashwxHash,
+  hashwxReady,
+  hashwxSeed,
+  hashwxTarget,
+} from "./hashwx.js";
+
 import { fnv1a, fnv1aResume, prngFromHash } from "./prng.js";
 import {
   buildRswMinter as _buildRswMinter,
@@ -20,9 +38,9 @@ import {
 
 export {
   buildRswMinter,
+  deserializeRswKeypair,
   generateRswKeypair,
   serializeRswKeypair,
-  deserializeRswKeypair,
 } from "./rsw.js";
 
 const DEFAULT_RSW_T = 75_000;
@@ -38,9 +56,10 @@ function resolveRswMinter(opts) {
     );
   }
 
-  const kp = typeof opts.keypair.N === "string"
-    ? deserializeRswKeypair(opts.keypair)
-    : opts.keypair;
+  const kp =
+    typeof opts.keypair.N === "string"
+      ? deserializeRswKeypair(opts.keypair)
+      : opts.keypair;
 
   const t = opts.t ?? DEFAULT_RSW_T;
   let byT = _minterCache.get(opts.keypair);
@@ -75,9 +94,14 @@ function assertSecret(secret) {
   if (typeof secret !== "string" && !Buffer.isBuffer(secret)) {
     throw new Error("[capjs-core] secret must be a string or Buffer");
   }
-  const len = typeof secret === "string" ? Buffer.byteLength(secret, "utf8") : secret.length;
+  const len =
+    typeof secret === "string"
+      ? Buffer.byteLength(secret, "utf8")
+      : secret.length;
   if (len < 16) {
-    throw new Error("[capjs-core] secret must be at least 16 bytes for security");
+    throw new Error(
+      "[capjs-core] secret must be at least 16 bytes for security",
+    );
   }
 }
 
@@ -123,7 +147,8 @@ export async function generateChallenge(secret, opts = {}) {
 
   let instrumentation;
   if (opts.instrumentation) {
-    const instrOpts = typeof opts.instrumentation === "object" ? opts.instrumentation : {};
+    const instrOpts =
+      typeof opts.instrumentation === "object" ? opts.instrumentation : {};
     const generator = opts.instrumentationGenerator || generateInstrumentation;
     const instr = await generator({ ...instrOpts, ttlMs });
     payload.ei = encryptGcm(
@@ -153,7 +178,8 @@ export async function validateChallenge(secret, body, opts = {}) {
   assertSecret(secret);
 
   if (!body || typeof body !== "object") return fail("invalid_body");
-  if (!body.token || typeof body.token !== "string") return fail("missing_token");
+  if (!body.token || typeof body.token !== "string")
+    return fail("missing_token");
   const solutions = body.solutions;
   if (!Array.isArray(solutions)) return fail("missing_solutions");
 
@@ -205,6 +231,7 @@ export async function validateChallenge(secret, body, opts = {}) {
     }
   }
 
+  let riskFlags = [];
   if (payload.ei) {
     const instrMeta = decryptGcm(payload.ei, secret);
     if (!instrMeta) return fail("instr_corrupted", { instr_error: true });
@@ -220,7 +247,13 @@ export async function validateChallenge(secret, body, opts = {}) {
       return fail("instr_timeout", { instr_error: true });
     } else if (body.instr) {
       const r = verifyInstrumentationResult(instrMeta, body.instr);
-      if (!r.valid) return fail(r.reason || "instr_failed", { instr_error: true });
+      if (!r.valid) {
+        return fail(r.reason || "instr_failed", {
+          instr_error: true,
+          ...(r.blockedBy && { blockedBy: r.blockedBy }),
+        });
+      }
+      if (r.riskFlags?.length) riskFlags = [...riskFlags, ...r.riskFlags];
     } else {
       return fail("instr_missing", { instr_error: true });
     }
@@ -254,6 +287,7 @@ export async function validateChallenge(secret, body, opts = {}) {
       expires: tokenExpires,
       scope: payload.sk ?? null,
       iat: payload.iat,
+      riskFlags,
     };
   }
 
@@ -267,12 +301,15 @@ export async function validateChallenge(secret, body, opts = {}) {
     expires: tokenExpires,
     scope: payload.sk ?? null,
     iat: payload.iat,
+    riskFlags,
   };
 }
 
 async function generateChallengeV2(secret, opts) {
   const protocols =
-    Array.isArray(opts.protocols) && opts.protocols.length ? opts.protocols : ["rsw"];
+    Array.isArray(opts.protocols) && opts.protocols.length
+      ? opts.protocols
+      : ["rsw"];
   const ttlMs = opts.expiresMs ?? DEFAULT_CHALLENGE_TTL_MS;
   const now = Date.now();
   const exp = now + ttlMs;
@@ -314,14 +351,24 @@ async function generateChallengeV2(secret, opts) {
         payload: { N: minter.N_hex, x: x_hex, t: minter.t },
       });
       expected.push({ protocol: "rsw", y: y_hex });
+    } else if (proto === "hashwx") {
+      for (const minted of mintHashwxChallenges(opts)) {
+        challenges.push({ protocol: "hashwx", payload: minted.payload });
+        expected.push({ protocol: "hashwx", ...minted.expected });
+      }
     } else if (proto === "instrumentation") {
       const instrOpts =
-        typeof opts.instrumentation === "object" && opts.instrumentation !== null
+        typeof opts.instrumentation === "object" &&
+        opts.instrumentation !== null
           ? opts.instrumentation
           : {};
-      const generator = opts.instrumentationGenerator || generateInstrumentation;
+      const generator =
+        opts.instrumentationGenerator || generateInstrumentation;
       const instr = await generator({ ...instrOpts, ttlMs });
-      challenges.push({ protocol: "instrumentation", payload: { blob: instr.instrumentation } });
+      challenges.push({
+        protocol: "instrumentation",
+        payload: { blob: instr.instrumentation },
+      });
       expected.push({
         protocol: "instrumentation",
         instrMeta: {
@@ -356,9 +403,11 @@ async function validateChallengeV2(secret, body, payload, opts = {}) {
   if (!payload.exp || payload.exp < Date.now()) return fail("expired");
 
   const decrypted = decryptGcm(payload.ev, secret, "cap:fmt2-v1");
-  if (!decrypted || !Array.isArray(decrypted.expected)) return fail("invalid_token");
+  if (!decrypted || !Array.isArray(decrypted.expected))
+    return fail("invalid_token");
   const expected = decrypted.expected;
   const solutions = body.solutions;
+  let riskFlags = [];
 
   if (solutions.length !== expected.length) return fail("invalid_solutions");
 
@@ -369,11 +418,15 @@ async function validateChallengeV2(secret, body, payload, opts = {}) {
 
     if (e.protocol === "sha256-pow") {
       const nonce = s.nonce;
-      if (typeof nonce !== "number" && typeof nonce !== "string") return fail("invalid_solution");
+      if (typeof nonce !== "number" && typeof nonce !== "string")
+        return fail("invalid_solution");
       const hash = sha256Bytes(e.salt + nonce);
-      if (!powMatchesPrefix(hash, parseHexPrefix(e.target))) return fail("invalid_solution");
+      if (!powMatchesPrefix(hash, parseHexPrefix(e.target)))
+        return fail("invalid_solution");
     } else if (e.protocol === "rsw") {
       if (!verifyRswSolution(e.y, s.y)) return fail("invalid_solution");
+    } else if (e.protocol === "hashwx") {
+      if (!(await verifyHashwxSolution(e, s))) return fail("invalid_solution");
     } else if (e.protocol === "instrumentation") {
       const meta = e.instrMeta;
       if (!meta) return fail("instr_corrupted", { instr_error: true });
@@ -388,7 +441,13 @@ async function validateChallengeV2(secret, body, payload, opts = {}) {
         return fail("instr_timeout", { instr_error: true });
       } else if (s.instr) {
         const r = verifyInstrumentationResult(meta, s.instr);
-        if (!r.valid) return fail(r.reason || "instr_failed", { instr_error: true });
+        if (!r.valid) {
+          return fail(r.reason || "instr_failed", {
+            instr_error: true,
+            ...(r.blockedBy && { blockedBy: r.blockedBy }),
+          });
+        }
+        if (r.riskFlags?.length) riskFlags = [...riskFlags, ...r.riskFlags];
       } else {
         return fail("instr_missing", { instr_error: true });
       }
@@ -425,6 +484,7 @@ async function validateChallengeV2(secret, body, payload, opts = {}) {
       expires: tokenExpires,
       scope: payload.sk ?? null,
       iat: payload.iat,
+      riskFlags,
     };
   }
 
@@ -438,5 +498,6 @@ async function validateChallengeV2(secret, body, payload, opts = {}) {
     expires: tokenExpires,
     scope: payload.sk ?? null,
     iat: payload.iat,
+    riskFlags,
   };
 }
