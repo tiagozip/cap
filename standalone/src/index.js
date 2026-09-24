@@ -1,6 +1,6 @@
 import { cors } from "@elysiajs/cors";
 import { swagger } from "@elysiajs/swagger";
-import { Elysia, file } from "elysia";
+import { Elysia } from "elysia";
 import { assetsServer } from "./assets.js";
 import { auth } from "./auth.js";
 import { capServer } from "./cap.js";
@@ -19,7 +19,7 @@ import {
 } from "./settings-cache.js";
 import { shareServer } from "./share.js";
 import { siteverifyServer } from "./siteverify.js";
-import { publicStatic } from "./static.js";
+import { publicStatic, servePage } from "./static.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
@@ -149,14 +149,14 @@ const app = new Elysia({
   )
   .use(publicStatic)
   .use(healthServer)
-  .get("/", async ({ cookie }) => {
-    if (isDemoMode()) return file("./public/index.html");
-    return file(
-      cookie.cap_authed?.value === "yes"
-        ? "./public/index.html"
-        : "./public/login.html",
-    );
-  })
+  .get("/", ({ cookie, set }) =>
+    servePage(
+      isDemoMode() || cookie.cap_authed?.value === "yes"
+        ? "index.html"
+        : "login.html",
+      set,
+    ),
+  )
   .use(auth)
   .use(server)
   .use(shareServer)

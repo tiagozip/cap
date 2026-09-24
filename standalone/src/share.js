@@ -1,7 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import { Elysia, file, t } from "elysia";
+import { Elysia, t } from "elysia";
 import { db } from "./db.js";
 import valkeyRateLimit from "./ratelimit.js";
+import { servePage } from "./static.js";
 import { chartDurations, geoStats, keyStats } from "./stats.js";
 
 const hashToken = (token) => createHash("sha256").update(token).digest("hex");
@@ -157,10 +158,10 @@ export const shareServer = new Elysia({
   })
   .get(
     "/",
-    ({ request, redirect }) => {
+    ({ request, redirect, set }) => {
       if (new URL(request.url).pathname.endsWith("/"))
         return redirect("/share");
-      return file("./public/share.html");
+      return servePage("share.html", set);
     },
     { detail: { hide: true } },
   )

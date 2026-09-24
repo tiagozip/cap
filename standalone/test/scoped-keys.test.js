@@ -368,6 +368,32 @@ if (!redisAvailable) {
       expect(dashboard.status).toBe(401);
     });
 
+    test("share page references its assets by content hash", async () => {
+      const res = await app.handle(new Request("http://localhost/share"));
+      expect(res.status).toBe(200);
+      expect(res.headers.get("cache-control")).toBe("no-cache");
+      const refs = [
+        ...(await res.text()).matchAll(
+          /"\.\/public\/([^"?]+\.(?:js|css))\?v=(\w+)"/g,
+        ),
+      ];
+      expect(refs.map(([, rel]) => rel)).toEqual(
+        expect.arrayContaining([
+          "assets/style.css",
+          "js/geo.js",
+          "js/share.js",
+        ]),
+      );
+      for (const [, rel, version] of refs) {
+        const bytes = await Bun.file(`./public/${rel}`).arrayBuffer();
+        expect(version).toBe(Bun.hash(bytes).toString(36));
+        const asset = await app.handle(
+          new Request(`http://localhost/public/${rel}?v=${version}`),
+        );
+        expect(asset.status).toBe(200);
+      }
+    });
+
     test("deleting the key removes its share links", async () => {
       const keyC = (
         await call("POST", "/server/keys", { body: { name: "C" }, auth: admin })

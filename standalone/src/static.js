@@ -22,6 +22,28 @@ const resolveSafePath = (rel) => {
   return resolved;
 };
 
+const pages = new Map();
+
+export const servePage = async (name, set) => {
+  set.headers["content-type"] = "text/html; charset=utf-8";
+  set.headers["cache-control"] = "no-cache";
+  set.headers["x-content-type-options"] = "nosniff";
+  if (!pages.has(name)) {
+    let html = await Bun.file(path.join(PUBLIC_ROOT, name)).text();
+    for (const ref of new Set(
+      html.match(/\.\/public\/[\w./@-]+\.(?:js|css)/g),
+    )) {
+      const bytes = await Bun.file(path.resolve(ref)).arrayBuffer();
+      html = html.replaceAll(
+        `"${ref}"`,
+        `"${ref}?v=${Bun.hash(bytes).toString(36)}"`,
+      );
+    }
+    pages.set(name, html);
+  }
+  return pages.get(name);
+};
+
 export const publicStatic = new Elysia().get(
   "/public/*",
   async ({ cookie, set, request, redirect }) => {
