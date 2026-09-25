@@ -326,6 +326,9 @@
   const SPECULATIVE_DELAY_MS = 2500;
   const SPECULATIVE_WORKERS = 1;
   const SPECULATIVE_YIELD_MS = 120;
+  // success paths hold the "Verifying..." animation for at least this long so
+  // the widget never flashes its result when the solve finishes instantly
+  const MIN_VERIFY_DISPLAY_MS = 1000;
 
   let _sharedWorkerUrl = null;
 
@@ -501,6 +504,11 @@
     #troubleshootLink;
     #host;
     #solving = false;
+    // Bumped whenever an in-flight solve must stop touching this widget: a
+    // newer solve, reset() or disconnectedCallback(). solve() captures the
+    // value it started with and re-checks it after every await that could
+    // write UI or token state.
+    #solveGen = 0;
     #eventHandlers;
     #internals;
 
@@ -549,8 +557,43 @@
     }
 
     #resetSpeculativeState() {
+      // Wake up any solve() currently waiting on the outgoing state so it can
+      // observe the generation bump and bail out; dropping the object without
+      // notifying would leave that solve (and its progress interval) hanging
+      // forever.
+      this.#speculative?.notify();
       this.#speculative = this.#makeSpeculativeState();
       this.#attachInteractionListeners();
+    }
+
+    // True while the speculative pipeline holds a token that can still be
+    // committed without contacting the server.
+    #hasFreshSpeculativeToken() {
+      const state = this.#speculative;
+      return !!(
+        state?.state === "done" &&
+        state.token &&
+        state.tokenExpires &&
+        Date.now() < state.tokenExpires
+      );
+    }
+
+    // Drops a speculative state whose token is already spent: the redeem that
+    // produced the token consumed the challenge nonce server-side (single-use),
+    // so `results`/`challengeResp` can never be redeemed again — replaying them
+    // only earns a 403 "already_redeemed". Called from inside a running solve,
+    // so unlike #resetSpeculativeState() it neither re-arms the interaction
+    // listeners nor leaves a pending warm-up timer: a second speculative solve
+    // must not start while the cold path is in flight. The solve's own success
+    // path re-arms them via #resetSpeculativeState().
+    #discardSpentSpeculativeState() {
+      if (this.#speculativeTimer) {
+        clearTimeout(this.#speculativeTimer);
+        this.#speculativeTimer = null;
+      }
+      this.#detachInteractionListeners();
+      this.#speculative?.notify();
+      this.#speculative = this.#makeSpeculativeState();
     }
 
     #detachInteractionListeners() {
@@ -598,16 +641,20 @@
     }
 
     async #beginSpeculativeSolve() {
-      if (this.#speculative.state !== "waiting") return;
-      this.#speculative.state = "fetching";
-      this.#speculative._t0 = performance.now();
+      // Bind to the state object we start with: reset()/disconnect() replace
+      // it, and a continuation from the previous mount must not write into the
+      // new one.
+      const state = this.#speculative;
+      if (!state || state.state !== "waiting") return;
+      state.state = "fetching";
+      state._t0 = performance.now();
 
       let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
       if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
         apiEndpoint = "/";
       }
       if (!apiEndpoint) {
-        this.#speculative.state = "idle";
+        state.state = "idle";
         return;
       }
       if (!apiEndpoint.endsWith("/")) apiEndpoint += "/";
@@ -624,17 +671,17 @@
           throw new Error("Failed to parse speculative challenge response");
         }
         if (resp.error) throw new Error(resp.error);
-        if (!this.#speculative) return;
+        if (state !== this.#speculative) return;
 
         resp._apiEndpoint = apiEndpoint;
-        this.#speculative.challengeResp = resp;
+        state.challengeResp = resp;
 
         if (resp.format === 2 && Array.isArray(resp.challenges)) {
           if (resp.challenges.some((ch) => ch?.protocol === "hashwx")) {
             getHashwxModule().catch(() => {});
           }
-          this.#speculative.state = "idle";
-          this.#speculative.notify();
+          state.state = "idle";
+          state.notify();
           return;
         }
 
@@ -650,24 +697,24 @@
             ];
           });
         }
-        this.#speculative.challenges = challenges;
-        this.#speculative.state = "solving";
+        state.challenges = challenges;
+        state.state = "solving";
 
-        this.#speculative.solvePromise = this.#speculativeSolveAll(
-          challenges,
-        ).catch(() => {
-          if (!this.#speculative) return;
-          this.#speculative.state = "error";
-          this.#speculative.notify();
-        });
+        state.solvePromise = this.#speculativeSolveAll(challenges, state).catch(
+          () => {
+            if (state !== this.#speculative) return;
+            state.state = "error";
+            state.notify();
+          },
+        );
       } catch {
-        if (!this.#speculative) return;
-        this.#speculative.state = "error";
-        this.#speculative.notify();
+        if (state !== this.#speculative) return;
+        state.state = "error";
+        state.notify();
       }
     }
 
-    async #speculativeSolveAll(challenges) {
+    async #speculativeSolveAll(challenges, state) {
       _getSharedWorkerUrl();
 
       let wasmModule = null;
@@ -675,7 +722,7 @@
         wasmModule = await getWasmModule();
       } catch {}
 
-      if (!this.#speculative) return [];
+      if (state !== this.#speculative) return [];
       if (!this.#speculativePool) {
         this.#speculativePool = new WorkerPool(1);
         this.#speculativePool._spawn();
@@ -688,7 +735,7 @@
       let concurrency = SPECULATIVE_WORKERS;
       let promoted = false;
 
-      this.#speculative.promoteFn = (fullCount) => {
+      state.promoteFn = (fullCount) => {
         if (promoted || !this.#speculativePool) return;
         promoted = true;
         concurrency = fullCount;
@@ -696,15 +743,15 @@
         this.#speculativePool._ensureSize(fullCount);
       };
 
-      if (this.#speculative.pendingPromotion !== null) {
-        this.#speculative.promoteFn(this.#speculative.pendingPromotion);
-        this.#speculative.pendingPromotion = null;
+      if (state.pendingPromotion !== null) {
+        state.promoteFn(state.pendingPromotion);
+        state.pendingPromotion = null;
       }
 
       let nextIndex = 0;
 
       while (nextIndex < total) {
-        if (!this.#speculative || !this.#speculativePool) return results;
+        if (state !== this.#speculative || !this.#speculativePool) return results;
         const batchSize = concurrency;
         const batch = [];
         const batchIndices = [];
@@ -722,7 +769,7 @@
             this.#speculativePool
               .run(challenge[0], challenge[1])
               .then((nonce) => {
-                if (this.#speculative) this.#speculative.completedCount++;
+                if (state === this.#speculative) state.completedCount++;
                 return nonce;
               }),
           ),
@@ -739,17 +786,17 @@
         }
       }
 
-      if (!this.#speculative) return results;
-      this.#speculative.results = results;
-      this.#speculative.state = "redeeming";
-      this.#speculativeRedeem(results);
+      if (state !== this.#speculative) return results;
+      state.results = results;
+      state.state = "redeeming";
+      this.#speculativeRedeem(results, state);
       return results;
     }
 
-    async #speculativeRedeem(solutions) {
+    async #speculativeRedeem(solutions, state) {
       try {
-        if (!this.#speculative) return;
-        const challengeResp = this.#speculative.challengeResp;
+        if (state !== this.#speculative) return;
+        const challengeResp = state.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
         if (!apiEndpoint)
           throw _err("missing_endpoint", "speculative redeem: missing apiEndpoint");
@@ -759,10 +806,10 @@
           instrOut = await runInstrumentationChallenge(
             challengeResp.instrumentation,
           );
-          if (!this.#speculative) return;
+          if (state !== this.#speculative) return;
           if (instrOut?.__timeout || instrOut?.__blocked) {
-            this.#speculative.state = "done";
-            this.#speculative.notify();
+            state.state = "done";
+            state.notify();
             return;
           }
         }
@@ -785,19 +832,19 @@
           throw new Error("Failed to parse speculative redeem response");
         }
 
-        if (!this.#speculative) return;
+        if (state !== this.#speculative) return;
         if (!resp.success)
           throw new Error(resp.error || "Speculative redeem failed");
 
-        this.#speculative.token = resp.token;
-        this.#speculative.tokenExpires = new Date(resp.expires).getTime();
-        this.#speculative.state = "done";
-        this.#speculative._invisibleElapsed = this.#speculative._t0 ? since(this.#speculative._t0) : "?";
-        this.#speculative.notify();
+        state.token = resp.token;
+        state.tokenExpires = new Date(resp.expires).getTime();
+        state.state = "done";
+        state._invisibleElapsed = state._t0 ? since(state._t0) : "?";
+        state.notify();
       } catch {
-        if (!this.#speculative) return;
-        this.#speculative.state = "done";
-        this.#speculative.notify();
+        if (state !== this.#speculative) return;
+        state.state = "done";
+        state.notify();
       }
     }
 
@@ -816,6 +863,68 @@
         this.#i18n?.[key] ||
         defaultValue
       );
+    }
+
+    // Waits out the remainder of MIN_VERIFY_DISPLAY_MS on success paths.
+    // Resolves false when the solve was aborted or superseded (a newer solve
+    // started, or reset()/disconnect invalidated this one) — in that case the
+    // caller must bail out without touching the UI or the token. Resolves true
+    // when the caller may continue and switch to the verified state.
+    async #waitMinVerifyDisplay(_t0, signal, gen) {
+      const remaining = MIN_VERIFY_DISPLAY_MS - (performance.now() - _t0);
+      if (remaining > 0) {
+        await new Promise((resolve) => {
+          if (signal?.aborted) return resolve();
+          const onAbort = () => {
+            clearTimeout(timer);
+            resolve();
+          };
+          const timer = setTimeout(() => {
+            signal?.removeEventListener("abort", onAbort);
+            resolve();
+          }, remaining);
+          signal?.addEventListener("abort", onAbort, { once: true });
+        });
+      }
+      return gen === this.#solveGen && !signal?.aborted;
+    }
+
+    // Serves the running solve from the speculative cache when its token is
+    // still valid, waiting out the remainder of MIN_VERIFY_DISPLAY_MS first.
+    //
+    // Returns { handled: false } when there is nothing to commit and the caller
+    // must continue down the regular path. Otherwise returns { handled: true },
+    // carrying the solve() result when a token was committed, or no result when
+    // this solve was superseded/aborted while waiting and must return quietly.
+    //
+    // The token is re-checked after the wait: if it expired in the meantime the
+    // spent state is dropped, so the caller falls through to the regular path
+    // and fetches a brand new challenge instead of redeeming consumed
+    // solutions.
+    async #tryCommitSpeculativeToken(_solveT0, signal, gen) {
+      if (!this.#hasFreshSpeculativeToken()) {
+        // Expired before we got here (e.g. the widget sat idle past the token
+        // TTL): drop the spent state so the regular path gets a fresh challenge.
+        if (this.#speculative?.state === "done" && this.#speculative.token) {
+          this.#discardSpentSpeculativeState();
+        }
+        return { handled: false };
+      }
+
+      this.dispatchEvent("progress", { progress: 100 });
+      if (!(await this.#waitMinVerifyDisplay(_solveT0, signal, gen))) {
+        return { handled: true };
+      }
+      if (!this.#speculative?.token) return { handled: true };
+
+      if (this.#hasFreshSpeculativeToken()) {
+        return { handled: true, result: this.#commitSpeculativeToken() };
+      }
+
+      // Expired while we waited: same as above, the challenge+solutions behind
+      // this token are already consumed, so start over from a fresh challenge.
+      this.#discardSpentSpeculativeState();
+      return { handled: false };
     }
 
     #commitSpeculativeToken() {
@@ -844,6 +953,57 @@
       this.#resetSpeculativeState();
       this.#solving = false;
       return { success: true, token: this.token };
+    }
+
+    // The regular (cold) path: obtain a challenge — reusing a format-2 one the
+    // speculative pipeline already fetched, if any — and solve it. Also used
+    // whenever a spent speculative state had to be abandoned, in which case the
+    // fresh state has no cached challenge and a new one is POSTed.
+    async #solveFromFreshChallenge(apiEndpoint, signal) {
+      let challengeResp;
+      const cached = this.#speculative.challengeResp;
+      if (cached?.format === 2 && Array.isArray(cached.challenges)) {
+        challengeResp = cached;
+        this.#speculative.challengeResp = null;
+      } else {
+        const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
+          method: "POST",
+          signal,
+        });
+        try {
+          challengeResp = await challengeRaw.json();
+        } catch {
+          throw _err("challenge_parse_error", "Failed to parse challenge response from server");
+        }
+        if (challengeResp.error) throw _err("network_error", challengeResp.error);
+      }
+
+      let solutions;
+      if (
+        challengeResp.format === 2 &&
+        Array.isArray(challengeResp.challenges)
+      ) {
+        solutions = await this.solveChallengesV2(
+          challengeResp.challenges,
+          signal,
+        );
+      } else {
+        const { challenge, token } = challengeResp;
+        let challenges = challenge;
+        if (!Array.isArray(challenges)) {
+          let i = 0;
+          challenges = Array.from({ length: challenge.c }, () => {
+            i++;
+            return [
+              prng(`${token}${i}`, challenge.s),
+              prng(`${token}${i}d`, challenge.d),
+            ];
+          });
+        }
+        solutions = await this.solveChallenges(challenges, signal);
+      }
+
+      return { solutions, challengeResp };
     }
 
     #resolveI18n() {
@@ -956,7 +1116,11 @@
         this.#shadow = this.shadowRoot;
       }
 
-      if (!this.#div) this.#div = document.createElement("div");
+      // Build a fresh container on every connect. Reusing the detached #div
+      // would keep its old children, so createUI() would append a second
+      // captcha-trigger/troubleshoot/credits subtree into it and the stale
+      // data-state from the previous mount would survive the re-attach.
+      this.#div = document.createElement("div");
       this.#resolveI18n();
       this.createUI();
       this.addEventListeners();
@@ -994,8 +1158,8 @@
       }
 
       this.#enforceCredits();
-      const _solveT0 = performance.now();
       const signal = this.#abort?.signal;
+      const gen = ++this.#solveGen;
       log.debug(T("solve"), "starting");
 
       try {
@@ -1013,6 +1177,10 @@
           ),
         );
         this.dispatchEvent("progress", { progress: 0 });
+        // The clock starts once the "Verifying..." state is actually applied
+        // (label + aria + ring), so the animation stays visible for the full
+        // MIN_VERIFY_DISPLAY_MS instead of slightly less.
+        const _solveT0 = performance.now();
 
         try {
           let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
@@ -1029,16 +1197,21 @@
           let solutions;
           let challengeResp;
 
-          if (
-            this.#speculative.state === "done" &&
-            this.#speculative.token &&
-            this.#speculative.tokenExpires &&
-            Date.now() < this.#speculative.tokenExpires
-          ) {
-            return this.#commitSpeculativeToken();
-          }
+          // Serve from the speculative cache while its token is still valid.
+          // When that token has expired the helper drops the spent state (its
+          // challenge+solutions were already consumed by the speculative
+          // redeem), so the branches below fall through to a fresh challenge
+          // instead of replaying them for a guaranteed 403 already_redeemed.
+          const entryCommit = await this.#tryCommitSpeculativeToken(
+            _solveT0,
+            signal,
+            gen,
+          );
+          if (entryCommit.handled) return entryCommit.result;
 
           if (this.#speculative.state === "done") {
+            // Finished without a usable token: the speculative redeem itself
+            // failed, so these solutions were never consumed — redeem them.
             solutions = this.#speculative.results;
             challengeResp = this.#speculative.challengeResp;
             this.dispatchEvent("progress", { progress: 100 });
@@ -1090,6 +1263,7 @@
             );
             clearInterval(progressInterval);
             if (signal?.aborted || !this.#speculative) return;
+            if (gen !== this.#solveGen) return;
 
             if (
               this.#speculative.state === "idle" &&
@@ -1107,59 +1281,30 @@
                 throw _err("solve_failed", "Unable to solve challenge, self-hosted instance likely down. This is not an issue with Priestess Verification.");
               }
 
-            if (
-              this.#speculative.token &&
-              this.#speculative.tokenExpires &&
-              Date.now() < this.#speculative.tokenExpires
-            ) {
-              return this.#commitSpeculativeToken();
-            }
+              const settledCommit = await this.#tryCommitSpeculativeToken(
+                _solveT0,
+                signal,
+                gen,
+              );
+              if (settledCommit.handled) return settledCommit.result;
 
-            solutions = this.#speculative.results;
-            challengeResp = this.#speculative.challengeResp;
-            this.dispatchEvent("progress", { progress: 100 });
+              if (this.#speculative.state === "done") {
+                solutions = this.#speculative.results;
+                challengeResp = this.#speculative.challengeResp;
+                this.dispatchEvent("progress", { progress: 100 });
+              } else {
+                // The token expired while we waited on the speculative
+                // pipeline, so its challenge+solutions are spent: start over
+                // with a fresh challenge.
+                ({ solutions, challengeResp } =
+                  await this.#solveFromFreshChallenge(apiEndpoint, signal));
+              }
             }
           } else {
-            const cached = this.#speculative.challengeResp;
-            if (cached?.format === 2 && Array.isArray(cached.challenges)) {
-              challengeResp = cached;
-              this.#speculative.challengeResp = null;
-            } else {
-              const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
-                method: "POST",
-                signal,
-              });
-              try {
-                challengeResp = await challengeRaw.json();
-              } catch {
-                throw _err("challenge_parse_error", "Failed to parse challenge response from server");
-              }
-              if (challengeResp.error) throw _err("network_error", challengeResp.error);
-            }
-
-            if (
-              challengeResp.format === 2 &&
-              Array.isArray(challengeResp.challenges)
-            ) {
-              solutions = await this.solveChallengesV2(
-                challengeResp.challenges,
-                signal,
-              );
-            } else {
-              const { challenge, token } = challengeResp;
-              let challenges = challenge;
-              if (!Array.isArray(challenges)) {
-                let i = 0;
-                challenges = Array.from({ length: challenge.c }, () => {
-                  i++;
-                  return [
-                    prng(`${token}${i}`, challenge.s),
-                    prng(`${token}${i}d`, challenge.d),
-                  ];
-                });
-              }
-              solutions = await this.solveChallenges(challenges, signal);
-            }
+            ({ solutions, challengeResp } = await this.#solveFromFreshChallenge(
+              apiEndpoint,
+              signal,
+            ));
           }
 
           const instrPromise = challengeResp.instrumentation
@@ -1168,6 +1313,7 @@
 
           const instrOut = await instrPromise;
           if (signal?.aborted || !this.#speculative) return;
+          if (gen !== this.#solveGen) return;
 
           if (instrOut?.__timeout || instrOut?.__blocked) {
             capFetch(`${apiEndpoint}redeem`, {
@@ -1232,9 +1378,15 @@
           }
 
           if (signal?.aborted || !this.#speculative) return;
+          if (gen !== this.#solveGen) return;
 
           this.dispatchEvent("progress", { progress: 100 });
           if (!resp.success) throw _err("invalid_solution", resp.error || "Invalid solution");
+
+          // A reset()/disconnect/newer solve during the wait bumped the
+          // generation; #waitMinVerifyDisplay reports that so a stale solve
+          // never writes the token or the verified UI.
+          if (!(await this.#waitMinVerifyDisplay(_solveT0, signal, gen))) return;
 
           this.#setToken(resp.token);
 
@@ -1264,7 +1416,11 @@
           this.#logInvisible();
           return { success: true, token: this.token };
         } catch (err) {
+          // A superseded solve stays quiet: the widget it belonged to has been
+          // reset/re-solved since, so painting an error here would clobber the
+          // newer solve's UI.
           if (signal?.aborted || !this.#speculative) return;
+          if (gen !== this.#solveGen) return;
           this.#trigger.setAttribute(
             "aria-label",
             this.getI18nText(
@@ -1276,7 +1432,9 @@
           throw err;
         }
       } finally {
-        this.#solving = false;
+        // Only the current solve may clear the flag — a stale one finishing
+        // late must not unlock (or lock) a newer solve's "solving" state.
+        if (gen === this.#solveGen) this.#solving = false;
       }
     }
 
@@ -1890,6 +2048,11 @@
     }
 
     reset() {
+      // Invalidate any in-flight solve before anything else: it must not
+      // commit its token or repaint the UI after the reset, and the button has
+      // to become usable again immediately.
+      this.#solveGen++;
+      this.#solving = false;
       if (this.#resetTimer) {
         clearTimeout(this.#resetTimer);
         this.#resetTimer = null;
@@ -1910,6 +2073,10 @@
 
     disconnectedCallback() {
       this.#abort?.abort();
+      // Unlock the widget and invalidate the in-flight solve right away; the
+      // reset() below bumps the generation again, which is harmless.
+      this.#solveGen++;
+      this.#solving = false;
       this.removeEventListener("progress", this.boundHandleProgress);
       this.removeEventListener("solve", this.boundHandleSolve);
       this.removeEventListener("error", this.boundHandleError);
