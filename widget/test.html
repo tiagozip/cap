@@ -121,7 +121,10 @@
           (c) => {
             if (!c.textContent || !c.textContent.trim())
               throw new Error("text empty");
-            if (c.getAttribute("href") !== "https://trycap.dev")
+            if (
+              c.getAttribute("href") !==
+              "https://github.com/KurisuRakko/priestess-verification"
+            )
               throw new Error("href not restored");
           },
         );

@@ -307,8 +307,8 @@ function renderIntegrationTab(key) {
   const sk = key.siteKey;
   const origin = location.origin;
   const endpoint = `${origin}/${sk}/`;
-  const widget = `<scr` + `ipt src="https://cdn.jsdelivr.net/npm/@cap.js/widget"></scr` + `ipt>
-<!-- pin a version in production, e.g. @cap.js/widget@3 -->
+  const widget = `<scr` + `ipt src="https://cdn.jsdelivr.net/gh/KurisuRakko/priestess-verification@main/widget/src/cap.min.js"></scr` + `ipt>
+<!-- pin to a release tag in production, e.g. @v1.0.0 -->
 
 <cap-widget data-cap-api-endpoint="${endpoint}"></cap-widget>`;
   const nodeSnippet = `const res = await fetch("${origin}/siteverify", {
@@ -317,7 +317,7 @@ function renderIntegrationTab(key) {
   body: JSON.stringify({ secret: process.env.CAP_SECRET, response: token }),
 });
 const { success } = await res.json();`;
-  const aiPrompt = `Implement Cap (self-hosted CAPTCHA) in this codebase, or migrate from the existing CAPTCHA solution if one is present.
+  const aiPrompt = `Implement Priestess Verification (self-hosted CAPTCHA) in this codebase, or migrate from the existing CAPTCHA solution if one is present.
 
 ## Configuration
 
@@ -335,7 +335,7 @@ Fetch these first:
 
 Before writing code, output a short plan covering:
 1. What CAPTCHA solution (if any) exists today and every place it's used (frontend mounts, backend verification, env vars, config files)
-2. Which Cap mode fits best: standard widget, invisible, or floating (check the docs for tradeoffs)
+2. Which Priestess Verification mode fits best: standard widget, invisible, or floating (check the docs for tradeoffs)
 3. File-by-file change list
 4. How you'll verify it works end-to-end
 
@@ -352,17 +352,17 @@ Wait for nothing and proceed once the plan is written.
 
 - Secrets go in env vars, never hardcoded.
 - Token must be verified server-side on every protected route. Frontend-only checks don't count.
-- Handle: missing token, invalid token, network failure to the Cap server, expired token.
+- Handle: missing token, invalid token, network failure to the Priestess Verification server, expired token.
 
 ## Step 5: Test it
 
 Execute a basic test to make sure everything works. Check valid token, missing token, and invalid token cases.
 
-If anything fails and you are sure it's Cap's issue:
+If anything fails and you are sure it's Priestess Verification's issue:
 
 1. Double-check that you're using the latest widget and standalone version.
 2. Double-check your secret, endpoint, and that you're sending the token in the right field. Consult the docs
-3. Instruct the user to open an issue on GitHub: https://github.com/tiagozip/cap`;
+3. Instruct the user to open an issue on GitHub: https://github.com/KurisuRakko/priestess-verification/issues`;
   return `
     <div class="integration-layout">
       <h3 class="config-section-title">Frontend</h3>
@@ -379,7 +379,7 @@ If anything fails and you are sure it's Cap's issue:
       </div>
 
       <h3 class="config-section-title" style="margin-top: 24px;">AI prompt</h3>
-      <p class="integration-hint">Drop this into your AI assistant to have it implement Cap end-to-end.</p>
+      <p class="integration-hint">Drop this into your AI assistant to have it implement Priestess Verification end-to-end.</p>
       <div class="code-block code-block-prompt" data-raw="${escapeHtml(aiPrompt)}">
         <pre><code>${escapeHtml(aiPrompt)}</code></pre>
         <button class="code-copy code-copy-large">
@@ -2811,10 +2811,11 @@ async function openSettings() {
       <div class="settings-section" id="aboutSection">
         <img src="https://trycap.dev/logo.png" alt="Cap logo" loading="lazy" class="about-logo" draggable="false">
         <p class="about-info" id="aboutInfo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-loader-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3a9 9 0 1 0 9 9" /></svg></p>
-        <a href="https://github.com/tiagozip/cap" target="_blank" class="github-link">
+        <a href="https://github.com/KurisuRakko/priestess-verification" target="_blank" class="github-link">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           Star on GitHub
         </a>
+        <p class="about-info" style="margin:16px 0 0">Based on <a href="https://github.com/tiagozip/cap" target="_blank" rel="noopener" style="color:var(--blue)">Cap</a> by Tiago (Apache-2.0)</p>
       </div>
     </div>`,
     true,

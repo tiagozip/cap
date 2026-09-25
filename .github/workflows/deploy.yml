@@ -1,12 +1,12 @@
 name: Deploy VitePress site to Pages
 
 on:
-  # Runs on pushes targeting the `main` branch. Change this to `master` if you're
-  # using the `master` branch as the default branch.
-  push:
-    branches: [main]
-
-  # Allows you to run this workflow manually from the Actions tab
+  # The fork's documentation site has not been migrated from upstream yet, so
+  # it is not deployed automatically: run this workflow manually from the
+  # Actions tab if a docs deployment is really wanted.
+  #
+  # (Upstream's `push: branches: [main]` trigger was removed so that a push to
+  # this fork cannot publish the upstream-branded docs.)
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages

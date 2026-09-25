@@ -219,7 +219,7 @@ async function load(duration, withGeo = false) {
   el("shareFilters").hidden = false;
   el("shareError").hidden = true;
   el("shareName").textContent = data.name;
-  document.title = `${data.name} · Cap stats`;
+  document.title = `${data.name} · Priestess Verification stats`;
   el("shareExpires").textContent = data.expires
     ? `Link expires ${new Date(data.expires).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
     : "";

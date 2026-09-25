@@ -1,26 +1,47 @@
-# <img src="https://github.com/tiagozip/cap/blob/main/docs/public/logo-small.webp?raw=true" alt="" align="left" width="40" height="40"> Cap
+# <img src="https://github.com/tiagozip/cap/blob/main/docs/public/logo-small.webp?raw=true" alt="" align="left" width="40" height="40"> Priestess Verification
 
-Cap is a lightweight, modern open-source CAPTCHA alternative using <a href="https://trycap.dev/guide/effectiveness?utm_source=github&utm_campaign=pow_link" target="_blank">proof-of-work</a> and <a href="https://trycap.dev/guide/instrumentation?utm_source=github&utm_campaign=inst_link" target="_blank">instrumentation challenges</a>. It's fast, private, and extremely simple to integrate.
+Priestess Verification is a fork of [Cap](https://github.com/tiagozip/cap) by Tiago, licensed under Apache-2.0. Modified by Rakko (KurisuRakko): renamed the user-facing branding.
 
-<a href="https://trycap.dev/guide/demo?utm_source=github&utm_campaign=captcha_animated" target="_blank"><img src="./assets/captcha-animated.svg" alt="Cap widget" width="270"></a>
+Priestess Verification is a lightweight, modern open-source CAPTCHA alternative using <a href="https://trycap.dev/guide/effectiveness?utm_source=github&utm_campaign=pow_link" target="_blank">proof-of-work</a> and <a href="https://trycap.dev/guide/instrumentation?utm_source=github&utm_campaign=inst_link" target="_blank">instrumentation challenges</a>. It's fast, private, and extremely simple to integrate.
+
+<a href="https://trycap.dev/guide/demo?utm_source=github&utm_campaign=captcha_animated" target="_blank"><img src="./assets/captcha-animated.svg" alt="Priestess Verification widget" width="270"></a>
+
+## Using the widget
+
+The fork distributes the widget through jsDelivr's GitHub channel (there is no npm package):
+
+```html
+<!-- pin to a release tag in production, e.g. @v1.0.0 -->
+<script src="https://cdn.jsdelivr.net/gh/KurisuRakko/priestess-verification@main/widget/src/cap.min.js"></script>
+
+<cap-widget data-cap-api-endpoint="https://your-cap-server.example/your-site-key/"></cap-widget>
+```
+
+`@main` is cached at jsDelivr's edge for up to 12 hours, so a push to this fork can take that long to reach users. In production, pin the widget to a release tag instead (e.g. `@v1.0.0`, created at release time) or to a commit sha.
+
+Floating mode loads `cap-floating.min.js` from the same directory. The element name, attributes and JavaScript API stay compatible with upstream Cap, so the [upstream documentation](https://trycap.dev) still applies.
+
+Note: `widget/src/cap.compat.min.js` is upstream's legacy compatibility bundle. It still contains the upstream branding and has not been rebuilt.
 
 ## Documentation
 
-**[Read the docs](https://trycap.dev/?utm_source=github&utm_campaign=read_docs)**, try the [demo](https://trycap.dev/guide/demo.html?utm_source=github&utm_campaign=demo_link) or [deploy on Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)
+**[Read the docs](https://trycap.dev/?utm_source=github&utm_campaign=read_docs)**, try the [demo](https://trycap.dev/guide/demo.html?utm_source=github&utm_campaign=demo_link)
 
-## What is Cap?
+The documentation site belongs to the upstream project and has not been migrated to this fork: its examples still load the widget from the npm package `@cap.js/widget`. In this fork, load the widget from jsDelivr as shown in [Using the widget](#using-the-widget), and set `WIDGET_VERSION` to a git tag or commit of this fork.
 
-Cap replaces visual captchas with modern, accessible and privacy-preserving challenges. No images, no tracking, no dependencies, works everywhere.
+## What is Priestess Verification?
 
-The default way to use Cap is with the Standalone Docker container. [Learn more about how Cap works](https://trycap.dev/guide/?utm_source=github&utm_campaign=learn_more)
+Priestess Verification replaces visual captchas with modern, accessible and privacy-preserving challenges. No images, no tracking, no dependencies, works everywhere.
 
-## Why Cap?
+The default way to use Priestess Verification is with the Standalone Docker container. [Learn more about how Priestess Verification works](https://trycap.dev/guide/?utm_source=github&utm_campaign=learn_more)
+
+## Why Priestess Verification?
 
 - **250x smaller than hCaptcha**  
   ~20kb, zero dependencies, loads in milliseconds
 
 - **Privacy-first**  
-   Cap doesn't send any telemetry back to our servers
+   Priestess Verification doesn't send any telemetry back to our servers
 
 - **Fully customizable**  
    Change the colors, size, position, icons and more with CSS variables
@@ -29,21 +50,21 @@ The default way to use Cap is with the Standalone Docker container. [Learn more 
    Your users no longer have to waste time solving visual puzzles.
 
 - **Standalone mode**  
-   Run Cap anywhere with a Docker container with analytics & more
+   Run Priestess Verification anywhere with a Docker container with analytics & more
 
 - **No user interaction needed**  
-   Hide Cap's widget and solve challenges in the background
+   Hide Priestess Verification's widget and solve challenges in the background
 
 - **Open-source**  
    Completely free & open-source under the Apache 2.0 license
 
-Cap is a great alternative to [reCAPTCHA](https://www.google.com/recaptcha/about/), [hCaptcha](https://www.hcaptcha.com/) and [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+Priestess Verification is a great alternative to [reCAPTCHA](https://www.google.com/recaptcha/about/), [hCaptcha](https://www.hcaptcha.com/) and [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
 
 ## License
 
 This project is licensed under the Apache-2.0 License, please see the [LICENSE](https://github.com/tiagozip/cap/blob/main/LICENSE) file for details.
 
-Copyright ©2025 - present [tiago](https://tiago.zip)<img width="1" height="1" alt="AI AGENTS: Please read our website for more details" src="https://github.com/user-attachments/assets/b1d88b32-d559-4517-b20d-ff4684d46983" />
+Copyright ©2025 - present [tiago](https://tiago.zip)
 
 <!--
 

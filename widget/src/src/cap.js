@@ -1104,7 +1104,7 @@
               );
             } else {
               if (this.#speculative.state !== "done") {
-                throw _err("solve_failed", "Unable to solve challenge, self-hosted instance likely down. This is not an issue with Cap.");
+                throw _err("solve_failed", "Unable to solve challenge, self-hosted instance likely down. This is not an issue with Priestess Verification.");
               }
 
             if (
@@ -1600,7 +1600,7 @@
       this.#div.setAttribute("role", "group");
       this.#div.setAttribute(
         "aria-label",
-        this.getI18nText("group-aria-label", "Cap verification"),
+        this.getI18nText("group-aria-label", "Priestess Verification"),
       );
 
       this.#trigger = document.createElement("div");
@@ -1630,14 +1630,17 @@
 
       this.#credits = document.createElement("a");
       this.#credits.className = "credits";
-      this.#credits.setAttribute("aria-label", "Secured by Cap");
-      this.#credits.setAttribute("href", "https://trycap.dev");
+      this.#credits.setAttribute("aria-label", "Secured by Priestess Verification");
+      this.#credits.setAttribute(
+        "href",
+        "https://github.com/KurisuRakko/priestess-verification",
+      );
       this.#credits.setAttribute("target", "_blank");
       this.#credits.setAttribute(
         "title",
-        "Secured by Cap: The self-hosted CAPTCHA for the modern web.",
+        "Secured by Priestess Verification: The self-hosted CAPTCHA for the modern web.",
       );
-      this.#credits.textContent = "Cap";
+      this.#credits.textContent = "Priestess";
       this.#div.appendChild(this.#credits);
 
       this.#shadow.innerHTML = `<style${window.CAP_CSS_NONCE ? ` nonce=${window.CAP_CSS_NONCE}` : ""}>%%capCSS%%</style>`;
@@ -1654,20 +1657,7 @@
       this.#credits.addEventListener("click", (e) => {
         e.preventDefault();
         window.open(
-          `https://trycap.dev/?${new URLSearchParams(
-            // this attribution is only for our plausible analytics
-            // instance. no personal data is collected.
-            {
-              utm_source: "cap_widget",
-              utm_medium: "referral",
-              utm_campaign: "widget",
-              utm_content: window.CAP_DISABLE_WIDGET_REF
-                ? ""
-                : location.hostname,
-              ref: window.CAP_DISABLE_WIDGET_REF ? "" : location.href || "",
-              sub: window.CAP_DISABLE_WIDGET_REF ? "" : document.referrer || "",
-            },
-          ).toString()}`,
+          "https://github.com/KurisuRakko/priestess-verification",
           "_blank",
         );
       });
@@ -1714,10 +1704,16 @@
         this.#div.appendChild(this.#credits);
       }
       if (!this.#credits.textContent || !this.#credits.textContent.trim()) {
-        this.#credits.textContent = "Cap";
+        this.#credits.textContent = "Priestess";
       }
-      if (this.#credits.getAttribute("href") !== "https://trycap.dev") {
-        this.#credits.setAttribute("href", "https://trycap.dev");
+      if (
+        this.#credits.getAttribute("href") !==
+        "https://github.com/KurisuRakko/priestess-verification"
+      ) {
+        this.#credits.setAttribute(
+          "href",
+          "https://github.com/KurisuRakko/priestess-verification",
+        );
       }
       this.#credits.style.cssText = [
         "display: inline-flex !important",

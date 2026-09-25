@@ -72,12 +72,5 @@ execSync(`bun ${path.join("test", "node_odd_difficulty.js")}`, {
 
 console.log(`\n  test finished!`);
 
-const doPublish = prompt("publish build? (y/N):").toLowerCase() === "y";
-if (!doPublish) {
-  process.exit(0);
-}
-Bun.spawn({
-  cmd: ["bun", "publish", "--access", "public"],
-  cwd: "./src",
-  stdout: "inherit",
-});
+console.log("fork does not publish @cap.js/wasm to npm; skipping publish");
+process.exit(0);

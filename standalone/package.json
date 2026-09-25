@@ -42,7 +42,7 @@
   "scripts": {
     "test": "bun test",
     "dev": "bun run --watch src/index.js",
-    "docker:publish": "cd .. && docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:3.1.14 -t tiago2/cap:3.1 -t tiago2/cap:3 -t tiago2/cap:latest -f standalone/Dockerfile . --push"
+    "docker:publish": "echo \"docker:publish is disabled in this fork: publishing would push upstream's tiago2/cap image tags. Build locally instead, e.g. 'docker compose build'.\""
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",

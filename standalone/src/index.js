@@ -69,10 +69,10 @@ const app = new Elysia({
           },
         ],
         info: {
-          title: "Cap Standalone",
+          title: "Priestess Verification Standalone",
           version: "3.0.1",
           description:
-            "API endpoints for Cap Standalone. Both Keys and Settings endpoints require an API key or session token.\n\n[Learn more](https://trycap.dev)",
+            "API endpoints for Priestess Verification Standalone. Both Keys and Settings endpoints require an API key or session token.\n\n[Learn more](https://github.com/KurisuRakko/priestess-verification)",
         },
         securitySchemes: {
           apiKey: {
@@ -83,7 +83,7 @@ const app = new Elysia({
     }),
   )
   .onBeforeHandle(({ set }) => {
-    set.headers["X-Powered-By"] = "Cap Standalone";
+    set.headers["X-Powered-By"] = "Priestess Verification Standalone";
   })
   .onError(({ error, code }) => {
     const serializeError = (err) =>
@@ -132,7 +132,7 @@ const app = new Elysia({
           ? serializeError(error)
           : {
               troubleshooting:
-                "http://trycap.dev/guide/standalone/options.html#error-messages",
+                "https://trycap.dev/guide/standalone/options.html#error-messages",
               id: errorId,
             },
     };
@@ -165,16 +165,18 @@ const app = new Elysia({
   .use(siteverifyServer)
   .listen(serverPort);
 
-console.log(`🧢 Cap running on http://${serverHostname}:${serverPort}`);
+console.log(
+  `Priestess Verification running on http://${serverHostname}:${serverPort}`,
+);
 
 let shuttingDown = false;
 for (const signal of ["SIGTERM", "SIGINT"]) {
   process.on(signal, async () => {
     if (shuttingDown) process.exit(1);
     shuttingDown = true;
-    console.log(`🧢 ${signal} received, finishing in-flight requests`);
+    console.log(`${signal} received, finishing in-flight requests`);
     setTimeout(() => {
-      console.error("🧢 requests still running after 8 s, exiting anyway");
+      console.error("requests still running after 8 s, exiting anyway");
       process.exit(1);
     }, SHUTDOWN_TIMEOUT_MS).unref();
     await app.stop();

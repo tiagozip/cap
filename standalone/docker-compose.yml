@@ -1,7 +1,13 @@
 services:
   cap:
-    image: tiago2/cap:latest
-    container_name: cap
+    build:
+      # Build the fork's own image: the repository root is the build context
+      # because standalone/Dockerfile copies standalone/ (and only standalone/,
+      # see standalone/Dockerfile.dockerignore).
+      context: ..
+      dockerfile: standalone/Dockerfile
+    image: priestess-verification
+    container_name: priestess-verification
     ports:
       - "3000:3000"
     environment:
@@ -14,7 +20,7 @@ services:
 
   valkey:
     image: valkey/valkey:9-alpine
-    container_name: cap-valkey
+    container_name: priestess-verification-valkey
     volumes:
       - valkey-data:/data
     command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
