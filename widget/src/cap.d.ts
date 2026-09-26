@@ -88,9 +88,9 @@ interface CapConfig {
    */
   "data-cap-auto"?: "visible" | "load" | "off" | "false" | "";
   /**
-   * Opt-in vertical mascot card: brand wordmark, a character illustration that
-   * follows the widget state (`checking` / `error` / `done`) and the regular
-   * trigger row. Without the attribute the widget is untouched and requests no
+   * Opt-in vertical mascot card: a character illustration that follows the
+   * widget state (`checking` / `error` / `done`), the regular trigger row, and
+   * a "Priestess Verification" wordmark in the bottom-right corner. Without the attribute the widget is untouched and requests no
    * images.
    *
    * A non-empty value is the directory base URL the state images are appended

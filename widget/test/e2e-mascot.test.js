@@ -264,7 +264,7 @@ ${TRIGGER_SNIPPET}`,
         new URL("/mascot/checking.webp", baseUrl).href,
       );
 
-      // Card chrome: brand wordmark on top, figure, trigger row at the bottom.
+      // Card chrome: figure on top, trigger row, brand wordmark bottom-right.
       const layout = await page.evaluate(() => {
         const root = document.getElementById("cap").shadowRoot;
         const captcha = root.querySelector(".captcha");
@@ -279,6 +279,10 @@ ${TRIGGER_SNIPPET}`,
           triggerHeight: trigger.getBoundingClientRect().height,
           brandText: credits.textContent,
           brandTop: credits.getBoundingClientRect().top,
+          brandRight: credits.getBoundingClientRect().right,
+          cardRight: captcha.getBoundingClientRect().right,
+          cardBottom: captcha.getBoundingClientRect().bottom,
+          brandBottom: credits.getBoundingClientRect().bottom,
           creditsCount: root.querySelectorAll(".credits").length,
           creditsPosition: getComputedStyle(credits).position,
         };
@@ -287,12 +291,14 @@ ${TRIGGER_SNIPPET}`,
       expect(layout.cardHeight).toBeGreaterThan(240);
       expect(layout.figureHeight).toBeGreaterThanOrEqual(160);
       expect(layout.figureHeight).toBeLessThanOrEqual(180);
-      expect(layout.brandTop).toBeLessThan(layout.figureTop);
+      expect(layout.brandTop).toBeGreaterThan(layout.triggerTop);
+      expect(layout.cardRight - layout.brandRight).toBeLessThan(10);
+      expect(layout.cardBottom - layout.brandBottom).toBeLessThan(10);
       expect(layout.triggerTop).toBeGreaterThan(layout.figureTop);
       expect(layout.triggerHeight).toBeGreaterThan(40);
       expect(layout.brandText).toBe("Priestess Verification");
       expect(layout.creditsCount).toBe(1);
-      expect(layout.creditsPosition).toBe("static");
+      expect(layout.creditsPosition).toBe("absolute");
     });
 
     test("shows the done pose after a successful solve", async () => {
@@ -479,7 +485,7 @@ ${TRIGGER_SNIPPET}`,
       expect(after.position).toBe("absolute");
     });
 
-    test("keeps the has-troubleshoot extra height in card mode", async () => {
+    test("has-troubleshoot reuses the card's footer strip in card mode", async () => {
       await open("/");
 
       const measure = () =>
@@ -515,10 +521,43 @@ ${TRIGGER_SNIPPET}`,
           .classList.remove("has-troubleshoot"),
       );
 
-      expect(after.card - before.card).toBeCloseTo(26, 0);
-      expect(after.strip - before.strip).toBeCloseTo(26, 0);
+      // The card always reserves a 26px footer strip (credits bottom-right,
+      // troubleshoot link bottom-left), so nothing moves.
+      // 26px strip plus the card's 1px bottom border.
+      expect(before.strip).toBeCloseTo(27, 0);
+      expect(after.card).toBeCloseTo(before.card, 0);
+      expect(after.strip).toBeCloseTo(before.strip, 0);
       expect(after.triggerHeight).toBeCloseTo(before.triggerHeight, 0);
-      expect(after.cardBottom).toBeCloseTo(before.cardBottom + 26, 0);
+    });
+
+    test("a long troubleshoot label never runs under the credits", async () => {
+      await open("/");
+
+      const result = await page.evaluate(() => {
+        const root = document.getElementById("cap").shadowRoot;
+        const captcha = root.querySelector(".captcha");
+        const link = root.querySelector(".cap-troubleshoot-link");
+        const credits = root.querySelector(".credits");
+        const hiddenDisplay = getComputedStyle(link).display;
+        // Mirror what the error path does, with a deliberately long label.
+        link.textContent = "समस्या निवारण के लिए यहाँ क्लिक करें और आगे पढ़ें";
+        link.setAttribute("href", "https://example.com/troubleshoot");
+        link.hidden = false;
+        captcha.classList.add("has-troubleshoot");
+        const l = link.getBoundingClientRect();
+        const c = credits.getBoundingClientRect();
+        const hit = root.elementFromPoint(l.right - 1, l.top + l.height / 2);
+        return {
+          hiddenDisplay,
+          linkRight: l.right,
+          creditsLeft: c.left,
+          hitIsLink: hit === link,
+        };
+      });
+
+      expect(result.hiddenDisplay).toBe("none");
+      expect(result.linkRight).toBeLessThanOrEqual(result.creditsLeft);
+      expect(result.hitIsLink).toBe(true);
     });
 
     test("honours prefers-reduced-motion: no fade transition on the images", async () => {

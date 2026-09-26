@@ -352,46 +352,36 @@
 }
 
 /* ── data-cap-mascot: opt-in vertical card ────────────────────────────────
-   Brand wordmark on top, the state mascot in the middle, the regular trigger
-   row pinned to the bottom. The card height comes from --cap-mascot-height
-   and reserves one --cap-widget-height row for the trigger; has-troubleshoot
-   keeps its extra 26px below the card exactly like the default layout. */
+   The state mascot on top, the regular trigger row below it, and a 26px
+   footer strip at the bottom. The strip holds the "Priestess Verification"
+   credits in the bottom-right corner and, when present, the troubleshoot
+   link on the left — so has-troubleshoot needs no extra height here. The card
+   height comes from --cap-mascot-height. */
 
 :host([data-cap-mascot]) .captcha {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: var(--cap-mascot-height, 268px);
-  padding-bottom: var(--cap-widget-height, 58px);
-}
-
-:host([data-cap-mascot]) .captcha.has-troubleshoot {
-  height: calc(var(--cap-mascot-height, 268px) + 26px);
+  height: var(--cap-mascot-height, 284px);
+  padding-top: 10px;
   padding-bottom: calc(var(--cap-widget-height, 58px) + 26px);
 }
 
-:host([data-cap-mascot]) .captcha-trigger {
-  inset: auto 0 0 0;
+:host([data-cap-mascot]) .captcha.has-troubleshoot {
+  height: var(--cap-mascot-height, 284px);
+}
+
+:host([data-cap-mascot]) .captcha-trigger,
+:host([data-cap-mascot]) .captcha.has-troubleshoot .captcha-trigger {
+  inset: auto 0 26px 0;
   height: var(--cap-widget-height, 58px);
 }
 
-/* The taller has-troubleshoot card has to lift the trigger row out of the
-   troubleshoot link's 26px strip, exactly like the default layout. This rule
-   needs the extra specificity: the plain mascot rule above would otherwise win
-   on source order. */
-:host([data-cap-mascot]) .captcha.has-troubleshoot .captcha-trigger {
-  inset-block-end: 26px;
-}
-
-/* The credits link becomes the top brand wordmark (order:-1 keeps it above
-   the figure no matter where #enforceCredits() re-appends it). */
 :host([data-cap-mascot]) .credits {
-  order: -1;
-  justify-content: center;
-  margin: 8px auto 2px;
-  padding: 2px 6px;
-  min-height: 0;
+  /* Size and opacity are set inline by #enforceCredits(). */
   text-decoration: none;
+  min-height: 20px;
+  padding: 2px 6px;
 }
 
 :host([data-cap-mascot]) .credits:hover,
@@ -399,12 +389,22 @@
   text-decoration: underline;
 }
 
+/* Share the footer strip with the credits: long translations of the
+   troubleshoot link are truncated instead of running under the wordmark. */
+:host([data-cap-mascot]) .cap-troubleshoot-link:not([hidden]) {
+  display: block;
+  max-width: calc(100% - 150px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 16px;
+}
+
 :host([data-cap-mascot]) .cap-mascot-figure {
   position: relative;
   flex: 0 0 auto;
   width: 100%;
   height: var(--cap-mascot-image-height, 176px);
-  margin-top: 2px;
   pointer-events: none;
   /* The source art is cut off at the waist; fade it out instead of ending on a
      hard edge right above the trigger row. */

@@ -7,10 +7,9 @@ Client-side widget for Cap, the self-hosted CAPTCHA for the modern web.
 ## Mascot card (`data-cap-mascot`)
 
 `data-cap-mascot` is an opt-in attribute that turns the default pill into a
-vertical card: a small "Priestess Verification" brand wordmark on top, a
-character illustration in the middle (the same credits link is reused as the
-wordmark, so no second credits entry appears), and the regular checkbox +
-label trigger row at the bottom. Keyboard, click, ARIA, events and the token
+vertical card: a character illustration on top, the regular checkbox + label
+trigger row below it, and the credits link — reading "Priestess Verification"
+— in the bottom-right corner. Keyboard, click, ARIA, events and the token
 behaviour are unchanged.
 
 ```html
@@ -63,10 +62,11 @@ removing `data-cap-mascot` at runtime rebuilds (or removes) the card.
 | variable                   | default | meaning                                              |
 | -------------------------- | ------- | ---------------------------------------------------- |
 | `--cap-widget-width`       | `260px` | card width (shared with the default layout)           |
-| `--cap-mascot-height`      | `268px` | card height                                           |
+| `--cap-mascot-height`      | `284px` | card height                                           |
 | `--cap-mascot-image-height`| `176px` | height of the illustration area (`object-fit: contain`) |
 | `--cap-widget-height`      | `58px`  | height of the trigger row reserved at the bottom      |
 
-With `.has-troubleshoot` (the troubleshooting link shown after an
-instrumentation failure) the card grows by the same extra `26px` as the
-default layout.
+The card always reserves a `26px` footer strip below the trigger row: the
+"Priestess Verification" credits sit in its bottom-right corner and the
+troubleshooting link (`.has-troubleshoot`, shown after an instrumentation
+failure) uses its left side, so the card does not grow in that case.

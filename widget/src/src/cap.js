@@ -2173,8 +2173,8 @@
 
     // ---- data-cap-mascot --------------------------------------------------
     //
-    // Opt-in vertical card: brand wordmark, the state mascot, then the regular
-    // trigger row. Nothing here exists without the attribute, so embedders that
+    // Opt-in vertical card: the state mascot, the regular trigger row, then
+    // the "Priestess Verification" credits bottom-right. Nothing here exists without the attribute, so embedders that
     // don't use it keep the stock pill and make zero extra image requests.
 
     #mascotEnabled() {
@@ -2279,26 +2279,19 @@
           "https://github.com/KurisuRakko/priestess-verification",
         );
       }
-      // In mascot mode the same link doubles as the top brand wordmark, so it
-      // is placed in the card's flow (order:-1 in cap.css) instead of being
-      // pinned to the bottom-right corner.
+      // The mascot card shows a smaller, quieter wordmark so it doesn't
+      // compete with the illustration.
       const mascot = this.#mascotEnabled();
       this.#credits.style.cssText = [
         "display: inline-flex !important",
         "visibility: visible !important",
-        "opacity: 0.8 !important",
+        `opacity: ${mascot ? "0.5" : "0.8"} !important`,
         "pointer-events: all !important",
-        "font-size: 12px !important",
+        `font-size: ${mascot ? "10px" : "12px"} !important`,
         "transform: none !important",
         "clip-path: none !important",
         "filter: none !important",
-        `position: ${mascot ? "static" : "absolute"} !important`,
-        ...(mascot
-          ? [
-              "margin: 8px auto 2px !important",
-              "text-decoration: none !important",
-            ]
-          : []),
+        "position: absolute !important",
       ].join("; ");
     }
 
