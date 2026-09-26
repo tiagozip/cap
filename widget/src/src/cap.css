@@ -352,7 +352,7 @@
 }
 
 /* ── data-cap-mascot: opt-in vertical card ────────────────────────────────
-   The state mascot on top, the regular trigger row below it, and a 26px
+   The state mascot on top, the regular trigger row below it, and a 14px
    footer strip at the bottom. The strip holds the "Priestess Verification"
    credits in the bottom-right corner and, when present, the troubleshoot
    link on the left — so has-troubleshoot needs no extra height here. The card
@@ -362,26 +362,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: var(--cap-mascot-height, 284px);
+  height: var(--cap-mascot-height, 246px);
   padding-top: 10px;
-  padding-bottom: calc(var(--cap-widget-height, 58px) + 26px);
+  padding-bottom: calc(var(--cap-mascot-row-height, 46px) + 14px);
 }
 
 :host([data-cap-mascot]) .captcha.has-troubleshoot {
-  height: var(--cap-mascot-height, 284px);
+  height: var(--cap-mascot-height, 246px);
 }
 
 :host([data-cap-mascot]) .captcha-trigger,
 :host([data-cap-mascot]) .captcha.has-troubleshoot .captcha-trigger {
-  inset: auto 0 26px 0;
-  height: var(--cap-widget-height, 58px);
+  inset: auto 0 14px 0;
+  height: var(--cap-mascot-row-height, 46px);
+  padding-block: 0;
 }
 
 :host([data-cap-mascot]) .credits {
   /* Size and opacity are set inline by #enforceCredits(). */
   text-decoration: none;
-  min-height: 20px;
-  padding: 2px 6px;
+  inset-block-end: 1px;
+  min-height: 16px;
+  padding: 1px 6px;
 }
 
 :host([data-cap-mascot]) .credits:hover,
@@ -397,7 +399,11 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  line-height: 16px;
+  inset-block-end: 1px;
+  padding-block: 1px;
+  min-height: 0;
+  font-size: 11px;
+  line-height: 14px;
 }
 
 :host([data-cap-mascot]) .cap-mascot-figure {

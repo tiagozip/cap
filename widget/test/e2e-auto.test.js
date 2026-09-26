@@ -385,7 +385,7 @@ if (!SHOULD_RUN_E2E) {
         const after = await readAria();
         expect(after.live).toBe("polite");
         expect(after.atomic).toBe("true");
-        expect(after.label).toBe("You're a human");
+        expect(after.label).toBe("Success");
         expect(after.ariaLabel).toBe(
           "We have verified you're a human, you may now continue",
         );

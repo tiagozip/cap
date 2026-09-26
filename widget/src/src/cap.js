@@ -2404,7 +2404,7 @@
     handleSolve(event) {
       this.updateUI(
         "done",
-        this.getI18nText("solved-label", "You're a human"),
+        this.getI18nText("solved-label", "Success"),
         true,
       );
       this.executeAttributeCode("onsolve", event);

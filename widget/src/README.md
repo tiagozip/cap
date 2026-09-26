@@ -62,11 +62,11 @@ removing `data-cap-mascot` at runtime rebuilds (or removes) the card.
 | variable                   | default | meaning                                              |
 | -------------------------- | ------- | ---------------------------------------------------- |
 | `--cap-widget-width`       | `260px` | card width (shared with the default layout)           |
-| `--cap-mascot-height`      | `284px` | card height                                           |
+| `--cap-mascot-height`      | `246px` | card height                                           |
+| `--cap-mascot-row-height`  | `46px`  | height of the trigger row in the card                 |
 | `--cap-mascot-image-height`| `176px` | height of the illustration area (`object-fit: contain`) |
-| `--cap-widget-height`      | `58px`  | height of the trigger row reserved at the bottom      |
 
-The card always reserves a `26px` footer strip below the trigger row: the
+The card always reserves a `14px` footer strip below the trigger row: the
 "Priestess Verification" credits sit in its bottom-right corner and the
 troubleshooting link (`.has-troubleshoot`, shown after an instrumentation
 failure) uses its left side, so the card does not grow in that case.

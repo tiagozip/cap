@@ -521,10 +521,10 @@ ${TRIGGER_SNIPPET}`,
           .classList.remove("has-troubleshoot"),
       );
 
-      // The card always reserves a 26px footer strip (credits bottom-right,
+      // The card always reserves a 14px footer strip (credits bottom-right,
       // troubleshoot link bottom-left), so nothing moves.
-      // 26px strip plus the card's 1px bottom border.
-      expect(before.strip).toBeCloseTo(27, 0);
+      // 14px strip plus the card's 1px bottom border.
+      expect(before.strip).toBeCloseTo(15, 0);
       expect(after.card).toBeCloseTo(before.card, 0);
       expect(after.strip).toBeCloseTo(before.strip, 0);
       expect(after.triggerHeight).toBeCloseTo(before.triggerHeight, 0);
