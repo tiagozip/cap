@@ -315,7 +315,12 @@ check(
 );
 
 // ── Vary: Origin is unconditional ──────────────────────────────────────────
-for (const path of ["/challenge", "/widget.js", "/cap_wasm_bg.wasm"]) {
+for (const path of [
+  "/challenge",
+  "/widget.js",
+  "/cap_wasm_bg.wasm",
+  "/mascot/done.webp",
+]) {
   const res = await fetch(new URL(path, baseUrl), {
     method: path === "/challenge" ? "POST" : "GET",
   });
@@ -339,6 +344,13 @@ for (const [path, file, type] of [
     "../vendor/pako_inflate.min.js",
     "application/javascript; charset=utf-8",
   ],
+  [
+    "/mascot/checking.webp",
+    "../../widget/src/mascot/checking.webp",
+    "image/webp",
+  ],
+  ["/mascot/error.webp", "../../widget/src/mascot/error.webp", "image/webp"],
+  ["/mascot/done.webp", "../../widget/src/mascot/done.webp", "image/webp"],
 ]) {
   const res = await fetch(new URL(path, baseUrl));
   const served = Buffer.from(await res.arrayBuffer());
@@ -351,6 +363,22 @@ for (const [path, file, type] of [
       repo: repo.length,
       type: res.headers.get("content-type"),
     },
+  );
+}
+
+// The mascot art may be replaced under the same URL, so it must not inherit the
+// immutable policy used for the versioned wasm/pako assets.
+for (const path of [
+  "/mascot/checking.webp",
+  "/mascot/error.webp",
+  "/mascot/done.webp",
+]) {
+  const res = await fetch(new URL(path, baseUrl));
+  const cacheControl = res.headers.get("cache-control") ?? "";
+  check(
+    `${path} uses the widget cache policy (not immutable)`,
+    cacheControl.includes("max-age=300") && !cacheControl.includes("immutable"),
+    cacheControl,
   );
 }
 

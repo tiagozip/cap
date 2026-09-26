@@ -8,6 +8,32 @@
     return;
   }
 
+  // Directory this classic script was loaded from, captured while it is still
+  // evaluating: `document.currentScript` is only set during that window. The
+  // mascot images default to `<script directory>/mascot/*.webp`, which resolves
+  // to `.../widget/src/mascot/done.webp` on jsDelivr and to `/mascot/done.webp`
+  // for the Worker's `/widget.js`. It stays null when the bundle is pulled in as
+  // a module (or by a bundler), where `document.currentScript` is always null.
+  const _scriptBaseUrl = (() => {
+    try {
+      const src = document.currentScript?.src;
+      if (!src) return null;
+      return src.replace(/[^/]*$/, "");
+    } catch {
+      return null;
+    }
+  })();
+
+  const MASCOT_STATES = ["checking", "error", "done"];
+  const MASCOT_BRAND_TEXT = "Priestess Verification";
+  const MASCOT_DEFAULT_TEXT = "Priestess";
+  const MASCOT_FALLBACK_BASE = "mascot/";
+  let _mascotBaseWarned = false;
+
+  // Accepts a base with or without a trailing slash. Empty values never reach
+  // this helper: callers only pass a trimmed, non-empty base.
+  const _asMascotBase = (base) => (base.endsWith("/") ? base : `${base}/`);
+
   const _ctp = ["#f5c2e7","#cba6f7","#f38ba8","#fab387","#f9e2af","#a6e3a1","#94e2d5","#89dceb","#b4befe"];
   const _bg = (s) => {
     if (s === "cap") return "#89b4fa";
@@ -507,6 +533,9 @@
     #credits;
     #troubleshootLink;
     #host;
+    // data-cap-mascot: the <div class="cap-mascot-figure"> holding the three
+    // stacked state images, or null while the attribute is absent.
+    #mascotFigure = null;
     #solving = false;
     // Bumped whenever an in-flight solve must stop touching this widget: a
     // newer solve, reset() or disconnectedCallback(). solve() captures the
@@ -1275,6 +1304,7 @@
         "data-cap-i18n-initial-state",
         "data-cap-auto",
         "data-cap-floating",
+        "data-cap-mascot",
         "required",
       ];
     }
@@ -1359,6 +1389,10 @@
 
       if (name === "data-cap-auto" || name === "data-cap-floating") {
         this.#handleAutoAttribute();
+      }
+
+      if (name === "data-cap-mascot") {
+        this.#handleMascotAttribute();
       }
 
       if (name === "required") {
@@ -2083,7 +2117,10 @@
 
       this.#shadow.appendChild(this.#div);
 
-      this.#enforceCredits();
+      // Every connect builds a fresh #div, so the previous figure reference is
+      // stale even when it still points at a detached node.
+      this.#mascotFigure = null;
+      this.#syncMascot();
       setTimeout(() => this.#enforceCredits(), 100);
     }
 
@@ -2134,13 +2171,104 @@
       return false;
     }
 
+    // ---- data-cap-mascot --------------------------------------------------
+    //
+    // Opt-in vertical card: brand wordmark, the state mascot, then the regular
+    // trigger row. Nothing here exists without the attribute, so embedders that
+    // don't use it keep the stock pill and make zero extra image requests.
+
+    #mascotEnabled() {
+      return this.hasAttribute("data-cap-mascot");
+    }
+
+    // Resolution order: the attribute value (a directory base), then
+    // window.CAP_MASCOT_URL, then the directory this script was served from.
+    #mascotBase() {
+      const attr = (this.getAttribute("data-cap-mascot") || "").trim();
+      if (attr) return _asMascotBase(attr);
+
+      const global = String(window.CAP_MASCOT_URL || "").trim();
+      if (global) return _asMascotBase(global);
+
+      if (_scriptBaseUrl !== null) return `${_scriptBaseUrl}mascot/`;
+
+      // Module/bundler load: there is no script URL to fall back on. A
+      // page-relative `mascot/` at least works when the images are served next
+      // to the page; warn once instead of throwing so the widget keeps working.
+      if (!_mascotBaseWarned) {
+        _mascotBaseWarned = true;
+        log.warn(
+          T(),
+          "data-cap-mascot: document.currentScript is unavailable, using a page-relative 'mascot/' directory. Set the attribute value or window.CAP_MASCOT_URL to point at the images.",
+        );
+      }
+      return MASCOT_FALLBACK_BASE;
+    }
+
+    #buildMascot() {
+      if (this.#mascotFigure || !this.#div) return;
+      const base = this.#mascotBase();
+      const figure = document.createElement("div");
+      figure.className = "cap-mascot-figure";
+      // The label already announces the state; the images stay decorative.
+      figure.setAttribute("aria-hidden", "true");
+      for (const state of MASCOT_STATES) {
+        const img = document.createElement("img");
+        img.className = "cap-mascot-image";
+        img.setAttribute("data-mascot-state", state);
+        img.alt = "";
+        img.setAttribute("aria-hidden", "true");
+        img.decoding = "async";
+        img.draggable = false;
+        img.src = `${base}${state}.webp`;
+        figure.appendChild(img);
+      }
+      this.#mascotFigure = figure;
+      this.#div.appendChild(figure);
+      log.debug(T(), `mascot card enabled (base=${base})`);
+    }
+
+    #destroyMascot() {
+      if (!this.#mascotFigure) return;
+      this.#mascotFigure.remove();
+      this.#mascotFigure = null;
+    }
+
+    // Rebuilds the card chrome for the current attribute state. Called on
+    // connect and from attributeChangedCallback, so toggling `data-cap-mascot`
+    // at runtime switches layouts in both directions.
+    #syncMascot() {
+      if (!this.#div) return;
+      if (this.#mascotEnabled()) {
+        this.#buildMascot();
+      } else {
+        this.#destroyMascot();
+      }
+      if (this.#credits) {
+        const text = this.#mascotEnabled()
+          ? MASCOT_BRAND_TEXT
+          : MASCOT_DEFAULT_TEXT;
+        if (this.#credits.textContent !== text) {
+          this.#credits.textContent = text;
+        }
+      }
+      this.#enforceCredits();
+    }
+
+    #handleMascotAttribute() {
+      if (!this.#div) return;
+      this.#syncMascot();
+    }
+
     #enforceCredits() {
       if (!this.#credits || !this.#div || this.#hostIsHidden()) return;
       if (!this.#credits.isConnected || this.#credits.parentNode !== this.#div) {
         this.#div.appendChild(this.#credits);
       }
       if (!this.#credits.textContent || !this.#credits.textContent.trim()) {
-        this.#credits.textContent = "Priestess";
+        this.#credits.textContent = this.#mascotEnabled()
+          ? MASCOT_BRAND_TEXT
+          : MASCOT_DEFAULT_TEXT;
       }
       if (
         this.#credits.getAttribute("href") !==
@@ -2151,6 +2279,10 @@
           "https://github.com/KurisuRakko/priestess-verification",
         );
       }
+      // In mascot mode the same link doubles as the top brand wordmark, so it
+      // is placed in the card's flow (order:-1 in cap.css) instead of being
+      // pinned to the bottom-right corner.
+      const mascot = this.#mascotEnabled();
       this.#credits.style.cssText = [
         "display: inline-flex !important",
         "visibility: visible !important",
@@ -2160,7 +2292,13 @@
         "transform: none !important",
         "clip-path: none !important",
         "filter: none !important",
-        "position: absolute !important",
+        `position: ${mascot ? "static" : "absolute"} !important`,
+        ...(mascot
+          ? [
+              "margin: 8px auto 2px !important",
+              "text-decoration: none !important",
+            ]
+          : []),
       ].join("; ");
     }
 
@@ -2395,6 +2533,7 @@
         this.#resetTimer = null;
       }
 
+      this.#mascotFigure = null;
       this.#detachInteractionListeners();
       this.#teardownAuto();
       if (this.#speculativeTimer) {

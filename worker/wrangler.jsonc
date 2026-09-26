@@ -15,10 +15,13 @@
   // `import capMinJs from "../../widget/src/cap.min.js"` must embed the exact
   // bytes of the repo's build artifact, not evaluate it as a module, and
   // `/cap_wasm_bg.wasm` must be served as raw bytes (wrangler's built-in
-  // `.wasm` rule would compile it into a WebAssembly.Module instead). Both
-  // rules fall through so the defaults still apply to every other file.
+  // `.wasm` rule would compile it into a WebAssembly.Module instead). The three
+  // mascot images are imported as raw bytes for the same reason — an image
+  // import must never be parsed as a module. All rules fall through so the
+  // defaults still apply to every other file.
   "rules": [
     { "type": "Data", "globs": ["**/cap_wasm_bg.wasm"], "fallthrough": true },
+    { "type": "Data", "globs": ["**/mascot/*.webp"], "fallthrough": true },
     { "type": "Text", "globs": ["**/*.min.js"], "fallthrough": true }
   ],
   // capjs-core dynamically imports these for instrumentation obfuscation levels

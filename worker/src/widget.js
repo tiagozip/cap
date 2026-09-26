@@ -20,7 +20,19 @@
  *                          sha256 fa226c8e1e3556993260e6a5c1fe94e225da59b3418a06811fdc51d308f8bb43,
  *                          identical to the jsDelivr copy
  *
+ * The `data-cap-mascot` card fetches three state images; they are served here
+ * so the Worker's `/widget.js` resolves its default `<script dir>/mascot/` base
+ * to `/mascot/*.webp` on this origin:
+ *
+ *   /mascot/checking.webp  widget/src/mascot/checking.webp
+ *   /mascot/error.webp     widget/src/mascot/error.webp
+ *   /mascot/done.webp      widget/src/mascot/done.webp
+ *
  * Every response carries `Vary: Origin` unconditionally (see `cors.js`).
+ *
+ * The images use WIDGET_CACHE_CONTROL rather than the immutable wasm/pako
+ * policy: unlike a versioned wasm build, the mascot art may be replaced under
+ * the same URL.
  */
 
 import { createHash } from "node:crypto";
@@ -28,6 +40,9 @@ import { HASHWX_WASM_BASE64 } from "../../core/src/hashwx-wasm.js";
 import capWasmBytes from "../../wasm/src/browser/cap_wasm_bg.wasm";
 import capFloatingMinJs from "../../widget/src/cap-floating.min.js";
 import capMinJs from "../../widget/src/cap.min.js";
+import mascotChecking from "../../widget/src/mascot/checking.webp";
+import mascotDone from "../../widget/src/mascot/done.webp";
+import mascotError from "../../widget/src/mascot/error.webp";
 import pakoInflateMinJs from "../vendor/pako_inflate.min.js";
 import { corsHeaders } from "./cors.js";
 
@@ -35,11 +50,15 @@ const WIDGET_CACHE_CONTROL = "public, max-age=300";
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 const JS_CONTENT_TYPE = "application/javascript; charset=utf-8";
 const WASM_CONTENT_TYPE = "application/wasm";
+const WEBP_CONTENT_TYPE = "image/webp";
 
 export const ASSET_PATHS = {
   capWasm: "/cap_wasm_bg.wasm",
   hashwx: "/hashwx.wasm",
   pako: "/pako_inflate.min.js",
+  mascotChecking: "/mascot/checking.webp",
+  mascotError: "/mascot/error.webp",
+  mascotDone: "/mascot/done.webp",
 };
 
 function toBytes(value) {
@@ -90,6 +109,30 @@ const ASSETS = new Map([
       body: pakoInflateMinJs,
       contentType: JS_CONTENT_TYPE,
       cacheControl: IMMUTABLE_CACHE_CONTROL,
+    },
+  ],
+  [
+    ASSET_PATHS.mascotChecking,
+    {
+      body: toBytes(mascotChecking),
+      contentType: WEBP_CONTENT_TYPE,
+      cacheControl: WIDGET_CACHE_CONTROL,
+    },
+  ],
+  [
+    ASSET_PATHS.mascotError,
+    {
+      body: toBytes(mascotError),
+      contentType: WEBP_CONTENT_TYPE,
+      cacheControl: WIDGET_CACHE_CONTROL,
+    },
+  ],
+  [
+    ASSET_PATHS.mascotDone,
+    {
+      body: toBytes(mascotDone),
+      contentType: WEBP_CONTENT_TYPE,
+      cacheControl: WIDGET_CACHE_CONTROL,
     },
   ],
 ]);

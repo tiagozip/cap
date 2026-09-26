@@ -3,6 +3,9 @@ import { inflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import capMinJs from "../../widget/src/cap.min.js?raw";
 import capFloatingMinJs from "../../widget/src/cap-floating.min.js?raw";
+import mascotCheckingWebp from "../../widget/src/mascot/checking.webp";
+import mascotDoneWebp from "../../widget/src/mascot/done.webp";
+import mascotErrorWebp from "../../widget/src/mascot/error.webp";
 import { solveChallengeResponse } from "../scripts/solve.js";
 import { readConfig } from "../src/config.js";
 import { resolveAllowedOrigin } from "../src/cors.js";
@@ -63,6 +66,12 @@ async function sha256HexOf(res) {
     .digest("hex");
 }
 
+/// Normalises a Data-rule import (ArrayBuffer or typed array) to bytes.
+function toBytes(value) {
+  if (value instanceof Uint8Array) return value;
+  return new Uint8Array(value);
+}
+
 describe("demo page", () => {
   it("serves a page that mounts the widget and the provenance footer", async () => {
     const res = await request("/");
@@ -72,6 +81,12 @@ describe("demo page", () => {
     expect(html).toContain(
       '<cap-widget data-cap-api-endpoint="/demo/"></cap-widget>',
     );
+    // The mascot card sits next to the default widget and needs no image URL:
+    // the widget's default base derives from the /widget.js script directory.
+    expect(html).toContain(
+      '<cap-widget id="mascot-widget" data-cap-mascot data-cap-api-endpoint="/demo/"></cap-widget>',
+    );
+    expect(html).not.toContain("CAP_MASCOT_URL");
     expect(html).toContain('<script src="/widget.js"></script>');
     expect(html).toContain('fetch("/demo/siteverify"');
     expect(html).toContain("Based on Cap by Tiago (Apache-2.0)");
@@ -148,6 +163,46 @@ describe("widget assets", () => {
     expect(await sha256HexOf(pako)).toBe(PAKO_SHA256);
   });
 
+  it("serves the data-cap-mascot images with the repo's bytes", async () => {
+    for (const [path, expected, length] of [
+      ["/mascot/checking.webp", mascotCheckingWebp, 17978],
+      ["/mascot/error.webp", mascotErrorWebp, 18200],
+      ["/mascot/done.webp", mascotDoneWebp, 18808],
+    ]) {
+      const res = await request(path, { headers: { Origin: ORIGIN } });
+      expect(res.status, path).toBe(200);
+      expect(res.headers.get("content-type"), path).toBe("image/webp");
+      expect(res.headers.get("access-control-allow-origin"), path).toBe(ORIGIN);
+      expect(res.headers.get("vary"), path).toBe("Origin");
+      // Replaced art must not be pinned for a year like the versioned wasm.
+      expect(res.headers.get("cache-control"), path).toBe(
+        "public, max-age=300",
+      );
+      const served = new Uint8Array(await res.arrayBuffer());
+      expect(served.byteLength, path).toBe(length);
+      expect(
+        Buffer.from(served).equals(Buffer.from(toBytes(expected))),
+        path,
+      ).toBe(true);
+    }
+  });
+
+  it("answers conditional requests for a mascot image with 304", async () => {
+    const first = await request("/mascot/done.webp");
+    const etag = first.headers.get("etag");
+    expect(etag).toBeTruthy();
+    const second = await request("/mascot/done.webp", {
+      headers: { "If-None-Match": etag },
+    });
+    expect(second.status).toBe(304);
+    expect(second.headers.get("content-type")).toBe("image/webp");
+  });
+
+  it("does not serve unknown mascot files", async () => {
+    const res = await request("/mascot/missing.webp");
+    expect(res.status).toBe(404);
+  });
+
   it("sends Vary: Origin unconditionally, with or without an Origin", async () => {
     for (const path of [
       "/widget.js",
@@ -155,6 +210,9 @@ describe("widget assets", () => {
       "/cap_wasm_bg.wasm",
       "/hashwx.wasm",
       "/pako_inflate.min.js",
+      "/mascot/checking.webp",
+      "/mascot/error.webp",
+      "/mascot/done.webp",
     ]) {
       const noOrigin = await request(path);
       expect(noOrigin.headers.get("vary"), path).toBe("Origin");

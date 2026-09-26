@@ -45,7 +45,7 @@ await page.waitForFunction(
   { timeout: 20_000 },
 );
 
-await page.locator("cap-widget .captcha-trigger").click({ timeout: 20_000 });
+await page.locator("cap-widget:not([data-cap-mascot]) .captcha-trigger").click({ timeout: 20_000 });
 
 await page.waitForFunction(
   () =>

@@ -351,6 +351,103 @@
   outline-offset: 2px;
 }
 
+/* ── data-cap-mascot: opt-in vertical card ────────────────────────────────
+   Brand wordmark on top, the state mascot in the middle, the regular trigger
+   row pinned to the bottom. The card height comes from --cap-mascot-height
+   and reserves one --cap-widget-height row for the trigger; has-troubleshoot
+   keeps its extra 26px below the card exactly like the default layout. */
+
+:host([data-cap-mascot]) .captcha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: var(--cap-mascot-height, 268px);
+  padding-bottom: var(--cap-widget-height, 58px);
+}
+
+:host([data-cap-mascot]) .captcha.has-troubleshoot {
+  height: calc(var(--cap-mascot-height, 268px) + 26px);
+  padding-bottom: calc(var(--cap-widget-height, 58px) + 26px);
+}
+
+:host([data-cap-mascot]) .captcha-trigger {
+  inset: auto 0 0 0;
+  height: var(--cap-widget-height, 58px);
+}
+
+/* The taller has-troubleshoot card has to lift the trigger row out of the
+   troubleshoot link's 26px strip, exactly like the default layout. This rule
+   needs the extra specificity: the plain mascot rule above would otherwise win
+   on source order. */
+:host([data-cap-mascot]) .captcha.has-troubleshoot .captcha-trigger {
+  inset-block-end: 26px;
+}
+
+/* The credits link becomes the top brand wordmark (order:-1 keeps it above
+   the figure no matter where #enforceCredits() re-appends it). */
+:host([data-cap-mascot]) .credits {
+  order: -1;
+  justify-content: center;
+  margin: 8px auto 2px;
+  padding: 2px 6px;
+  min-height: 0;
+  text-decoration: none;
+}
+
+:host([data-cap-mascot]) .credits:hover,
+:host([data-cap-mascot]) .credits:focus-visible {
+  text-decoration: underline;
+}
+
+:host([data-cap-mascot]) .cap-mascot-figure {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  height: var(--cap-mascot-image-height, 176px);
+  margin-top: 2px;
+  pointer-events: none;
+  /* The source art is cut off at the waist; fade it out instead of ending on a
+     hard edge right above the trigger row. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+}
+
+:host([data-cap-mascot]) .cap-mascot-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* State → image. `checking` is the base layer, so it also covers the absent
+   and empty data-state the widget starts from. */
+:host([data-cap-mascot]) .cap-mascot-image[data-mascot-state="checking"] {
+  opacity: 1;
+}
+
+:host([data-cap-mascot])
+  .captcha[data-state="done"]
+  .cap-mascot-image[data-mascot-state="checking"],
+:host([data-cap-mascot])
+  .captcha[data-state="error"]
+  .cap-mascot-image[data-mascot-state="checking"] {
+  opacity: 0;
+}
+
+:host([data-cap-mascot])
+  .captcha[data-state="done"]
+  .cap-mascot-image[data-mascot-state="done"],
+:host([data-cap-mascot])
+  .captcha[data-state="error"]
+  .cap-mascot-image[data-mascot-state="error"] {
+  opacity: 1;
+}
+
 @media (forced-colors: active) {
   .captcha {
     border-color: CanvasText;
