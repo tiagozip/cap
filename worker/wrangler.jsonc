@@ -18,11 +18,20 @@
   // `.wasm` rule would compile it into a WebAssembly.Module instead). The three
   // mascot images are imported as raw bytes for the same reason — an image
   // import must never be parsed as a module. All rules fall through so the
-  // defaults still apply to every other file.
+  // defaults still apply to every other file. The showcase page inlines its
+  // own CSS, its `*.client.js` browser script and the Rakko Design vendor copy
+  // (CSS inlined, ripple modules served at /design/*.js) as text too: none of
+  // them is Worker code.
   "rules": [
     { "type": "Data", "globs": ["**/cap_wasm_bg.wasm"], "fallthrough": true },
     { "type": "Data", "globs": ["**/mascot/*.webp"], "fallthrough": true },
-    { "type": "Text", "globs": ["**/*.min.js"], "fallthrough": true }
+    { "type": "Text", "globs": ["**/*.min.js"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/*.css"], "fallthrough": true },
+    {
+      "type": "Text",
+      "globs": ["**/*.client.js", "**/vendor/rakko-design/**/*.js"],
+      "fallthrough": true
+    }
   ],
   // capjs-core dynamically imports these for instrumentation obfuscation levels
   // >= 4. Neither can run in workerd, so both are stubbed and the import

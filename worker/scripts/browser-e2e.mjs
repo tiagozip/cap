@@ -1,9 +1,10 @@
 /**
- * Real-browser acceptance for the demo page: opens `/`, clicks the widget,
- * waits for the PoW + instrumentation round trip and the same-origin
- * `/demo/siteverify` call, records every request the page makes, asserts that
- * nothing is fetched from `cdn.jsdelivr.net` (the Worker self-hosts the widget,
- * its wasm files and pako), then writes a full-page screenshot.
+ * Real-browser acceptance for the demo page: opens the "click to verify"
+ * variant (`/#click`), clicks the widget, waits for the PoW + instrumentation
+ * round trip and the same-origin `/demo/siteverify` call, records every
+ * request the page makes, asserts that nothing is fetched from
+ * `cdn.jsdelivr.net` (the Worker self-hosts the widget, its wasm files and
+ * pako), then writes a full-page screenshot.
  *
  *   PLAYWRIGHT_BROWSERS_PATH=<repo>/widget/node_modules/.pv-tools/pw-browsers \
  *     node scripts/browser-e2e.mjs http://127.0.0.1:8787
@@ -34,22 +35,25 @@ page.on("pageerror", (error) => logs.push(`[pageerror] ${error.message}`));
 const requests = [];
 page.on("request", (request) => requests.push(request.url()));
 
-await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+await page.goto(new URL("/#click", baseUrl).href, {
+  waitUntil: "domcontentloaded",
+});
 
 await page.waitForFunction(
   () =>
     document
-      .querySelector("cap-widget")
+      .querySelector("#stage-slot cap-widget")
       ?.shadowRoot?.querySelector(".captcha-trigger"),
   null,
   { timeout: 20_000 },
 );
 
-await page.locator("cap-widget:not([data-cap-mascot]) .captcha-trigger").click({ timeout: 20_000 });
+await page
+  .locator("#stage-slot cap-widget .captcha-trigger")
+  .click({ timeout: 20_000 });
 
 await page.waitForFunction(
-  () =>
-    document.getElementById("result")?.textContent?.includes('"success": true'),
+  () => document.getElementById("status")?.dataset.state === "ok",
   null,
   { timeout: 120_000 },
 );

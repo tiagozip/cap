@@ -1,0 +1,178 @@
+/*
+ * @rakko/design-system · static tokens
+ *
+ * Canonical Tailwind v4 @theme blocks for the Rakko Design monorepo.
+ * Runtime overrides for --surface-paper, --bg-opacity, --color-border, and
+ * the dynamic accent (--a) live in the consumer app (variables.css, theme.css,
+ * AccentColorStyleInjector). This file declares only static contract.
+ */
+
+@theme inline {
+  --color-paper: var(--surface-paper);
+  --font-sans:
+    var(--app-font-sans), var(--app-font-sans-cjk, system-ui, -apple-system, 'PingFang SC',
+    'Microsoft YaHei', 'Segoe UI', Roboto, Helvetica, 'noto sans sc',
+    'hiragino sans gb', 'sans-serif', Apple Color Emoji, Segoe UI Emoji,
+    Not Color Emoji);
+  --font-serif:
+    var(--app-font-serif, 'Noto Serif CJK SC', 'Noto Serif SC',
+    'Source Han Serif SC', 'Source Han Serif', source-han-serif-sc, SongTi SC,
+    SimSum, 'Hiragino Sans GB', system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, 'Microsoft YaHei', 'WenQuanYi Micro Hei', sans-serif);
+  --font-mono:
+    'OperatorMonoSSmLig Nerd Font', 'Cascadia Code PL',
+    'FantasqueSansMono Nerd Font', 'operator mono', JetBrainsMono,
+    'Fira code Retina', 'Fira code', 'Consolas', Monaco, 'Hannotate SC',
+    monospace, -apple-system;
+
+  /* Logo-only typography contract. Logotype declares its own faces;
+     does NOT inherit --font-serif (which is body-weighted Source Han / Noto
+     Serif CJK SC and too heavy as a logotype). */
+  --font-logo-cjk: 'Noto Serif JP', 'Source Han Serif', 'Source Han Serif SC',
+    'Noto Serif CJK SC', serif;
+  --font-logo-latin: 'EB Garamond', 'GT Sectra', 'Tiempos Headline', Georgia,
+    serif;
+}
+
+@theme {
+  --color-accent: #c56473;
+
+  /* Neutral 色阶 — 素 Pure (3-tier, dark mode inverts to pure gray in the consumer app)
+     Tier 1 (1-4): surface/fill   Tier 2 (5-7): border/icon/secondary text   Tier 3 (8-10): body/heading
+     Light mode carries a warm parchment undertone (R > G > B). Dark mode
+     inverts to pure neutral gray (R = G = B) — warmth on dark surfaces
+     reads as olive at low saturation, so the scale resets to neutral and
+     warmth is carried solely by --color-paper.
+     n-5 must NEVER be used for text. neutral-50~950 is banned project-wide. */
+  --color-neutral-1: #f9f8f5;
+  --color-neutral-2: #f0efeb;
+  --color-neutral-3: #e3e1db;
+  --color-neutral-4: #d0cec6;
+  --color-neutral-5: #a8a69f;
+  --color-neutral-6: #787670;
+  --color-neutral-7: #5c5a55;
+  --color-neutral-8: #403f3a;
+  --color-neutral-9: #24231f;
+  --color-neutral-10: #141312;
+
+  /* Semantic — 和色 (Japanese traditional). Restraint matched to accent. */
+  --color-info: #3d6896;    /* 縹 hanada */
+  --color-success: #5e9f7e; /* 若竹 wakatake */
+  --color-warning: #a87a3d; /* 朽葉 kuchiba */
+  --color-error: #a64953;   /* 蘇芳 suoh */
+
+  /* border-border utility — value is overridden in the consumer app variables.css per theme */
+  --color-border: rgba(24, 24, 27, 0.1);
+
+  --color-muted-1: var(--color-neutral-1);
+  --color-muted-2: var(--color-neutral-2);
+  --color-muted-3: var(--color-neutral-3);
+  --color-muted-4: var(--color-neutral-4);
+  --color-muted-5: var(--color-neutral-5);
+  --color-muted-6: var(--color-neutral-6);
+  --color-muted-7: var(--color-neutral-7);
+  --color-muted-8: var(--color-neutral-8);
+  --color-muted-9: var(--color-neutral-9);
+  --color-muted-10: var(--color-neutral-10);
+
+  --color-themed-bg_opacity: var(--bg-opacity);
+}
+
+@theme {
+  /* Typography scale — Geist-style role+px tokens. Anchored on html { font-size: 14px }
+     in the consumer app. Size and line-height are bundled per token (single source of truth);
+     font-weight stays separate (apply font-medium / font-normal independently).
+     CJK forbids synthetic bold — use font-medium (500) at most for headings.
+
+     Roles:
+       caption  10            — eyebrow uppercase + tracking only (use sparingly)
+       label    12            — meta, small label, pagination
+       copy     13 14 15 16   — body family; copy-14 is the base anchor (1rem)
+       title    20 24 28      — section heading → page H1
+       display  36 48         — hero, OG renderer
+       icon     sm md lg      — non-body sizes for <i>/icon elements (no line-height)
+
+     Banned: hardcoded text-[Npx], Tailwind defaults text-xs/sm/base/lg/xl/2xl/3xl/...
+     Enforcement lives in the consumer app lint rules + design-system check.ts (phase 3).
+
+     NOTE: `--text-*: initial` (clear tw defaults) is deferred to phase 3 — it
+     interacts badly with the typography plugin's @apply chain in tw v4.2.2. */
+
+  --text-caption-10: 10px;
+  --text-caption-10--line-height: 1.4;
+
+  --text-label-12: 12px;
+  --text-label-12--line-height: 1.5;
+
+  --text-copy-13: 13px;
+  --text-copy-13--line-height: 1.54;
+  --text-copy-14: 14px;
+  --text-copy-14--line-height: 1.57;
+  --text-copy-15: 15px;
+  --text-copy-15--line-height: 1.6;
+  --text-copy-16: 16px;
+  --text-copy-16--line-height: 1.625;
+
+  --text-title-20: 20px;
+  --text-title-20--line-height: 1.4;
+  --text-title-24: 24px;
+  --text-title-24--line-height: 1.33;
+  --text-title-28: 28px;
+  --text-title-28--line-height: 1.29;
+
+  --text-display-36: 36px;
+  --text-display-36--line-height: 1.22;
+  --text-display-48: 48px;
+  --text-display-48--line-height: 1.17;
+
+  --text-icon-sm: 14px;
+  --text-icon-md: 16px;
+  --text-icon-lg: 18px;
+}
+
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Motion + state contract.
+ * 数值借用 MD2 的状态层逻辑，但降低视觉强度以保留 Rakko 的安静气质。
+ */
+:root {
+  --motion-duration-state: 160ms;
+  --motion-duration-ripple: 420ms;
+  --motion-duration-enter: 240ms;
+  --motion-duration-exit: 180ms;
+  --motion-delay-tooltip: 500ms;
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --state-hover-opacity: 4%;
+  --state-focus-opacity: 8%;
+  --state-pressed-opacity: 12%;
+
+  /* 毛玻璃表面（顶栏等常驻半透明 chrome）。
+     起点取自 shiroi 顶栏（20px 模糊 + 180% 饱和 + 72% 纸底），现值是用户在评审页上调出的定稿：
+     3px 模糊 + 193% 饱和 + 45% 纸底，底线复用 --color-border。
+     四级 backdrop-blur 表管的是单独模糊；这里是一套组合表面，不算第五级。
+     层必须常驻：滚动渐显只改模糊半径与底色 alpha，不许用 opacity 从 0 淡入——
+     opacity 为 0 的 backdrop-filter 层不会被绘制，首次出现那一帧要重建模糊表面，
+     表现为掉帧并闪一下纯透明。 */
+  --glass-blur: 3px;
+  --glass-saturate: 193%;
+  --glass-surface-opacity: 45%;
+
+  /* 玻璃材质的其余组成（组合方式见 src/glass.css，用法见 references/glass.md）。
+     panel 用 58% 而不是 chrome 的 45%：浮层会落在任意内容之上，正文要在它上面可读。
+     浅色纸底盖在浅色页面上，alpha 高于 ~75% 时材质几乎不可见；可读性靠饱和与纸色，不靠 alpha。
+     高光 0.59 两种主题通用（用户在深色主题下定的值），主题层不再单独覆盖它。
+     遮罩只压暗不模糊（全屏 backdrop 每帧读回整个视口，是系统里最贵的东西），
+     且用纯黑而非 n-10：n-10 在深色主题会翻成近白，遮罩就变成了漂白。
+     whisper 阴影在深色主题由消费方主题层覆盖（同 --color-border）。 */
+  --glass-panel-opacity: 58%;
+  --glass-scrim-opacity: 34%;
+  --glass-highlight: rgba(255, 255, 255, 0.59);
+  --shadow-whisper: 0 4px 24px rgba(0, 0, 0, 0.05);
+
+  /* haze 档：压在图像上的文字块身后的一团雾。中心纸色 alpha 与雾向外溢出文字块的基准距离
+     （云体、雾边、圆角、羽化都是它的倍数）；形状与羽化由 glass.css 决定，不是 token。
+     51% / 28px 是用户在评审页上调出来的定稿值。 */
+  --glass-haze-opacity: 51%;
+  --glass-haze-bleed: 28px;
+}

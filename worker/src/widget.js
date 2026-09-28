@@ -33,6 +33,13 @@
  * The images use WIDGET_CACHE_CONTROL rather than the immutable wasm/pako
  * policy: unlike a versioned wasm build, the mascot art may be replaced under
  * the same URL.
+ *
+ * The demo page installs Rakko Design's ripple feedback from two ES modules,
+ * served byte for byte from the synced vendor copy (`scripts/sync-design.sh`);
+ * `ripple.js` imports `./ripple-geometry.js`, so both live under `/design/`:
+ *
+ *   /design/ripple.js           vendor/rakko-design/design-system/src/ripple.js
+ *   /design/ripple-geometry.js  vendor/rakko-design/design-system/src/ripple-geometry.js
  */
 
 import { createHash } from "node:crypto";
@@ -43,6 +50,8 @@ import capMinJs from "../../widget/src/cap.min.js";
 import mascotChecking from "../../widget/src/mascot/checking.webp";
 import mascotDone from "../../widget/src/mascot/done.webp";
 import mascotError from "../../widget/src/mascot/error.webp";
+import rippleJs from "../../vendor/rakko-design/design-system/src/ripple.js";
+import rippleGeometryJs from "../../vendor/rakko-design/design-system/src/ripple-geometry.js";
 import pakoInflateMinJs from "../vendor/pako_inflate.min.js";
 import { corsHeaders } from "./cors.js";
 
@@ -59,6 +68,8 @@ export const ASSET_PATHS = {
   mascotChecking: "/mascot/checking.webp",
   mascotError: "/mascot/error.webp",
   mascotDone: "/mascot/done.webp",
+  ripple: "/design/ripple.js",
+  rippleGeometry: "/design/ripple-geometry.js",
 };
 
 function toBytes(value) {
@@ -132,6 +143,22 @@ const ASSETS = new Map([
     {
       body: toBytes(mascotDone),
       contentType: WEBP_CONTENT_TYPE,
+      cacheControl: WIDGET_CACHE_CONTROL,
+    },
+  ],
+  [
+    ASSET_PATHS.ripple,
+    {
+      body: rippleJs,
+      contentType: JS_CONTENT_TYPE,
+      cacheControl: WIDGET_CACHE_CONTROL,
+    },
+  ],
+  [
+    ASSET_PATHS.rippleGeometry,
+    {
+      body: rippleGeometryJs,
+      contentType: JS_CONTENT_TYPE,
       cacheControl: WIDGET_CACHE_CONTROL,
     },
   ],

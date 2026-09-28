@@ -46,7 +46,8 @@ Without those three lines the widget still works, but it makes a cross-origin re
 
 | Route | Purpose |
 | --- | --- |
-| `GET /` | demo page with a `<cap-widget>` pointed at the same origin |
+| `GET /` | showcase page: seven live widget variants (auto, invisible, click, mascot, mascot + auto, background-free mascot, background-free mascot + auto), each verified through `/demo/siteverify` |
+| `GET /design/ripple.js`, `GET /design/ripple-geometry.js` | Rakko Design's ripple runtime for the showcase page, from `vendor/rakko-design/` |
 | `GET /widget.js`, `GET /widget-floating.js` | this repo's `widget/src/cap.min.js` / `cap-floating.min.js`, byte for byte |
 | `GET /cap_wasm_bg.wasm`, `GET /hashwx.wasm` | this repo's `wasm/src/browser/*.wasm`, byte for byte |
 | `GET /pako_inflate.min.js` | `pako@2.1.0` `dist/pako_inflate.min.js` (sha256 `fa226c8e…f8bb43`, identical to the jsDelivr copy) |
@@ -76,6 +77,8 @@ node scripts/acceptance.mjs http://127.0.0.1:8787    # curl-style end-to-end che
 node scripts/browser-e2e.mjs http://127.0.0.1:8787  # real browser; fails if anything hits cdn.jsdelivr.net
 node scripts/cpu-bench.mjs                           # CPU cost of /challenge, /redeem, /siteverify
 ```
+
+The showcase page (`worker/src/demo-page.js`, `worker/src/demo/page.css`, `worker/src/demo/app.client.js`) is styled with [Rakko Design](https://github.com/KurisuRakko/Rakko-Design). Its tokens, glass material, state layer and ripple runtime live in `vendor/rakko-design/`, which only `scripts/sync-design.sh` may write (`RAKKO_DESIGN_DIR=<local checkout> scripts/sync-design.sh` works offline); `node scripts/check-design.mjs` checks the page against the design rules (no raw colours, no `backdrop-filter` outside the vendored `glass.css`, …).
 
 ### Deploy
 

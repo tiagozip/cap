@@ -2,7 +2,7 @@
  * Priestess Verification on Cloudflare Workers — router for verify.rakko.cn.
  *
  * Routes:
- *   GET  /                    demo page (stock `<cap-widget>` + same-origin verify)
+ *   GET  /                    showcase page (seven widget variants + same-origin verify)
  *   GET  /widget.js           the repo's widget/src/cap.min.js, byte for byte
  *   GET  /widget-floating.js  the repo's widget/src/cap-floating.min.js
  *   GET  /cap_wasm_bg.wasm    the repo's PoW wasm (window.CAP_CUSTOM_WASM_URL)
@@ -11,6 +11,8 @@
  *   GET  /mascot/checking.webp  data-cap-mascot art, served from this origin
  *   GET  /mascot/error.webp     (the widget's default <script dir>/mascot/ base)
  *   GET  /mascot/done.webp
+ *   GET  /design/ripple.js    Rakko Design ripple runtime for the demo page
+ *   GET  /design/ripple-geometry.js
  *   POST /challenge           challenge generation        (scope "site", CORS)
  *   POST /redeem              challenge redemption        (scope "site", CORS)
  *   POST /siteverify          server-to-server validation (no CORS)
