@@ -20,7 +20,10 @@
  * (`data-cap-api-endpoint="/demo/"`): those issue demo-scoped tokens, the only
  * kind `/demo/siteverify` accepts. The `window.CAP_CUSTOM_*` variables point
  * the widget's wasm and pako fetches at this origin instead of jsDelivr; they
- * must be set before the widget script loads. The mascot variants need no
+ * must be set before the widget script loads. Every asset URL carries a
+ * `?v=` content hash (`versionedPath` in `src/widget.js`), so after a deploy
+ * no browser pairs this page with a widget it cached earlier. The mascot
+ * variants need no
  * image URL: the widget's default `<script directory>/mascot/` base resolves
  * to `/mascot/*.webp` on this origin.
  */
@@ -78,7 +81,7 @@ const ICON_REPLAY =
 const ICON_COPY =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
 
-export function renderDemoPage({ capWasm, hashwx, pako, ripple }) {
+export function renderDemoPage({ widget, capWasm, hashwx, pako, ripple }) {
   // Relative URLs keep the widget same-origin no matter how the page is
   // reached. An absolute `url.origin` would break `wrangler dev`, where the
   // custom-domain route makes the Worker see `http://verify.rakko.cn` while
@@ -194,7 +197,7 @@ ${PAGE_CSS}
     </footer>
 
 ${assetScript}
-    <script src="/widget.js"></script>
+    <script src="${widget}"></script>
     <script type="module">
       import { installRippleFeedback } from ${jsonForScript(ripple)};
       installRippleFeedback(document);

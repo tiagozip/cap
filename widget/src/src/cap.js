@@ -2379,17 +2379,8 @@
     handleProgress(event) {
       if (!this.#trigger) return;
 
-      const progressCircle = this.#trigger.querySelector(
-        ".progress-ring-circle",
-      );
-
-      if (progressCircle) {
-        const circumference = 2 * Math.PI * 14;
-        const offset =
-          circumference - (event.detail.progress / 100) * circumference;
-        progressCircle.style.strokeDashoffset = offset;
-      }
-
+      // The ring is an indeterminate spinner (see cap.css): progress only
+      // refreshes the label and runs the onprogress attribute.
       const wrapper = this.#trigger.querySelector(".label-wrapper");
       if (wrapper) {
         const activeLabel = wrapper.querySelector(".label.active");

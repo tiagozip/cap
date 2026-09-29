@@ -48,7 +48,7 @@
       idleClick: "等你点一下组件",
       idleAuto: "组件一出现在屏幕上就会自己开始",
       idleInvisible: "马上在后台开始…",
-      progress: (p) => `正在计算 · ${p}%`,
+      solving: "正在验证…",
       checking: "拿到 token，正在请服务器核验…",
       ok: "服务器核验通过",
       okSub: (s) => `用时 ${s} 秒 · token 已在服务器端核销`,
@@ -134,7 +134,7 @@
       idleClick: "Waiting for you to click the widget",
       idleAuto: "Starts by itself once the widget is on screen",
       idleInvisible: "Starting in the background…",
-      progress: (p) => `Solving · ${p}%`,
+      solving: "Verifying…",
       checking: "Got a token, asking the server to verify it…",
       ok: "Verified by the server",
       okSub: (s) => `Took ${s}s · the token was consumed server-side`,
@@ -405,8 +405,10 @@
       "CAP_PAKO_URL",
     ]) {
       if (typeof window[name] !== "string") continue;
-      const url = new URL(window[name], origin).href;
-      lines.push(`  window.${name} = ${JSON.stringify(url)};`);
+      // The page's own `?v=` cache-buster is not something to hard-code.
+      const url = new URL(window[name], origin);
+      url.search = "";
+      lines.push(`  window.${name} = ${JSON.stringify(url.href)};`);
     }
     return lines.length ? [OPEN_SCRIPT, ...lines, CLOSE_SCRIPT] : [];
   }
@@ -519,7 +521,7 @@
       if (run.cancelled) return;
       const progress = Math.round(event.detail?.progress ?? 0);
       if (progress === 0 || !run.startedAt) run.startedAt = performance.now();
-      if (progress < 100) setStatus("running", () => t().progress(progress));
+      if (progress < 100) setStatus("running", () => t().solving);
     });
     target.addEventListener("solve", (event) => {
       verify(event.detail.token, run);

@@ -177,6 +177,20 @@ function etagFor(body) {
   return etag;
 }
 
+/**
+ * `pathname` plus a `?v=` content hash, for the pages this Worker renders
+ * itself. The demo page is served `no-store`, so a deploy that changes an
+ * asset also changes its URL there, and no browser keeps running a copy it
+ * cached before the deploy (`/widget.js` is cacheable for five minutes, the
+ * wasm for a year). The query string is ignored when the asset is served.
+ */
+export function versionedPath(pathname) {
+  const asset = ASSETS.get(pathname);
+  if (!asset) throw new Error(`versionedPath: unknown asset ${pathname}`);
+  // etagFor() returns `"sha256-<32 hex>"`; 12 hex digits are plenty here.
+  return `${pathname}?v=${etagFor(asset.body).slice(8, 20)}`;
+}
+
 export function isWidgetPath(pathname) {
   return ASSETS.has(pathname);
 }

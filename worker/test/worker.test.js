@@ -90,7 +90,7 @@ describe("demo page", () => {
     // The mascot variants need no image URL: the widget's default base
     // derives from the /widget.js script directory.
     expect(html).not.toContain("CAP_MASCOT_URL");
-    expect(html).toContain('<script src="/widget.js"></script>');
+    expect(html).toMatch(/<script src="\/widget\.js\?v=[0-9a-f]{12}"><\/script>/);
     expect(html).toContain('fetch("/demo/siteverify"');
     expect(html).toContain("Based on Cap by Tiago (Apache-2.0)");
     expect(html).not.toContain(SITEVERIFY_SECRET);
@@ -127,8 +127,8 @@ describe("demo page", () => {
     expect(html.slice(vendor, page)).toContain("[data-glass='panel']");
     expect(html.slice(vendor, page)).toContain("[data-ripple]");
     expect(html).toContain('data-glass="panel"');
-    expect(html).toContain(
-      'import { installRippleFeedback } from "/design/ripple.js";',
+    expect(html).toMatch(
+      /import \{ installRippleFeedback \} from "\/design\/ripple\.js\?v=[0-9a-f]{12}";/,
     );
     // Only the vendored glass.css may declare the blur.
     expect(html.slice(page)).not.toContain("backdrop-filter");
@@ -153,17 +153,44 @@ describe("demo page", () => {
     const html = await (await request("/")).text();
     // The custom URLs have to be set before the widget script loads; the page
     // must not leave any of the three to jsDelivr's defaults.
-    const widgetScript = html.indexOf('<script src="/widget.js"></script>');
+    const widgetScript = html.indexOf('<script src="/widget.js?v=');
+    expect(widgetScript).toBeGreaterThan(-1);
     for (const [name, path] of [
       ["CAP_CUSTOM_WASM_URL", "/cap_wasm_bg.wasm"],
       ["CAP_CUSTOM_HASHWX_URL", "/hashwx.wasm"],
       ["CAP_PAKO_URL", "/pako_inflate.min.js"],
     ]) {
-      const assignment = html.indexOf(`window.${name} = "${path}"`);
-      expect(assignment).toBeGreaterThan(-1);
-      expect(assignment).toBeLessThan(widgetScript);
+      const assignment = html.indexOf(`window.${name} = "${path}?v=`);
+      expect(assignment, name).toBeGreaterThan(-1);
+      expect(assignment, name).toBeLessThan(widgetScript);
     }
     expect(html).not.toContain("cdn.jsdelivr.net");
+  });
+
+  it("versions every asset URL with the served content's hash", async () => {
+    const html = await (await request("/")).text();
+    const urls = [
+      ...html.matchAll(/"(\/[\w./-]+)\?v=([0-9a-f]{12})"/g),
+    ].map(([, path, version]) => ({ path, version }));
+    expect(urls.map((u) => u.path).sort()).toEqual(
+      [
+        "/cap_wasm_bg.wasm",
+        "/design/ripple.js",
+        "/hashwx.wasm",
+        "/pako_inflate.min.js",
+        "/widget.js",
+      ].sort(),
+    );
+    for (const { path, version } of urls) {
+      // The query is ignored when serving, and the version is the ETag's hash,
+      // so a deploy that changes the bytes changes the page's URL too.
+      const res = await request(`${path}?v=${version}`);
+      expect(res.status, path).toBe(200);
+      expect(res.headers.get("etag"), path).toBe(
+        `"sha256-${(await sha256HexOf(res)).slice(0, 32)}"`,
+      );
+      expect(res.headers.get("etag").slice(8, 20), path).toBe(version);
+    }
   });
 });
 

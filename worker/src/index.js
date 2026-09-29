@@ -36,7 +36,12 @@ import {
   handleSiteverify,
   jsonResponse,
 } from "./handlers.js";
-import { ASSET_PATHS, isWidgetPath, widgetResponse } from "./widget.js";
+import {
+  ASSET_PATHS,
+  isWidgetPath,
+  versionedPath,
+  widgetResponse,
+} from "./widget.js";
 
 // Cloudflare Workers forbid `WebAssembly.compile()` at runtime, and capjs-core
 // normally compiles its embedded hashwx blob on first use. Hand it the module
@@ -50,6 +55,20 @@ try {
 }
 
 export { TokenStore } from "./token-store.js";
+
+// Content-versioned URLs for everything the demo page loads, hashed once per
+// isolate on first use (see `versionedPath`).
+let demoAssets = null;
+function demoAssetUrls() {
+  demoAssets ??= {
+    widget: versionedPath("/widget.js"),
+    capWasm: versionedPath(ASSET_PATHS.capWasm),
+    hashwx: versionedPath(ASSET_PATHS.hashwx),
+    pako: versionedPath(ASSET_PATHS.pako),
+    ripple: versionedPath(ASSET_PATHS.ripple),
+  };
+  return demoAssets;
+}
 
 export default {
   async fetch(request, env) {
@@ -76,7 +95,7 @@ export default {
 
     try {
       if (url.pathname === "/" && request.method === "GET") {
-        return new Response(renderDemoPage(ASSET_PATHS), {
+        return new Response(renderDemoPage(demoAssetUrls()), {
           status: 200,
           headers: {
             "Content-Type": "text/html; charset=utf-8",

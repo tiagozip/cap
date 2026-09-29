@@ -191,14 +191,16 @@
   stroke-width: var(--cap-spinner-thickness, 3);
 }
 
+/* Indeterminate spinner: a fixed arc (28% of the r=14 ring, whose
+   circumference is 87.96) that keeps turning while the widget verifies. The
+   ring no longer tracks the `progress` event, which still fires as before. */
 .checkbox .progress-ring-circle {
   fill: none;
   stroke: var(--cap-spinner-color, #000);
   stroke-width: var(--cap-spinner-thickness, 3);
   stroke-linecap: round;
-  stroke-dasharray: 87.96;
-  stroke-dashoffset: 87.96;
-  transition: stroke-dashoffset 0.6s ease;
+  stroke-dasharray: 24.63 63.33;
+  stroke-dashoffset: 0;
 }
 
 .captcha[data-state="verifying"] .checkbox {
@@ -214,6 +216,16 @@
 
 .captcha[data-state="verifying"] .checkbox .progress-ring {
   display: block;
+  animation: cap-spin 0.8s linear infinite;
+}
+
+@keyframes cap-spin {
+  from {
+    transform: rotate(-90deg);
+  }
+  to {
+    transform: rotate(270deg);
+  }
 }
 
 .captcha[data-state="done"] .checkbox {
