@@ -21,6 +21,7 @@ export const homeV2Strings = {
     navDocs: "Docs",
     navFeatures: "Features",
     navDemo: "Demo",
+    navGithubStars: "stars",
 
     // Hero
     heroTitle: " Self-hosted CAPTCHA",
@@ -28,29 +29,27 @@ export const homeV2Strings = {
     heroLead1: " No Google. No telemetry. No visual puzzles. ",
     heroLead2: "Switch from reCAPTCHA in minutes. ",
     heroCtaStart: "Get started in 5 minutes ",
-    heroCtaPromptTitle: "Sets up your AI agent for Cap",
-    heroCtaPromptCopied: "Prompt copied!",
-    heroCtaCopyPrompt: "Copy agent prompt",
+    heroCtaTry: "Try the widget ",
     heroDashAlt: "Cap admin dashboard screenshot",
 
     // Trust bar
     trustLabel: "Trusted in production by",
 
     // Feature grid
-    featPrivacyTitle: "Privacy-first. No tracking.",
+    featPrivacyTitle: "Privacy-first, no tracking",
     featPrivacyBody:
       " Zero telemetry. No third-party network. Your users' data stays between you and them. ",
-    featSizeTitle: "250x smaller than hCaptcha.",
+    featSizeTitle: "250x smaller than hCaptcha",
     featSizeBody: " ~20kb, zero dependencies. Loads in milliseconds, not seconds. ",
-    featInvisibleTitle: "No visual puzzles. Always invisible.",
+    featInvisibleTitle: "GPU-resistant and invisible",
     featInvisibleBody:
       " PoW, time-lock challenges and instrumentation run silently in the background. ",
     featOpenTitle: "Free & open-source",
     featOpenBody:
       " Apache 2.0 licensed. Audit it, fork it, self-host it. No vendor can pull the rug. ",
-    featLawsTitle: "Built for privacy laws.",
-    featLawsBody:
-      " Designed to help you meet GDPR, CCPA, LGPD and more, with strict privacy and accessibility standards baked in. ",
+    featAgentsTitle: "Block AI agents, if you want to",
+    featAgentsBody:
+      " Configure instrumentation to block automated browsers used by AI agents to drive your site. ",
     featCustomTitle: "Fully customizable",
     featCustomBody:
       " Colors, size, position, icons, all controllable via CSS variables. No iframe lock-in. ",
@@ -205,6 +204,7 @@ export const homeV2Strings = {
     navDocs: "文档",
     navFeatures: "特性",
     navDemo: "演示",
+    navGithubStars: "星标",
 
     // Hero
     heroTitle: "自托管 CAPTCHA",
@@ -212,28 +212,26 @@ export const homeV2Strings = {
     heroLead1: "没有 Google，没有遥测，没有图形谜题。",
     heroLead2: "几分钟就能从 reCAPTCHA 迁移过来。",
     heroCtaStart: "5 分钟上手 ",
-    heroCtaPromptTitle: "为你的 AI Agent 配置好 Cap 接入",
-    heroCtaPromptCopied: "提示词已复制！",
-    heroCtaCopyPrompt: "复制 Agent 提示词",
+    heroCtaTry: "试用一下 ",
     heroDashAlt: "Cap 管理后台截图",
 
     // Trust bar
     trustLabel: "他们已在生产环境使用 Cap",
 
     // Feature grid
-    featPrivacyTitle: "隐私优先，零追踪。",
+    featPrivacyTitle: "隐私优先，零追踪",
     featPrivacyBody: "零遥测，不连第三方网络。用户数据只留在你和用户之间。",
-    featSizeTitle: "体积仅为 hCaptcha 的 1/250。",
+    featSizeTitle: "体积仅为 hCaptcha 的 1/250",
     featSizeBody: "约 20kb，零依赖。加载按毫秒算，不是按秒算。",
-    featInvisibleTitle: "没有图形谜题，始终隐形。",
+    featInvisibleTitle: "抗 GPU，且完全隐形",
     featInvisibleBody:
       "工作量证明（PoW）、时间锁质询与 instrumentation 都在后台静默运行。",
     featOpenTitle: "免费且开源",
     featOpenBody:
       "Apache 2.0 许可。可审计、可 fork、可自托管，没有厂商能釜底抽薪。",
-    featLawsTitle: "为隐私法规而生。",
-    featLawsBody:
-      "帮你满足 GDPR、CCPA、LGPD 等法规，严格的隐私与无障碍标准开箱即用。",
+    featAgentsTitle: "可选：拦截 AI Agent",
+    featAgentsBody:
+      "一个可选设置即可拒绝 Playwright、Puppeteer 等自动化浏览器，AI Agent 和爬虫正是靠它们操作你的网站。默认关闭。",
     featCustomTitle: "深度可定制",
     featCustomBody:
       "颜色、尺寸、位置、图标，全都能用 CSS 变量控制，不被 iframe 锁死。",
@@ -385,6 +383,7 @@ export const homeV2Strings = {
     navDocs: "Doku",
     navFeatures: "Features",
     navDemo: "Demo",
+    navGithubStars: "Sterne",
 
     // Hero
     heroTitle: "Selbst gehostetes CAPTCHA",
@@ -392,30 +391,28 @@ export const homeV2Strings = {
     heroLead1: "Kein Google. Keine Telemetrie. Keine Bilderrätsel.",
     heroLead2: "In Minuten von reCAPTCHA umsteigen.",
     heroCtaStart: "In 5 Minuten loslegen ",
-    heroCtaPromptTitle: "Richtet deinen KI-Agenten für Cap ein",
-    heroCtaPromptCopied: "Prompt kopiert!",
-    heroCtaCopyPrompt: "Agent-Prompt kopieren",
+    heroCtaTry: "Widget ausprobieren ",
     heroDashAlt: "Screenshot des Cap-Admin-Dashboards",
 
     // Trust bar
     trustLabel: "Im Produktivbetrieb im Einsatz bei",
 
     // Feature grid
-    featPrivacyTitle: "Datenschutz zuerst. Kein Tracking.",
+    featPrivacyTitle: "Datenschutz zuerst, kein Tracking",
     featPrivacyBody:
       "Null Telemetrie. Kein Drittanbieter-Netzwerk. Die Daten deiner Nutzer bleiben zwischen euch.",
-    featSizeTitle: "250x kleiner als hCaptcha.",
+    featSizeTitle: "250x kleiner als hCaptcha",
     featSizeBody:
       "~20 kb, keine Abhängigkeiten. Lädt in Millisekunden, nicht in Sekunden.",
-    featInvisibleTitle: "Keine Bilderrätsel. Immer unsichtbar.",
+    featInvisibleTitle: "GPU-resistent und unsichtbar",
     featInvisibleBody:
       "PoW, Time-Lock-Challenges und Instrumentation laufen still im Hintergrund.",
     featOpenTitle: "Kostenlos & quelloffen",
     featOpenBody:
       "Apache-2.0-Lizenz. Prüfen, forken, selbst hosten. Kein Anbieter kann dir den Boden unter den Füßen wegziehen.",
-    featLawsTitle: "Für Datenschutzgesetze gebaut.",
-    featLawsBody:
-      "Entwickelt, damit du DSGVO, CCPA, LGPD und mehr erfüllst, mit strengen Datenschutz- und Barrierefreiheitsstandards von Haus aus.",
+    featAgentsTitle: "KI-Agenten blockieren, wenn du willst",
+    featAgentsBody:
+      "Eine optionale Einstellung weist automatisierte Browser wie Playwright und Puppeteer ab, mit denen KI-Agenten und Scraper deine Seite bedienen. Standardmäßig ist sie aus.",
     featCustomTitle: "Vollständig anpassbar",
     featCustomBody:
       "Farben, Größe, Position, Icons, alles über CSS-Variablen steuerbar. Kein iframe-Lock-in.",
@@ -572,6 +569,7 @@ export const homeV2Strings = {
     navDocs: "Docs",
     navFeatures: "Fonctionnalités",
     navDemo: "Démo",
+    navGithubStars: "étoiles",
 
     // Hero
     heroTitle: "Le CAPTCHA auto-hébergé",
@@ -579,30 +577,28 @@ export const homeV2Strings = {
     heroLead1: "Pas de Google. Pas de télémétrie. Pas de puzzles visuels.",
     heroLead2: "Quittez reCAPTCHA en quelques minutes.",
     heroCtaStart: "Démarrer en 5 minutes ",
-    heroCtaPromptTitle: "Configure votre agent IA pour Cap",
-    heroCtaPromptCopied: "Prompt copié !",
-    heroCtaCopyPrompt: "Copier le prompt agent",
+    heroCtaTry: "Essayer le widget ",
     heroDashAlt: "Capture d'écran du tableau de bord Cap",
 
     // Trust bar
     trustLabel: "Utilisé en production par",
 
     // Feature grid
-    featPrivacyTitle: "Vie privée d'abord. Aucun pistage.",
+    featPrivacyTitle: "Vie privée d'abord, aucun pistage",
     featPrivacyBody:
       "Zéro télémétrie. Aucun réseau tiers. Les données de vos utilisateurs restent entre vous et eux.",
-    featSizeTitle: "250x plus léger que hCaptcha.",
+    featSizeTitle: "250x plus léger que hCaptcha",
     featSizeBody:
       "~20 ko, zéro dépendance. Se charge en millisecondes, pas en secondes.",
-    featInvisibleTitle: "Aucun puzzle visuel. Toujours invisible.",
+    featInvisibleTitle: "Résistant aux GPU et invisible",
     featInvisibleBody:
       "La preuve de travail, les défis à verrou temporel et l'instrumentation tournent silencieusement en arrière-plan.",
     featOpenTitle: "Gratuit et open source",
     featOpenBody:
       "Sous licence Apache 2.0. Auditez-le, forkez-le, hébergez-le. Aucun éditeur ne peut vous couper l'herbe sous le pied.",
-    featLawsTitle: "Pensé pour les lois sur la vie privée.",
-    featLawsBody:
-      "Conçu pour vous aider à respecter le RGPD, le CCPA, la LGPD et d'autres, avec des standards stricts de confidentialité et d'accessibilité intégrés.",
+    featAgentsTitle: "Bloquez les agents IA, si vous le voulez",
+    featAgentsBody:
+      "Un réglage optionnel rejette les navigateurs automatisés comme Playwright et Puppeteer, que les agents IA et les scrapers utilisent pour piloter votre site. Il est désactivé par défaut.",
     featCustomTitle: "Entièrement personnalisable",
     featCustomBody:
       "Couleurs, taille, position, icônes : tout se pilote via des variables CSS. Aucun enfermement dans une iframe.",
@@ -759,6 +755,7 @@ export const homeV2Strings = {
     navDocs: "เอกสาร",
     navFeatures: "ฟีเจอร์",
     navDemo: "เดโม",
+    navGithubStars: "ดาว",
 
     // Hero
     heroTitle: "CAPTCHA แบบโฮสต์เอง",
@@ -766,9 +763,7 @@ export const homeV2Strings = {
     heroLead1: "ไม่มี Google ไม่มีเทเลเมทรี ไม่มีปริศนาภาพ",
     heroLead2: "ย้ายจาก reCAPTCHA ได้ในไม่กี่นาที",
     heroCtaStart: "เริ่มใช้ใน 5 นาที ",
-    heroCtaPromptTitle: "ตั้งค่า AI agent ของคุณให้ใช้ Cap",
-    heroCtaPromptCopied: "คัดลอกพรอมต์แล้ว!",
-    heroCtaCopyPrompt: "คัดลอกพรอมต์สำหรับ agent",
+    heroCtaTry: "ลองใช้วิดเจ็ต ",
     heroDashAlt: "ภาพหน้าจอแดชบอร์ดผู้ดูแลระบบ Cap",
 
     // Trust bar
@@ -781,15 +776,15 @@ export const homeV2Strings = {
     featSizeTitle: "เล็กกว่า hCaptcha 250 เท่า",
     featSizeBody:
       "ประมาณ 20kb ไม่มี dependency โหลดเสร็จในหลักมิลลิวินาที ไม่ใช่หลักวินาที",
-    featInvisibleTitle: "ไม่มีปริศนาภาพ ทำงานแบบล่องหนเสมอ",
+    featInvisibleTitle: "ต้านทาน GPU และมองไม่เห็น",
     featInvisibleBody:
       "PoW, time-lock challenge และ instrumentation ทำงานเงียบ ๆ อยู่เบื้องหลัง",
     featOpenTitle: "ฟรีและโอเพนซอร์ส",
     featOpenBody:
       "ใช้สัญญาอนุญาต Apache 2.0 ตรวจสอบโค้ดได้ fork ได้ โฮสต์เองได้ ไม่มีผู้ให้บริการรายไหนดึงพรมออกจากใต้เท้าคุณได้",
-    featLawsTitle: "ออกแบบมาเพื่อกฎหมายความเป็นส่วนตัว",
-    featLawsBody:
-      "ช่วยให้คุณปฏิบัติตาม GDPR, CCPA, LGPD และอื่น ๆ พร้อมมาตรฐานความเป็นส่วนตัวและการเข้าถึงที่เข้มงวดตั้งแต่ต้น",
+    featAgentsTitle: "บล็อก AI agent ได้ ถ้าคุณต้องการ",
+    featAgentsBody:
+      "การตั้งค่าแบบเลือกเปิดได้จะปฏิเสธเบราว์เซอร์อัตโนมัติอย่าง Playwright และ Puppeteer ที่ AI agent และสแครปเปอร์ใช้ควบคุมเว็บไซต์ของคุณ ค่าเริ่มต้นคือปิด",
     featCustomTitle: "ปรับแต่งได้เต็มที่",
     featCustomBody:
       "สี ขนาด ตำแหน่ง ไอคอน ควบคุมได้ทั้งหมดผ่านตัวแปร CSS ไม่ถูกล็อกอยู่ใน iframe",

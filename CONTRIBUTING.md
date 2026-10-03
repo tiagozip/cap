@@ -1,11 +1,5 @@
 # contributing
 
-## ai usage
-
-ai contributions are **allowed** but please make sure to label your pull requests as so and properly review and test them.
-
-we also request providing benchmarks when possible. we dont allow AI security vulnerabilities.
-
 ## development setup
 
 - you need to have the latest version of [Bun](https://bun.com/) installed for building the widget, server, standalone, solver and docs, and Rust for WASM

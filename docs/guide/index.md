@@ -5,11 +5,9 @@ description: "Set up Cap, the open-source self-hosted CAPTCHA, in about five min
 
 # Quickstart
 
-Cap is a self-hosted CAPTCHA that replaces image puzzles with invisible proof-of-work. Your users click one checkbox, the work runs silently in their browser, and none of their data ever leaves your servers. No Google, no telemetry, no per-request fees.
+cap is a self-hosted and privacy-first captcha alternative that doesn't force your users to click on traffic lights. there are no puzzles, no tracking, and no third parties watching your visitors.
 
-Cap has two parts: a **widget** that runs the challenge and shows the checkbox, and a **server** that issues challenges and verifies solutions. You'll have both running in about five minutes.
-
-**Here's the widget, live:**
+cap has two parts: a **widget** that runs the challenge and shows the checkbox, and a **server** that issues challenges and verifies solutions. you'll have both running in about five minutes.
 
 <Demo />
 
@@ -25,7 +23,7 @@ Cap's `/siteverify` is compatible with reCAPTCHA's API. You can point your exist
 
 ## 1. Run the server
 
-We recommend [Cap Standalone](./standalone/index.md), a single container that exposes a small REST API and a dashboard for managing keys. It supports multiple site keys and is compatible with reCAPTCHA's siteverify API.
+I recommend [Cap Standalone](./standalone/index.md), a single container that exposes a small REST API and a dashboard for managing keys. It supports multiple site keys and is compatible with reCAPTCHA's siteverify API.
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
