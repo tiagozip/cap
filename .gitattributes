@@ -6,3 +6,9 @@ widget/test.html linguist-vendored
 wasm/test/browser.html linguist-vendored
 standalone/Dockerfile linguist-vendored
 docs/.vitepress/theme/style.css linguist-vendored
+
+# The instrumentation frame pins its inline bootstrap with a CSP hash, and CSP
+# hashes are computed over exact bytes. Checking this file out with CRLF makes the
+# hash mismatch on Windows, the bootstrap never runs, and the widget reports
+# "Instrumentation timed out". Keep it LF everywhere.
+widget/src/instrumentation.html -text
