@@ -265,7 +265,10 @@ window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
 If you serve the widget under a strict Content-Security-Policy, you can supply nonces so the widget's injected `<style>` and `<script>` elements aren't blocked:
 
 - `window.CAP_CSS_NONCE` — applied to the widget's `<style>` tag. Also used as a fallback nonce for injected scripts if `CAP_SCRIPT_NONCE` is unset.
-- `window.CAP_SCRIPT_NONCE` — applied to the scripts the widget injects: the pako decompression fallback and the instrumentation challenge iframe.
+- `window.CAP_SCRIPT_NONCE` — applied to the scripts the widget injects, such as the pako decompression fallback.
+- `window.CAP_INSTRUMENTATION_FRAME_URL` — optional URL for the isolated instrumentation frame. When the widget is loaded as a classic script, it defaults to `instrumentation.html` next to that script. Bundled/module builds can set this explicitly.
+
+With a strict Content-Security-Policy, allow the instrumentation frame URL in `frame-src`. The parent page does **not** need `'unsafe-eval'`; the dynamic-code probes execute only inside the sandboxed instrumentation frame.
 
 You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL`, and the HashWX one with `window.CAP_CUSTOM_HASHWX_URL`.
 
