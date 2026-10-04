@@ -1,5 +1,9 @@
 (() => {
   const WASM_VERSION = "0.0.8";
+  const CAP_WIDGET_SCRIPT_URL =
+    typeof document !== "undefined" && document.currentScript?.src
+      ? document.currentScript.src
+      : "";
   const _browserHasHaptics =
     "vibrate" in navigator &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -59,8 +63,9 @@
   const getInstrumentationFrameUrl = () => {
     const configured = window.CAP_INSTRUMENTATION_FRAME_URL;
     if (configured) return new URL(configured, document.baseURI).href;
-    const scriptUrl = typeof document.currentScript?.src === "string" ? document.currentScript.src : "";
-    if (scriptUrl) return new URL("instrumentation.html", scriptUrl).href;
+    if (CAP_WIDGET_SCRIPT_URL) {
+      return new URL("instrumentation.html", CAP_WIDGET_SCRIPT_URL).href;
+    }
     return new URL("instrumentation.html", window.location.href).href;
   };
 
