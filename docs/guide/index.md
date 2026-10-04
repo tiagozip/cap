@@ -85,7 +85,7 @@ The widget is a single web component. If you wouldn't like to pin versions, repl
 ```
 
 ::: tip
-Check the [latest release](https://github.com/tiagozip/cap/releases) for the version to pin. In high-security setups you can self-host this file instead of loading it from the CDN.
+Check the [latest release](https://github.com/tiagozip/cap/releases) for the version to pin. You can also [self-host the widget](./widget.md#self-hosting-the-widget), serving both the script and the solver's WASM files from your own domain instead of the CDN.
 :::
 
 ### The simple way: drop it in a form

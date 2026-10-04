@@ -36,6 +36,51 @@ bun add cap-widget
 
 :::
 
+## Self-hosting the widget
+
+The jsdelivr script tag above is the easiest way to start, and stays the default. If you'd rather not depend on a CDN, you can serve everything from your own domain instead. There are two parts to it: the widget JavaScript, and the WASM files the solver loads at runtime.
+
+### Serving the widget JavaScript
+
+Load the `cap-widget` package from a path you control instead of jsdelivr. You have two options:
+
+- Install it from npm (`pnpm add cap-widget`) and `import "cap-widget"` in your app, letting your bundler serve it alongside your other code. The framework examples below already do this.
+- Serve the prebuilt file directly. The [Standalone asset server](./standalone/options#asset-server) exposes it at `/assets/widget.js` once you set `ENABLE_ASSETS_SERVER=true`, so you can point a plain script tag at your own instance:
+
+```html
+<script src="https://<your-instance>/assets/widget.js"></script>
+```
+
+### Pointing the WASM solver at your own copies
+
+By default the widget fetches its two WASM files (`cap_wasm_bg.wasm` and `hashwx.wasm`) from jsdelivr at solve time. Override the URLs with `window.CAP_CUSTOM_WASM_URL` and `window.CAP_CUSTOM_HASHWX_URL`. Set them before the widget solves a challenge, so the simplest place is an inline script before you load the widget:
+
+```html
+<script>
+  window.CAP_CUSTOM_WASM_URL = "https://<your-instance>/assets/cap_wasm_bg.wasm";
+  window.CAP_CUSTOM_HASHWX_URL = "https://<your-instance>/assets/hashwx.wasm";
+</script>
+
+<cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
+
+<script src="https://<your-instance>/assets/widget.js"></script>
+```
+
+If you use a bundler, set the two globals before the import runs:
+
+```js
+window.CAP_CUSTOM_WASM_URL = "https://<your-instance>/assets/cap_wasm_bg.wasm";
+window.CAP_CUSTOM_HASHWX_URL = "https://<your-instance>/assets/hashwx.wasm";
+
+import "cap-widget";
+```
+
+The URLs can point anywhere you host the files, not just a Standalone instance. The [Standalone asset server](./standalone/options#asset-server) is one way to host them: with `ENABLE_ASSETS_SERVER=true` it serves `/assets/cap_wasm_bg.wasm` and `/assets/hashwx.wasm` (alongside `/assets/widget.js` and `/assets/floating.js`), downloaded once from `CACHE_HOST` and refreshed hourly. Set `WIDGET_VERSION` and `WASM_VERSION` to pin the versions it serves.
+
+::: warning
+`hashwx.wasm` only ships in `@cap.js/wasm` 0.0.8 and newer. If your `WASM_VERSION` is older, `/assets/hashwx.wasm` responds with a 503, so leave `CAP_CUSTOM_HASHWX_URL` unset and the widget will load HashWX from jsdelivr.
+:::
+
 ## Usage
 
 The widget requires a `data-cap-api-endpoint` pointing at your Cap deployment. For Standalone instances, this is:
@@ -267,7 +312,7 @@ If you serve the widget under a strict Content-Security-Policy, you can supply n
 - `window.CAP_CSS_NONCE` — applied to the widget's `<style>` tag. Also used as a fallback nonce for injected scripts if `CAP_SCRIPT_NONCE` is unset.
 - `window.CAP_SCRIPT_NONCE` — applied to the scripts the widget injects: the pako decompression fallback and the instrumentation challenge iframe.
 
-You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL`, and the HashWX one with `window.CAP_CUSTOM_HASHWX_URL`.
+You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL`, and the HashWX one with `window.CAP_CUSTOM_HASHWX_URL`. See [self-hosting the widget](#self-hosting-the-widget) for a full example.
 
 To disable haptic feedback (vibrations on mobile devices), set `window.CAP_DISABLE_HAPTICS = true` globally or add the `data-cap-disable-haptics` attribute to individual widgets:
 

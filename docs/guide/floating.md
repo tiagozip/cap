@@ -33,6 +33,8 @@ Or from the standalone server:
 <!-- [!code ++] -->
 ```
 
+If you want to serve everything from your own domain and keep the solver off the CDN too, see [self-hosting the widget](./widget#self-hosting-the-widget).
+
 The following attributes are supported:
 
 - `data-cap-floating`: The CSS selector of the `cap-widget` element you want to use.
