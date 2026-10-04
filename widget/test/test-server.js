@@ -34,7 +34,11 @@ export function makeBaseHandler({ onChallenge, onRedeem, html }) {
     }
     if (url.pathname === "/instrumentation.html") {
       return new Response(instrumentationFrame, {
-        headers: { "Content-Type": "text/html" },
+        headers: {
+          "Content-Type": "text/html",
+          "Content-Security-Policy":
+            "default-src 'none'; script-src '" + 'sha256-sgobLq6fA6mD5PfiPEqS494SWhx85qjYD+GMgdZ8P3w=' + "' 'unsafe-eval'; connect-src 'none'; style-src 'none'; img-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'",
+        },
       });
     }
     if (url.pathname === "/cap_wasm_bg.wasm") {
@@ -59,6 +63,6 @@ export function makeBaseHandler({ onChallenge, onRedeem, html }) {
 export function setLocalWasmHtml(html) {
   return html.replace(
     "</head>",
-    `<script>window.CAP_CUSTOM_WASM_URL = "/cap_wasm_bg.wasm";</script></head>`,
+    `<script nonce="e2e">window.CAP_CUSTOM_WASM_URL = "/cap_wasm_bg.wasm";</script></head>`,
   );
 }

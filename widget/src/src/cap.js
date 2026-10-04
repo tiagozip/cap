@@ -1,8 +1,12 @@
 (() => {
   const WASM_VERSION = "0.0.8";
   const CAP_WIDGET_SCRIPT_URL =
-    typeof document !== "undefined" && document.currentScript?.src
-      ? document.currentScript.src
+    typeof document !== "undefined"
+      ? document.currentScript?.src ||
+        Array.from(document.scripts)
+          .map((script) => script.src)
+          .find((src) => /\/(?:cap|widget)(?:\.min)?\.js(?:[?#]|$)/.test(src)) ||
+        ""
       : "";
   const _browserHasHaptics =
     "vibrate" in navigator &&
@@ -190,7 +194,6 @@
     const frameUrl = getInstrumentationFrameUrl();
 
     return new Promise((resolve) => {
-      const nonce = crypto.randomUUID();
       const iframe = document.createElement("iframe");
       iframe.setAttribute("sandbox", "allow-scripts");
       iframe.setAttribute("aria-hidden", "true");
@@ -211,7 +214,7 @@
       const onMessage = (event) => {
         if (event.source !== iframe.contentWindow) return;
         const data = event.data;
-        if (!data || data.nonce !== nonce) return;
+        if (!data || typeof data !== "object") return;
         cleanup();
         if (data.type === "cap:instr") {
           if (data.blocked) resolve({ __blocked: true, blockReason: data.blockReason || "automated_browser" });
@@ -220,7 +223,10 @@
         } else resolve({ __timeout: true });
       };
       const send = () => {
-        iframe.contentWindow?.postMessage({ type: "cap:instr:start", nonce, script: scriptText }, "*");
+        iframe.contentWindow?.postMessage(
+          { type: "cap:instr:start", script: scriptText },
+          "*",
+        );
       };
 
       window.addEventListener("message", onMessage);

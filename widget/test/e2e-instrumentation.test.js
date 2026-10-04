@@ -134,10 +134,7 @@ if (!SHOULD_RUN_E2E) {
         () => document.getElementById("errorResult").textContent,
       );
 
-      const ok =
-        (token && /^[a-z0-9]+:[a-f0-9]+$/.test(token)) || error.length > 0;
-      expect(ok).toBe(true);
-      expect(error).not.toMatch(/unsafe-eval|Content Security Policy/i);
+      expect(token).toMatch(/^[a-z0-9]+:[a-f0-9]+$/);
     }, 90_000);
 
     test("regression: forged cap:instr postMessage from parent window is ignored", async () => {

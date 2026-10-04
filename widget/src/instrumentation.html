@@ -2,25 +2,23 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-sgobLq6fA6mD5PfiPEqS494SWhx85qjYD+GMgdZ8P3w=' 'unsafe-eval'; connect-src 'none'; style-src 'none'; img-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'">
 </head>
 <body>
-<script>
-(() => {
+<script>(() => {
   let active = false;
   window.addEventListener("message", async (event) => {
     if (active || event.source !== window.parent) return;
     const data = event.data;
-    if (!data || data.type !== "cap:instr:start" || typeof data.nonce !== "string" || typeof data.script !== "string") return;
+    if (!data || data.type !== "cap:instr:start" || typeof data.script !== "string") return;
     active = true;
     try {
       (0, eval)(data.script);
       if (typeof window.onload === "function") await window.onload(new Event("load"));
     } catch {
-      window.parent.postMessage({ type: "cap:error", nonce: data.nonce }, "*");
+      window.parent.postMessage({ type: "cap:error" }, "*");
     }
   });
-})();
-</script>
+})();</script>
 </body>
 </html>
