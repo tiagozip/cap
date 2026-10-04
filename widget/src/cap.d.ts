@@ -6,6 +6,7 @@ declare global {
     CAP_PAKO_URL?: string;
     CAP_CSS_NONCE?: string;
     CAP_SCRIPT_NONCE?: string;
+    CAP_INSTRUMENTATION_FRAME_URL?: string;
     CAP_DONT_SKIP_REDEFINE?: boolean;
     CAP_DEBUG?: boolean;
     CAP_SILENT?: boolean;
