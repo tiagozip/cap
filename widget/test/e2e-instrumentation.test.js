@@ -36,7 +36,7 @@ if (!SHOULD_RUN_E2E) {
 <div id="solveResult"></div>
 <div id="errorResult"></div>
 <script src="/widget.js"></script>
-<script>
+<script nonce="e2e">
   const w = document.getElementById("cap");
   w.addEventListener("solve", (e) => {
     document.getElementById("solveResult").textContent = e.detail.token;
