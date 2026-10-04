@@ -27,7 +27,10 @@ if (!SHOULD_RUN_E2E) {
   beforeAll(async () => {
     const html = setLocalWasmHtml(`<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><title>cap widget instr e2e</title></head>
+<head>
+<meta charset="utf-8"><title>cap widget instr e2e</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-e2e' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'self' 'nonce-e2e'; frame-src 'self'; worker-src 'self' blob:; object-src 'none'">
+</head>
 <body>
 <cap-widget id="cap" data-cap-api-endpoint="/cap/" data-cap-hidden-field-name="cap-token"></cap-widget>
 <div id="solveResult"></div>
@@ -101,7 +104,7 @@ if (!SHOULD_RUN_E2E) {
   });
 
   describe("widget e2e with instrumentation", () => {
-    test("instrumentation iframe runs and produces a token or documented error", async () => {
+    test("instrumentation works with strict parent CSP without unsafe-eval", async () => {
       await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
       await page.waitForFunction(
         () =>
@@ -134,6 +137,7 @@ if (!SHOULD_RUN_E2E) {
       const ok =
         (token && /^[a-z0-9]+:[a-f0-9]+$/.test(token)) || error.length > 0;
       expect(ok).toBe(true);
+      expect(error).not.toMatch(/unsafe-eval|Content Security Policy/i);
     }, 90_000);
 
     test("regression: forged cap:instr postMessage from parent window is ignored", async () => {

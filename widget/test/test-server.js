@@ -8,6 +8,10 @@ export const widgetMin = fs.readFileSync(
   path.join(__dirname, "..", "src", "cap.min.js"),
   "utf-8",
 );
+export const instrumentationFrame = fs.readFileSync(
+  path.join(__dirname, "..", "src", "instrumentation.html"),
+  "utf-8",
+);
 export const wasmBytes = fs.readFileSync(
   path.join(
     __dirname,
@@ -26,6 +30,11 @@ export function makeBaseHandler({ onChallenge, onRedeem, html }) {
     if (url.pathname === "/widget.js") {
       return new Response(widgetMin, {
         headers: { "Content-Type": "application/javascript" },
+      });
+    }
+    if (url.pathname === "/instrumentation.html") {
+      return new Response(instrumentationFrame, {
+        headers: { "Content-Type": "text/html" },
       });
     }
     if (url.pathname === "/cap_wasm_bg.wasm") {
