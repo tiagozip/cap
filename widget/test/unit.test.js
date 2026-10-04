@@ -20,9 +20,9 @@ describe("widget source structure", () => {
     expect(widgetSource).toMatch(/runInstrumentationChallenge/);
   });
 
-  test("instrumentation message handler validates ev.source against iframe.contentWindow", () => {
+  test("instrumentation message handler validates event.source against iframe.contentWindow", () => {
     expect(widgetSource).toMatch(
-      /ev\.source !== iframe\.contentWindow/,
+      /event\.source !== iframe\.contentWindow/,
     );
   });
 
