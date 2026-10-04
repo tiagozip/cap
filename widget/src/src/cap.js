@@ -5,7 +5,11 @@
       ? document.currentScript?.src ||
         Array.from(document.scripts)
           .map((script) => script.src)
-          .find((src) => /\/(?:cap|widget)(?:\.min)?\.js(?:[?#]|$)/.test(src)) ||
+          .find((src) =>
+            /\/(?:cap-widget|@cap\.js\/widget)(?:[/?#]|\.min?\.js(?:[?#]|$))/.test(
+              src,
+            ),
+          ) ||
         ""
       : "";
   const _browserHasHaptics =
@@ -68,7 +72,11 @@
     const configured = window.CAP_INSTRUMENTATION_FRAME_URL;
     if (configured) return new URL(configured, document.baseURI).href;
     if (CAP_WIDGET_SCRIPT_URL) {
-      return new URL("instrumentation.html", CAP_WIDGET_SCRIPT_URL).href;
+      const scriptUrl = new URL(CAP_WIDGET_SCRIPT_URL, document.baseURI);
+      if (!/\.[a-z0-9]+$/i.test(scriptUrl.pathname)) {
+        scriptUrl.pathname += "/";
+      }
+      return new URL("instrumentation.html", scriptUrl).href;
     }
     return new URL("instrumentation.html", window.location.href).href;
   };
