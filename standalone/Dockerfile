@@ -21,6 +21,10 @@ COPY --from=prerelease /usr/src/app .
 WORKDIR /usr/src/app
 RUN mkdir -p data && chown bun:bun data
 
+# The Bun base image sets org.opencontainers.image.source to oven-sh/bun.
+# Override it so dependency tools link this image to this repository.
+LABEL org.opencontainers.image.source="https://github.com/tiagozip/cap"
+
 EXPOSE 3000/tcp
 
 USER bun
