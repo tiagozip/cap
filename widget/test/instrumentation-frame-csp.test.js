@@ -31,12 +31,13 @@ describe("instrumentation frame CSP", () => {
   });
 
   test("hash is unaffected by CRLF/LF checkout differences", () => {
-    // Guards against the failure above reappearing on a Windows checkout.
-    const asLf = doc.replace(/\r\n/g, "\n");
-    const lfBody = asLf.match(/<script>([\s\S]*?)<\/script>/)[1];
-    expect(hashOf(lfBody)).toBe(hashOf(lfBody.replace(/\r\n/g, "\n")));
-    // The declared hash must be the LF one, because that is what npm/git ship.
-    expect(declared).toBe(hashOf(asLf.match(/<script>([\s\S]*?)<\/script>/)[1]));
+    // The source file is intentionally pinned to LF so Git cannot silently
+    // change the CSP hash on a CRLF checkout.
+    expect(doc).not.toContain("\r");
+    const asCrlf = doc.replace(/\n/g, "\r\n");
+    const crlfBody = asCrlf.match(/<script>([\s\S]*?)<\/script>/)[1];
+    expect(hashOf(crlfBody)).not.toBe(hashOf(body));
+    expect(declared).toBe(hashOf(body));
   });
 
   test("frame keeps its restrictive policy", () => {
