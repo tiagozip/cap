@@ -155,9 +155,9 @@ if (!SHOULD_RUN_E2E) {
 
       await evilPage.evaluate(() => {
         // Burst-fire forged messages the moment any iframe is added to the
-        // DOM — beats the legitimate sandboxed iframe's srcdoc script to
-        // posting back, since those bursts are queued synchronously while
-        // the real script still has to load + execute async.
+        // DOM — beats the legitimate sandboxed instrumentation frame to
+        // posting back, since those bursts are queued before the frame
+        // can load and execute its bootstrap.
         window.__capForgeObserver = new MutationObserver((muts) => {
           for (const m of muts) {
             for (const node of m.addedNodes) {
@@ -206,8 +206,8 @@ if (!SHOULD_RUN_E2E) {
       // would resolve runInstrumentationChallenge with __blocked or __timeout
       // long before the legitimate sandboxed iframe's script could respond,
       // which propagates to the widget's `error` handler.
-      // With the fix, forged messages are dropped (ev.source mismatch) and
-      // the legitimate flow completes — yielding a valid token.
+      // With the fix, forged messages are dropped (event.source mismatch)
+      // and the legitimate flow completes — yielding a valid token.
       expect(error).toBe("");
       expect(token).toMatch(/^[a-z0-9]+:[a-f0-9]+$/);
 
