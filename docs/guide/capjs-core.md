@@ -293,4 +293,13 @@ app.post("/api/redeem", async (req) => {
 
 HashWX needs no key material and no setup at boot. The first verification compiles the embedded WebAssembly module, which takes a few milliseconds; call `hashwxReady()` at startup to move that off the first request.
 
+Runtimes that forbid compiling WebAssembly at runtime need the module precompiled. On Cloudflare Workers this is automatic since v0.1.4: Wrangler resolves the package's `workerd` condition and imports the bundled `hashwx.wasm` directly. On other such runtimes, import `capjs-core/hashwx.wasm` as a `WebAssembly.Module` the way your platform supports and hand it over before the first verification:
+
+```js
+import { setHashwxModule } from "capjs-core";
+import hashwxModule from "capjs-core/hashwx.wasm"; // platform-specific wasm import
+
+setHashwxModule(hashwxModule);
+```
+
 `hashwxDifficulty` is the expected number of hashes a client must compute, split across `hashwxChallengeCount` independent sub-challenges (default `4`). One challenge on its own has an exponentially distributed solve time, so one visitor waits 30 ms and the next waits three seconds. At the same total difficulty, four sub-challenges cut the p90 by about a quarter and make the median about a third slower, since the attacker's expected work stays `d` hashes either way. See [client cost](./hashwx.md#cost). Each extra sub-challenge adds about 20 µs to verification. `hashwxNoncesPerHash` (default `65_536`) is also accepted.

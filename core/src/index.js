@@ -27,6 +27,7 @@ export {
   hashwxReady,
   hashwxSeed,
   hashwxTarget,
+  setHashwxModule,
 } from "./hashwx.js";
 
 import { fnv1a, fnv1aResume, prngFromHash } from "./prng.js";

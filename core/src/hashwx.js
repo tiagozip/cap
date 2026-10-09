@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import bundledModule from "#hashwx-module";
 import { HASHWX_WASM_BASE64 } from "./hashwx-wasm.js";
 
 export const HASHWX_SEED_SIZE = 32;
@@ -25,9 +26,25 @@ function decodeBase64(b64) {
 }
 
 let readyPromise = null;
+let suppliedModule = null;
+
+export function setHashwxModule(module) {
+  if (!(module instanceof WebAssembly.Module))
+    throw new TypeError(
+      "[capjs-core] setHashwxModule expects a WebAssembly.Module",
+    );
+  if (readyPromise)
+    throw new Error(
+      "[capjs-core] setHashwxModule must be called before HashWX initializes",
+    );
+  suppliedModule = module;
+}
 
 async function init() {
-  const mod = await WebAssembly.compile(decodeBase64(HASHWX_WASM_BASE64));
+  const mod =
+    suppliedModule ??
+    bundledModule ??
+    (await WebAssembly.compile(decodeBase64(HASHWX_WASM_BASE64)));
   const instance = new WebAssembly.Instance(mod, {});
   const exports = instance.exports;
   if (typeof exports._initialize === "function") exports._initialize();
