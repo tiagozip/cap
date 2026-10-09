@@ -250,6 +250,12 @@ export interface HashwxState {
   seedPtr: number;
 }
 
+/** Supplies a precompiled HashWX module for runtimes that forbid compiling
+ *  wasm at runtime. Cloudflare Workers pick up
+ *  the bundled `hashwx.wasm` automatically. Must be called before the first
+ *  verification or `hashwxReady()`. */
+export function setHashwxModule(module: WebAssembly.Module): void;
+
 /** Compiles and initializes the embedded HashWX wasm. Called automatically on
  *  first verification; await it at boot to move the cost off the first
  *  request. Resolves to a state handle reusable with `hashwxHash`. */
