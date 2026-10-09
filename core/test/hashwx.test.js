@@ -2,6 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { HASHWX_WASM_SHA256 } from "../src/hashwx-wasm.js";
+import {
+  generateChallenge,
+  hashwxHash,
+  hashwxReady,
+  hashwxSeed,
+  hashwxTarget,
+  validateChallenge,
+} from "../src/index.js";
+import { TEST_SECRET } from "./helpers.js";
 
 const wasmBytes = readFileSync(new URL("../src/hashwx.wasm", import.meta.url));
 
@@ -47,5 +56,44 @@ describe("hashwx module loading", () => {
     expect(supplied.hashwxHash(a, seed, 196611n)).toBe(
       embedded.hashwxHash(b, seed, 196611n),
     );
+  });
+});
+
+async function solveHashwx(payload) {
+  const state = await hashwxReady();
+  const challenge = Uint8Array.from(Buffer.from(payload.c, "hex"));
+  const target = hashwxTarget(payload.d);
+  const per = BigInt(payload.n);
+  for (let nonce = 0n; nonce < 1_000_000n; nonce++) {
+    const seed = hashwxSeed(challenge, nonce / per);
+    if (hashwxHash(state, seed, nonce) <= target)
+      return { nonce: nonce.toString() };
+  }
+  throw new Error("hashwx solver gave up");
+}
+
+describe("hashwx verification", () => {
+  test("generate -> solve -> validate round trip", async () => {
+    const pub = await generateChallenge(TEST_SECRET, {
+      format: 2,
+      protocols: ["hashwx"],
+      hashwxDifficulty: 64,
+      hashwxNoncesPerHash: 16,
+    });
+    const solutions = [];
+    for (const c of pub.challenges)
+      solutions.push(await solveHashwx(c.payload));
+
+    const ok = await validateChallenge(TEST_SECRET, {
+      token: pub.token,
+      solutions,
+    });
+    expect(ok.success).toBe(true);
+
+    const tampered = await validateChallenge(TEST_SECRET, {
+      token: pub.token,
+      solutions: solutions.map(() => ({ nonce: "18446744073709551615" })),
+    });
+    expect(tampered.success).toBe(false);
   });
 });

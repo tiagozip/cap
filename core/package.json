@@ -37,9 +37,9 @@
     "./hashwx.wasm": "./src/hashwx.wasm"
   },
   "imports": {
-    "#hashwx-module": {
-      "workerd": "./src/hashwx-module.workerd.js",
-      "default": "./src/hashwx-module.js"
+    "#hashwx-load": {
+      "workerd": "./src/hashwx-load.workerd.js",
+      "default": "./src/hashwx-load.js"
     }
   },
   "types": "src/index.d.ts",
@@ -53,8 +53,8 @@
     "src/rsw.js",
     "src/hashwx.js",
     "src/hashwx-wasm.js",
-    "src/hashwx-module.js",
-    "src/hashwx-module.workerd.js",
+    "src/hashwx-load.js",
+    "src/hashwx-load.workerd.js",
     "src/hashwx.wasm",
     "README.md",
     "LICENSE"
