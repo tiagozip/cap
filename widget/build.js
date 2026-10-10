@@ -107,6 +107,13 @@ const server = Bun.serve({
         },
       });
     },
+    "/instrumentation.html": () => {
+      return new Response(Bun.file("./src/instrumentation.html"), {
+        headers: {
+          "Content-Type": "text/html",
+        },
+      });
+    },
     "/failed": () => {
       console.error("test failed, quitting");
       process.exit(1);

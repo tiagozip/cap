@@ -46,6 +46,7 @@ const updateCache = async () => {
     const [
       widgetSource,
       floatingSource,
+      instrumentationFrameSource,
       wasmSource,
       wasmLoaderSource,
       hashwxSource,
@@ -53,6 +54,9 @@ const updateCache = async () => {
       fetchAsset(`${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}`),
       fetchAsset(
         `${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/cap-floating.min.js`,
+      ),
+      fetchAsset(
+        `${CACHE_HOST}/npm/@cap.js/widget@${WIDGET_VERSION}/instrumentation.html`,
       ),
       fetchAsset(
         `${CACHE_HOST}/npm/@cap.js/wasm@${WASM_VERSION}/browser/cap_wasm_bg.wasm`,
@@ -81,6 +85,7 @@ const updateCache = async () => {
       db.set("asset:cache-config", JSON.stringify(cacheConfig)),
       db.set("asset:widget.js", widgetSource),
       db.set("asset:floating.js", floatingSource),
+      db.set("asset:instrumentation.html", instrumentationFrameSource),
       db.set("asset:cap_wasm_bg.wasm", Buffer.from(wasmSource)),
       db.set("asset:cap_wasm.js", wasmLoaderSource),
       hashwxSource
@@ -118,6 +123,15 @@ export const assetsServer = new Elysia({
   .get("/floating.js", async ({ set }) => {
     set.headers["Content-Type"] = "text/javascript";
     const content = await db.get("asset:floating.js");
+    if (!content) {
+      set.status = 503;
+      return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";
+    }
+    return content;
+  })
+  .get("/instrumentation.html", async ({ set }) => {
+    set.headers["Content-Type"] = "text/html";
+    const content = await db.get("asset:instrumentation.html");
     if (!content) {
       set.status = 503;
       return "Asset not cached yet. If this persists, check the server logs for asset fetch errors.";

@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-yvy1xyO0/zSIY21BtZEPvgco/nbDnCLn7vfPHMk9T2U=' 'unsafe-eval'; connect-src 'none'; style-src 'none'; img-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'">
+</head>
+<body>
+<script>(() => {
+  let active = false;
+  window.addEventListener("message", async (event) => {
+    if (active || event.source !== window.parent) return;
+    const data = event.data;
+    if (!data || data.type !== "cap:instr:start" || typeof data.script !== "string") return;
+    active = true;
+    try {
+      (0, eval)(data.script);
+      if (typeof window.onload === "function") await window.onload(new Event("load"));
+    } catch {
+      window.parent.postMessage({ type: "cap:error" }, "*");
+    }
+  });
+})();</script>
+</body>
+</html>
