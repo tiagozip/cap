@@ -97,3 +97,26 @@ describe("hashwx verification", () => {
     expect(tampered.success).toBe(false);
   });
 });
+
+describe("format 2 instrumentation blocked marker", () => {
+  for (const blockAutomatedBrowsers of [false, true]) {
+    test(`blocked marker is rejected with blockAutomatedBrowsers=${blockAutomatedBrowsers}`, async () => {
+      const pub = await generateChallenge(TEST_SECRET, {
+        format: 2,
+        protocols: ["hashwx", "instrumentation"],
+        hashwxDifficulty: 1,
+        hashwxChallengeCount: 1,
+        instrumentation: { blockAutomatedBrowsers, obfuscationLevel: 1 },
+      });
+      const r = await validateChallenge(TEST_SECRET, {
+        token: pub.token,
+        solutions: [{ nonce: 0 }, { blocked: true }],
+      });
+      expect(r.success).toBe(false);
+      expect(r.reason).toBe(
+        blockAutomatedBrowsers ? "instr_automated_browser" : "instr_failed",
+      );
+      expect(r.instr_error).toBe(true);
+    }, 30_000);
+  }
+});

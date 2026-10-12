@@ -241,9 +241,12 @@ export async function validateChallenge(secret, body, opts = {}) {
     }
 
     if (body.instr_blocked === true) {
-      if (instrMeta.blockAutomatedBrowsers) {
-        return fail("instr_automated_browser", { instr_error: true });
-      }
+      return fail(
+        instrMeta.blockAutomatedBrowsers
+          ? "instr_automated_browser"
+          : "instr_failed",
+        { instr_error: true },
+      );
     } else if (body.instr_timeout === true) {
       return fail("instr_timeout", { instr_error: true });
     } else if (body.instr) {
@@ -435,9 +438,12 @@ async function validateChallengeV2(secret, body, payload, opts = {}) {
         return fail("instr_expired", { instr_error: true });
       }
       if (s.blocked === true) {
-        if (meta.blockAutomatedBrowsers) {
-          return fail("instr_automated_browser", { instr_error: true });
-        }
+        return fail(
+          meta.blockAutomatedBrowsers
+            ? "instr_automated_browser"
+            : "instr_failed",
+          { instr_error: true },
+        );
       } else if (s.timeout === true) {
         return fail("instr_timeout", { instr_error: true });
       } else if (s.instr) {

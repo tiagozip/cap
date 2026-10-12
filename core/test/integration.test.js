@@ -50,7 +50,7 @@ describe("end-to-end (PoW + instrumentation)", () => {
     expect(missing.instr_error).toBe(true);
   }, 60_000);
 
-  test("instr_blocked + blockAutomatedBrowsers=false succeeds", async () => {
+  test("instr_blocked + blockAutomatedBrowsers=false is rejected", async () => {
     const pub = await generateChallenge(TEST_SECRET, {
       challengeCount: 2,
       challengeSize: 8,
@@ -63,7 +63,9 @@ describe("end-to-end (PoW + instrumentation)", () => {
       solutions,
       instr_blocked: true,
     });
-    expect(r.success).toBe(true);
+    expect(r.success).toBe(false);
+    expect(r.reason).toBe("instr_failed");
+    expect(r.instr_error).toBe(true);
   }, 30_000);
 
   test("instr_blocked + blockAutomatedBrowsers=true is rejected", async () => {
