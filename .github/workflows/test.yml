@@ -76,6 +76,9 @@ jobs:
       - name: Run e2e (hashwx)
         working-directory: widget
         run: bun test test/e2e-hashwx.test.js
+      - name: Run e2e (mascot)
+        working-directory: widget
+        run: bun test test/e2e-mascot.test.js
 
   standalone:
     name: cap-standalone

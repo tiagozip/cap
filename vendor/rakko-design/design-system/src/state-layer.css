@@ -1,0 +1,97 @@
+/* 共享 MD2 状态层：data-ripple 表面、焦点环、禁用态与 ripple 墨点（原 showcase motion.css 顶部规则，提升为设计契约）。 */
+
+[data-ripple] {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-ripple]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-duration-state) var(--motion-ease-standard);
+}
+
+[data-ripple]:hover::before {
+  opacity: var(--state-hover-opacity);
+}
+
+[data-ripple]:focus-visible::before {
+  opacity: var(--state-focus-opacity);
+}
+
+[data-ripple]:active::before {
+  opacity: var(--state-pressed-opacity);
+}
+
+[data-ripple]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+[data-ripple]:disabled,
+[data-ripple][aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* 禁用态压掉 hover / focus / pressed 状态层：disabled 控件不得出现状态反馈。 */
+[data-ripple]:disabled::before,
+[data-ripple][aria-disabled='true']::before {
+  opacity: 0;
+}
+
+.ripple-ink {
+  position: absolute;
+  left: var(--ripple-x);
+  top: var(--ripple-y);
+  z-index: 1;
+  width: var(--ripple-size);
+  height: var(--ripple-size);
+  border-radius: 50%;
+  background: currentColor;
+  opacity: var(--state-pressed-opacity);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0);
+  animation: rakko-ripple var(--motion-duration-ripple)
+    var(--motion-ease-standard) forwards;
+}
+
+@keyframes rakko-ripple {
+  70% {
+    opacity: var(--state-pressed-opacity);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ripple]::before {
+    transition-duration: 1ms;
+  }
+
+  .ripple-ink {
+    animation-duration: 1ms;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (forced-colors: active) {
+  [data-ripple]:focus-visible {
+    outline: 2px solid CanvasText;
+  }
+
+  .ripple-ink,
+  [data-ripple]::before {
+    display: none;
+  }
+}

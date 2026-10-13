@@ -1,0 +1,16 @@
+/* 上下文操作表面（data-context-action）的触摸配套。
+   iOS Safari 不派 contextmenu，长按只能靠计时器；同一时刻 Safari 会启动文本选择与
+   链接/图片的 callout，必须在这里压掉，否则 Sheet 弹出的同时选区或 callout 也出现。
+   user-select 只在触摸输入下关闭：只有触摸会和文本选择打架，桌面卡片文字保持可选。
+   与 glass.css 同为 sanctioned 样式文件：打包应用直接 @import，自包含 mockup 内联这几条。 */
+[data-context-action] {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (pointer: coarse) {
+  [data-context-action] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}

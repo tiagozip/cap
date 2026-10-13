@@ -24,6 +24,23 @@ export const wasmBytes = fs.readFileSync(
   ),
 );
 
+// The mascot card's three state images, served from /mascot/<state>.webp so the
+// default `data-cap-mascot` resolution (script directory + mascot/) has real
+// bytes to load in tests.
+export const mascotDir = path.join(__dirname, "..", "src", "mascot");
+const MASCOT_FILES = new Map(
+  ["checking", "error", "done"].map((state) => [
+    path.join(mascotDir, `${state}.webp`),
+    fs.readFileSync(path.join(mascotDir, `${state}.webp`)),
+  ]),
+);
+
+export function serveMascot(pathname) {
+  const file = MASCOT_FILES.get(path.join(mascotDir, path.basename(pathname)));
+  if (!file) return null;
+  return new Response(file, { headers: { "Content-Type": "image/webp" } });
+}
+
 export function makeBaseHandler({ onChallenge, onRedeem, html, floatingHtml }) {
   return async (req) => {
     const url = new URL(req.url);
@@ -31,6 +48,10 @@ export function makeBaseHandler({ onChallenge, onRedeem, html, floatingHtml }) {
       return new Response(widgetMin, {
         headers: { "Content-Type": "application/javascript" },
       });
+    }
+    if (url.pathname.startsWith("/mascot/")) {
+      const mascot = serveMascot(url.pathname);
+      if (mascot) return mascot;
     }
     if (url.pathname === "/floating.js") {
       return new Response(floatingMin, {

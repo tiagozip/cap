@@ -2,12 +2,17 @@
  * Priestess Verification on Cloudflare Workers — router for verify.rakko.cn.
  *
  * Routes:
- *   GET  /                    demo page (stock `<cap-widget>` + same-origin verify)
+ *   GET  /                    showcase page (seven widget variants + same-origin verify)
  *   GET  /widget.js           the repo's widget/src/cap.min.js, byte for byte
  *   GET  /widget-floating.js  the repo's widget/src/cap-floating.min.js
  *   GET  /cap_wasm_bg.wasm    the repo's PoW wasm (window.CAP_CUSTOM_WASM_URL)
  *   GET  /hashwx.wasm         the repo's hashwx wasm (window.CAP_CUSTOM_HASHWX_URL)
  *   GET  /pako_inflate.min.js pako@2.1.0 (window.CAP_PAKO_URL)
+ *   GET  /mascot/checking.webp  data-cap-mascot art, served from this origin
+ *   GET  /mascot/error.webp     (the widget's default <script dir>/mascot/ base)
+ *   GET  /mascot/done.webp
+ *   GET  /design/ripple.js    Rakko Design ripple runtime for the demo page
+ *   GET  /design/ripple-geometry.js
  *   POST /challenge           challenge generation        (scope "site", CORS)
  *   POST /redeem              challenge redemption        (scope "site", CORS)
  *   POST /siteverify          server-to-server validation (no CORS)
@@ -31,7 +36,12 @@ import {
   handleSiteverify,
   jsonResponse,
 } from "./handlers.js";
-import { ASSET_PATHS, isWidgetPath, widgetResponse } from "./widget.js";
+import {
+  ASSET_PATHS,
+  isWidgetPath,
+  versionedPath,
+  widgetResponse,
+} from "./widget.js";
 
 // Cloudflare Workers forbid `WebAssembly.compile()` at runtime, and capjs-core
 // normally compiles its embedded hashwx blob on first use. Hand it the module
@@ -45,6 +55,20 @@ try {
 }
 
 export { TokenStore } from "./token-store.js";
+
+// Content-versioned URLs for everything the demo page loads, hashed once per
+// isolate on first use (see `versionedPath`).
+let demoAssets = null;
+function demoAssetUrls() {
+  demoAssets ??= {
+    widget: versionedPath("/widget.js"),
+    capWasm: versionedPath(ASSET_PATHS.capWasm),
+    hashwx: versionedPath(ASSET_PATHS.hashwx),
+    pako: versionedPath(ASSET_PATHS.pako),
+    ripple: versionedPath(ASSET_PATHS.ripple),
+  };
+  return demoAssets;
+}
 
 export default {
   async fetch(request, env) {
@@ -71,7 +95,7 @@ export default {
 
     try {
       if (url.pathname === "/" && request.method === "GET") {
-        return new Response(renderDemoPage(ASSET_PATHS), {
+        return new Response(renderDemoPage(demoAssetUrls()), {
           status: 200,
           headers: {
             "Content-Type": "text/html; charset=utf-8",

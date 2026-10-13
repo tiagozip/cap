@@ -294,7 +294,7 @@ Haptic feedback is automatically disabled in [programmatic mode](./programmatic)
 
 #### Auto mode
 
-`data-cap-auto` lets the widget start solving on its own instead of waiting for a click. It runs the exact same path as a manual click: the progress ring animates, `progress` / `solve` / `error` fire as usual, and the hidden token field is filled in when it finishes.
+`data-cap-auto` lets the widget start solving on its own instead of waiting for a click. It runs the exact same path as a manual click: the spinner turns, `progress` / `solve` / `error` fire as usual, and the hidden token field is filled in when it finishes.
 
 | Value                    | Behaviour                                                                                  |
 | ------------------------ | ------------------------------------------------------------------------------------------ |

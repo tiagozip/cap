@@ -1,0 +1,40 @@
+/* 层级契约（z-index layers）——系统里所有会互相叠放的表面，只从这四档取层级。
+   消费方一律写 var(--layer-*)；这里定义的数值就是契约本身，组件、模板、应用侧
+   都不许再写裸 z-index 数值（见 references/anti-patterns.md）。
+
+   为什么只分四档：z-index 的坑从来不是「数值够不够大」，而是「谁该压过谁」有没有
+   一个全局答案。按表面在交互里的角色分档，任意两类表面之间的关系就是确定的：
+
+     chrome  — 常驻外壳（TopBar / BottomNav）：贴边、一直在，但它是背景板；
+               模态打开时它必须被盖住，否则抽屉底部的按钮会被底栏那条压住；
+     overlay — 模态（Dialog / Sheet 的 backdrop 与 viewport）：遮罩压住整页（含
+               chrome）、焦点被圈定。模态可以叠模态（Sheet 里再开确认 Dialog）：
+               两层同为这一档，后挂载的那层在上 —— 这是被允许且被依赖的行为，
+               不要为「模态之上的模态」另造数值；
+     popup   — 锚定浮层（Menu / Select / Popover / Tooltip 的 Positioner）：它
+               生在某个触发器旁边，而那个触发器可能就在模态里——模态里开 Select，
+               下拉必须压过模态，所以它在 overlay 之上；
+     toast   — Snackbar：它报告的是「刚才发生了什么」（含撤销），而用户很可能正
+               在模态里才看到它、才需要点它，所以永远在最上。
+
+   加新档的规则：新组件先对号入座（贴边常驻 → chrome；锁焦点、带遮罩 → overlay；
+   锚在触发器上 → popup；不请自来且要立刻被看到 → toast）。确实放不进去，才在本
+   文件里加一档，并在 references/tokens.md 登记档次与理由——四档之外不许出现第五
+   个裸数值。
+
+   三个生效条件：
+   1. z-index 只作用于定位元素与 flex / grid 子项（本契约里四档的宿主都满足）；
+   2. 四档只在同一个 stacking context 内互相比较。祖先一旦建立层叠上下文
+      （transform / filter / backdrop-filter / opacity < 1 / isolation: isolate /
+      contain / will-change / 定位元素带非 auto 的 z-index 等），里面的浮层再高也
+      出不去：容器外一个 z-index: 40 的 chrome 就能把整层模态盖住。所以浮层默认
+      必须 Portal 到 body；用 container 挂进别处时，--layer-* 只在那个容器内部有
+      意义，容器外的 chrome 会重新压上来（showcase 的 .sheet-demo 带
+      transform: translateZ(0)，就是现成反例，见 docs/2026-09-20-overlay-layers.md）；
+   3. 同一档内没有先后，按 DOM 顺序决定（后挂载的在上）。 */
+:root {
+  --layer-chrome: 40;  /* 固定外壳：TopBar / BottomNav（贴边、常驻、可被浮层盖住） */
+  --layer-overlay: 50; /* 模态层：Dialog / Sheet 的 backdrop 与 viewport */
+  --layer-popup: 55;   /* 锚定浮层：Menu / Select / Popover / Tooltip 的 Positioner */
+  --layer-toast: 60;   /* Snackbar：永远在最上，模态开着也要看得见 */
+}

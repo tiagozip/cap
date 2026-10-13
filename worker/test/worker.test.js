@@ -3,6 +3,12 @@ import { inflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import capMinJs from "../../widget/src/cap.min.js?raw";
 import capFloatingMinJs from "../../widget/src/cap-floating.min.js?raw";
+import mascotCheckingWebp from "../../widget/src/mascot/checking.webp";
+import mascotDoneWebp from "../../widget/src/mascot/done.webp";
+import mascotErrorWebp from "../../widget/src/mascot/error.webp";
+import rippleGeometryJs from "../../vendor/rakko-design/design-system/src/ripple-geometry.js?raw";
+import rippleJs from "../../vendor/rakko-design/design-system/src/ripple.js?raw";
+import appClientJs from "../src/demo/app.client.js?raw";
 import { solveChallengeResponse } from "../scripts/solve.js";
 import { readConfig } from "../src/config.js";
 import { resolveAllowedOrigin } from "../src/cors.js";
@@ -63,37 +69,128 @@ async function sha256HexOf(res) {
     .digest("hex");
 }
 
+/// Normalises a Data-rule import (ArrayBuffer or typed array) to bytes.
+function toBytes(value) {
+  if (value instanceof Uint8Array) return value;
+  return new Uint8Array(value);
+}
+
 describe("demo page", () => {
-  it("serves a page that mounts the widget and the provenance footer", async () => {
+  it("serves the showcase page with the provenance footer", async () => {
     const res = await request("/");
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("text/html; charset=utf-8");
     const html = await res.text();
+    // The widgets are created by the page script against the demo endpoints.
+    expect(html).toContain('const ENDPOINT = "/demo/";');
     expect(html).toContain(
-      '<cap-widget data-cap-api-endpoint="/demo/"></cap-widget>',
+      'widget.setAttribute("data-cap-api-endpoint", ENDPOINT);',
     );
-    expect(html).toContain('<script src="/widget.js"></script>');
+    expect(html).toContain("new window.Cap({ apiEndpoint: ENDPOINT })");
+    // The mascot variants need no image URL: the widget's default base
+    // derives from the /widget.js script directory.
+    expect(html).not.toContain("CAP_MASCOT_URL");
+    expect(html).toMatch(/<script src="\/widget\.js\?v=[0-9a-f]{12}"><\/script>/);
     expect(html).toContain('fetch("/demo/siteverify"');
     expect(html).toContain("Based on Cap by Tiago (Apache-2.0)");
     expect(html).not.toContain(SITEVERIFY_SECRET);
     expect(html).not.toContain(CAP_SECRET);
   });
 
+  it("offers all seven variants", async () => {
+    const html = await (await request("/")).text();
+    for (const id of [
+      "auto",
+      "invisible",
+      "click",
+      "mascot",
+      "mascot-auto",
+      "bare",
+      "bare-auto",
+    ]) {
+      expect(html, id).toContain(`id: "${id}"`);
+    }
+    // The two background-free variants draw no card of their own.
+    expect(html).toContain(
+      "--cap-background: transparent; --cap-border-color: transparent",
+    );
+  });
+
+  it("inlines Rakko Design ahead of the page styles", async () => {
+    const html = await (await request("/")).text();
+    const vendor = html.indexOf('<style data-vendor="rakko-design">');
+    const page = html.indexOf("<style data-page>");
+    expect(vendor).toBeGreaterThan(-1);
+    expect(page).toBeGreaterThan(vendor);
+    // tokens, glass material and state layer all come from the vendor copy
+    expect(html.slice(vendor, page)).toContain("--glass-blur");
+    expect(html.slice(vendor, page)).toContain("[data-glass='panel']");
+    expect(html.slice(vendor, page)).toContain("[data-ripple]");
+    expect(html).toContain('data-glass="panel"');
+    expect(html).toMatch(
+      /import \{ installRippleFeedback \} from "\/design\/ripple\.js\?v=[0-9a-f]{12}";/,
+    );
+    // Only the vendored glass.css may declare the blur.
+    expect(html.slice(page)).not.toContain("backdrop-filter");
+  });
+
+  it("inlines the page CSS and script whole, without closing them early", async () => {
+    const html = await (await request("/")).text();
+    expect(appClientJs).not.toMatch(/<\/?script/i);
+    expect(html).toContain(`<script>\n${appClientJs}\n    </script>`);
+    // Vitest hands CSS imports to tests as empty strings, so check the page
+    // style block through its last rule instead of byte for byte.
+    const pageStart = html.indexOf("<style data-page>");
+    const pageBlock = html.slice(
+      pageStart,
+      html.indexOf("</style>", pageStart),
+    );
+    expect(pageBlock).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(pageBlock.trimEnd().endsWith("}")).toBe(true);
+  });
+
   it("points the widget's wasm and pako fetches at this origin", async () => {
     const html = await (await request("/")).text();
     // The custom URLs have to be set before the widget script loads; the page
     // must not leave any of the three to jsDelivr's defaults.
-    const widgetScript = html.indexOf('<script src="/widget.js"></script>');
+    const widgetScript = html.indexOf('<script src="/widget.js?v=');
+    expect(widgetScript).toBeGreaterThan(-1);
     for (const [name, path] of [
       ["CAP_CUSTOM_WASM_URL", "/cap_wasm_bg.wasm"],
       ["CAP_CUSTOM_HASHWX_URL", "/hashwx.wasm"],
       ["CAP_PAKO_URL", "/pako_inflate.min.js"],
     ]) {
-      const assignment = html.indexOf(`window.${name} = "${path}"`);
-      expect(assignment).toBeGreaterThan(-1);
-      expect(assignment).toBeLessThan(widgetScript);
+      const assignment = html.indexOf(`window.${name} = "${path}?v=`);
+      expect(assignment, name).toBeGreaterThan(-1);
+      expect(assignment, name).toBeLessThan(widgetScript);
     }
     expect(html).not.toContain("cdn.jsdelivr.net");
+  });
+
+  it("versions every asset URL with the served content's hash", async () => {
+    const html = await (await request("/")).text();
+    const urls = [
+      ...html.matchAll(/"(\/[\w./-]+)\?v=([0-9a-f]{12})"/g),
+    ].map(([, path, version]) => ({ path, version }));
+    expect(urls.map((u) => u.path).sort()).toEqual(
+      [
+        "/cap_wasm_bg.wasm",
+        "/design/ripple.js",
+        "/hashwx.wasm",
+        "/pako_inflate.min.js",
+        "/widget.js",
+      ].sort(),
+    );
+    for (const { path, version } of urls) {
+      // The query is ignored when serving, and the version is the ETag's hash,
+      // so a deploy that changes the bytes changes the page's URL too.
+      const res = await request(`${path}?v=${version}`);
+      expect(res.status, path).toBe(200);
+      expect(res.headers.get("etag"), path).toBe(
+        `"sha256-${(await sha256HexOf(res)).slice(0, 32)}"`,
+      );
+      expect(res.headers.get("etag").slice(8, 20), path).toBe(version);
+    }
   });
 });
 
@@ -148,6 +245,60 @@ describe("widget assets", () => {
     expect(await sha256HexOf(pako)).toBe(PAKO_SHA256);
   });
 
+  it("serves the data-cap-mascot images with the repo's bytes", async () => {
+    for (const [path, expected, length] of [
+      ["/mascot/checking.webp", mascotCheckingWebp, 17978],
+      ["/mascot/error.webp", mascotErrorWebp, 18200],
+      ["/mascot/done.webp", mascotDoneWebp, 18808],
+    ]) {
+      const res = await request(path, { headers: { Origin: ORIGIN } });
+      expect(res.status, path).toBe(200);
+      expect(res.headers.get("content-type"), path).toBe("image/webp");
+      expect(res.headers.get("access-control-allow-origin"), path).toBe(ORIGIN);
+      expect(res.headers.get("vary"), path).toBe("Origin");
+      // Replaced art must not be pinned for a year like the versioned wasm.
+      expect(res.headers.get("cache-control"), path).toBe(
+        "public, max-age=300",
+      );
+      const served = new Uint8Array(await res.arrayBuffer());
+      expect(served.byteLength, path).toBe(length);
+      expect(
+        Buffer.from(served).equals(Buffer.from(toBytes(expected))),
+        path,
+      ).toBe(true);
+    }
+  });
+
+  it("serves the Rakko Design ripple modules from the vendor copy", async () => {
+    for (const [path, expected] of [
+      ["/design/ripple.js", rippleJs],
+      ["/design/ripple-geometry.js", rippleGeometryJs],
+    ]) {
+      const res = await request(path);
+      expect(res.status, path).toBe(200);
+      expect(res.headers.get("content-type"), path).toBe(
+        "application/javascript; charset=utf-8",
+      );
+      expect(await res.text(), path).toBe(expected);
+    }
+  });
+
+  it("answers conditional requests for a mascot image with 304", async () => {
+    const first = await request("/mascot/done.webp");
+    const etag = first.headers.get("etag");
+    expect(etag).toBeTruthy();
+    const second = await request("/mascot/done.webp", {
+      headers: { "If-None-Match": etag },
+    });
+    expect(second.status).toBe(304);
+    expect(second.headers.get("content-type")).toBe("image/webp");
+  });
+
+  it("does not serve unknown mascot files", async () => {
+    const res = await request("/mascot/missing.webp");
+    expect(res.status).toBe(404);
+  });
+
   it("sends Vary: Origin unconditionally, with or without an Origin", async () => {
     for (const path of [
       "/widget.js",
@@ -155,6 +306,9 @@ describe("widget assets", () => {
       "/cap_wasm_bg.wasm",
       "/hashwx.wasm",
       "/pako_inflate.min.js",
+      "/mascot/checking.webp",
+      "/mascot/error.webp",
+      "/mascot/done.webp",
     ]) {
       const noOrigin = await request(path);
       expect(noOrigin.headers.get("vary"), path).toBe("Origin");

@@ -1,0 +1,275 @@
+/* 玻璃材质契约（毛玻璃 / 液态玻璃）。
+   系统内所有 backdrop-filter 只允许出现在这个文件；组件与模板通过 data-glass 取材质：
+     chrome  — 常驻 chrome（顶栏）：60% 纸底 + 底部发丝线，配 data-reveal="scroll" 可滚动渐显
+     panel   — 按需挂载的浮层面板（Popover / Menu / Select / Dialog / Sheet）：
+               76% 纸底 + 左上透镜渐变 + 1px 内侧高光 + whisper 阴影
+     inverse — 反色面板（Snackbar）：n-10 底、n-1 字，同样的高光与阴影配方
+     haze    — 压在图像上的文字块：文字身后一团雾。默认 cloud（多团软椭圆并集的有机云形 + 随风飘散的
+               噪声雾边），data-haze="veil" 为软圆角矩形 + 毛绒雾边；无边框无高光，文字颜色跟随纸色语义
+   模糊半径、饱和度、alpha 全部来自 tokens.css 的 --glass-*；圆角、尺寸、入退场留给组件。
+   液态感只用静态 gradient 与 box-shadow 实现，没有折射、没有每帧成本。
+   出生规则见 references/anti-patterns.md「Glass surface born on the wrong frame」。 */
+
+/* haze 的模糊落在 ::before 上，宿主本身不做 backdrop-filter，否则会多出一块方形模糊。 */
+[data-glass]:not([data-glass='haze']) {
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+/* 老 WebKit（Safari 18 之前）只认 -webkit- 前缀。前缀声明必须独立成块，不许与无前缀声明并列写在
+   同一个规则块里：Lightning CSS（Tailwind v4 与 Vite 的 CSS 压缩器）会把两者当同一属性去重、只保留
+   后写的那条，而 Chrome 152 起已删除前缀别名——并列写法会让生产构建里的全部玻璃失去模糊，
+   且下方的 @supports 兜底因为检测到无前缀受支持而不会启用。scripts/check.ts 用真实压缩跑一遍守住这一点。 */
+@supports not (backdrop-filter: blur(1px)) {
+  [data-glass]:not([data-glass='haze']),
+  [data-glass='haze']::before {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+}
+
+[data-glass='chrome'] {
+  background: color-mix(
+    in srgb,
+    var(--color-paper) var(--glass-surface-opacity),
+    transparent
+  );
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+/* 滚动渐显：以最近的滚动容器为时间轴，在 --rk-glass-reveal 内从透明插值到自身材质。
+   元素 opacity 恒为 1，层从首帧起常驻；变化的只有模糊半径、饱和度、底色 alpha 与发丝线。 */
+[data-glass='chrome'][data-reveal='scroll'] {
+  animation: rk-glass-reveal linear both;
+  animation-timeline: scroll(nearest);
+  animation-range: 0 var(--rk-glass-reveal, 120px);
+}
+
+@keyframes rk-glass-reveal {
+  from {
+    background: transparent;
+    backdrop-filter: blur(0px) saturate(100%);
+    box-shadow: 0 1px 0 transparent;
+  }
+}
+
+/* 不支持 scroll-driven animation 的浏览器退化为常显。 */
+@supports not (animation-timeline: scroll()) {
+  [data-glass='chrome'][data-reveal='scroll'] {
+    animation: none;
+  }
+}
+
+[data-glass='panel'] {
+  background:
+    radial-gradient(
+      120% 90% at 18% 0%,
+      color-mix(in srgb, var(--glass-highlight) 55%, transparent),
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--color-paper) var(--glass-panel-opacity), transparent);
+  border: 1px solid var(--color-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--shadow-whisper);
+}
+
+[data-glass='inverse'] {
+  background: color-mix(
+    in srgb,
+    var(--color-neutral-10) var(--glass-panel-opacity),
+    transparent
+  );
+  color: var(--color-neutral-1);
+  border: 1px solid color-mix(in srgb, var(--color-neutral-1) 12%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-neutral-1) 12%, transparent),
+    var(--shadow-whisper);
+}
+
+/* 雾。雾是什么：文字块身后一团边缘消散、不会戛然而止的东西。有两种形态：
+     cloud（默认）—— 多团错位软椭圆的并集：三团主体、六团外围凸起，每团都收在盒内消散到零，边界起伏、
+       有机；外面再裹一圈同样云形、但被分形噪声撕碎的淡雾，像随风飘散的雾丝。
+     veil（data-haze="veil"）—— 一块贴着文字块的软圆角矩形，像苹果压在壁纸上的文字底衬：边缘按像素做
+       高斯羽化，四角与四边一样柔，最外圈同样裹一圈噪声雾边。形状规整，边缘毛绒。
+   两种都没有硬边、没有等半径的实心圆角；毛绒是小尺度的绒毛，不是把主体切碎。
+   实现分两层，两种形态共用：
+     ::before 主体 —— 承载 backdrop 模糊与纸色（--glass-haze-opacity）。
+     ::after 雾边 —— 叠在主体下面，更淡的纸色、不做 backdrop 模糊，用一张 240px 的 SVG 分形噪声
+       （feTurbulence）做平铺 mask 撕碎边缘。落在主体范围内的噪声会被主体的 backdrop 模糊糊平，所以雾内部
+       依旧干净，只有伸出主体的一圈是碎的。噪声是静态小贴图，栅格化一次即缓存，没有每帧成本。
+     cloud：主体 = 九团 radial-gradient 取并集（mask-composite: add），溢出纵 1.2× / 横 2×（再乘 spread）；
+       雾边 = 同一份九团并集与噪声相交（intersect），盒子比主体再大一圈。九团的尺寸与位置都是盒子的
+       百分比，中心 ± 半径全部落在 0–100% 内——越界的团会被盒边裁成直边。
+     veil：主体 = 圆角 1× bleed + filter: blur 羽化，溢出纵 0.6× / 横 1×；雾边 = 圆角矩形 × 噪声。
+   调参钩子（--rk-glass-haze-*，实现层变量，不是契约 token；评审页用滑块改它们）：
+     --rk-glass-haze-cloud-spread    cloud 溢出倍数，默认 0.85
+     --rk-glass-haze-cloud-core      cloud 主体三团的实心核心止点，默认 33%
+     --rk-glass-haze-fringe-opacity  雾边纸色 alpha，默认 40%
+     --rk-glass-haze-feather         veil 羽化量，bleed 的倍数，默认 0.5
+     --rk-glass-haze-fringe          veil 雾边纵向外扩，bleed 的倍数，默认 1.1（横向自动 +0.4）
+   用法：属性挂在整个文字块上（标题 + 导语用同一个包裹元素）。相邻两个 haze 的雾会互相重叠，且后一个
+   兄弟的雾会压在前一个的文字之上，所以一段版面只挂一团，不给相邻的每一行各挂一团。
+   预算：雾是常驻玻璃层，静息时一页最多两团，不给正文段落逐段铺雾。
+   定位：宿主可以是 sticky / absolute / fixed（配方的 position 是零特异性默认值），不可以是 static。 */
+
+/* position 是布局属性，不归材质管：零特异性只给一个默认值，宿主自己的
+   sticky / absolute / fixed 一律赢。伪元素只要求宿主被定位，唯一不许的是 static。 */
+:where([data-glass='haze']) {
+  position: relative;
+}
+
+[data-glass='haze'] {
+  /* 两份实现内部素材：噪声贴图，以及 cloud 的九团（主体与雾边共用）。 */
+  --rk-glass-haze-noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='3' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 3.2 0 0 0 -1.1'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+  --rk-glass-haze-cloud:
+    radial-gradient(30% 46% at 30% 50%, #000 var(--rk-glass-haze-cloud-core, 33%), transparent 100%),
+    radial-gradient(34% 44% at 52% 52%, #000 var(--rk-glass-haze-cloud-core, 33%), transparent 100%),
+    radial-gradient(30% 44% at 70% 48%, #000 var(--rk-glass-haze-cloud-core, 33%), transparent 100%),
+    radial-gradient(16% 34% at 16% 36%, #000 0%, transparent 100%),
+    radial-gradient(14% 30% at 86% 62%, #000 0%, transparent 100%),
+    radial-gradient(20% 22% at 42% 76%, #000 0%, transparent 100%),
+    radial-gradient(18% 22% at 64% 24%, #000 0%, transparent 100%),
+    radial-gradient(10% 28% at 88% 36%, #000 0%, transparent 100%),
+    radial-gradient(9% 22% at 10% 70%, #000 0%, transparent 100%);
+  isolation: isolate;
+  color: var(--color-neutral-9);
+}
+
+[data-glass='haze']::before,
+[data-glass='haze']::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+/* 主体：承载 backdrop 模糊与纸色。 */
+[data-glass='haze']::before {
+  z-index: -1;
+  background: color-mix(in srgb, var(--color-paper) var(--glass-haze-opacity), transparent);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+}
+
+/* 雾边：更淡的纸色，被噪声撕碎；不做 backdrop 模糊，整套 haze 仍只有一次 backdrop 读回。 */
+[data-glass='haze']::after {
+  z-index: -2;
+  background: color-mix(in srgb, var(--color-paper) var(--rk-glass-haze-fringe-opacity, 40%), transparent);
+  filter: blur(calc(0.15 * var(--glass-haze-bleed)));
+}
+
+/* cloud（默认）：主体九团并集；雾边 = 九团并集 ∩ 噪声，盒子再大一圈。
+   mask 层列表自上而下，composite 逐层作用于其下的累积结果，最后一层的运算符不参与。 */
+[data-glass='haze']::before {
+  inset: calc(-1.2 * var(--rk-glass-haze-cloud-spread, 0.85) * var(--glass-haze-bleed))
+    calc(-2 * var(--rk-glass-haze-cloud-spread, 0.85) * var(--glass-haze-bleed));
+  mask-image: var(--rk-glass-haze-cloud);
+  -webkit-mask-image: var(--rk-glass-haze-cloud);
+  mask-composite: add;
+  -webkit-mask-composite: source-over;
+}
+
+[data-glass='haze']::after {
+  inset: calc(-1.7 * var(--rk-glass-haze-cloud-spread, 0.85) * var(--glass-haze-bleed))
+    calc(-2.8 * var(--rk-glass-haze-cloud-spread, 0.85) * var(--glass-haze-bleed));
+  mask-image: var(--rk-glass-haze-noise), var(--rk-glass-haze-cloud);
+  -webkit-mask-image: var(--rk-glass-haze-noise), var(--rk-glass-haze-cloud);
+  mask-size: 240px 240px, auto, auto, auto, auto, auto, auto, auto, auto, auto;
+  -webkit-mask-size: 240px 240px, auto, auto, auto, auto, auto, auto, auto, auto, auto;
+  mask-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  -webkit-mask-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  mask-composite: intersect, add, add, add, add, add, add, add, add, add;
+  -webkit-mask-composite: source-in, source-over, source-over, source-over, source-over, source-over, source-over, source-over, source-over, source-over;
+}
+
+/* veil（data-haze="veil"）：软圆角矩形主体（圆角与羽化都是像素值，不随盒子长宽比变形）+ 圆角矩形雾边。 */
+[data-glass='haze'][data-haze='veil']::before {
+  inset: calc(-0.6 * var(--glass-haze-bleed)) calc(-1 * var(--glass-haze-bleed));
+  border-radius: var(--glass-haze-bleed);
+  filter: blur(calc(var(--rk-glass-haze-feather, 0.5) * var(--glass-haze-bleed)));
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+[data-glass='haze'][data-haze='veil']::after {
+  inset: calc(-1 * var(--rk-glass-haze-fringe, 1.1) * var(--glass-haze-bleed))
+    calc(-1 * (var(--rk-glass-haze-fringe, 1.1) + 0.4) * var(--glass-haze-bleed));
+  border-radius: calc(1.4 * var(--glass-haze-bleed));
+  filter: blur(calc(0.2 * var(--glass-haze-bleed)));
+  mask-image: var(--rk-glass-haze-noise);
+  -webkit-mask-image: var(--rk-glass-haze-noise);
+  mask-size: 240px 240px;
+  -webkit-mask-size: 240px 240px;
+  mask-repeat: repeat;
+  -webkit-mask-repeat: repeat;
+  mask-composite: add;
+  -webkit-mask-composite: source-over;
+}
+
+/* 退化：不支持 backdrop-filter，或用户要求降低透明度时，改为不透明底，保留高光与阴影。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  /* 渐显规则的选择器是两个属性（0,2,0），退化块里必须用同等特异性才能关掉动画，
+     否则 keyframe 会把透明底与 blur(0) 写回来，渲染表面白白常驻。 */
+  [data-glass='chrome'][data-reveal='scroll'] {
+    animation: none;
+  }
+
+  [data-glass='chrome'] {
+    background: var(--color-paper);
+  }
+
+  [data-glass='panel'] {
+    background:
+      radial-gradient(
+        120% 90% at 18% 0%,
+        color-mix(in srgb, var(--glass-highlight) 55%, transparent),
+        transparent 62%
+      ),
+      var(--color-paper);
+  }
+
+  [data-glass='inverse'] {
+    background: var(--color-neutral-10);
+  }
+
+  [data-glass='haze']::before {
+    background: color-mix(in srgb, var(--color-paper) 85%, transparent);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-glass],
+  [data-glass='haze']::before {
+    backdrop-filter: none;
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    [data-glass],
+    [data-glass='haze']::before {
+      -webkit-backdrop-filter: none;
+    }
+  }
+
+  [data-glass='haze']::before {
+    background: color-mix(in srgb, var(--color-paper) 85%, transparent);
+  }
+
+  [data-glass='chrome'][data-reveal='scroll'] {
+    animation: none;
+  }
+
+  [data-glass='chrome'] {
+    background: var(--color-paper);
+  }
+
+  [data-glass='panel'] {
+    background:
+      radial-gradient(
+        120% 90% at 18% 0%,
+        color-mix(in srgb, var(--glass-highlight) 55%, transparent),
+        transparent 62%
+      ),
+      var(--color-paper);
+  }
+
+  [data-glass='inverse'] {
+    background: var(--color-neutral-10);
+  }
+}

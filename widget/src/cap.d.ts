@@ -4,6 +4,13 @@ declare global {
     CAP_CUSTOM_WASM_URL?: string;
     CAP_CUSTOM_HASHWX_URL?: string;
     CAP_PAKO_URL?: string;
+    /**
+     * Directory base URL for the `data-cap-mascot` state images
+     * (`checking.webp` / `error.webp` / `done.webp`). Only used by widgets whose
+     * `data-cap-mascot` attribute has no value of its own; must be set before
+     * the widget script runs.
+     */
+    CAP_MASCOT_URL?: string;
     CAP_CSS_NONCE?: string;
     CAP_SCRIPT_NONCE?: string;
     CAP_DONT_SKIP_REDEFINE?: boolean;
@@ -80,6 +87,19 @@ interface CapConfig {
    * (`data-cap-floating`), where the trigger press starts the solve.
    */
   "data-cap-auto"?: "visible" | "load" | "off" | "false" | "";
+  /**
+   * Opt-in vertical mascot card: a character illustration that follows the
+   * widget state (`checking` / `error` / `done`), the regular trigger row, and
+   * a "Priestess Verification" wordmark in the bottom-right corner. Without the attribute the widget is untouched and requests no
+   * images.
+   *
+   * A non-empty value is the directory base URL the state images are appended
+   * to (`checking.webp`, `error.webp`, `done.webp`); a trailing slash is
+   * optional. A bare attribute falls back to `window.CAP_MASCOT_URL` and then
+   * to the widget script's own directory + `mascot/`. Adding or removing the
+   * attribute at runtime rebuilds the card.
+   */
+  "data-cap-mascot"?: string;
   "data-cap-i18n-initial-state"?: string;
   "data-cap-i18n-verifying-label"?: string;
   "data-cap-i18n-solved-label"?: string;
