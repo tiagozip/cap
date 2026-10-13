@@ -26,9 +26,12 @@ WASM_VERSION=0.0.8
 
 - `/assets/widget.js`
 - `/assets/floating.js`
+- `/assets/instrumentation.html`
 - `/assets/cap_wasm_bg.wasm`
 - `/assets/hashwx.wasm`
 - `/assets/cap_wasm.js`
+
+对于使用严格 CSP 的部署，需要在 `frame-src` 中允许加载 `/assets/instrumentation.html`。Instrumentation iframe 使用独立且权限受限的 CSP，因此嵌入页面无需启用 `'unsafe-eval'`。
 
 在你的应用中，将验证组件的脚本地址指向相应路径即可使用，例如：
 
