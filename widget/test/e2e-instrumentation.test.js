@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { inflateRawSync } from "node:zlib";
 
 let chromium;
 try {
@@ -15,6 +16,9 @@ if (!SHOULD_RUN_E2E) {
   );
   const { generateChallenge, validateChallenge } = await import(
     "../../core/src/index.js"
+  );
+  const { generateInstrumentation, verifyInstrumentationResult } = await import(
+    "../../core/src/instrumentation.js"
   );
 
   const SECRET = "instr-e2e-secret-32-bytes-padding-jjjjk!";
@@ -100,8 +104,64 @@ if (!SHOULD_RUN_E2E) {
     if (server) server.stop(true);
   });
 
+  async function runInFrame({
+    zoom = 1,
+    revealAfter,
+    css = "",
+    level = 1,
+  } = {}) {
+    const challenge = await generateInstrumentation({
+      obfuscationLevel: level,
+      blockAutomatedBrowsers: false,
+    });
+    const script = inflateRawSync(
+      Buffer.from(challenge.instrumentation, "base64"),
+    ).toString("utf8");
+    await page.goto(baseUrl);
+    const result = await page.evaluate(
+      ({ script, zoom, revealAfter, css }) =>
+        new Promise((resolve) => {
+          document.body.style.zoom = String(zoom);
+          const iframe = document.createElement("iframe");
+          iframe.setAttribute("sandbox", "allow-scripts");
+          iframe.style.cssText =
+            "position:absolute;width:1px;height:1px;top:-9999px;left:-9999px;border:none;opacity:0;pointer-events:none;";
+          if (revealAfter !== undefined) iframe.style.display = "none";
+          let revealTimer;
+          const finish = (result) => {
+            clearTimeout(timeout);
+            clearTimeout(revealTimer);
+            window.removeEventListener("message", handler);
+            iframe.remove();
+            resolve(result);
+          };
+          const handler = (event) => {
+            if (
+              event.source === iframe.contentWindow &&
+              event.data?.type === "cap:instr"
+            ) {
+              finish(event.data.result);
+            }
+          };
+          const timeout = setTimeout(() => finish(null), 2000);
+          window.addEventListener("message", handler);
+          iframe.addEventListener("load", () => {
+            if (revealAfter >= 0) {
+              revealTimer = setTimeout(() => {
+                iframe.style.display = "block";
+              }, revealAfter);
+            }
+          });
+          iframe.srcdoc = `<!doctype html><html><head><style>${css}</style></head><body><script>${script}</script></body></html>`;
+          document.body.appendChild(iframe);
+        }),
+      { script, zoom, revealAfter, css },
+    );
+    return verifyInstrumentationResult(challenge, result).valid;
+  }
+
   describe("widget e2e with instrumentation", () => {
-    test("instrumentation iframe runs and produces a token or documented error", async () => {
+    test("instrumentation iframe produces a valid token", async () => {
       await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
       await page.waitForFunction(
         () =>
@@ -131,10 +191,34 @@ if (!SHOULD_RUN_E2E) {
         () => document.getElementById("errorResult").textContent,
       );
 
-      const ok =
-        (token && /^[a-z0-9]+:[a-f0-9]+$/.test(token)) || error.length > 0;
-      expect(ok).toBe(true);
+      expect(error).toBe("");
+      expect(token).toMatch(/^[a-z0-9]+:[a-f0-9]+$/);
     }, 90_000);
+
+    test("regression: layout probe waits for the iframe to become rendered", async () => {
+      expect(await runInFrame({ revealAfter: 50 })).toBe(true);
+    });
+
+    for (const zoom of [0.75, 0.9, 1, 1.1, 1.25, 1.5, 2]) {
+      test(`regression: layout probe accepts page zoom ${zoom}`, async () => {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          expect(await runInFrame({ zoom })).toBe(true);
+        }
+      }, 15_000);
+    }
+
+    for (const level of [3, 7]) {
+      test(`regression: layout probe works at obfuscation level ${level}`, async () => {
+        expect(await runInFrame({ zoom: 1.25, level })).toBe(true);
+      }, 15_000);
+    }
+
+    test("layout probe still rejects unavailable or inconsistent geometry", async () => {
+      expect(await runInFrame({ revealAfter: -1 })).toBe(false);
+      expect(await runInFrame({ css: "div { transform: scale(0.5) }" })).toBe(
+        false,
+      );
+    }, 10_000);
 
     test("regression: forged cap:instr postMessage from parent window is ignored", async () => {
       const evilPage = await browser.newPage();
