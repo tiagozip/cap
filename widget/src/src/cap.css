@@ -430,6 +430,12 @@
   mask-image: linear-gradient(to bottom, #000 78%, transparent);
 }
 
+/* Soft-focus swap: the outgoing pose blurs and shrinks away while the
+   incoming one, held back by --cap-mascot-swap-delay, comes into focus from a
+   slightly larger, blurred frame. Staggering the two keeps the transparent
+   art from showing as a double image halfway through. The delay sits on
+   whichever rule an image transitions *into* view under, so it applies in
+   both directions (checking → done and back again). */
 :host([data-cap-mascot]) .cap-mascot-image {
   position: absolute;
   inset: 0;
@@ -437,7 +443,12 @@
   height: 100%;
   object-fit: contain;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  filter: blur(8px);
+  transform: scale(1.06);
+  transition:
+    opacity 0.42s ease,
+    filter 0.42s ease,
+    transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -446,6 +457,9 @@
    and empty data-state the widget starts from. */
 :host([data-cap-mascot]) .cap-mascot-image[data-mascot-state="checking"] {
   opacity: 1;
+  filter: none;
+  transform: none;
+  transition-delay: var(--cap-mascot-swap-delay, 0.14s);
 }
 
 :host([data-cap-mascot])
@@ -455,6 +469,9 @@
   .captcha[data-state="error"]
   .cap-mascot-image[data-mascot-state="checking"] {
   opacity: 0;
+  filter: blur(6px);
+  transform: scale(0.96);
+  transition-delay: 0s;
 }
 
 :host([data-cap-mascot])
@@ -464,6 +481,9 @@
   .captcha[data-state="error"]
   .cap-mascot-image[data-mascot-state="error"] {
   opacity: 1;
+  filter: none;
+  transform: none;
+  transition-delay: var(--cap-mascot-swap-delay, 0.14s);
 }
 
 @media (forced-colors: active) {

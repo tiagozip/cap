@@ -25,8 +25,12 @@ single mascot image is requested.
 ### Character images
 
 Three stacked `<img>` elements (`alt=""`, `aria-hidden="true"`) follow the
-widget's `data-state` and cross-fade over ~200ms (`prefers-reduced-motion:
-reduce` disables the transition):
+widget's `data-state` with a soft-focus swap: the outgoing pose blurs and
+shrinks away, and the incoming one comes into focus from a slightly larger,
+blurred frame after a short stagger (`--cap-mascot-swap-delay`), so the two
+transparent images never overlap as a double exposure. The whole swap settles
+in about 0.65s; `prefers-reduced-motion: reduce` disables it and the pose
+changes instantly:
 
 | widget state                             | image      |
 | ---------------------------------------- | ---------- |
@@ -65,6 +69,7 @@ removing `data-cap-mascot` at runtime rebuilds (or removes) the card.
 | `--cap-mascot-height`      | `246px` | card height                                           |
 | `--cap-mascot-row-height`  | `46px`  | height of the trigger row in the card                 |
 | `--cap-mascot-image-height`| `176px` | height of the illustration area (`object-fit: contain`) |
+| `--cap-mascot-swap-delay`  | `0.14s` | how long the incoming pose waits for the outgoing one to clear |
 
 The card always reserves a `14px` footer strip below the trigger row: the
 "Priestess Verification" credits sit in its bottom-right corner and the

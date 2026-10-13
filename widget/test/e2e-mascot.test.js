@@ -210,8 +210,8 @@ ${TRIGGER_SNIPPET}`,
       { timeout: 60_000 },
     );
 
-  // The opacity flip is a 200ms transition: wait for it to settle instead of
-  // asserting mid-animation.
+  // The pose swap is a ~0.65s staggered transition: wait for it to settle
+  // instead of asserting mid-animation.
   const waitForVisible = (state, id = "cap") =>
     page.waitForFunction(
       ({ widgetId, expected }) => {
@@ -317,6 +317,62 @@ ${TRIGGER_SNIPPET}`,
       );
       expect(typeof token).toBe("string");
       expect(token.length).toBeGreaterThan(0);
+    }, 90_000);
+
+    test("swaps poses with a staggered soft-focus transition", async () => {
+      await open("/");
+
+      // Per-image filter/transform/delay, once every transition has finished.
+      const settledStyles = () =>
+        page.waitForFunction(() => {
+          const root = document.getElementById("cap").shadowRoot;
+          const images = [...root.querySelectorAll("img.cap-mascot-image")];
+          if (images.some((img) => img.getAnimations().length > 0)) {
+            return null;
+          }
+          return Object.fromEntries(
+            images.map((img) => {
+              const style = getComputedStyle(img);
+              return [
+                img.getAttribute("data-mascot-state"),
+                {
+                  opacity: style.opacity,
+                  filter: style.filter,
+                  transform: style.transform,
+                  delay: style.transitionDelay.split(",")[0].trim(),
+                },
+              ];
+            }),
+          );
+        }, null, { timeout: 10_000 }).then((handle) => handle.jsonValue());
+
+      const idle = await settledStyles();
+      // The visible pose is fully in focus; the waiting ones sit blurred and
+      // scaled up, ready to come into focus.
+      expect(idle.checking).toMatchObject({
+        opacity: "1",
+        filter: "none",
+        transform: "none",
+      });
+      expect(idle.done.opacity).toBe("0");
+      expect(idle.done.filter).toBe("blur(8px)");
+      expect(idle.done.transform).not.toBe("none");
+
+      await page.click("#cap .captcha-trigger");
+      await waitForState("done");
+      const done = await settledStyles();
+
+      expect(done.done).toMatchObject({
+        opacity: "1",
+        filter: "none",
+        transform: "none",
+      });
+      expect(done.checking.opacity).toBe("0");
+      expect(done.checking.filter).toBe("blur(6px)");
+      // The incoming pose waits for the outgoing one to clear; the outgoing
+      // one leaves immediately, so the two never show as a double image.
+      expect(done.done.delay).toBe("0.14s");
+      expect(done.checking.delay).toBe("0s");
     }, 90_000);
 
     test("shows the error pose when the challenge endpoint fails", async () => {
