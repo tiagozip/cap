@@ -201,7 +201,7 @@ describe("widget assets", () => {
     expect(res.headers.get("content-type")).toBe(
       "application/javascript; charset=utf-8",
     );
-    expect(res.headers.get("access-control-allow-origin")).toBe(ORIGIN);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
     expect(await res.text()).toBe(capMinJs);
   });
 
@@ -254,8 +254,7 @@ describe("widget assets", () => {
       const res = await request(path, { headers: { Origin: ORIGIN } });
       expect(res.status, path).toBe(200);
       expect(res.headers.get("content-type"), path).toBe("image/webp");
-      expect(res.headers.get("access-control-allow-origin"), path).toBe(ORIGIN);
-      expect(res.headers.get("vary"), path).toBe("Origin");
+      expect(res.headers.get("access-control-allow-origin"), path).toBe("*");
       // Replaced art must not be pinned for a year like the versioned wasm.
       expect(res.headers.get("cache-control"), path).toBe(
         "public, max-age=300",
@@ -299,7 +298,9 @@ describe("widget assets", () => {
     expect(res.status).toBe(404);
   });
 
-  it("sends Vary: Origin unconditionally, with or without an Origin", async () => {
+  it("sends Access-Control-Allow-Origin: * whatever the Origin", async () => {
+    // Public bytes for every registered site: the header never depends on the
+    // request, so there is no Origin variant for a cache to mix up.
     for (const path of [
       "/widget.js",
       "/widget-floating.js",
@@ -310,15 +311,15 @@ describe("widget assets", () => {
       "/mascot/error.webp",
       "/mascot/done.webp",
     ]) {
-      const noOrigin = await request(path);
-      expect(noOrigin.headers.get("vary"), path).toBe("Origin");
-      expect(noOrigin.headers.get("access-control-allow-origin")).toBeNull();
-
-      const withOrigin = await request(path, { headers: { Origin: ORIGIN } });
-      expect(withOrigin.headers.get("vary"), path).toBe("Origin");
-      expect(withOrigin.headers.get("access-control-allow-origin")).toBe(
-        ORIGIN,
-      );
+      for (const headers of [
+        {},
+        { Origin: ORIGIN },
+        { Origin: "https://some-other-site.example" },
+      ]) {
+        const res = await request(path, { headers });
+        expect(res.headers.get("access-control-allow-origin"), path).toBe("*");
+        expect(res.headers.get("vary"), path).toBeNull();
+      }
     }
   });
 });

@@ -28,7 +28,11 @@
  *   /mascot/error.webp     widget/src/mascot/error.webp
  *   /mascot/done.webp      widget/src/mascot/done.webp
  *
- * Every response carries `Vary: Origin` unconditionally (see `cors.js`).
+ * Every asset is public (the same bytes are on jsDelivr), so every response
+ * carries `Access-Control-Allow-Origin: *`: any site registered in the admin
+ * console can load the wasm and pako without a Worker-wide origin list. The
+ * header never depends on the request, so no `Vary: Origin` is needed and a
+ * shared cache can never replay a variant without it.
  *
  * The images use WIDGET_CACHE_CONTROL rather than the immutable wasm/pako
  * policy: unlike a versioned wasm build, the mascot art may be replaced under
@@ -53,7 +57,6 @@ import mascotError from "../../widget/src/mascot/error.webp";
 import rippleJs from "../../vendor/rakko-design/design-system/src/ripple.js";
 import rippleGeometryJs from "../../vendor/rakko-design/design-system/src/ripple-geometry.js";
 import pakoInflateMinJs from "../vendor/pako_inflate.min.js";
-import { corsHeaders } from "./cors.js";
 
 const WIDGET_CACHE_CONTROL = "public, max-age=300";
 const IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -196,7 +199,7 @@ export function isWidgetPath(pathname) {
 }
 
 /** Serves any of the static assets, including the conditional-request path. */
-export function widgetResponse(request, pathname, origin) {
+export function widgetResponse(request, pathname) {
   const asset = ASSETS.get(pathname);
   if (!asset) return new Response("Not found", { status: 404 });
   const etag = etagFor(asset.body);
@@ -205,7 +208,7 @@ export function widgetResponse(request, pathname, origin) {
     "Cache-Control": asset.cacheControl,
     ETag: etag,
     "X-Content-Type-Options": "nosniff",
-    ...corsHeaders(origin),
+    "Access-Control-Allow-Origin": "*",
   };
   if (request.headers.get("If-None-Match") === etag) {
     return new Response(null, { status: 304, headers });

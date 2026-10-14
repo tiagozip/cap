@@ -1,21 +1,23 @@
 /**
  * CORS policy.
  *
- * `/challenge`, `/redeem`, `/widget*.js` and the vendored static assets are
- * cross-origin: they echo `Access-Control-Allow-Origin` only for the same
- * origin or for an origin in the `ALLOWED_ORIGINS` var. Requests from anywhere
+ * `/challenge` and `/redeem` are cross-origin: they echo
+ * `Access-Control-Allow-Origin` only for the same origin or for an origin in
+ * the `ALLOWED_ORIGINS` var; `/<siteKey>/challenge` and `/<siteKey>/redeem`
+ * do the same with the site's own origins. Requests from anywhere
  * else still reach the Worker (CORS is a browser-side gate), but the browser
  * cannot read the response, which makes the widget unusable from that origin.
  *
  * `Vary: Origin` is sent **unconditionally**, including when the request has no
  * `Origin` header at all. The body does not depend on the origin, but the
- * headers do, so a shared cache that stored a no-`Origin` variant (the plain
- * `<script src="/widget.js">` cache key) must not replay it for a CORS
- * `fetch()` from an allowlisted origin. Without `Vary` the cached response has
- * no `Access-Control-Allow-Origin` and CORS fails for up to `max-age` — one
- * year for the wasm files.
+ * headers do, so a shared cache that stored a no-`Origin` variant must not
+ * replay it for a CORS `fetch()` from an allowlisted origin.
  *
- * `/siteverify` is server-to-server and never gets CORS headers.
+ * The static assets (`/widget*.js`, wasm, pako, mascot art) are public and
+ * always send `Access-Control-Allow-Origin: *` instead (see `widget.js`).
+ *
+ * `/siteverify` and `/<siteKey>/siteverify` are server-to-server and never get
+ * CORS headers.
  */
 
 export function resolveAllowedOrigin(request, allowedOrigins) {

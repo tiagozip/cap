@@ -6,19 +6,21 @@
  * same-origin shortcut used by the demo page so the browser never sees the
  * siteverify secret.
  *
- * Scopes: production challenges carry `scope: "site"` and demo challenges carry
- * `scope: "demo"` (capjs-core's `scope` option, stored in the JWT payload as
- * `sk` and enforced by `validateChallenge`). The demo routes additionally store
- * their tokens under a `demo:` key prefix, so the two directions are isolated
- * twice over:
+ * Tenants: every challenge belongs to one tenant, `{ scope, keySuffix }`.
+ * The scope is signed into the challenge JWT (capjs-core's `scope` option,
+ * stored as `sk` and enforced by `validateChallenge`) and the suffix is
+ * appended to the token's storage key, so tenants are isolated twice over:
  *
- *   - a production token redeemed at `/demo/redeem` fails `scope_mismatch`,
- *     and a demo token redeemed at `/redeem` likewise;
+ *   - a challenge minted for one tenant fails `scope_mismatch` when redeemed
+ *     at another tenant's `/redeem`;
  *   - even a token that somehow reached the wrong store cannot be consumed,
- *     because the storage key is prefixed.
+ *     because its storage key differs.
  *
- * `/demo/siteverify` therefore only ever accepts demo-scoped tokens: it cannot
- * be used as a secret-free `/siteverify` for real tokens.
+ * The tenants are the Worker-wide production one (`SITE_TENANT`, the legacy
+ * `/challenge` routes with the env secrets), the demo page (`DEMO_TENANT`) and
+ * one per registered site (`siteTenant()` in `sites.js`). `/demo/siteverify`
+ * therefore only ever accepts demo tokens: it cannot be used as a secret-free
+ * `/siteverify` for real ones.
  */
 
 import { randomHex, sha256Hex } from "../../core/src/crypto.js";
@@ -31,9 +33,8 @@ import {
   storageKeyFor,
 } from "./siteverify.js";
 
-export const SITE_SCOPE = "site";
-export const DEMO_SCOPE = "demo";
-export const DEMO_KEY_PREFIX = "demo:";
+export const SITE_TENANT = Object.freeze({ scope: "site", keySuffix: "" });
+export const DEMO_TENANT = Object.freeze({ scope: "demo", keySuffix: "@demo" });
 
 const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
@@ -45,10 +46,6 @@ export function jsonResponse(body, status, extraHeaders = {}) {
     status,
     headers: { ...JSON_HEADERS, ...extraHeaders },
   });
-}
-
-function keyPrefixFor(scope) {
-  return scope === DEMO_SCOPE ? DEMO_KEY_PREFIX : "";
 }
 
 function tokenStoreFor(env, key) {
@@ -126,7 +123,7 @@ export async function handleChallenge(
   _env,
   config,
   origin,
-  scope = SITE_SCOPE,
+  tenant = SITE_TENANT,
 ) {
   if (!config.capSecret) {
     return jsonResponse(
@@ -137,7 +134,7 @@ export async function handleChallenge(
   }
   const challenge = await generateChallenge(
     config.capSecret,
-    challengeOptions(config, scope),
+    challengeOptions(config, tenant.scope),
   );
   return jsonResponse(challenge, 200, corsHeaders(origin));
 }
@@ -147,7 +144,7 @@ export async function handleRedeem(
   env,
   config,
   origin,
-  scope = SITE_SCOPE,
+  tenant = SITE_TENANT,
 ) {
   const headers = corsHeaders(origin);
   if (!config.capSecret) {
@@ -177,14 +174,13 @@ export async function handleRedeem(
   // secret in the same row (one write instead of two). The token the client
   // receives is `<signature>:<secret>`, so verification can find that row again
   // from the token alone.
-  const keyPrefix = keyPrefixFor(scope);
   let minted = null;
   const result = await validateChallenge(config.capSecret, body, {
-    scope,
+    scope: tenant.scope,
     consumeNonce: async (sigHex, ttlMs) => {
       const verToken = randomHex(15);
       const ttlMs_ = Math.max(ttlMs, config.tokenTtlMs);
-      const key = storageKeyFor(sigHex, keyPrefix);
+      const key = storageKeyFor(sigHex, tenant.keySuffix);
       const claimed = await tokenStoreFor(env, key).consumeNonce(
         key,
         ttlMs_,
@@ -214,14 +210,15 @@ export async function handleRedeem(
   );
 }
 
-async function consumeWithPrefix(response, env, keyPrefix) {
+async function consumeForTenant(response, env, keySuffix) {
   return consumeRedeemToken(
     response,
     (key, secretHash) => tokenStoreFor(env, key).consumeToken(key, secretHash),
-    keyPrefix,
+    keySuffix,
   );
 }
 
+/** `/siteverify`: the Worker-wide tenant, checked against `SITEVERIFY_SECRET`. */
 export async function handleSiteverify(request, env, config) {
   if (!config.siteverifySecret) {
     return jsonResponse(
@@ -229,7 +226,29 @@ export async function handleSiteverify(request, env, config) {
       500,
     );
   }
+  return verifyWithSecret(
+    request,
+    env,
+    (secret) => constantTimeSecretMatch(secret, config.siteverifySecret),
+    SITE_TENANT.keySuffix,
+  );
+}
 
+/**
+ * `/<siteKey>/siteverify`: a registered site's tokens, checked against the
+ * sha256 of that site's secret (`site.secretHash`).
+ */
+export async function handleSiteSiteverify(request, env, site, keySuffix) {
+  return verifyWithSecret(
+    request,
+    env,
+    (secret) =>
+      constantTimeSecretMatch(sha256Hex(String(secret)), site.secretHash),
+    keySuffix,
+  );
+}
+
+async function verifyWithSecret(request, env, secretMatches, keySuffix) {
   let body;
   try {
     body = await request.json();
@@ -254,11 +273,11 @@ export async function handleSiteverify(request, env, config) {
     );
   }
 
-  if (!constantTimeSecretMatch(secret, config.siteverifySecret)) {
+  if (!secretMatches(secret)) {
     return jsonResponse({ success: false, error: "Invalid secret" }, 403);
   }
 
-  const result = await consumeWithPrefix(response, env, "");
+  const result = await consumeForTenant(response, env, keySuffix);
   if (!result.ok) {
     return jsonResponse({ success: false, error: result.error }, result.status);
   }
@@ -267,9 +286,8 @@ export async function handleSiteverify(request, env, config) {
 
 /**
  * Same-origin-only verification used by the demo page. It never accepts a
- * secret from the caller: the Worker's own `SITEVERIFY_SECRET` is used. Only
- * demo-scoped tokens exist under the `demo:` prefix, so a production token is
- * never accepted here.
+ * secret from the caller. Only demo-scoped tokens are stored under the
+ * `@demo` suffix, so a production token is never accepted here.
  */
 export async function handleDemoSiteverify(request, env, config) {
   if (!isSameOriginRequest(request)) {
@@ -296,7 +314,7 @@ export async function handleDemoSiteverify(request, env, config) {
     );
   }
 
-  const result = await consumeWithPrefix(token, env, DEMO_KEY_PREFIX);
+  const result = await consumeForTenant(token, env, DEMO_TENANT.keySuffix);
   if (!result.ok) {
     return jsonResponse({ success: false, error: result.error }, result.status);
   }

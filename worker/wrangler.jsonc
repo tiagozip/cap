@@ -10,7 +10,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "vars": {
-    "ALLOWED_ORIGINS": "https://verify.rakko.cn"
+    "ALLOWED_ORIGINS": "https://verify.rakko.cn",
+    // /admin signs in through Priestess (Phainon app `priestess-verification`)
+    // and then only lets these Priestess subs in (comma separated; empty =
+    // nobody).
+    "PRIESTESS_API_BASE": "https://api.rakko.cn/auth/priestess/oidc",
+    "PRIESTESS_APP_ID": "priestess-verification",
+    "ADMIN_ALLOWED_SUBS": "plu_UUHsG7WuUqDXh4R6"
   },
   // `import capMinJs from "../../widget/src/cap.min.js"` must embed the exact
   // bytes of the repo's build artifact, not evaluate it as a module, and
@@ -41,9 +47,15 @@
     "javascript-obfuscator": "./src/stubs/javascript-obfuscator.js"
   },
   "durable_objects": {
-    "bindings": [{ "name": "TOKEN_STORE", "class_name": "TokenStore" }]
+    "bindings": [
+      { "name": "TOKEN_STORE", "class_name": "TokenStore" },
+      { "name": "SITE_REGISTRY", "class_name": "SiteRegistry" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["TokenStore"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["TokenStore"] },
+    { "tag": "v2", "new_sqlite_classes": ["SiteRegistry"] }
+  ],
   "routes": [{ "pattern": "verify.rakko.cn", "custom_domain": true }],
   "observability": { "enabled": true }
 }

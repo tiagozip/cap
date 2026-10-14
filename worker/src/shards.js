@@ -14,8 +14,8 @@
 export const SHARD_COUNT = 4;
 
 /**
- * Storage keys are hex strings (the challenge JWT signature, optionally
- * prefixed with `demo:`), so the first character is already a uniformly
+ * Storage keys start with the challenge JWT signature in hex (a tenant suffix
+ * such as `@demo` may follow), so the first character is already a uniformly
  * distributed nibble. Mapping it straight to a shard spreads writes without
  * hashing anything; a key always lands on the same shard, which is what makes
  * the per-key "insert if absent" / "consume exactly once" operations atomic.

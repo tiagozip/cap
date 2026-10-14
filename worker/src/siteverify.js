@@ -31,7 +31,10 @@ export function constantTimeSecretMatch(provided, expected) {
 
 /**
  * Splits a redeem token (`<signature>:<secret>`) into its parts. Returns `null`
- * for anything that is not exactly two non-empty segments.
+ * for anything that is not exactly two non-empty segments, or whose signature
+ * is not hex: the storage key is the signature plus a tenant suffix
+ * (`@demo`, `@<siteKey>`), so a signature carrying its own `@…` could
+ * otherwise address another tenant's row.
  */
 export function parseRedeemToken(token) {
   if (typeof token !== "string") return null;
@@ -39,16 +42,18 @@ export function parseRedeemToken(token) {
   if (separator <= 0 || separator !== token.lastIndexOf(":")) return null;
   const id = token.slice(0, separator);
   const secret = token.slice(separator + 1);
-  if (!id || !secret) return null;
+  if (!id || !secret || !/^[0-9a-f]+$/.test(id)) return null;
   return { id, secret };
 }
 
 /**
- * Storage key for a token signature. The demo page uses its own prefix so that
- * demo-scoped tokens and production tokens can never consume each other's rows.
+ * Storage key for a token signature. Each tenant (demo page, registered site)
+ * appends its own suffix, so tokens of different tenants can never consume
+ * each other's rows. A suffix, not a prefix: the key's first character picks
+ * the shard (`shards.js`) and must stay the signature's first hex digit.
  */
-export function storageKeyFor(id, keyPrefix = "") {
-  return `${keyPrefix}${id}`;
+export function storageKeyFor(id, keySuffix = "") {
+  return `${id}${keySuffix}`;
 }
 
 /** Hash of the token secret; the raw secret never reaches the store. */
@@ -66,14 +71,14 @@ export function tokenSecretHash(secret) {
 export async function consumeRedeemToken(
   token,
   consumeToken,
-  keyPrefix = "",
+  keySuffix = "",
 ) {
   const parsed = parseRedeemToken(token);
   if (!parsed) {
     return { ok: false, status: 400, error: "Missing required parameters" };
   }
 
-  const key = storageKeyFor(parsed.id, keyPrefix);
+  const key = storageKeyFor(parsed.id, keySuffix);
   const expires = await consumeToken(key, tokenSecretHash(parsed.secret));
   if (expires === null || expires === undefined) {
     return { ok: false, status: 404, error: "Token not found" };

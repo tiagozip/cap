@@ -2,10 +2,11 @@
 /**
  * scripts/check-design.mjs —— 展示页的 Rakko Design 合规检查（Node 标准库，零依赖）。
  *
- * 检查对象：
+ * 检查对象（展示页和后台各一组）：
  *   worker/src/demo/page.css      展示页自己的样式
  *   worker/src/demo/app.client.js 展示页的浏览器脚本
  *   worker/src/demo-page.js       页面骨架（内联 SVG、style 属性）
+ *   worker/src/admin/admin.css、admin.client.js、page.js  后台的同上三件
  *
  * 规则（注释里的内容不算）：
  *   - CSS（逐条声明）：裸 hex（只有 mask 声明里的 #000 / #fff 例外）、rgb/hsl/hwb/lab/lch/
@@ -31,9 +32,18 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const RAKKO_DIR = process.env.RAKKO_DESIGN_DIR || "";
 const VENDOR = join(ROOT, "vendor/rakko-design");
 
-const PAGE_CSS = join(ROOT, "worker/src/demo/page.css");
-const CLIENT_JS = join(ROOT, "worker/src/demo/app.client.js");
-const PAGE_JS = join(ROOT, "worker/src/demo-page.js");
+const PAGES = [
+  {
+    css: join(ROOT, "worker/src/demo/page.css"),
+    client: join(ROOT, "worker/src/demo/app.client.js"),
+    page: join(ROOT, "worker/src/demo-page.js"),
+  },
+  {
+    css: join(ROOT, "worker/src/admin/admin.css"),
+    client: join(ROOT, "worker/src/admin/admin.client.js"),
+    page: join(ROOT, "worker/src/admin/page.js"),
+  },
+];
 
 const issues = [];
 const rel = (p) => relative(ROOT, p).split("\\").join("/");
@@ -102,7 +112,7 @@ const COLOR_FUNCTION = /\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/;
 const MASK_HEX = /^#(?:000|fff|000000|ffffff)$/i;
 
 /** 带 data-glass 的元素的 class / id（页面骨架里写死的那些），用来查「玻璃被藏起来」。 */
-function glassSelectors() {
+function glassSelectors(PAGE_JS, CLIENT_JS) {
   const names = new Set();
   const sources = [read(PAGE_JS), read(CLIENT_JS)];
   for (const text of sources) {
@@ -117,6 +127,7 @@ function glassSelectors() {
   return [...names];
 }
 
+function checkPage({ css: PAGE_CSS, client: CLIENT_JS, page: PAGE_JS }) {
 {
   const css = stripComments(read(PAGE_CSS), "css");
 
@@ -155,7 +166,7 @@ function glassSelectors() {
   });
 
   // 玻璃表面不许被 opacity:0 / display:none / visibility:hidden 藏起来（出生规则）。
-  const glass = glassSelectors();
+  const glass = glassSelectors(PAGE_JS, CLIENT_JS);
   each(css, /\s*([^{}\s][^{}]*)\{([^{}]*)\}/g, (m) => {
     const selector = m[1];
     const line = lineOf(css, m.index + m[0].indexOf(selector));
@@ -194,10 +205,13 @@ for (const file of [CLIENT_JS, PAGE_JS]) {
     "vendor/rakko-design/design-system/src/state-layer.css",
   ];
   for (const path of imports) if (!page.includes(path)) add(PAGE_JS, 1, `没有内联 ${path}`);
-  const vendorAt = page.indexOf("<style data-vendor");
-  const pageAt = page.indexOf("<style data-page");
+  const vendorAt = page.search(/<style[^>]*data-vendor/);
+  const pageAt = page.search(/<style[^>]*data-page/);
   if (vendorAt === -1 || pageAt === -1 || vendorAt > pageAt) add(PAGE_JS, 1, "vendor 样式必须在页面样式之前内联");
 }
+}
+
+for (const page of PAGES) checkPage(page);
 
 // ------------------------------------------------------------------ vendor 完整性
 if (!existsSync(join(VENDOR, "tokens.generated.css"))) {
@@ -228,4 +242,4 @@ if (issues.length) {
   console.error(`[check-design] ${issues.length} 个问题`);
   process.exit(1);
 }
-console.log(`[check-design] OK（page.css / app.client.js / demo-page.js${RAKKO_DIR ? " + vendor 完整性" : ""}）`);
+console.log(`[check-design] OK（展示页 + 后台${RAKKO_DIR ? " + vendor 完整性" : ""}）`);

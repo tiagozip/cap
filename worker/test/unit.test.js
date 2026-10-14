@@ -7,6 +7,14 @@ import {
 import { resolveAllowedOrigin } from "../src/cors.js";
 import { SHARD_COUNT, shardNameForKey } from "../src/shards.js";
 import {
+  CACHE_TTL_MS,
+  forgetSites,
+  loadSite,
+  parseSitePath,
+  validateOrigins,
+  validateSettings,
+} from "../src/sites.js";
+import {
   constantTimeSecretMatch,
   consumeRedeemToken,
   parseRedeemToken,
@@ -31,20 +39,28 @@ describe("constantTimeSecretMatch", () => {
 
 describe("parseRedeemToken", () => {
   it("splits exactly two non-empty segments", () => {
-    expect(parseRedeemToken("id:secret")).toEqual({
-      id: "id",
+    expect(parseRedeemToken("0abc:secret")).toEqual({
+      id: "0abc",
       secret: "secret",
     });
-    expect(parseRedeemToken("id:sec:ret")).toBeNull();
+    expect(parseRedeemToken("0abc:sec:ret")).toBeNull();
     expect(parseRedeemToken(":secret")).toBeNull();
     expect(parseRedeemToken("id:")).toBeNull();
     expect(parseRedeemToken("nocolon")).toBeNull();
     expect(parseRedeemToken(42)).toBeNull();
   });
 
+  it("only accepts a hex signature, so a token cannot name another tenant", () => {
+    // `<sig>@<siteKey>` is a storage key, never a valid token id.
+    expect(parseRedeemToken("0abc@demo:secret")).toBeNull();
+    expect(parseRedeemToken("0abc@0123456789:secret")).toBeNull();
+    expect(parseRedeemToken("0ABC:secret")).toBeNull();
+    expect(parseRedeemToken("xyz:secret")).toBeNull();
+  });
+
   it("keys rows by the token signature and hashes the secret", () => {
     expect(storageKeyFor("deadbeef")).toBe("deadbeef");
-    expect(storageKeyFor("deadbeef", "demo:")).toBe("demo:deadbeef");
+    expect(storageKeyFor("deadbeef", "@demo")).toBe("deadbeef@demo");
     const hash = tokenSecretHash("secret");
     expect(hash).toMatch(/^[0-9a-f]{64}$/);
     expect(hash).not.toContain("secret");
@@ -55,10 +71,10 @@ describe("parseRedeemToken", () => {
 
 describe("consumeRedeemToken", () => {
   it("consumes a stored, unexpired token", async () => {
-    const key = storageKeyFor("id");
+    const key = storageKeyFor("0abc");
     const store = new Map([[key, Date.now() + 60_000]]);
     const seen = [];
-    const result = await consumeRedeemToken("id:secret", async (k, hash) => {
+    const result = await consumeRedeemToken("0abc:secret", async (k, hash) => {
       seen.push([k, hash]);
       const value = store.get(k);
       store.delete(k);
@@ -69,22 +85,22 @@ describe("consumeRedeemToken", () => {
     expect(seen).toEqual([[key, tokenSecretHash("secret")]]);
   });
 
-  it("prefixes the storage key for demo-scoped tokens", async () => {
+  it("suffixes the storage key for a tenant", async () => {
     let seenKey = null;
     const result = await consumeRedeemToken(
-      "id:secret",
+      "0abc:secret",
       async (k) => {
         seenKey = k;
         return Date.now() + 60_000;
       },
-      "demo:",
+      "@demo",
     );
     expect(result).toEqual({ ok: true, status: 200 });
-    expect(seenKey).toBe("demo:id");
+    expect(seenKey).toBe("0abc@demo");
   });
 
   it("maps missing and expired tokens to standalone-style errors", async () => {
-    const missing = await consumeRedeemToken("id:secret", async () => null);
+    const missing = await consumeRedeemToken("0abc:secret", async () => null);
     expect(missing).toMatchObject({
       ok: false,
       status: 404,
@@ -92,7 +108,7 @@ describe("consumeRedeemToken", () => {
     });
 
     const expired = await consumeRedeemToken(
-      "id:secret",
+      "0abc:secret",
       async () => Date.now() - 1,
     );
     expect(expired).toMatchObject({
@@ -180,5 +196,81 @@ describe("cors", () => {
 
     const noOrigin = new Request("https://verify.rakko.cn/challenge");
     expect(resolveAllowedOrigin(noOrigin, new Set())).toBeNull();
+  });
+});
+
+describe("site registry cache", () => {
+  function fakeRegistry(keys) {
+    const registry = {
+      reads: 0,
+      async listSites() {
+        registry.reads += 1;
+        return keys.map((siteKey) => ({ siteKey }));
+      },
+    };
+    return registry;
+  }
+
+  it("reads the registry once per TTL, however many keys are asked for", async () => {
+    forgetSites();
+    const registry = fakeRegistry(["0123456789"]);
+    const now = 1_000_000;
+    const lookups = await Promise.all(
+      Array.from({ length: 50 }, (_, i) =>
+        loadSite(registry, i.toString(16).padStart(10, "f"), now),
+      ),
+    );
+    expect(lookups.every((site) => site === null)).toBe(true);
+    expect((await loadSite(registry, "0123456789", now + 1))?.siteKey).toBe(
+      "0123456789",
+    );
+    expect(registry.reads).toBe(1);
+
+    await loadSite(registry, "0123456789", now + CACHE_TTL_MS);
+    expect(registry.reads).toBe(2);
+
+    forgetSites();
+    await loadSite(registry, "0123456789", now + CACHE_TTL_MS + 1);
+    expect(registry.reads).toBe(3);
+  });
+});
+
+describe("site input", () => {
+  it("only routes 10-hex site keys", () => {
+    expect(parseSitePath("/0123456789/challenge")).toEqual({
+      siteKey: "0123456789",
+      action: "challenge",
+    });
+    for (const path of [
+      "/challenge",
+      "/demo/challenge",
+      "/0123456789/challenge/",
+      "/0123456789A/redeem",
+      "/012345678/redeem",
+      "/0123456789/other",
+    ]) {
+      expect(parseSitePath(path), path).toBeNull();
+    }
+  });
+
+  it("normalises origins and settings", () => {
+    expect(
+      validateOrigins([
+        " https://a.example/ ",
+        "https://a.example",
+        "",
+        "http://127.0.0.1:8080",
+      ]),
+    ).toEqual(["https://a.example", "http://127.0.0.1:8080"]);
+    expect(() => validateOrigins(["http://a.example"])).toThrow();
+    expect(() => validateOrigins("https://a.example")).toThrow();
+    expect(
+      validateSettings({
+        challengeCount: "7",
+        tokenTtlMs: null,
+        blockAutomatedBrowsers: true,
+      }),
+    ).toEqual({ challengeCount: 7, blockAutomatedBrowsers: true });
+    expect(() => validateSettings({ blockAutomatedBrowsers: "yes" })).toThrow();
   });
 });

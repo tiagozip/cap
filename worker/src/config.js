@@ -48,6 +48,18 @@ function boolVar(env, name, fallback) {
   );
 }
 
+/**
+ * Settings an admin may override per site (`sites.settings` in the
+ * `SiteRegistry`). Anything a site leaves out inherits the Worker-wide value
+ * from `vars`, and the ranges are the same as for the env vars.
+ */
+export const SITE_SETTING_RANGES = {
+  challengeCount: [1, 1000],
+  challengeSize: [1, 256],
+  challengeDifficulty: [1, 16],
+  tokenTtlMs: [1000, 24 * 60 * 60 * 1000],
+};
+
 export function parseAllowedOrigins(raw) {
   const list = String(raw ?? DEFAULT_ALLOWED_ORIGINS)
     .split(",")
@@ -84,6 +96,40 @@ export function parseProtocols(raw) {
     }
   }
   return protocols;
+}
+
+const DEFAULT_PRIESTESS_API_BASE = "https://api.rakko.cn/auth/priestess/oidc";
+const DEFAULT_PRIESTESS_APP_ID = "priestess-verification";
+
+/**
+ * `/admin` login settings. The admin console signs in through Priestess (the
+ * Phainon Worker's native login-code flow) and then additionally requires the
+ * Priestess `sub` to be listed in `ADMIN_ALLOWED_SUBS`; an empty list lets
+ * nobody in.
+ */
+export function readAdminConfig(env) {
+  const apiBase = String(
+    env.PRIESTESS_API_BASE || DEFAULT_PRIESTESS_API_BASE,
+  ).replace(/\/+$/, "");
+  let parsed;
+  try {
+    parsed = new URL(apiBase);
+  } catch {
+    throw new Error(`[config] PRIESTESS_API_BASE is not a URL: ${apiBase}`);
+  }
+  if (parsed.protocol !== "https:" && parsed.hostname !== "127.0.0.1") {
+    throw new Error(`[config] PRIESTESS_API_BASE must be https: ${apiBase}`);
+  }
+  return {
+    apiBase,
+    appId: String(env.PRIESTESS_APP_ID || DEFAULT_PRIESTESS_APP_ID),
+    allowedSubs: new Set(
+      String(env.ADMIN_ALLOWED_SUBS ?? "")
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean),
+    ),
+  };
 }
 
 export function readConfig(env) {

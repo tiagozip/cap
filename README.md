@@ -14,7 +14,8 @@ The fork distributes the widget through jsDelivr's GitHub channel (there is no n
 <!-- pin to a release tag in production, e.g. @v1.0.0 -->
 <script src="https://cdn.jsdelivr.net/gh/KurisuRakko/priestess-verification@main/widget/src/cap.min.js"></script>
 
-<cap-widget data-cap-api-endpoint="https://your-cap-server.example/your-site-key/"></cap-widget>
+<!-- <site-key> comes from the admin console at https://verify.rakko.cn/admin (see "Registering a site") -->
+<cap-widget data-cap-api-endpoint="https://verify.rakko.cn/<site-key>/"></cap-widget>
 ```
 
 `@main` is cached at jsDelivr's edge for up to 12 hours, so a push to this fork can take that long to reach users. In production, pin the widget to a release tag instead (e.g. `@v1.0.0`, created at release time) or to a commit sha.
@@ -35,7 +36,7 @@ The widget does not bundle everything it needs: at runtime it fetches a PoW wasm
 </script>
 <script src="https://verify.rakko.cn/widget.js"></script>
 
-<cap-widget data-cap-api-endpoint="https://your-cap-server.example/your-site-key/"></cap-widget>
+<cap-widget data-cap-api-endpoint="https://verify.rakko.cn/<site-key>/"></cap-widget>
 ```
 
 Without those three lines the widget still works, but it makes a cross-origin request to jsDelivr at load time (and falls back to the slower JS solver if that request fails). The demo page at `/` sets all three itself.
@@ -54,8 +55,19 @@ Without those three lines the widget still works, but it makes a cross-origin re
 | `POST /challenge`, `POST /redeem` | challenge generation / redemption via `core/` (scope `site`) |
 | `POST /siteverify` | server-to-server validation for your backend |
 | `POST /demo/challenge`, `POST /demo/redeem`, `POST /demo/siteverify` | the demo page's own endpoints (scope `demo`); `/demo/siteverify` needs no secret and only accepts demo-scoped tokens |
+| `POST /<siteKey>/challenge`, `POST /<siteKey>/redeem` | a registered site's endpoints (scope `site:<siteKey>`), CORS for that site's origins only |
+| `POST /<siteKey>/siteverify` | a registered site's server-to-server validation, with that site's secret |
+| `GET /admin` | admin console: register sites, edit their origins and settings, rotate secrets (Priestess sign-in) |
 
-Every route whose response headers depend on `Origin` — the widget assets, the wasm/pako files, `/challenge` and `/redeem` — sends `Vary: Origin` unconditionally, including for requests without an `Origin` header, so a cached no-`Origin` variant can never be replayed to a CORS caller.
+The static assets (widget scripts, wasm, pako, mascot art) are public and always send `Access-Control-Allow-Origin: *`. `/challenge`, `/redeem` and their per-site versions echo the allowed `Origin` and send `Vary: Origin` unconditionally, including for requests without an `Origin` header, so a cached no-`Origin` variant can never be replayed to a CORS caller.
+
+### Registering a site
+
+Each embedder gets its own site in the admin console at `https://verify.rakko.cn/admin`: a 10-character site key, its own siteverify secret (shown once; only its sha256 is stored) and the browser origins allowed to call it. Tokens are bound to their site twice — the challenge scope is `site:<siteKey>` and the token's storage key carries the site key — so a token solved on one site can neither be redeemed nor verified on another, nor on the legacy routes.
+
+Sites live in the `SiteRegistry` Durable Object. The Worker caches each lookup (including misses) for 30 seconds per isolate, so verification traffic only reads the registry on a cache miss and never writes to it; an edit in the console takes up to 30 seconds to reach every isolate. Disabled and deleted sites answer 404.
+
+The console signs in through Priestess (Phainon app `priestess-verification`, native login-code flow with state + S256 PKCE). The Worker exchanges the login code, reads `/me` and revokes the Priestess refresh token straight away, all server-side; then it requires the Priestess `sub` to be listed in `ADMIN_ALLOWED_SUBS` (empty = nobody) and sets its own 8-hour `__Host-pv_admin` session cookie. Revoking a user in Priestess does not end a console session that already exists; it expires on its own, or immediately once the sub is removed from `ADMIN_ALLOWED_SUBS` and the Worker redeployed.
 
 
 ### Local development
@@ -97,11 +109,13 @@ npx wrangler secret put SITEVERIFY_SECRET    # e.g. openssl rand -hex 32
 npx wrangler deploy
 ```
 
-`ALLOWED_ORIGINS` is a comma separated list of extra browser origins allowed to call `/challenge`, `/redeem` and the widget assets; the worker's own origin is always allowed, and `/siteverify` never sends CORS headers.
+`ALLOWED_ORIGINS` is a comma separated list of extra browser origins allowed to call the legacy `/challenge` and `/redeem`; the worker's own origin is always allowed, and `/siteverify` never sends CORS headers. New embedders should be registered as sites in `/admin` instead, which needs no redeploy.
+
+The deploy applies the `v2` Durable Object migration (`SiteRegistry`). The Phainon app `priestess-verification` must exist with `https://verify.rakko.cn` as its allowed origin and `https://verify.rakko.cn/admin/callback` as its return URL.
 
 ### Calling `/siteverify` from your backend
 
-Use the same shape as the standalone server, so the dashboard snippet keeps working:
+For a registered site, post to `/<siteKey>/siteverify` with that site's secret (the console shows the exact snippet). The legacy `/siteverify` uses the Worker-wide `SITEVERIFY_SECRET`. Both take the same shape as the standalone server:
 
 ```js
 const res = await fetch("https://verify.rakko.cn/siteverify", {
@@ -116,7 +130,9 @@ const { success } = await res.json();
 
 ### Configuration
 
-All optional tuning lives in `wrangler.jsonc` under `vars` (defaults shown): `ALLOWED_ORIGINS` (`https://verify.rakko.cn`), `CHALLENGE_COUNT` (50), `CHALLENGE_SIZE` (32), `CHALLENGE_DIFFICULTY` (4), `INSTRUMENTATION_LEVEL` (3), `BLOCK_AUTOMATED_BROWSERS` (false), `TOKEN_TTL_MS` (20 min), `CHALLENGE_PROTOCOLS` (empty = format 1), `HASHWX_DIFFICULTY` (1000000), `HASHWX_CHALLENGE_COUNT` (4).
+All optional tuning lives in `wrangler.jsonc` under `vars` (defaults shown): `ALLOWED_ORIGINS` (`https://verify.rakko.cn`), `CHALLENGE_COUNT` (50), `CHALLENGE_SIZE` (32), `CHALLENGE_DIFFICULTY` (4), `INSTRUMENTATION_LEVEL` (3), `BLOCK_AUTOMATED_BROWSERS` (false), `TOKEN_TTL_MS` (20 min), `CHALLENGE_PROTOCOLS` (empty = format 1), `HASHWX_DIFFICULTY` (1000000), `HASHWX_CHALLENGE_COUNT` (4). A registered site can override `CHALLENGE_COUNT`, `CHALLENGE_SIZE`, `CHALLENGE_DIFFICULTY`, `TOKEN_TTL_MS` and `BLOCK_AUTOMATED_BROWSERS` for itself in the console.
+
+Admin sign-in: `PRIESTESS_API_BASE` (`https://api.rakko.cn/auth/priestess/oidc`), `PRIESTESS_APP_ID` (`priestess-verification`), `ADMIN_ALLOWED_SUBS` (comma separated Priestess subs; empty lets nobody in).
 
 Instrumentation obfuscation levels 4-10 fall back to a weaker script inside Workers, because `esbuild` (native binary) and `javascript-obfuscator` cannot run in workerd. Keep `INSTRUMENTATION_LEVEL` at 3 (the default) unless you have measured the trade-off yourself.
 
