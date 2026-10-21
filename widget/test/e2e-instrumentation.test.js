@@ -16,6 +16,10 @@ if (!SHOULD_RUN_E2E) {
   const { generateChallenge, validateChallenge } = await import(
     "../../core/src/index.js"
   );
+  const { generateInstrumentation, verifyInstrumentationResult } = await import(
+    "../../core/src/instrumentation.js"
+  );
+  const { inflateRawSync } = await import("node:zlib");
 
   const SECRET = "instr-e2e-secret-32-bytes-padding-jjjjk!";
 
@@ -212,5 +216,38 @@ if (!SHOULD_RUN_E2E) {
 
       await evilPage.close();
     }, 90_000);
+  });
+
+  describe("obfuscation levels", () => {
+    for (const level of [1, 5, 8, 9, 10]) {
+      test(`level ${level} script posts a result the server accepts`, async () => {
+        const meta = await generateInstrumentation({ obfuscationLevel: level });
+        const src = inflateRawSync(
+          Buffer.from(meta.instrumentation, "base64"),
+        ).toString();
+        const levelPage = await browser.newPage();
+        await levelPage.goto(baseUrl, { waitUntil: "domcontentloaded" });
+        const result = await levelPage.evaluate(
+          (script) =>
+            new Promise((resolve) => {
+              const iframe = document.createElement("iframe");
+              iframe.setAttribute("sandbox", "allow-scripts");
+              const timer = setTimeout(() => resolve(null), 15_000);
+              window.addEventListener("message", (e) => {
+                if (e.source !== iframe.contentWindow) return;
+                if (e.data?.type !== "cap:instr") return;
+                clearTimeout(timer);
+                resolve(e.data.result || null);
+              });
+              iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>${script}\n</scr${"ipt"}></body></html>`;
+              document.body.appendChild(iframe);
+            }),
+          src,
+        );
+        await levelPage.close();
+        expect(result).not.toBeNull();
+        expect(verifyInstrumentationResult(meta, result).valid).toBe(true);
+      }, 30_000);
+    }
   });
 }
