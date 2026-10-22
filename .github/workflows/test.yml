@@ -57,7 +57,7 @@ jobs:
         run: bunx playwright install --with-deps chromium
       - name: Run unit tests
         working-directory: widget
-        run: bun test test/unit.test.js
+        run: bun run test:unit
       - name: Run e2e (basic)
         working-directory: widget
         run: bun test test/e2e.test.js

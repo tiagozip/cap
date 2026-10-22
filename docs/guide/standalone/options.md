@@ -26,9 +26,12 @@ Your assets will be served from the following paths:
 
 - `/assets/widget.js`
 - `/assets/floating.js`
+- `/assets/instrumentation.html`
 - `/assets/cap_wasm_bg.wasm`
 - `/assets/hashwx.wasm`
 - `/assets/cap_wasm.js`
+
+For strict CSP deployments, allow `/assets/instrumentation.html` in `frame-src`. The instrumentation frame has its own narrowly scoped CSP and does not require `'unsafe-eval'` on the embedding page.
 
 You can use these in your app by setting the widget's script source to the appropriate path, like this:
 

@@ -265,7 +265,10 @@ window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
 如果你的页面启用了严格的 Content-Security-Policy，可以提供 nonce，避免组件注入的 `<style>` 和 `<script>` 元素被拦截：
 
 - `window.CAP_CSS_NONCE`：应用到组件的 `<style>` 标签。当 `CAP_SCRIPT_NONCE` 未设置时，也会作为注入脚本的备用 nonce。
-- `window.CAP_SCRIPT_NONCE`：应用到组件注入的脚本，即 pako 解压回退脚本和 instrumentation（浏览器环境检测）质询 iframe。
+- `window.CAP_SCRIPT_NONCE`：应用到组件注入的脚本，例如 pako 解压回退脚本。
+- `window.CAP_INSTRUMENTATION_FRAME_URL`：可选，指定隔离的 instrumentation（浏览器环境检测）iframe 的 URL。通过传统脚本加载组件时，默认使用与该脚本同目录下的 `instrumentation.html`；打包或模块化构建可以显式设置此项。
+
+使用严格的 Content-Security-Policy 时，需要在 `frame-src` 中允许加载 instrumentation iframe 的 URL。宿主页面**无需**启用 `'unsafe-eval'`；动态代码检测仅在沙箱隔离的 instrumentation iframe 中执行。
 
 你还可以通过 `window.CAP_CUSTOM_WASM_URL` 设置自定义的 WASM 地址（比如 Standalone 静态资源服务器的地址），HashWX 的地址则通过 `window.CAP_CUSTOM_HASHWX_URL` 设置。
 
