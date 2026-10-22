@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.0-slim AS base
+FROM oven/bun:1.4.4-slim AS base
 WORKDIR /usr/src/app
 
 FROM base AS install
