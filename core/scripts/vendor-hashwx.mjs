@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -31,7 +31,9 @@ ${chunks.join(" +\n")};
 `,
 );
 
-console.log(`wrote ${outPath}`);
+copyFileSync(wasmPath, join(root, "src", "hashwx.wasm"));
+
+console.log(`wrote ${outPath} and src/hashwx.wasm`);
 console.log(`  source commit ${commit}`);
 console.log(`  wasm ${wasm.length} bytes, sha256 ${digest}`);
 console.log(`  base64 ${b64.length} chars`);
