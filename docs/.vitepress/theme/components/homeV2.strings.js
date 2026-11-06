@@ -1,158 +1,113 @@
-// UI strings for HomeV2.vue, keyed by VitePress locale index
-// ("root" falls back to `en` in the component).
-//
-// NOTE: some English values intentionally keep leading/trailing spaces.
-// They reproduce the exact whitespace the Vue template compiler emitted
-// for the original hard-coded text, so the server-rendered English
-// markup stays byte-identical to the pre-i18n build.
 export const homeV2Strings = {
   en: {
-    // Widget referral banner
     bannerRegionLabel: "From the Cap widget",
     bannerVerified: "You just verified you're human with Cap",
-    bannerHostPrefix: "\u00A0on ",
+    bannerHostPrefix: " on ",
     bannerVerifiedEnd: ".",
-    bannerSub:
-      "You can close this tab. Or stick around if you're curious what Cap is.",
+    bannerSub: "You can close this tab. Or stick around if you're curious what Cap is.",
     bannerDismiss: "Dismiss",
 
-    // Header nav
     navBrandLabel: "Cap home",
     navDocs: "Docs",
-    navFeatures: "Features",
     navDemo: "Demo",
     navGithubStars: "stars",
 
-    // Hero
-    heroTitle: " Self-hosted CAPTCHA",
-    heroTitleDim: "for the modern web.",
-    heroLead1: " No Google. No telemetry. No visual puzzles. ",
-    heroLead2: "Switch from reCAPTCHA in minutes. ",
-    heroCtaStart: "Get started in 5 minutes ",
-    heroCtaTry: "Try the widget ",
-    heroDashAlt: "Cap admin dashboard screenshot",
+    heroTitle: "The CAPTCHA you host yourself.",
+    heroTitleDim: "Bots and AI agents out, people in.",
+    heroLead:
+      "Cap stops scrapers, AI agents and headless browsers with proof-of-work and browser checks. Nobody clicks on buses, and nothing goes to Google.",
+    heroCtaStart: "Deploy in 5 minutes",
+    heroCtaDocs: "Read the docs",
 
-    // Trust bar
-    trustLabel: "Trusted in production by",
+    demoLabel: "Live demo",
+    demoReset: "Reset the demo",
+    demoTry: "Try a demo",
+    demoTryBot: "What a bot sees",
+    demoBotError: "Headless browser blocked",
+    demoTabYou: "Your browser",
+    demoTabBot: "Headless Chrome",
+    demoBotNote: "A replay of chrome-headless-shell driven by Playwright, ticking this same widget.",
+    demoReplay: "Replay",
+    demoStepChallenge: "Challenge",
+    demoStepPow: "Proof of work",
+    demoStepChecks: "Browser checks",
+    demoStepRedeem: "Redeem",
+    demoSubChallenges: "{n} sub-challenges",
+    demoProgress: "{n} of {total}",
+    demoHashes: "{h} hashes",
+    demoIssued: "Token issued",
+    demoRejected: "Rejected",
+    demoVerifying: "Verifying...",
+    demoSolved: "Solved in {s} s. Your browser just joined the log.",
+    torchListLabel: "Example log of requests and what Cap decided",
 
-    // Feature grid
-    featPrivacyTitle: "Privacy-first, no tracking",
-    featPrivacyBody:
-      " Zero telemetry. No third-party network. Your users' data stays between you and them. ",
-    featSizeTitle: "250x smaller than hCaptcha",
-    featSizeBody: " ~20kb, zero dependencies. Loads in milliseconds, not seconds. ",
-    featInvisibleTitle: "GPU-resistant and invisible",
-    featInvisibleBody:
-      " PoW, time-lock challenges and instrumentation run silently in the background. ",
-    featOpenTitle: "Free & open-source",
-    featOpenBody:
-      " Apache 2.0 licensed. Audit it, fork it, self-host it. No vendor can pull the rug. ",
-    featAgentsTitle: "Block AI agents, if you want to",
-    featAgentsBody:
-      " Configure instrumentation to block automated browsers used by AI agents to drive your site. ",
-    featCustomTitle: "Fully customizable",
-    featCustomBody:
-      " Colors, size, position, icons, all controllable via CSS variables. No iframe lock-in. ",
+    trustLine: "Running in production at bunny.net, AdGuard and Fraunhofer, among others.",
 
-    // Compliance
-    cmplTitle: "Compliant out of the box.",
-    cmplBody:
-      " Open-source, self-hosted and privacy-first. We don't use cookies or tracking and no data leaves your servers. ",
-    cmplLink: "See how Cap complies ",
-    cmplPrivacyLabel: "Privacy & data",
-    cmplAccessibilityLabel: "Accessibility",
-    cmplI18nChip: "Internationalization (i18n)",
-    cmplRtlChip: "RTL support",
+    agentsTitle: "Catches the browsers agents drive",
+    agentsBody:
+      "Most abuse now comes from automated browsers, not curl. Turn on browser checks and Cap tests for Playwright, Puppeteer, Selenium, Camoufox and stealth plugins. The verdict happens on your server, so a patched browser can't vouch for itself.",
+    agentsLink: "How detection works",
+    agentsResultLabel: "What your server gets back from a bot",
 
-    // Bundle size
-    speedTitle: "A fraction of the weight",
-    speedBody:
-      " Cap's widget is extremely lightweight and runs invisibly, shipping only about 20 kB of JavaScript with no third-party scripts. ",
-    speedNote: "Client bundle sizes (minified gzip)",
+    dashTitle: "Your traffic, on your server",
+    dashBody:
+      "Standalone comes with a dashboard for every site key. It shows challenges, solves and failures over time, where they come from and which networks they use. Country and network lookups run against a database on your own server.",
+    dashAlt: "The Cap Standalone dashboard showing challenges, solves and failures for a site key, with breakdowns by country, network and platform",
+    dashFacts: [
+      ["Settings per site key", "Set the difficulty, browser checks and rate limits separately for each site."],
+      ["Blocked IPs", "Block an address or a range from the dashboard when something gets through."],
+      ["One Docker container", "Standalone runs as a single image next to Redis or Valkey."],
+    ],
 
-    // Testimonial
+    gridTitle: "The rest of the toolbox",
+    gridBody: "Everything here ships in the open-source release. There is no paid tier holding features back.",
+    cellModesTitle: "Checkbox, floating or invisible",
+    cellModesBody: "Show the checkbox, hide it until a button is pressed, or solve in the background from your own code.",
+    cellPowTitle: "Proof-of-work GPUs can't skip",
+    cellPowBody: "HashWX builds a new hash function for every challenge, so a GPU solves it about 2x faster than a CPU instead of 150x.",
+    cellRateTitle: "Rate limits",
+    cellRateBody: "Cap how many challenges one IP can ask for in a window, for the whole instance or one site key.",
+    cellPrivacyTitle: "No cookies, no tracking",
+    cellPrivacyBody: "Nothing goes to a third party, so the privacy review is short in most jurisdictions.",
+    cellSizeTitle: "About 20 kB",
+    cellSizeBody: "The widget weighs about 20 kB minified and gzipped. reCAPTCHA weighs about 500 kB.",
+    cellApiTitle: "Any backend",
+    cellApiBody: "Verify a token with one POST to /siteverify from any language. The response matches reCAPTCHA's.",
+    powRows: [
+      ["SHA-256", 150],
+      ["RSW", 170],
+      ["HashWX", 2],
+    ],
+    powSource: "GPU speedup over a 16-thread CPU, from HashWX's author tevador.",
+
     quoteLead: " Cap has been a good fit for AdGuard Temp Mail. We use it as an ",
     quoteHl1: "invisible, self-hosted CAPTCHA layer",
     quoteMid1: " with ",
     quoteHl2: "proof-of-work and browser instrumentation challenges",
-    quoteMid2:
-      ", which helps us add abuse protection while keeping the experience ",
+    quoteMid2: ", which helps us add abuse protection while keeping the experience ",
     quoteHl3: "lightweight and unobtrusive",
     quoteEnd: " for regular users. ",
     quoteRole: "Head of PR, AdGuard",
 
-    // Comparison
-    compareTitle: "How it compares",
-    compareBody:
-      " Cap is the free, open-source, self-hosted option, same detection tier as the big names, without shipping your users' data to a third party. ",
-    compareLink: "See the full comparison ",
-    compareSelfTitle: "Self-hosted",
-    compareSelfBody:
-      " Runs entirely on your own server. reCAPTCHA, hCaptcha and Turnstile are cloud-only. ",
-    compareOpenTitle: "Open source",
-    compareOpenBody:
-      " Apache 2.0. Read it, fork it, own it. The big three are closed source. ",
-    comparePuzzlesTitle: "No visual puzzles",
-    comparePuzzlesBody:
-      " Invisible proof-of-work, no crosswalks. reCAPTCHA and hCaptcha still show puzzles. ",
-    compareTelemetryTitle: "Zero third-party telemetry",
-    compareTelemetryBody:
-      " Your visitors' data never leaves your server. Google, Cloudflare and hCaptcha all phone home. ",
-    compareFreeTitle: "Free at scale",
-    compareFreeBody:
-      " No quotas, no per-request fees. reCAPTCHA and hCaptcha meter or charge. ",
-    compareLayersTitle: "Layered defense",
-    compareLayersBody:
-      " Proof-of-work layered with dynamic JavaScript instrumentation challenges ",
+    statsLine: "Browsers fetched Cap's solver {n} times from jsDelivr in the last year.",
+    statsFallback: "more than a billion",
 
-    // Widget demo
-    widgetDemoTitle: "Try solving a Cap challenge",
-
-    // Two layers
-    layersTitle1: " Two independent layers.",
-    layersTitle2: "Bypass one, the other still holds. ",
-    layersBody:
-      " Every challenge solves proof-of-work and runs browser instrumentation at the same time. Defeating one layer doesn't defeat the other. ",
-    layersPowLabel: "Layer 01",
-    layersPowTitle: "PoW and time-locks",
-    layersPowBody:
-      " The client solves parallel SHA-256 hashes and time-lock challenges tuned against GPU acceleration in WASM. ",
-    layersKvHashes: "hashes/s",
-    layersKvTarget: "target",
-    layersJsLabel: "Layer 02",
-    layersJsTitle: "JS instrumentation",
-    layersJsBody:
-      " A freshly-generated JS program runs complex JavaScript, DOM and browser checks. ",
-
-    // Stats
-    statsLabel: "CDN hits · 12mo",
-
-    // Closer strip
-    closerSizeLabel: "size",
-    closerSizeNote: "vs 600 kb+ hCaptcha",
-    closerTrackersLabel: "trackers",
-    closerTrackersNote: "vs reCAPTCHA",
-    closerCostLabel: "cost",
-    closerCostNote: "vs $1k+ hCaptcha",
-    closerSetupLabel: "setup",
-    closerSetupNote: "docker container",
-
-    // FAQ
+    faqTitle: "Questions",
+    faqMore: "More answers in the docs",
+    faqAgentsQ: "Does it stop AI scrapers?",
+    faqAgentsA:
+      " Yes. Cap blocks the automated browsers most AI agents browse with, and plain HTTP scrapers can't run the challenge, so they never get a token. ",
     faqGdprQ: "Is it GDPR-friendly?",
     faqGdprA:
       " Yes. Cap doesn't phone home, doesn't set cookies, and doesn't fingerprint users. Your server sees the verification, no one else does. ",
-    faqMigrateQ: "Can I migrate from reCAPTCHA / hCaptcha?",
+    faqMigrateQ: "Can I migrate from reCAPTCHA or hCaptcha?",
     faqMigrateA:
       " Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll need to swap your client-side code to use Cap's widget. ",
-    faqBotsQ: "How effective is it against real bots?",
-    faqBotsA:
-      " Cap's instrumentation combined with proof-of-work is very effective at making abuse extremely difficult to automate at scale. ",
     faqCostQ: "What does it cost to self-host?",
     faqCostA:
       " Cap Standalone fits on a $5 VPS for most sites. There are no per-request fees, no egress to a third party, and no API quotas to hit. ",
     faqOpenQ: "What is an open-source CAPTCHA?",
-    faqOpenA1:
-      " An open-source CAPTCHA is bot protection whose code you can read, audit, and ",
+    faqOpenA1: " An open-source CAPTCHA is bot protection whose code you can read, audit, and ",
     faqOpenLink: "self-host",
     faqOpenA2:
       ", rather than a closed third-party service. Cap is licensed under Apache 2.0 and runs entirely on your own infrastructure, so visitor data never reaches a vendor. ",
@@ -163,17 +118,14 @@ export const homeV2Strings = {
     faqAltSep2: ", and ",
     faqAltA2: " to find what fits your stack. ",
 
-    // Bottom CTA
-    ctaTitle: "Ditch reCAPTCHA this afternoon.",
-    ctaBody:
-      " Drop the widget into your site, point it at a $5 VPS, and stop paying anyone to see your users' traffic. ",
-    ctaStart: "Get started in 5 minutes",
-    ctaDemo: "Try the demo ",
-    ctaGithub: "Star on GitHub",
+    startTitle: "Add it to a form this afternoon.",
+    startBody: "Run one Docker container, create a site key, and drop the widget into your form.",
+    startCta: "Read the quickstart",
+    startGithub: "View on GitHub",
+    startCodeLabel: "A form protected by Cap",
 
-    // Footer
-    ftTagline1: " Self-hosted, open-source CAPTCHA.",
-    ftTagline2: " No Google. No telemetry. No puzzles. ",
+    ftTagline1: "Self-hosted, open-source CAPTCHA.",
+    ftTagline2: "No Google, no telemetry, no puzzles.",
     ftProductLabel: "Product",
     ftQuickstart: "Quickstart",
     ftWidget: "Widget",
@@ -191,68 +143,66 @@ export const homeV2Strings = {
     ftLegal: " Not legal advice. Compliance depends on your deployment. ",
   },
   zh: {
-    // Widget referral banner
     bannerRegionLabel: "来自 Cap 验证组件",
     bannerVerified: "你刚刚通过 Cap 完成了人机验证",
-    bannerHostPrefix: "\u00A0·\u00A0",
+    bannerHostPrefix: " · ",
     bannerVerifiedEnd: "。",
     bannerSub: "你可以关掉这个标签页了。如果好奇 Cap 是什么，欢迎继续了解。",
     bannerDismiss: "关闭",
-
-    // Header nav
     navBrandLabel: "Cap 首页",
     navDocs: "文档",
-    navFeatures: "特性",
     navDemo: "演示",
     navGithubStars: "星标",
-
-    // Hero
-    heroTitle: "自托管 CAPTCHA",
-    heroTitleDim: "为现代 Web 而生。",
-    heroLead1: "没有 Google，没有遥测，没有图形谜题。",
-    heroLead2: "几分钟就能从 reCAPTCHA 迁移过来。",
-    heroCtaStart: "5 分钟上手 ",
-    heroCtaTry: "试用一下 ",
-    heroDashAlt: "Cap 管理后台截图",
-
-    // Trust bar
-    trustLabel: "他们已在生产环境使用 Cap",
-
-    // Feature grid
-    featPrivacyTitle: "隐私优先，零追踪",
-    featPrivacyBody: "零遥测，不连第三方网络。用户数据只留在你和用户之间。",
-    featSizeTitle: "体积仅为 hCaptcha 的 1/250",
-    featSizeBody: "约 20kb，零依赖。加载按毫秒算，不是按秒算。",
-    featInvisibleTitle: "抗 GPU，且完全隐形",
-    featInvisibleBody:
-      "工作量证明（PoW）、时间锁质询与 instrumentation 都在后台静默运行。",
-    featOpenTitle: "免费且开源",
-    featOpenBody:
-      "Apache 2.0 许可。可审计、可 fork、可自托管，没有厂商能釜底抽薪。",
-    featAgentsTitle: "可选：拦截 AI Agent",
-    featAgentsBody:
-      "一个可选设置即可拒绝 Playwright、Puppeteer 等自动化浏览器，AI Agent 和爬虫正是靠它们操作你的网站。默认关闭。",
-    featCustomTitle: "深度可定制",
-    featCustomBody:
-      "颜色、尺寸、位置、图标，全都能用 CSS 变量控制，不被 iframe 锁死。",
-
-    // Compliance
-    cmplTitle: "开箱即合规。",
-    cmplBody:
-      "开源、自托管、隐私优先。不用 Cookie、不做追踪，任何数据都不会离开你的服务器。",
-    cmplLink: "看看 Cap 如何合规 ",
-    cmplPrivacyLabel: "隐私与数据",
-    cmplAccessibilityLabel: "无障碍",
-    cmplI18nChip: "国际化（i18n）",
-    cmplRtlChip: "RTL 支持",
-
-    // Bundle size
-    speedTitle: "体积只是别人的零头",
-    speedBody:
-      "Cap 的验证组件很轻，全程隐形：约 20 kB JavaScript，零第三方脚本。",
-    speedNote: "客户端包体积（minified gzip）",
-
-    // Testimonial
+    heroTitle: "可以自己托管的 CAPTCHA。",
+    heroTitleDim: "挡住机器人和 AI 智能体，放行真人。",
+    heroLead: "Cap 用工作量证明和浏览器检测拦住爬虫、AI 智能体和无头浏览器。没人需要点公交车图片，也没有数据发给 Google。",
+    heroCtaStart: "5 分钟完成部署",
+    heroCtaDocs: "阅读文档",
+    demoLabel: "在线演示",
+    demoReset: "重置演示",
+    demoTry: "试一试",
+    demoTryBot: "机器人看到的样子",
+    demoBotError: "已拦截无头浏览器",
+    demoTabYou: "你的浏览器",
+    demoTabBot: "无头 Chrome",
+    demoBotNote: "这是 chrome-headless-shell 在 Playwright 驱动下勾选同一个组件的回放。",
+    demoReplay: "重播",
+    demoStepChallenge: "质询",
+    demoStepPow: "工作量证明",
+    demoStepChecks: "浏览器检测",
+    demoStepRedeem: "兑换",
+    demoSubChallenges: "{n} 个子质询",
+    demoProgress: "{n} / {total}",
+    demoHashes: "{h} 次哈希",
+    demoIssued: "已签发令牌",
+    demoRejected: "已拒绝",
+    demoVerifying: "验证中...",
+    demoSolved: "用时 {s} 秒解出。你的浏览器已经写进了记录。",
+    torchListLabel: "请求记录示例，以及 Cap 的判定",
+    trustLine: "bunny.net、AdGuard 和 Fraunhofer 等都在生产环境中使用 Cap。",
+    agentsTitle: "识别智能体驱动的浏览器",
+    agentsBody: "如今的滥用大多来自自动化浏览器，而不是 curl。开启浏览器检测后，Cap 会检测 Playwright、Puppeteer、Selenium、Camoufox 和各类隐身插件。判定在你的服务器上完成，被改过的浏览器没法替自己担保。",
+    agentsLink: "检测原理",
+    agentsResultLabel: "机器人兑换令牌时你的服务器收到的结果",
+    dashTitle: "你的流量，留在你的服务器上",
+    dashBody: "Standalone 为每个站点密钥提供仪表盘，展示质询、通过和失败随时间的变化，以及来源国家和所用网络。国家和网络查询使用的是你服务器上的数据库。",
+    dashAlt: "Cap Standalone 仪表盘，显示某个站点密钥的质询、通过和失败数据，以及按国家、网络和平台的分布",
+    dashFacts: [["按站点密钥单独设置", "为每个站点分别设置难度、浏览器检测和速率限制。"], ["封禁 IP", "有漏网之鱼时，直接在仪表盘里封禁某个地址或网段。"], ["一个 Docker 容器", "Standalone 以单个镜像运行，旁边配一个 Redis 或 Valkey。"]],
+    gridTitle: "其余的工具",
+    gridBody: "这里的一切都包含在开源版本里，没有付费档位藏着功能。",
+    cellModesTitle: "复选框、浮动或隐形",
+    cellModesBody: "显示复选框，或在按下按钮前一直隐藏，也可以在你自己的代码里后台完成求解。",
+    cellPowTitle: "GPU 跳不过的工作量证明",
+    cellPowBody: "HashWX 为每道题生成新的哈希函数，GPU 只比 CPU 快约 2 倍，而不是 150 倍。",
+    cellRateTitle: "速率限制",
+    cellRateBody: "限制单个 IP 在一个时间窗口内能请求多少道题，可以针对整个实例，也可以针对某个站点密钥。",
+    cellPrivacyTitle: "不设 Cookie，不做追踪",
+    cellPrivacyBody: "不向任何第三方发送数据，所以在大多数司法辖区隐私审查都很快。",
+    cellSizeTitle: "约 20 kB",
+    cellSizeBody: "验证组件压缩并 gzip 后约 20 kB，reCAPTCHA 约 500 kB。",
+    cellApiTitle: "任意后端",
+    cellApiBody: "用任何语言向 /siteverify 发一个 POST 就能验证令牌，返回格式与 reCAPTCHA 相同。",
+    powSource: "相对 16 线程 CPU 的 GPU 加速倍数，数据来自 HashWX 作者 tevador。",
     quoteLead: "Cap 很适合 AdGuard Temp Mail。我们把它用作",
     quoteHl1: "隐形、自托管的 CAPTCHA 层",
     quoteMid1: "，搭配",
@@ -261,95 +211,32 @@ export const homeV2Strings = {
     quoteHl3: "轻量、无打扰",
     quoteEnd: "。",
     quoteRole: "AdGuard 公关负责人",
-
-    // Comparison
-    compareTitle: "横向对比",
-    compareBody:
-      "Cap 是免费、开源、可自托管的那一个：检测水准与大牌同级，却不会把用户数据送去第三方。",
-    compareLink: "查看完整对比 ",
-    compareSelfTitle: "自托管",
-    compareSelfBody:
-      "完全运行在你自己的服务器上。reCAPTCHA、hCaptcha 和 Turnstile 都只有云端版本。",
-    compareOpenTitle: "开源",
-    compareOpenBody: "Apache 2.0。可阅读、可 fork、完全归你。三巨头都是闭源。",
-    comparePuzzlesTitle: "没有图形谜题",
-    comparePuzzlesBody:
-      "隐形的工作量证明，不用再找斑马线。reCAPTCHA 和 hCaptcha 至今仍在出图形题。",
-    compareTelemetryTitle: "零第三方遥测",
-    compareTelemetryBody:
-      "访客数据永不离开你的服务器。Google、Cloudflare 和 hCaptcha 全都会回传数据。",
-    compareFreeTitle: "规模再大也免费",
-    compareFreeBody:
-      "没有配额，没有按请求计费。reCAPTCHA 和 hCaptcha 要么限量、要么收钱。",
-    compareLayersTitle: "分层防御",
-    compareLayersBody: "工作量证明叠加动态 JavaScript instrumentation 质询",
-
-    // Widget demo
-    widgetDemoTitle: "亲手解一道 Cap 质询",
-
-    // Two layers
-    layersTitle1: "两道独立防线。",
-    layersTitle2: "绕过一道，还有一道。",
-    layersBody:
-      "每次质询都会同时求解工作量证明并运行浏览器 instrumentation。攻破一层，另一层依然有效。",
-    layersPowLabel: "防线 01",
-    layersPowTitle: "PoW 与时间锁",
-    layersPowBody:
-      "客户端在 WASM 中并行求解 SHA-256 哈希与时间锁质询，并针对 GPU 加速做了专门对抗。",
-    layersKvHashes: "哈希/秒",
-    layersKvTarget: "目标",
-    layersJsLabel: "防线 02",
-    layersJsTitle: "JS instrumentation",
-    layersJsBody:
-      "每次都全新生成的 JS 程序，执行复杂的 JavaScript、DOM 与浏览器检测。",
-
-    // Stats
-    statsLabel: "CDN 请求 · 近 12 个月",
-
-    // Closer strip
-    closerSizeLabel: "体积",
-    closerSizeNote: "vs 600 kb+ 的 hCaptcha",
-    closerTrackersLabel: "追踪器",
-    closerTrackersNote: "vs reCAPTCHA",
-    closerCostLabel: "费用",
-    closerCostNote: "vs $1k+ 的 hCaptcha",
-    closerSetupLabel: "部署",
-    closerSetupNote: "一个 Docker 容器",
-
-    // FAQ
+    statsLine: "过去一年里，浏览器从 jsDelivr 获取 Cap 求解器 {n} 次。",
+    statsFallback: "超过十亿",
+    faqTitle: "常见问题",
+    faqMore: "文档里有更多解答",
+    faqAgentsQ: "它能挡住 AI 爬虫吗？",
+    faqAgentsA: "能。Cap 会拦下大多数 AI 智能体所用的自动化浏览器，纯 HTTP 爬虫无法运行题目，所以永远拿不到令牌。",
     faqGdprQ: "它符合 GDPR 吗？",
-    faqGdprA:
-      "符合。Cap 不回传数据、不设 Cookie、不做用户指纹。验证只有你的服务器看得到，别人一概看不到。",
+    faqGdprA: "符合。Cap 不回传数据、不设 Cookie、不做用户指纹。验证只有你的服务器看得到，别人一概看不到。",
     faqMigrateQ: "能从 reCAPTCHA / hCaptcha 迁移吗？",
-    faqMigrateA:
-      "能。Cap 的 siteverify API 兼容 reCAPTCHA 和 hCaptcha，只需把客户端代码换成 Cap 的验证组件。",
-    faqBotsQ: "对真实机器人的防护效果如何？",
-    faqBotsA:
-      "很有效。instrumentation 加上工作量证明，让滥用行为很难被大规模自动化。",
+    faqMigrateA: "能。Cap 的 siteverify API 兼容 reCAPTCHA 和 hCaptcha，只需把客户端代码换成 Cap 的验证组件。",
     faqCostQ: "自托管要花多少钱？",
-    faqCostA:
-      "对多数站点而言，一台 $5 的 VPS 就能跑 Cap Standalone。没有按请求收费，没有流向第三方的流量，也没有会触顶的 API 配额。",
+    faqCostA: "对多数站点而言，一台 $5 的 VPS 就能跑 Cap Standalone。没有按请求收费，没有流向第三方的流量，也没有会触顶的 API 配额。",
     faqOpenQ: "什么是开源 CAPTCHA？",
     faqOpenA1: "开源 CAPTCHA 是一种代码可读、可审计、可",
     faqOpenLink: "自托管",
-    faqOpenA2:
-      "的机器人防护，而非封闭的第三方服务。Cap 采用 Apache 2.0 许可，完全运行在你自己的基础设施上，访客数据永远不会到达任何厂商。",
+    faqOpenA2: "的机器人防护，而非封闭的第三方服务。Cap 采用 Apache 2.0 许可，完全运行在你自己的基础设施上，访客数据永远不会到达任何厂商。",
     faqAltQ: "reCAPTCHA 最好的开源替代是什么？",
-    faqAltA1:
-      "Cap 是 Google reCAPTCHA 的隐私优先、自托管替代方案，以工作量证明和 instrumentation 取代图形谜题与追踪。不妨对比一下 ",
+    faqAltA1: "Cap 是 Google reCAPTCHA 的隐私优先、自托管替代方案，以工作量证明和 instrumentation 取代图形谜题与追踪。不妨对比一下 ",
     faqAltSep1: "、",
     faqAltSep2: " 和 ",
     faqAltA2: "，看看哪个更适合你的技术栈。",
-
-    // Bottom CTA
-    ctaTitle: "今天下午，就跟 reCAPTCHA 说再见。",
-    ctaBody:
-      "把验证组件放进站点，指向一台 $5 的 VPS，从此不再付钱让别人看你用户的流量。",
-    ctaStart: "5 分钟上手",
-    ctaDemo: "试试演示 ",
-    ctaGithub: "去 GitHub 点个 Star",
-
-    // Footer
+    startTitle: "今天下午就能加到表单里。",
+    startBody: "运行一个 Docker 容器，创建站点密钥，再把验证组件放进你的表单。",
+    startCta: "阅读快速开始",
+    startGithub: "在 GitHub 上查看",
+    startCodeLabel: "一个受 Cap 保护的表单",
     ftTagline1: "自托管、开源的 CAPTCHA。",
     ftTagline2: "没有 Google，没有遥测，没有谜题。",
     ftProductLabel: "产品",
@@ -369,172 +256,100 @@ export const homeV2Strings = {
     ftLegal: "本页不构成法律建议。是否合规取决于你的部署方式。",
   },
   de: {
-    // Widget referral banner
     bannerRegionLabel: "Vom Cap-Widget",
     bannerVerified: "Du hast dich gerade mit Cap als Mensch verifiziert",
     bannerHostPrefix: " auf ",
     bannerVerifiedEnd: ".",
-    bannerSub:
-      "Du kannst diesen Tab schließen. Oder bleib, wenn dich interessiert, was Cap ist.",
+    bannerSub: "Du kannst diesen Tab schließen. Oder bleib, wenn dich interessiert, was Cap ist.",
     bannerDismiss: "Schließen",
-
-    // Header nav
     navBrandLabel: "Cap Startseite",
     navDocs: "Doku",
-    navFeatures: "Features",
     navDemo: "Demo",
     navGithubStars: "Sterne",
-
-    // Hero
-    heroTitle: "Selbst gehostetes CAPTCHA",
-    heroTitleDim: "für das moderne Web.",
-    heroLead1: "Kein Google. Keine Telemetrie. Keine Bilderrätsel.",
-    heroLead2: "In Minuten von reCAPTCHA umsteigen.",
-    heroCtaStart: "In 5 Minuten loslegen ",
-    heroCtaTry: "Widget ausprobieren ",
-    heroDashAlt: "Screenshot des Cap-Admin-Dashboards",
-
-    // Trust bar
-    trustLabel: "Im Produktivbetrieb im Einsatz bei",
-
-    // Feature grid
-    featPrivacyTitle: "Datenschutz zuerst, kein Tracking",
-    featPrivacyBody:
-      "Null Telemetrie. Kein Drittanbieter-Netzwerk. Die Daten deiner Nutzer bleiben zwischen euch.",
-    featSizeTitle: "250x kleiner als hCaptcha",
-    featSizeBody:
-      "~20 kb, keine Abhängigkeiten. Lädt in Millisekunden, nicht in Sekunden.",
-    featInvisibleTitle: "GPU-resistent und unsichtbar",
-    featInvisibleBody:
-      "PoW, Time-Lock-Challenges und Instrumentation laufen still im Hintergrund.",
-    featOpenTitle: "Kostenlos & quelloffen",
-    featOpenBody:
-      "Apache-2.0-Lizenz. Prüfen, forken, selbst hosten. Kein Anbieter kann dir den Boden unter den Füßen wegziehen.",
-    featAgentsTitle: "KI-Agenten blockieren, wenn du willst",
-    featAgentsBody:
-      "Eine optionale Einstellung weist automatisierte Browser wie Playwright und Puppeteer ab, mit denen KI-Agenten und Scraper deine Seite bedienen. Standardmäßig ist sie aus.",
-    featCustomTitle: "Vollständig anpassbar",
-    featCustomBody:
-      "Farben, Größe, Position, Icons, alles über CSS-Variablen steuerbar. Kein iframe-Lock-in.",
-
-    // Compliance
-    cmplTitle: "Von Haus aus konform.",
-    cmplBody:
-      "Quelloffen, selbst gehostet und datenschutzfreundlich. Keine Cookies, kein Tracking, und keine Daten verlassen deine Server.",
-    cmplLink: "So erfüllt Cap die Vorgaben ",
-    cmplPrivacyLabel: "Datenschutz & Daten",
-    cmplAccessibilityLabel: "Barrierefreiheit",
-    cmplI18nChip: "Internationalisierung (i18n)",
-    cmplRtlChip: "RTL-Unterstützung",
-
-    // Bundle size
-    speedTitle: "Ein Bruchteil des Gewichts",
-    speedBody:
-      "Das Cap-Widget ist extrem leichtgewichtig und läuft unsichtbar: nur rund 20 kB JavaScript, ohne Drittanbieter-Skripte.",
-    speedNote: "Client-Bundle-Größen (minified, gzip)",
-
-    // Testimonial
+    heroTitle: "Das CAPTCHA, das du selbst hostest.",
+    heroTitleDim: "Bots und KI-Agenten raus, Menschen rein.",
+    heroLead: "Cap stoppt Scraper, KI-Agenten und Headless-Browser mit Proof-of-Work und Browserprüfungen. Niemand klickt auf Busse, und nichts geht an Google.",
+    heroCtaStart: "In 5 Minuten deployen",
+    heroCtaDocs: "Doku lesen",
+    demoLabel: "Live-Demo",
+    demoReset: "Demo zurücksetzen",
+    demoTry: "Probier's aus",
+    demoTryBot: "Das sieht ein Bot",
+    demoBotError: "Headless-Browser blockiert",
+    demoTabYou: "Dein Browser",
+    demoTabBot: "Headless Chrome",
+    demoBotNote: "Eine Wiederholung von chrome-headless-shell, gesteuert von Playwright, am selben Widget.",
+    demoReplay: "Erneut abspielen",
+    demoStepChallenge: "Challenge",
+    demoStepPow: "Proof of Work",
+    demoStepChecks: "Browser-Prüfungen",
+    demoStepRedeem: "Einlösen",
+    demoSubChallenges: "{n} Teilaufgaben",
+    demoProgress: "{n} von {total}",
+    demoHashes: "{h} Hashes",
+    demoIssued: "Token ausgestellt",
+    demoRejected: "Abgelehnt",
+    demoVerifying: "Wird geprüft...",
+    demoSolved: "In {s} s gelöst. Dein Browser steht jetzt im Log.",
+    torchListLabel: "Beispiel-Log mit Anfragen und Caps Entscheidungen",
+    trustLine: "Läuft produktiv bei bunny.net, AdGuard, Fraunhofer und anderen.",
+    agentsTitle: "Erkennt die Browser, die Agenten steuern",
+    agentsBody: "Missbrauch kommt heute meist von automatisierten Browsern, nicht von curl. Mit aktivierten Browserprüfungen prüft Cap auf Playwright, Puppeteer, Selenium, Camoufox und Stealth-Plugins. Das Urteil fällt auf deinem Server, also kann ein gepatchter Browser nicht für sich selbst bürgen.",
+    agentsLink: "So funktioniert die Erkennung",
+    agentsResultLabel: "Was dein Server von einem Bot zurückbekommt",
+    dashTitle: "Dein Traffic, auf deinem Server",
+    dashBody: "Standalone bringt für jeden Site-Key ein Dashboard mit. Es zeigt Challenges, Lösungen und Fehlschläge über die Zeit, woher sie kommen und welche Netze sie nutzen. Länder- und Netzabfragen laufen gegen eine Datenbank auf deinem eigenen Server.",
+    dashAlt: "Das Cap-Standalone-Dashboard mit Challenges, Lösungen und Fehlschlägen für einen Site-Key, aufgeschlüsselt nach Land, Netz und Plattform",
+    dashFacts: [["Einstellungen pro Site-Key", "Schwierigkeit, Browserprüfungen und Rate Limits für jede Seite einzeln festlegen."], ["Gesperrte IPs", "Sperr eine Adresse oder einen Bereich direkt im Dashboard, wenn etwas durchrutscht."], ["Ein Docker-Container", "Standalone läuft als ein einziges Image neben Redis oder Valkey."]],
+    gridTitle: "Der Rest des Werkzeugkastens",
+    gridBody: "Alles hier steckt im Open-Source-Release. Es gibt keinen bezahlten Tarif, der Funktionen zurückhält.",
+    cellModesTitle: "Checkbox, schwebend oder unsichtbar",
+    cellModesBody: "Zeig die Checkbox, versteck sie bis zum Klick auf einen Button, oder lös die Aufgabe im Hintergrund aus deinem eigenen Code.",
+    cellPowTitle: "Proof-of-Work, den GPUs nicht abkürzen",
+    cellPowBody: "HashWX baut für jede Aufgabe eine neue Hashfunktion, deshalb ist eine GPU nur etwa 2x schneller als eine CPU statt 150x.",
+    cellRateTitle: "Rate Limits",
+    cellRateBody: "Begrenz, wie viele Aufgaben eine IP pro Zeitfenster anfordern darf, für die ganze Instanz oder einen Site-Key.",
+    cellPrivacyTitle: "Keine Cookies, kein Tracking",
+    cellPrivacyBody: "Nichts geht an Dritte, also ist die Datenschutzprüfung in den meisten Rechtsräumen kurz.",
+    cellSizeTitle: "Etwa 20 kB",
+    cellSizeBody: "Das Widget wiegt minifiziert und gzip-komprimiert etwa 20 kB. reCAPTCHA wiegt etwa 500 kB.",
+    cellApiTitle: "Jedes Backend",
+    cellApiBody: "Prüf ein Token mit einem POST an /siteverify aus jeder Sprache. Die Antwort entspricht der von reCAPTCHA.",
+    powSource: "GPU-Beschleunigung gegenüber einer CPU mit 16 Threads, Zahlen von tevador, dem Autor von HashWX.",
     quoteLead: "Cap passt gut zu AdGuard Temp Mail. Wir nutzen es als ",
     quoteHl1: "unsichtbare, selbst gehostete CAPTCHA-Schicht",
     quoteMid1: " mit ",
     quoteHl2: "Proof-of-Work- und Browser-Instrumentation-Challenges",
-    quoteMid2:
-      ", was uns hilft, Missbrauchsschutz zu ergänzen und die Erfahrung dabei ",
+    quoteMid2: ", was uns hilft, Missbrauchsschutz zu ergänzen und die Erfahrung dabei ",
     quoteHl3: "leichtgewichtig und unaufdringlich",
     quoteEnd: " für normale Nutzer zu halten. ",
     quoteRole: "Head of PR, AdGuard",
-
-    // Comparison
-    compareTitle: "Im Vergleich",
-    compareBody:
-      "Cap ist die kostenlose, quelloffene, selbst gehostete Option: dieselbe Erkennungsklasse wie die großen Namen, ohne die Daten deiner Nutzer an Dritte zu schicken.",
-    compareLink: "Zum vollständigen Vergleich ",
-    compareSelfTitle: "Selbst gehostet",
-    compareSelfBody:
-      "Läuft vollständig auf deinem eigenen Server. reCAPTCHA, hCaptcha und Turnstile gibt es nur in der Cloud.",
-    compareOpenTitle: "Open Source",
-    compareOpenBody:
-      "Apache 2.0. Lies es, forke es, besitze es. Die großen drei sind Closed Source.",
-    comparePuzzlesTitle: "Keine Bilderrätsel",
-    comparePuzzlesBody:
-      "Unsichtbarer Proof-of-Work, keine Zebrastreifen. reCAPTCHA und hCaptcha zeigen weiterhin Rätsel.",
-    compareTelemetryTitle: "Null Drittanbieter-Telemetrie",
-    compareTelemetryBody:
-      "Die Daten deiner Besucher verlassen nie deinen Server. Google, Cloudflare und hCaptcha funken alle nach Hause.",
-    compareFreeTitle: "Kostenlos in jeder Größenordnung",
-    compareFreeBody:
-      "Keine Kontingente, keine Gebühren pro Anfrage. reCAPTCHA und hCaptcha deckeln oder kassieren.",
-    compareLayersTitle: "Gestaffelte Verteidigung",
-    compareLayersBody:
-      "Proof-of-Work kombiniert mit dynamischen JavaScript-Instrumentation-Challenges",
-
-    // Widget demo
-    widgetDemoTitle: "Löse selbst eine Cap-Challenge",
-
-    // Two layers
-    layersTitle1: "Zwei unabhängige Schichten.",
-    layersTitle2: "Umgehst du eine, hält die andere.",
-    layersBody:
-      "Jede Challenge löst Proof-of-Work und führt gleichzeitig Browser-Instrumentation aus. Eine Schicht zu knacken knackt die andere nicht.",
-    layersPowLabel: "Schicht 01",
-    layersPowTitle: "PoW und Time-Locks",
-    layersPowBody:
-      "Der Client löst parallele SHA-256-Hashes und Time-Lock-Challenges, in WASM und gezielt gegen GPU-Beschleunigung ausgelegt.",
-    layersKvHashes: "Hashes/s",
-    layersKvTarget: "Ziel",
-    layersJsLabel: "Schicht 02",
-    layersJsTitle: "JS-Instrumentation",
-    layersJsBody:
-      "Ein frisch generiertes JS-Programm führt komplexe JavaScript-, DOM- und Browser-Checks aus.",
-
-    // Stats
-    statsLabel: "CDN-Abrufe · 12 Mon.",
-
-    // Closer strip
-    closerSizeLabel: "Größe",
-    closerSizeNote: "vs. 600 kb+ bei hCaptcha",
-    closerTrackersLabel: "Tracker",
-    closerTrackersNote: "vs. reCAPTCHA",
-    closerCostLabel: "Kosten",
-    closerCostNote: "vs. $1k+ bei hCaptcha",
-    closerSetupLabel: "Setup",
-    closerSetupNote: "ein Docker-Container",
-
-    // FAQ
+    statsLine: "Browser haben Caps Solver im letzten Jahr {n} Mal von jsDelivr geladen.",
+    statsFallback: "über eine Milliarde",
+    faqTitle: "Fragen",
+    faqMore: "Mehr Antworten in der Doku",
+    faqAgentsQ: "Stoppt es KI-Scraper?",
+    faqAgentsA: "Ja. Cap blockiert die automatisierten Browser, mit denen die meisten KI-Agenten surfen, und reine HTTP-Scraper können die Aufgabe nicht ausführen und bekommen deshalb nie ein Token.",
     faqGdprQ: "Ist es DSGVO-freundlich?",
-    faqGdprA:
-      "Ja. Cap funkt nicht nach Hause, setzt keine Cookies und erstellt keine Fingerprints. Nur dein Server sieht die Verifizierung, sonst niemand.",
+    faqGdprA: "Ja. Cap funkt nicht nach Hause, setzt keine Cookies und erstellt keine Fingerprints. Nur dein Server sieht die Verifizierung, sonst niemand.",
     faqMigrateQ: "Kann ich von reCAPTCHA / hCaptcha migrieren?",
-    faqMigrateA:
-      "Ja. Caps siteverify-API ist zu reCAPTCHA und hCaptcha kompatibel, du musst nur den Client-Code auf Caps Widget umstellen.",
-    faqBotsQ: "Wie wirksam ist es gegen echte Bots?",
-    faqBotsA:
-      "Caps Instrumentation in Kombination mit Proof-of-Work macht es sehr schwer, Missbrauch in großem Maßstab zu automatisieren.",
+    faqMigrateA: "Ja. Caps siteverify-API ist zu reCAPTCHA und hCaptcha kompatibel, du musst nur den Client-Code auf Caps Widget umstellen.",
     faqCostQ: "Was kostet das Selbst-Hosten?",
-    faqCostA:
-      "Cap Standalone läuft für die meisten Websites auf einem 5-$-VPS. Keine Gebühren pro Anfrage, kein Traffic zu Dritten und keine API-Kontingente, an die du stößt.",
+    faqCostA: "Cap Standalone läuft für die meisten Websites auf einem 5-$-VPS. Keine Gebühren pro Anfrage, kein Traffic zu Dritten und keine API-Kontingente, an die du stößt.",
     faqOpenQ: "Was ist ein Open-Source-CAPTCHA?",
-    faqOpenA1:
-      "Ein Open-Source-CAPTCHA ist Bot-Schutz, dessen Code du lesen, prüfen und ",
+    faqOpenA1: "Ein Open-Source-CAPTCHA ist Bot-Schutz, dessen Code du lesen, prüfen und ",
     faqOpenLink: "selbst hosten",
-    faqOpenA2:
-      " kannst, statt eines geschlossenen Drittanbieterdienstes. Cap steht unter der Apache-2.0-Lizenz und läuft vollständig auf deiner eigenen Infrastruktur, Besucherdaten erreichen also nie einen Anbieter.",
+    faqOpenA2: " kannst, statt eines geschlossenen Drittanbieterdienstes. Cap steht unter der Apache-2.0-Lizenz und läuft vollständig auf deiner eigenen Infrastruktur, Besucherdaten erreichen also nie einen Anbieter.",
     faqAltQ: "Was ist die beste Open-Source-Alternative zu reCAPTCHA?",
-    faqAltA1:
-      "Cap ist eine datenschutzfreundliche, selbst gehostete Alternative zu Google reCAPTCHA, die Proof-of-Work und Instrumentation statt Bilderrätseln oder Tracking nutzt. Vergleiche es mit ",
+    faqAltA1: "Cap ist eine datenschutzfreundliche, selbst gehostete Alternative zu Google reCAPTCHA, die Proof-of-Work und Instrumentation statt Bilderrätseln oder Tracking nutzt. Vergleiche es mit ",
     faqAltSep1: ", ",
     faqAltSep2: " und ",
     faqAltA2: ", um herauszufinden, was zu deinem Stack passt.",
-
-    // Bottom CTA
-    ctaTitle: "Wirf reCAPTCHA noch heute Nachmittag raus.",
-    ctaBody:
-      "Widget einbauen, auf einen 5-$-VPS zeigen und aufhören, jemanden dafür zu bezahlen, den Traffic deiner Nutzer zu sehen.",
-    ctaStart: "In 5 Minuten loslegen",
-    ctaDemo: "Demo ausprobieren ",
-    ctaGithub: "Auf GitHub sternen",
-
-    // Footer
+    startTitle: "Heute Nachmittag ins Formular eingebaut.",
+    startBody: "Starte einen Docker-Container, leg einen Site-Key an und setz das Widget in dein Formular.",
+    startCta: "Schnellstart lesen",
+    startGithub: "Auf GitHub ansehen",
+    startCodeLabel: "Ein mit Cap geschütztes Formular",
     ftTagline1: "Selbst gehostetes, quelloffenes CAPTCHA.",
     ftTagline2: "Kein Google. Keine Telemetrie. Keine Rätsel.",
     ftProductLabel: "Produkt",
@@ -551,176 +366,103 @@ export const homeV2Strings = {
     ftEffectiveness: "Wirksamkeit",
     ftCompliance: "Compliance",
     ftCommunity: "Community",
-    ftLegal:
-      "Keine Rechtsberatung. Die Konformität hängt von deinem Deployment ab.",
+    ftLegal: "Keine Rechtsberatung. Die Konformität hängt von deinem Deployment ab.",
   },
   fr: {
-    // Widget referral banner
     bannerRegionLabel: "Depuis le widget Cap",
     bannerVerified: "Vous venez de prouver que vous êtes humain avec Cap",
     bannerHostPrefix: " sur ",
     bannerVerifiedEnd: ".",
-    bannerSub:
-      "Vous pouvez fermer cet onglet. Ou rester, si vous êtes curieux de savoir ce qu'est Cap.",
+    bannerSub: "Vous pouvez fermer cet onglet. Ou rester, si vous êtes curieux de savoir ce qu'est Cap.",
     bannerDismiss: "Fermer",
-
-    // Header nav
     navBrandLabel: "Accueil Cap",
     navDocs: "Docs",
-    navFeatures: "Fonctionnalités",
     navDemo: "Démo",
     navGithubStars: "étoiles",
-
-    // Hero
-    heroTitle: "Le CAPTCHA auto-hébergé",
-    heroTitleDim: "pour le web moderne.",
-    heroLead1: "Pas de Google. Pas de télémétrie. Pas de puzzles visuels.",
-    heroLead2: "Quittez reCAPTCHA en quelques minutes.",
-    heroCtaStart: "Démarrer en 5 minutes ",
-    heroCtaTry: "Essayer le widget ",
-    heroDashAlt: "Capture d'écran du tableau de bord Cap",
-
-    // Trust bar
-    trustLabel: "Utilisé en production par",
-
-    // Feature grid
-    featPrivacyTitle: "Vie privée d'abord, aucun pistage",
-    featPrivacyBody:
-      "Zéro télémétrie. Aucun réseau tiers. Les données de vos utilisateurs restent entre vous et eux.",
-    featSizeTitle: "250x plus léger que hCaptcha",
-    featSizeBody:
-      "~20 ko, zéro dépendance. Se charge en millisecondes, pas en secondes.",
-    featInvisibleTitle: "Résistant aux GPU et invisible",
-    featInvisibleBody:
-      "La preuve de travail, les défis à verrou temporel et l'instrumentation tournent silencieusement en arrière-plan.",
-    featOpenTitle: "Gratuit et open source",
-    featOpenBody:
-      "Sous licence Apache 2.0. Auditez-le, forkez-le, hébergez-le. Aucun éditeur ne peut vous couper l'herbe sous le pied.",
-    featAgentsTitle: "Bloquez les agents IA, si vous le voulez",
-    featAgentsBody:
-      "Un réglage optionnel rejette les navigateurs automatisés comme Playwright et Puppeteer, que les agents IA et les scrapers utilisent pour piloter votre site. Il est désactivé par défaut.",
-    featCustomTitle: "Entièrement personnalisable",
-    featCustomBody:
-      "Couleurs, taille, position, icônes : tout se pilote via des variables CSS. Aucun enfermement dans une iframe.",
-
-    // Compliance
-    cmplTitle: "Conforme dès l'installation.",
-    cmplBody:
-      "Open source, auto-hébergé et respectueux de la vie privée. Ni cookies ni pistage, et aucune donnée ne quitte vos serveurs.",
-    cmplLink: "Voir comment Cap est conforme ",
-    cmplPrivacyLabel: "Vie privée et données",
-    cmplAccessibilityLabel: "Accessibilité",
-    cmplI18nChip: "Internationalisation (i18n)",
-    cmplRtlChip: "Prise en charge RTL",
-
-    // Bundle size
-    speedTitle: "Une fraction du poids",
-    speedBody:
-      "Le widget Cap est extrêmement léger et s'exécute de façon invisible : environ 20 ko de JavaScript, sans aucun script tiers.",
-    speedNote: "Taille des bundles client (minifiés, gzip)",
-
-    // Testimonial
+    heroTitle: "Le CAPTCHA que vous hébergez vous-même.",
+    heroTitleDim: "Les bots et agents IA dehors, les humains dedans.",
+    heroLead: "Cap arrête les scrapers, les agents IA et les navigateurs headless avec de la preuve de travail et des vérifications du navigateur. Personne ne clique sur des bus, et rien ne part chez Google.",
+    heroCtaStart: "Déployer en 5 minutes",
+    heroCtaDocs: "Lire la doc",
+    demoLabel: "Démo en direct",
+    demoReset: "Réinitialiser la démo",
+    demoTry: "Essayez",
+    demoTryBot: "Ce que voit un bot",
+    demoBotError: "Navigateur headless bloqué",
+    demoTabYou: "Votre navigateur",
+    demoTabBot: "Chrome headless",
+    demoBotNote: "Une rediffusion de chrome-headless-shell, piloté par Playwright, qui coche ce même widget.",
+    demoReplay: "Rejouer",
+    demoStepChallenge: "Défi",
+    demoStepPow: "Preuve de travail",
+    demoStepChecks: "Vérifications du navigateur",
+    demoStepRedeem: "Validation",
+    demoSubChallenges: "{n} sous-défis",
+    demoProgress: "{n} sur {total}",
+    demoHashes: "{h} hachages",
+    demoIssued: "Jeton émis",
+    demoRejected: "Refusé",
+    demoVerifying: "Vérification...",
+    demoSolved: "Résolu en {s} s. Votre navigateur vient d'entrer dans le journal.",
+    torchListLabel: "Exemple de journal de requêtes et des décisions de Cap",
+    trustLine: "En production chez bunny.net, AdGuard, Fraunhofer et d'autres.",
+    agentsTitle: "Repère les navigateurs pilotés par des agents",
+    agentsBody: "Aujourd'hui, l'essentiel des abus vient de navigateurs automatisés, pas de curl. Activez les vérifications du navigateur et Cap recherche Playwright, Puppeteer, Selenium, Camoufox et les plugins furtifs. Le verdict se fait sur votre serveur, donc un navigateur modifié ne peut pas se porter garant de lui-même.",
+    agentsLink: "Fonctionnement de la détection",
+    agentsResultLabel: "Ce que votre serveur reçoit d'un bot",
+    dashTitle: "Votre trafic, sur votre serveur",
+    dashBody: "Standalone inclut un tableau de bord pour chaque clé de site. Il montre les défis, les réussites et les échecs dans le temps, leur provenance et les réseaux utilisés. Les recherches de pays et de réseau passent par une base de données sur votre propre serveur.",
+    dashAlt: "Le tableau de bord de Cap Standalone avec les défis, réussites et échecs d'une clé de site, répartis par pays, réseau et plateforme",
+    dashFacts: [["Réglages par clé de site", "Définissez la difficulté, les vérifications du navigateur et les limites de débit pour chaque site."], ["IP bloquées", "Bloquez une adresse ou une plage depuis le tableau de bord quand quelque chose passe."], ["Un seul conteneur Docker", "Standalone tourne dans une seule image, à côté de Redis ou Valkey."]],
+    gridTitle: "Le reste de la boîte à outils",
+    gridBody: "Tout ce qui suit est dans la version open source. Aucune offre payante ne garde de fonctionnalités pour elle.",
+    cellModesTitle: "Case à cocher, flottant ou invisible",
+    cellModesBody: "Affichez la case, cachez-la jusqu'à un clic sur un bouton, ou résolvez en arrière-plan depuis votre propre code.",
+    cellPowTitle: "Une preuve de travail que les GPU ne contournent pas",
+    cellPowBody: "HashWX construit une nouvelle fonction de hachage pour chaque défi, si bien qu'un GPU ne va qu'environ 2x plus vite qu'un CPU au lieu de 150x.",
+    cellRateTitle: "Limites de débit",
+    cellRateBody: "Limitez le nombre de défis qu'une IP peut demander sur une période, pour toute l'instance ou une seule clé de site.",
+    cellPrivacyTitle: "Pas de cookies, pas de suivi",
+    cellPrivacyBody: "Rien ne part chez un tiers, donc l'examen de confidentialité est court dans la plupart des juridictions.",
+    cellSizeTitle: "Environ 20 ko",
+    cellSizeBody: "Le widget pèse environ 20 ko minifié et compressé en gzip. reCAPTCHA pèse environ 500 ko.",
+    cellApiTitle: "N'importe quel backend",
+    cellApiBody: "Vérifiez un jeton avec un seul POST vers /siteverify depuis n'importe quel langage. La réponse suit celle de reCAPTCHA.",
+    powSource: "Accélération GPU par rapport à un CPU à 16 threads, chiffres de tevador, l'auteur de HashWX.",
     quoteLead: "Cap convient très bien à AdGuard Temp Mail. Nous l'utilisons comme ",
     quoteHl1: "couche CAPTCHA invisible et auto-hébergée",
     quoteMid1: " avec des ",
     quoteHl2: "défis de preuve de travail et d'instrumentation du navigateur",
-    quoteMid2:
-      ", ce qui nous aide à renforcer la protection contre les abus tout en gardant une expérience ",
+    quoteMid2: ", ce qui nous aide à renforcer la protection contre les abus tout en gardant une expérience ",
     quoteHl3: "légère et discrète",
     quoteEnd: " pour les utilisateurs normaux. ",
     quoteRole: "Head of PR, AdGuard",
-
-    // Comparison
-    compareTitle: "Le comparatif",
-    compareBody:
-      "Cap est l'option gratuite, open source et auto-hébergée : le même niveau de détection que les grands noms, sans envoyer les données de vos utilisateurs à un tiers.",
-    compareLink: "Voir le comparatif complet ",
-    compareSelfTitle: "Auto-hébergé",
-    compareSelfBody:
-      "Tourne entièrement sur votre propre serveur. reCAPTCHA, hCaptcha et Turnstile n'existent qu'en cloud.",
-    compareOpenTitle: "Open source",
-    compareOpenBody:
-      "Apache 2.0. Lisez-le, forkez-le, il est à vous. Les trois grands sont propriétaires.",
-    comparePuzzlesTitle: "Aucun puzzle visuel",
-    comparePuzzlesBody:
-      "Preuve de travail invisible, plus de passages piétons à cliquer. reCAPTCHA et hCaptcha affichent toujours des puzzles.",
-    compareTelemetryTitle: "Zéro télémétrie tierce",
-    compareTelemetryBody:
-      "Les données de vos visiteurs ne quittent jamais votre serveur. Google, Cloudflare et hCaptcha renvoient tous des données.",
-    compareFreeTitle: "Gratuit à toute échelle",
-    compareFreeBody:
-      "Aucun quota, aucun frais par requête. reCAPTCHA et hCaptcha limitent ou facturent.",
-    compareLayersTitle: "Défense en profondeur",
-    compareLayersBody:
-      "Preuve de travail combinée à des défis d'instrumentation JavaScript dynamiques",
-
-    // Widget demo
-    widgetDemoTitle: "Essayez de résoudre un défi Cap",
-
-    // Two layers
-    layersTitle1: "Deux couches indépendantes.",
-    layersTitle2: "Contournez l'une, l'autre tient toujours.",
-    layersBody:
-      "Chaque défi résout une preuve de travail et exécute en même temps l'instrumentation du navigateur. Vaincre une couche ne vainc pas l'autre.",
-    layersPowLabel: "Couche 01",
-    layersPowTitle: "PoW et verrous temporels",
-    layersPowBody:
-      "Le client résout en parallèle des hachages SHA-256 et des défis à verrou temporel, en WASM et calibrés contre l'accélération GPU.",
-    layersKvHashes: "hachages/s",
-    layersKvTarget: "cible",
-    layersJsLabel: "Couche 02",
-    layersJsTitle: "Instrumentation JS",
-    layersJsBody:
-      "Un programme JS généré à la volée exécute des vérifications JavaScript, DOM et navigateur complexes.",
-
-    // Stats
-    statsLabel: "requêtes CDN · 12 mois",
-
-    // Closer strip
-    closerSizeLabel: "taille",
-    closerSizeNote: "contre 600 ko+ pour hCaptcha",
-    closerTrackersLabel: "traqueurs",
-    closerTrackersNote: "contre reCAPTCHA",
-    closerCostLabel: "coût",
-    closerCostNote: "contre 1 000 $+ pour hCaptcha",
-    closerSetupLabel: "installation",
-    closerSetupNote: "un conteneur Docker",
-
-    // FAQ
+    statsLine: "Les navigateurs ont récupéré le solveur de Cap {n} fois sur jsDelivr l'an dernier.",
+    statsFallback: "plus d'un milliard de",
+    faqTitle: "Questions",
+    faqMore: "Plus de réponses dans la doc",
+    faqAgentsQ: "Est-ce que ça arrête les scrapers IA ?",
+    faqAgentsA: "Oui. Cap bloque les navigateurs automatisés qu'utilisent la plupart des agents IA, et les scrapers HTTP simples ne peuvent pas exécuter le défi, donc ils n'obtiennent jamais de jeton.",
     faqGdprQ: "Est-ce compatible avec le RGPD ?",
-    faqGdprA:
-      "Oui. Cap ne renvoie rien vers l'extérieur, ne pose pas de cookies et ne prend pas d'empreinte des utilisateurs. Seul votre serveur voit la vérification.",
+    faqGdprA: "Oui. Cap ne renvoie rien vers l'extérieur, ne pose pas de cookies et ne prend pas d'empreinte des utilisateurs. Seul votre serveur voit la vérification.",
     faqMigrateQ: "Puis-je migrer depuis reCAPTCHA / hCaptcha ?",
-    faqMigrateA:
-      "Oui. L'API siteverify de Cap est compatible avec reCAPTCHA et hCaptcha, il vous suffit de remplacer votre code client par le widget Cap.",
-    faqBotsQ: "Quelle est son efficacité face à de vrais bots ?",
-    faqBotsA:
-      "L'instrumentation de Cap combinée à la preuve de travail rend l'automatisation des abus à grande échelle extrêmement difficile.",
+    faqMigrateA: "Oui. L'API siteverify de Cap est compatible avec reCAPTCHA et hCaptcha, il vous suffit de remplacer votre code client par le widget Cap.",
     faqCostQ: "Combien coûte l'auto-hébergement ?",
-    faqCostA:
-      "Cap Standalone tient sur un VPS à 5 $ pour la plupart des sites. Aucun frais par requête, aucun transfert vers un tiers et aucun quota d'API à atteindre.",
+    faqCostA: "Cap Standalone tient sur un VPS à 5 $ pour la plupart des sites. Aucun frais par requête, aucun transfert vers un tiers et aucun quota d'API à atteindre.",
     faqOpenQ: "Qu'est-ce qu'un CAPTCHA open source ?",
-    faqOpenA1:
-      "Un CAPTCHA open source est une protection anti-bot dont vous pouvez lire et auditer le code, et que vous pouvez ",
+    faqOpenA1: "Un CAPTCHA open source est une protection anti-bot dont vous pouvez lire et auditer le code, et que vous pouvez ",
     faqOpenLink: "auto-héberger",
-    faqOpenA2:
-      ", au lieu d'un service tiers fermé. Cap est sous licence Apache 2.0 et tourne entièrement sur votre propre infrastructure : les données des visiteurs n'atteignent jamais un éditeur.",
+    faqOpenA2: ", au lieu d'un service tiers fermé. Cap est sous licence Apache 2.0 et tourne entièrement sur votre propre infrastructure : les données des visiteurs n'atteignent jamais un éditeur.",
     faqAltQ: "Quelle est la meilleure alternative open source à reCAPTCHA ?",
-    faqAltA1:
-      "Cap est une alternative auto-hébergée et respectueuse de la vie privée à Google reCAPTCHA, qui utilise la preuve de travail et l'instrumentation plutôt que des puzzles visuels ou du pistage. Comparez-le à ",
+    faqAltA1: "Cap est une alternative auto-hébergée et respectueuse de la vie privée à Google reCAPTCHA, qui utilise la preuve de travail et l'instrumentation plutôt que des puzzles visuels ou du pistage. Comparez-le à ",
     faqAltSep1: ", ",
     faqAltSep2: " et ",
     faqAltA2: " pour trouver ce qui convient à votre stack.",
-
-    // Bottom CTA
-    ctaTitle: "Abandonnez reCAPTCHA cet après-midi.",
-    ctaBody:
-      "Ajoutez le widget à votre site, pointez-le vers un VPS à 5 $ et arrêtez de payer qui que ce soit pour voir le trafic de vos utilisateurs.",
-    ctaStart: "Démarrer en 5 minutes",
-    ctaDemo: "Essayer la démo ",
-    ctaGithub: "Mettre une étoile sur GitHub",
-
-    // Footer
+    startTitle: "Ajoutez-le à un formulaire cet après-midi.",
+    startBody: "Lancez un conteneur Docker, créez une clé de site et placez le widget dans votre formulaire.",
+    startCta: "Lire le démarrage rapide",
+    startGithub: "Voir sur GitHub",
+    startCodeLabel: "Un formulaire protégé par Cap",
     ftTagline1: "Le CAPTCHA auto-hébergé et open source.",
     ftTagline2: "Pas de Google. Pas de télémétrie. Pas de puzzles.",
     ftProductLabel: "Produit",
@@ -737,176 +479,103 @@ export const homeV2Strings = {
     ftEffectiveness: "Efficacité",
     ftCompliance: "Conformité",
     ftCommunity: "Communauté",
-    ftLegal:
-      "Ceci n'est pas un avis juridique. La conformité dépend de votre déploiement.",
+    ftLegal: "Ceci n'est pas un avis juridique. La conformité dépend de votre déploiement.",
   },
   th: {
-    // Widget referral banner
     bannerRegionLabel: "จากวิดเจ็ต Cap",
     bannerVerified: "คุณเพิ่งยืนยันว่าเป็นมนุษย์ด้วย Cap",
     bannerHostPrefix: " บน ",
     bannerVerifiedEnd: "",
-    bannerSub:
-      "คุณปิดแท็บนี้ได้เลย หรือจะอยู่ต่อถ้าอยากรู้ว่า Cap คืออะไร",
+    bannerSub: "คุณปิดแท็บนี้ได้เลย หรือจะอยู่ต่อถ้าอยากรู้ว่า Cap คืออะไร",
     bannerDismiss: "ปิด",
-
-    // Header nav
     navBrandLabel: "หน้าแรก Cap",
     navDocs: "เอกสาร",
-    navFeatures: "ฟีเจอร์",
     navDemo: "เดโม",
     navGithubStars: "ดาว",
-
-    // Hero
-    heroTitle: "CAPTCHA แบบโฮสต์เอง",
-    heroTitleDim: "สำหรับเว็บยุคใหม่",
-    heroLead1: "ไม่มี Google ไม่มีเทเลเมทรี ไม่มีปริศนาภาพ",
-    heroLead2: "ย้ายจาก reCAPTCHA ได้ในไม่กี่นาที",
-    heroCtaStart: "เริ่มใช้ใน 5 นาที ",
-    heroCtaTry: "ลองใช้วิดเจ็ต ",
-    heroDashAlt: "ภาพหน้าจอแดชบอร์ดผู้ดูแลระบบ Cap",
-
-    // Trust bar
-    trustLabel: "ใช้งานจริงบนโปรดักชันโดย",
-
-    // Feature grid
-    featPrivacyTitle: "ให้ความสำคัญกับความเป็นส่วนตัว ไม่มีการติดตาม",
-    featPrivacyBody:
-      "ไม่มีเทเลเมทรี ไม่เชื่อมต่อเครือข่ายบุคคลที่สาม ข้อมูลผู้ใช้อยู่ระหว่างคุณกับผู้ใช้เท่านั้น",
-    featSizeTitle: "เล็กกว่า hCaptcha 250 เท่า",
-    featSizeBody:
-      "ประมาณ 20kb ไม่มี dependency โหลดเสร็จในหลักมิลลิวินาที ไม่ใช่หลักวินาที",
-    featInvisibleTitle: "ต้านทาน GPU และมองไม่เห็น",
-    featInvisibleBody:
-      "PoW, time-lock challenge และ instrumentation ทำงานเงียบ ๆ อยู่เบื้องหลัง",
-    featOpenTitle: "ฟรีและโอเพนซอร์ส",
-    featOpenBody:
-      "ใช้สัญญาอนุญาต Apache 2.0 ตรวจสอบโค้ดได้ fork ได้ โฮสต์เองได้ ไม่มีผู้ให้บริการรายไหนดึงพรมออกจากใต้เท้าคุณได้",
-    featAgentsTitle: "บล็อก AI agent ได้ ถ้าคุณต้องการ",
-    featAgentsBody:
-      "การตั้งค่าแบบเลือกเปิดได้จะปฏิเสธเบราว์เซอร์อัตโนมัติอย่าง Playwright และ Puppeteer ที่ AI agent และสแครปเปอร์ใช้ควบคุมเว็บไซต์ของคุณ ค่าเริ่มต้นคือปิด",
-    featCustomTitle: "ปรับแต่งได้เต็มที่",
-    featCustomBody:
-      "สี ขนาด ตำแหน่ง ไอคอน ควบคุมได้ทั้งหมดผ่านตัวแปร CSS ไม่ถูกล็อกอยู่ใน iframe",
-
-    // Compliance
-    cmplTitle: "สอดคล้องกับข้อกำหนดตั้งแต่แกะกล่อง",
-    cmplBody:
-      "โอเพนซอร์ส โฮสต์เอง และให้ความสำคัญกับความเป็นส่วนตัว ไม่ใช้คุกกี้ ไม่ติดตาม และไม่มีข้อมูลออกจากเซิร์ฟเวอร์ของคุณ",
-    cmplLink: "ดูว่า Cap สอดคล้องอย่างไร ",
-    cmplPrivacyLabel: "ความเป็นส่วนตัวและข้อมูล",
-    cmplAccessibilityLabel: "การเข้าถึง",
-    cmplI18nChip: "การรองรับหลายภาษา (i18n)",
-    cmplRtlChip: "รองรับ RTL",
-
-    // Bundle size
-    speedTitle: "น้ำหนักเพียงเศษเสี้ยว",
-    speedBody:
-      "วิดเจ็ต Cap เบามากและทำงานแบบล่องหน ส่ง JavaScript เพียงราว 20 kB โดยไม่มีสคริปต์จากบุคคลที่สาม",
-    speedNote: "ขนาดบันเดิลฝั่งไคลเอนต์ (minified gzip)",
-
-    // Testimonial
+    heroTitle: "CAPTCHA ที่คุณโฮสต์เองได้",
+    heroTitleDim: "กันบอตและเอเจนต์ AI ออกไป ให้คนจริงผ่าน",
+    heroLead: "Cap หยุดสเครเปอร์ เอเจนต์ AI และเบราว์เซอร์แบบ headless ด้วย proof-of-work และการตรวจเบราว์เซอร์ ไม่ต้องคลิกรูปรถบัส และไม่มีข้อมูลส่งไปที่ Google",
+    heroCtaStart: "ติดตั้งใช้งานใน 5 นาที",
+    heroCtaDocs: "อ่านเอกสาร",
+    demoLabel: "เดโมสด",
+    demoReset: "รีเซ็ตเดโม",
+    demoTry: "ลองเลย",
+    demoTryBot: "สิ่งที่บอตเห็น",
+    demoBotError: "บล็อกเบราว์เซอร์อัตโนมัติแล้ว",
+    demoTabYou: "เบราว์เซอร์ของคุณ",
+    demoTabBot: "Headless Chrome",
+    demoBotNote: "ภาพจำลองของ chrome-headless-shell ที่ควบคุมด้วย Playwright กำลังติ๊กวิดเจ็ตเดียวกันนี้",
+    demoReplay: "เล่นซ้ำ",
+    demoStepChallenge: "ชาเลนจ์",
+    demoStepPow: "Proof of work",
+    demoStepChecks: "การตรวจเบราว์เซอร์",
+    demoStepRedeem: "แลกโทเค็น",
+    demoSubChallenges: "{n} ชาเลนจ์ย่อย",
+    demoProgress: "{n} จาก {total}",
+    demoHashes: "{h} แฮช",
+    demoIssued: "ออกโทเค็นแล้ว",
+    demoRejected: "ถูกปฏิเสธ",
+    demoVerifying: "กำลังตรวจสอบ...",
+    demoSolved: "แก้เสร็จใน {s} วินาที เบราว์เซอร์ของคุณถูกเพิ่มลงในบันทึกแล้ว",
+    torchListLabel: "ตัวอย่างบันทึกคำขอและสิ่งที่ Cap ตัดสิน",
+    trustLine: "ใช้งานจริงที่ bunny.net, AdGuard, Fraunhofer และที่อื่นๆ",
+    agentsTitle: "จับเบราว์เซอร์ที่เอเจนต์ควบคุม",
+    agentsBody: "การละเมิดส่วนใหญ่ทุกวันนี้มาจากเบราว์เซอร์อัตโนมัติ ไม่ใช่ curl เมื่อเปิดการตรวจเบราว์เซอร์ Cap จะตรวจหา Playwright, Puppeteer, Selenium, Camoufox และปลั๊กอินพรางตัว การตัดสินเกิดขึ้นบนเซิร์ฟเวอร์ของคุณ เบราว์เซอร์ที่ถูกแก้ไขจึงรับรองตัวเองไม่ได้",
+    agentsLink: "การตรวจจับทำงานอย่างไร",
+    agentsResultLabel: "สิ่งที่เซิร์ฟเวอร์ของคุณได้รับกลับมาจากบอต",
+    dashTitle: "ทราฟฟิกของคุณ อยู่บนเซิร์ฟเวอร์ของคุณ",
+    dashBody: "Standalone มีแดชบอร์ดสำหรับทุกคีย์ไซต์ แสดงจำนวนโจทย์ การผ่าน และความล้มเหลวตามเวลา รวมถึงแหล่งที่มาและเครือข่ายที่ใช้ การค้นหาประเทศและเครือข่ายใช้ฐานข้อมูลบนเซิร์ฟเวอร์ของคุณเอง",
+    dashAlt: "แดชบอร์ด Cap Standalone แสดงจำนวนโจทย์ การผ่าน และความล้มเหลวของคีย์ไซต์ แยกตามประเทศ เครือข่าย และแพลตฟอร์ม",
+    dashFacts: [["ตั้งค่าแยกตามคีย์ไซต์", "กำหนดความยาก การตรวจเบราว์เซอร์ และการจำกัดอัตราแยกสำหรับแต่ละไซต์"], ["IP ที่ถูกบล็อก", "บล็อกที่อยู่หรือช่วง IP จากแดชบอร์ดเมื่อมีอะไรหลุดผ่านมา"], ["คอนเทนเนอร์ Docker เดียว", "Standalone รันเป็นอิมเมจเดียวคู่กับ Redis หรือ Valkey"]],
+    gridTitle: "เครื่องมือที่เหลือ",
+    gridBody: "ทุกอย่างในส่วนนี้อยู่ในรุ่นโอเพนซอร์ส ไม่มีแพ็กเกจเสียเงินที่กั๊กฟีเจอร์ไว้",
+    cellModesTitle: "แบบช่องติ๊ก ลอย หรือมองไม่เห็น",
+    cellModesBody: "แสดงช่องติ๊ก ซ่อนไว้จนกว่าจะกดปุ่ม หรือแก้โจทย์เบื้องหลังจากโค้ดของคุณเอง",
+    cellPowTitle: "Proof-of-work ที่ GPU ข้ามไม่ได้",
+    cellPowBody: "HashWX สร้างฟังก์ชันแฮชใหม่ทุกโจทย์ GPU จึงเร็วกว่า CPU เพียงราว 2 เท่า แทนที่จะเป็น 150 เท่า",
+    cellRateTitle: "การจำกัดอัตรา",
+    cellRateBody: "จำกัดจำนวนโจทย์ที่ IP หนึ่งขอได้ในช่วงเวลาหนึ่ง ทั้งอินสแตนซ์หรือเฉพาะคีย์ไซต์",
+    cellPrivacyTitle: "ไม่มีคุกกี้ ไม่มีการติดตาม",
+    cellPrivacyBody: "ไม่มีข้อมูลส่งไปยังบุคคลที่สาม การตรวจด้านความเป็นส่วนตัวจึงสั้นในเขตอำนาจศาลส่วนใหญ่",
+    cellSizeTitle: "ราว 20 kB",
+    cellSizeBody: "วิดเจ็ตมีขนาดราว 20 kB หลัง minify และ gzip ส่วน reCAPTCHA มีขนาดราว 500 kB",
+    cellApiTitle: "แบ็กเอนด์ใดก็ได้",
+    cellApiBody: "ตรวจโทเค็นด้วย POST เดียวไปที่ /siteverify จากภาษาใดก็ได้ รูปแบบคำตอบเหมือนของ reCAPTCHA",
+    powSource: "อัตราเร่งของ GPU เทียบกับ CPU 16 เธรด ตัวเลขจาก tevador ผู้สร้าง HashWX",
     quoteLead: "Cap เข้ากับ AdGuard Temp Mail ได้ดี เราใช้มันเป็น",
     quoteHl1: "ชั้น CAPTCHA แบบล่องหนที่โฮสต์เอง",
     quoteMid1: " ร่วมกับ",
     quoteHl2: "challenge แบบ proof-of-work และ browser instrumentation",
-    quoteMid2:
-      " ซึ่งช่วยให้เราเพิ่มการป้องกันการใช้งานในทางที่ผิด ขณะที่ยังคงประสบการณ์ที่",
+    quoteMid2: " ซึ่งช่วยให้เราเพิ่มการป้องกันการใช้งานในทางที่ผิด ขณะที่ยังคงประสบการณ์ที่",
     quoteHl3: "เบาและไม่รบกวน",
     quoteEnd: "สำหรับผู้ใช้ทั่วไป",
     quoteRole: "Head of PR, AdGuard",
-
-    // Comparison
-    compareTitle: "เทียบกับเจ้าอื่น",
-    compareBody:
-      "Cap คือตัวเลือกที่ฟรี โอเพนซอร์ส และโฮสต์เองได้ ระดับการตรวจจับเทียบเท่าเจ้าใหญ่ โดยไม่ต้องส่งข้อมูลผู้ใช้ให้บุคคลที่สาม",
-    compareLink: "ดูการเปรียบเทียบทั้งหมด ",
-    compareSelfTitle: "โฮสต์เอง",
-    compareSelfBody:
-      "ทำงานบนเซิร์ฟเวอร์ของคุณทั้งหมด ส่วน reCAPTCHA, hCaptcha และ Turnstile มีแต่บนคลาวด์",
-    compareOpenTitle: "โอเพนซอร์ส",
-    compareOpenBody:
-      "Apache 2.0 อ่านโค้ดได้ fork ได้ เป็นของคุณเอง ขณะที่สามเจ้าใหญ่ปิดซอร์สทั้งหมด",
-    comparePuzzlesTitle: "ไม่มีปริศนาภาพ",
-    comparePuzzlesBody:
-      "proof-of-work แบบล่องหน ไม่ต้องกดเลือกทางม้าลาย ส่วน reCAPTCHA และ hCaptcha ยังแสดงปริศนาอยู่",
-    compareTelemetryTitle: "ไม่มีเทเลเมทรีจากบุคคลที่สาม",
-    compareTelemetryBody:
-      "ข้อมูลผู้เข้าชมไม่เคยออกจากเซิร์ฟเวอร์ของคุณ ขณะที่ Google, Cloudflare และ hCaptcha ล้วนส่งข้อมูลกลับ",
-    compareFreeTitle: "ฟรีไม่ว่าจะสเกลแค่ไหน",
-    compareFreeBody:
-      "ไม่มีโควตา ไม่มีค่าธรรมเนียมต่อคำขอ ส่วน reCAPTCHA และ hCaptcha จำกัดปริมาณหรือคิดเงิน",
-    compareLayersTitle: "ป้องกันหลายชั้น",
-    compareLayersBody:
-      "proof-of-work ซ้อนกับ challenge แบบ JavaScript instrumentation ที่สร้างขึ้นใหม่ทุกครั้ง",
-
-    // Widget demo
-    widgetDemoTitle: "ลองแก้ challenge ของ Cap ดู",
-
-    // Two layers
-    layersTitle1: "สองชั้นที่เป็นอิสระต่อกัน",
-    layersTitle2: "ผ่านชั้นหนึ่งไปได้ อีกชั้นก็ยังอยู่",
-    layersBody:
-      "ทุก challenge จะแก้ proof-of-work และรัน browser instrumentation ไปพร้อมกัน การเจาะชั้นหนึ่งได้ไม่ได้แปลว่าเจาะอีกชั้นได้",
-    layersPowLabel: "ชั้นที่ 01",
-    layersPowTitle: "PoW และ time-lock",
-    layersPowBody:
-      "ไคลเอนต์แก้แฮช SHA-256 แบบขนานและ time-lock challenge ใน WASM ซึ่งปรับมาเพื่อรับมือกับการเร่งความเร็วด้วย GPU",
-    layersKvHashes: "แฮช/วินาที",
-    layersKvTarget: "เป้าหมาย",
-    layersJsLabel: "ชั้นที่ 02",
-    layersJsTitle: "JS instrumentation",
-    layersJsBody:
-      "โปรแกรม JS ที่สร้างขึ้นใหม่ทุกครั้งจะรันการตรวจสอบ JavaScript, DOM และเบราว์เซอร์ที่ซับซ้อน",
-
-    // Stats
-    statsLabel: "คำขอ CDN · 12 เดือน",
-
-    // Closer strip
-    closerSizeLabel: "ขนาด",
-    closerSizeNote: "เทียบกับ hCaptcha 600 kb+",
-    closerTrackersLabel: "ตัวติดตาม",
-    closerTrackersNote: "เทียบกับ reCAPTCHA",
-    closerCostLabel: "ค่าใช้จ่าย",
-    closerCostNote: "เทียบกับ hCaptcha $1k+",
-    closerSetupLabel: "การติดตั้ง",
-    closerSetupNote: "คอนเทนเนอร์ Docker",
-
-    // FAQ
+    statsLine: "ในปีที่ผ่านมา เบราว์เซอร์ดึงตัวแก้โจทย์ของ Cap จาก jsDelivr ไป {n} ครั้ง",
+    statsFallback: "มากกว่าหนึ่งพันล้าน",
+    faqTitle: "คำถาม",
+    faqMore: "ดูคำตอบเพิ่มเติมในเอกสาร",
+    faqAgentsQ: "มันหยุดสเครเปอร์ AI ได้ไหม",
+    faqAgentsA: "ได้ Cap บล็อกเบราว์เซอร์อัตโนมัติที่เอเจนต์ AI ส่วนใหญ่ใช้ท่องเว็บ ส่วนสเครเปอร์ HTTP ล้วนรันโจทย์ไม่ได้ จึงไม่มีทางได้โทเค็น",
     faqGdprQ: "รองรับ GDPR หรือไม่?",
-    faqGdprA:
-      "รองรับ Cap ไม่ส่งข้อมูลกลับ ไม่ตั้งคุกกี้ และไม่เก็บลายนิ้วมือผู้ใช้ มีแค่เซิร์ฟเวอร์ของคุณที่เห็นผลการยืนยัน ไม่มีใครอื่นเห็น",
+    faqGdprA: "รองรับ Cap ไม่ส่งข้อมูลกลับ ไม่ตั้งคุกกี้ และไม่เก็บลายนิ้วมือผู้ใช้ มีแค่เซิร์ฟเวอร์ของคุณที่เห็นผลการยืนยัน ไม่มีใครอื่นเห็น",
     faqMigrateQ: "ย้ายจาก reCAPTCHA / hCaptcha ได้ไหม?",
-    faqMigrateA:
-      "ได้ API siteverify ของ Cap เข้ากันได้กับ reCAPTCHA และ hCaptcha เพียงเปลี่ยนโค้ดฝั่งไคลเอนต์มาใช้วิดเจ็ตของ Cap",
-    faqBotsQ: "ได้ผลแค่ไหนกับบอทจริง ๆ?",
-    faqBotsA:
-      "instrumentation ของ Cap เมื่อรวมกับ proof-of-work ทำให้การใช้งานในทางที่ผิดแบบอัตโนมัติในสเกลใหญ่ทำได้ยากมาก",
+    faqMigrateA: "ได้ API siteverify ของ Cap เข้ากันได้กับ reCAPTCHA และ hCaptcha เพียงเปลี่ยนโค้ดฝั่งไคลเอนต์มาใช้วิดเจ็ตของ Cap",
     faqCostQ: "โฮสต์เองมีค่าใช้จ่ายเท่าไร?",
-    faqCostA:
-      "สำหรับเว็บส่วนใหญ่ Cap Standalone รันบน VPS ราคา $5 ได้สบาย ไม่มีค่าธรรมเนียมต่อคำขอ ไม่มีทราฟฟิกออกไปหาบุคคลที่สาม และไม่มีโควตา API ให้ชน",
+    faqCostA: "สำหรับเว็บส่วนใหญ่ Cap Standalone รันบน VPS ราคา $5 ได้สบาย ไม่มีค่าธรรมเนียมต่อคำขอ ไม่มีทราฟฟิกออกไปหาบุคคลที่สาม และไม่มีโควตา API ให้ชน",
     faqOpenQ: "CAPTCHA แบบโอเพนซอร์สคืออะไร?",
-    faqOpenA1:
-      "CAPTCHA แบบโอเพนซอร์สคือระบบป้องกันบอทที่คุณอ่านโค้ด ตรวจสอบ และ",
+    faqOpenA1: "CAPTCHA แบบโอเพนซอร์สคือระบบป้องกันบอทที่คุณอ่านโค้ด ตรวจสอบ และ",
     faqOpenLink: "โฮสต์เอง",
-    faqOpenA2:
-      "ได้ แทนที่จะเป็นบริการปิดจากบุคคลที่สาม Cap ใช้สัญญาอนุญาต Apache 2.0 และรันบนโครงสร้างพื้นฐานของคุณทั้งหมด ข้อมูลผู้เข้าชมจึงไม่ถูกส่งไปถึงผู้ให้บริการรายใด",
+    faqOpenA2: "ได้ แทนที่จะเป็นบริการปิดจากบุคคลที่สาม Cap ใช้สัญญาอนุญาต Apache 2.0 และรันบนโครงสร้างพื้นฐานของคุณทั้งหมด ข้อมูลผู้เข้าชมจึงไม่ถูกส่งไปถึงผู้ให้บริการรายใด",
     faqAltQ: "ทางเลือกโอเพนซอร์สที่ดีที่สุดแทน reCAPTCHA คืออะไร?",
-    faqAltA1:
-      "Cap เป็นทางเลือกแทน Google reCAPTCHA ที่โฮสต์เองได้และให้ความสำคัญกับความเป็นส่วนตัว โดยใช้ proof-of-work และ instrumentation แทนปริศนาภาพหรือการติดตาม ลองเทียบกับ ",
+    faqAltA1: "Cap เป็นทางเลือกแทน Google reCAPTCHA ที่โฮสต์เองได้และให้ความสำคัญกับความเป็นส่วนตัว โดยใช้ proof-of-work และ instrumentation แทนปริศนาภาพหรือการติดตาม ลองเทียบกับ ",
     faqAltSep1: ", ",
     faqAltSep2: " และ ",
     faqAltA2: " เพื่อดูว่าตัวไหนเหมาะกับสแตกของคุณ",
-
-    // Bottom CTA
-    ctaTitle: "เลิกใช้ reCAPTCHA ได้ตั้งแต่บ่ายนี้",
-    ctaBody:
-      "วางวิดเจ็ตลงในเว็บของคุณ ชี้ไปที่ VPS ราคา $5 แล้วเลิกจ่ายเงินให้ใครก็ตามเพื่อแลกกับการให้เขาเห็นทราฟฟิกของผู้ใช้คุณ",
-    ctaStart: "เริ่มใช้ใน 5 นาที",
-    ctaDemo: "ลองเดโม ",
-    ctaGithub: "ให้ดาวบน GitHub",
-
-    // Footer
+    startTitle: "ใส่ลงในฟอร์มได้ภายในบ่ายนี้",
+    startBody: "รันคอนเทนเนอร์ Docker หนึ่งตัว สร้างคีย์ไซต์ แล้ววางวิดเจ็ตลงในฟอร์มของคุณ",
+    startCta: "อ่านคู่มือเริ่มต้น",
+    startGithub: "ดูบน GitHub",
+    startCodeLabel: "ฟอร์มที่ป้องกันด้วย Cap",
     ftTagline1: "CAPTCHA แบบโฮสต์เองและโอเพนซอร์ส",
     ftTagline2: "ไม่มี Google ไม่มีเทเลเมทรี ไม่มีปริศนา",
     ftProductLabel: "ผลิตภัณฑ์",
@@ -923,7 +592,6 @@ export const homeV2Strings = {
     ftEffectiveness: "ประสิทธิภาพ",
     ftCompliance: "การปฏิบัติตามข้อกำหนด",
     ftCommunity: "ชุมชน",
-    ftLegal:
-      "ข้อมูลนี้ไม่ใช่คำแนะนำทางกฎหมาย การปฏิบัติตามข้อกำหนดขึ้นอยู่กับการติดตั้งใช้งานของคุณ",
+    ftLegal: "ข้อมูลนี้ไม่ใช่คำแนะนำทางกฎหมาย การปฏิบัติตามข้อกำหนดขึ้นอยู่กับการติดตั้งใช้งานของคุณ",
   },
 };

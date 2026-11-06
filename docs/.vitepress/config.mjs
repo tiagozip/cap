@@ -81,9 +81,9 @@ const ORGANIZATION = {
 // FAQ rich results). Composite answers are concatenated exactly as the
 // template renders them, including link texts.
 const faqItemsFromStrings = (s) => [
+  [s.faqAgentsQ, s.faqAgentsA.trim()],
   [s.faqGdprQ, s.faqGdprA.trim()],
   [s.faqMigrateQ, s.faqMigrateA.trim()],
-  [s.faqBotsQ, s.faqBotsA.trim()],
   [s.faqCostQ, s.faqCostA.trim()],
   [s.faqOpenQ, `${s.faqOpenA1}${s.faqOpenLink}${s.faqOpenA2}`.trim()],
   [

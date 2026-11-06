@@ -54,8 +54,8 @@ const groups = [
       },
       {
         code: "152-FZ",
-        region: "Russia",
-        flag: "ru",
+        region: "Personal data law",
+        flag: "law",
         name: 'Federal Law No. 152-FZ "On Personal Data"',
         note: "Self-host on your own infrastructure, including in-region. No cookies, tracking, profiling, or third-party calls are required in the verification flow.",
       },
@@ -120,6 +120,24 @@ const groups = [
                   <circle cx="16" cy="16" r="10" />
                   <ellipse cx="16" cy="16" rx="4.2" ry="10" />
                   <path d="M6.4 13h19.2M6.4 19h19.2M16 6v20" />
+                </g>
+              </svg>
+              <svg
+                v-else-if="item.flag === 'law'"
+                viewBox="0 0 32 32"
+                width="28"
+                height="28"
+              >
+                <rect x="1" y="1" width="30" height="30" rx="6" fill="#45475a" />
+                <g
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M11 7h7l5 5v13H11z" />
+                  <path d="M18 7v5h5M14 17h6M14 21h6" />
                 </g>
               </svg>
               <img
