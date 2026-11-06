@@ -4,11 +4,18 @@ import { useData } from "vitepress";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
 import VPNavBarTranslations from "vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue";
 import HomeDemo from "./HomeDemo.vue";
+import HomeOdometer from "./HomeOdometer.vue";
 import HomeToolbox from "./HomeToolbox.vue";
 import { homeV2Strings } from "./homeV2.strings.js";
 
 const { localeIndex, lang } = useData();
 const t = computed(() => ({ ...homeV2Strings.en, ...homeV2Strings[localeIndex.value] }));
+const heroLines = computed(() => {
+  let i = 0;
+  return [t.value.heroTitle, t.value.heroTitleDim].map((line) => line.split(" ").map((w) => ({ w, i: i++ })));
+});
+const trustParts = computed(() => t.value.trustLine.split("{n}"));
+const numLang = computed(() => (localeIndex.value === "root" ? "en" : localeIndex.value));
 const lp = computed(() => (localeIndex.value === "root" ? "" : `/${localeIndex.value}`));
 
 const faq = computed(() => {
@@ -241,8 +248,9 @@ onBeforeUnmount(() => {
             <HomeDemo :t="t">
               <div class="hero-copy">
                 <h1>
-                  <span>{{ t.heroTitle }}</span>
-                  <span>{{ t.heroTitleDim }}</span>
+                  <span v-for="(line, n) in heroLines" :key="n"
+                    ><template v-for="{ w, i } in line" :key="i"><span class="w" :style="`--i: ${i}`">{{ w }}</span>{{ " " }}</template></span
+                  >
                 </h1>
                 <p class="lead">{{ t.heroLead }}</p>
                 <div class="actions">
@@ -258,7 +266,7 @@ onBeforeUnmount(() => {
       <section class="band trust">
         <div class="wrap">
           <div class="frame trust-inner">
-            <p>{{ t.trustLine }}</p>
+            <p>{{ trustParts[0] }}<HomeOdometer :lang="numLang" />{{ trustParts[1] }}</p>
             <div class="logos">
               <img src="/logos/bunny-duo.svg" alt="bunny.net" width="112" height="43" loading="lazy" />
               <img src="/logos/adguard-duo.svg" alt="AdGuard" width="104" height="24" loading="lazy" />
@@ -510,6 +518,8 @@ html.home-v2-active {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --radius: 10px;
   --frame-pad: 48px;
+  --wrap-pad: 24px;
+  --tick: #585b70;
 
   background: var(--ground);
   color: var(--text);
@@ -597,7 +607,7 @@ html.home-v2-active main.main {
   width: 100%;
   max-width: 1168px;
   margin-inline: auto;
-  padding-inline: 24px;
+  padding-inline: var(--wrap-pad);
 }
 #homev2 .frame {
   padding-inline: var(--frame-pad);
@@ -612,6 +622,38 @@ html.home-v2-active main.main {
 #homev2 .band + .band {
   border-bottom: 0;
   border-top: 1px solid var(--edge);
+}
+#homev2 .band + .band > .wrap,
+#homev2 .top > .wrap {
+  position: relative;
+}
+#homev2 .band + .band > .wrap::before,
+#homev2 .band + .band > .wrap::after,
+#homev2 .top > .wrap::before,
+#homev2 .top > .wrap::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  z-index: 2;
+  width: 6px;
+  height: 11px;
+  background: var(--tick);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  pointer-events: none;
+}
+#homev2 .top > .wrap::before,
+#homev2 .top > .wrap::after {
+  top: auto;
+  bottom: -6px;
+}
+#homev2 .band + .band > .wrap::before,
+#homev2 .top > .wrap::before {
+  left: var(--wrap-pad);
+}
+#homev2 .band + .band > .wrap::after,
+#homev2 .top > .wrap::after {
+  right: var(--wrap-pad);
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
 #homev2 .section {
   padding-block: 96px;
@@ -859,6 +901,11 @@ html.home-v2-active main.main {
 #homev2 .hero .frame {
   overflow: clip;
 }
+#homev2 .top,
+#homev2 .hero {
+  -webkit-user-select: none;
+  user-select: none;
+}
 #homev2 .hero-copy {
   max-width: 880px;
   margin-inline: auto;
@@ -871,7 +918,7 @@ html.home-v2-active main.main {
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
-#homev2 h1 span {
+#homev2 h1 > span {
   display: block;
   width: fit-content;
   margin-inline: auto;
@@ -886,6 +933,59 @@ html.home-v2-active main.main {
   justify-content: center;
   margin-top: 28px;
 }
+#homev2 h1 .w {
+  display: inline-block;
+  transform-origin: 0 100%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #homev2 .hero .w {
+    animation: hero-word 1100ms var(--ease-out) calc(80ms + var(--i) * 42ms) both;
+  }
+  #homev2 .hero .lead {
+    animation: hero-rise 1000ms var(--ease-out) 520ms both;
+  }
+  #homev2 .hero .actions > a {
+    animation: hero-rise 900ms var(--ease-out) 640ms both;
+  }
+  #homev2 .hero .actions > a + a {
+    animation-delay: 710ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #homev2 .hero .lead,
+  #homev2 .hero .actions {
+    animation: hero-fade 500ms ease both;
+  }
+}
+@keyframes hero-word {
+  from {
+    opacity: 0;
+    transform: translateY(0.45em) rotate(2deg);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+  }
+}
 #homev2 .trust-inner {
   display: flex;
   align-items: center;
@@ -894,7 +994,9 @@ html.home-v2-active main.main {
   padding-block: 36px;
 }
 #homev2 .trust p {
-  max-width: 22em;
+  max-width: 25em;
+  text-wrap: balance;
+  word-break: keep-all;
   font-size: 0.9375rem;
   color: var(--text-secondary);
 }
@@ -1404,8 +1506,8 @@ html.home-v2-active main.main {
   html.home-v2-active {
     --frame-pad: 16px;
   }
-  #homev2 .wrap {
-    padding-inline: 12px;
+  html.home-v2-active {
+    --wrap-pad: 12px;
   }
   #homev2 .top nav {
     gap: 14px;

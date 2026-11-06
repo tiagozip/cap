@@ -513,48 +513,44 @@ function breadcrumbList(pageData) {
 
 const SEARCH_TEXT = {
   zh: {
-    placeholder: "搜索文档",
     button: "搜索",
-    cancel: "取消",
+    details: "显示详细列表",
     reset: "清除查询",
+    back: "关闭搜索",
     noResults: "没有找到相关结果",
     select: "选择",
     navigate: "切换",
     close: "关闭",
-    searchBy: "搜索服务由",
   },
   de: {
-    placeholder: "Doku durchsuchen",
     button: "Suchen",
-    cancel: "Abbrechen",
+    details: "Detailansicht",
     reset: "Suche zurücksetzen",
-    noResults: "Keine Ergebnisse gefunden",
+    back: "Suche schließen",
+    noResults: "Keine Ergebnisse für",
     select: "auswählen",
     navigate: "navigieren",
     close: "schließen",
-    searchBy: "Suche von",
   },
   fr: {
-    placeholder: "Rechercher dans la doc",
     button: "Rechercher",
-    cancel: "Annuler",
+    details: "Afficher les détails",
     reset: "Effacer la recherche",
-    noResults: "Aucun résultat trouvé",
+    back: "Fermer la recherche",
+    noResults: "Aucun résultat pour",
     select: "sélectionner",
     navigate: "naviguer",
     close: "fermer",
-    searchBy: "Recherche par",
   },
   th: {
-    placeholder: "ค้นหาเอกสาร",
     button: "ค้นหา",
-    cancel: "ยกเลิก",
+    details: "แสดงรายละเอียด",
     reset: "ล้างคำค้นหา",
-    noResults: "ไม่พบผลลัพธ์",
+    back: "ปิดการค้นหา",
+    noResults: "ไม่พบผลลัพธ์สำหรับ",
     select: "เลือก",
     navigate: "เลื่อน",
     close: "ปิด",
-    searchBy: "ค้นหาโดย",
   },
 };
 
@@ -564,18 +560,14 @@ const SEARCH_LOCALES = Object.fromEntries(
     return [
       loc,
       {
-        placeholder: s.placeholder,
         translations: {
           button: { buttonText: s.button, buttonAriaLabel: s.button },
           modal: {
-            searchBox: { cancelButtonText: s.cancel, resetButtonTitle: s.reset },
-            noResultsScreen: { noResultsText: s.noResults },
-            footer: {
-              selectText: s.select,
-              navigateText: s.navigate,
-              closeText: s.close,
-              searchByText: s.searchBy,
-            },
+            displayDetails: s.details,
+            resetButtonTitle: s.reset,
+            backButtonTitle: s.back,
+            noResultsText: s.noResults,
+            footer: { selectText: s.select, navigateText: s.navigate, closeText: s.close },
           },
         },
       },
@@ -610,6 +602,16 @@ const SITE_META = {
   },
 };
 
+const navFor = (loc) => {
+  const h = { ...homeV2Strings.en, ...homeV2Strings[loc === "root" ? "en" : loc] };
+  const p = LOCALE_INFO[loc].prefix;
+  return [
+    { text: h.navDocs, link: `${p}/guide/`, activeMatch: `^${p}/guide/(?!demo|alternatives)` },
+    { text: h.navDemo, link: `${p}/guide/demo.html`, activeMatch: `^${p}/guide/demo` },
+    { text: h.ftCompareLabel, link: `${p}/guide/alternatives.html`, activeMatch: `^${p}/guide/alternatives` },
+  ];
+};
+
 const localeConfig = (loc) => {
   const t = UI[loc];
   const p = LOCALE_INFO[loc].prefix;
@@ -618,11 +620,7 @@ const localeConfig = (loc) => {
     lang: LOCALE_INFO[loc].lang,
     ...SITE_META[loc],
     themeConfig: {
-      nav: [
-        { text: t.home, link: `${p}/` },
-        { text: t.docs, link: `${p}/guide/` },
-        { text: "GitHub", link: GITHUB_URL },
-      ],
+      nav: navFor(loc),
       sidebar: sidebarFor(loc),
       editLink: {
         pattern: `${GITHUB_URL}/edit/main/docs/:path`,
@@ -910,16 +908,8 @@ export default withMermaid({
   ],
   themeConfig: {
     search: {
-      provider: "algolia",
+      provider: "local",
       options: {
-        appId: "B8THEYC8QW",
-        apiKey: "ebdc4d8bd68e388cbeca09c14b982a85",
-        indexName: "cap-tiagorangel",
-        // Note: no per-locale `searchParameters.facetFilters` needed here.
-        // VitePress's VPAlgoliaSearchBox strips any user-provided `lang:*`
-        // facet filter and always injects `lang:<current locale lang>` itself,
-        // so English pages query with lang:en-US and zh pages with lang:zh-CN
-        // automatically (requires `lang` to be a facet attribute on the index).
         locales: SEARCH_LOCALES,
       },
     },
@@ -930,11 +920,7 @@ export default withMermaid({
       pattern: "https://github.com/tiagozip/cap/edit/main/docs/:path",
     },
 
-    nav: [
-      { text: "Home", link: "/" },
-      { text: "Docs", link: "/guide" },
-      { text: "GitHub", link: GITHUB_URL },
-    ],
+    nav: navFor("root"),
 
     sidebar: sidebarFor("root"),
 
@@ -949,6 +935,7 @@ export default withMermaid({
     },
   },
   markdown: {
+    theme: "catppuccin-mocha",
     image: {
       lazyLoading: true,
     },

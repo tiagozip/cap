@@ -92,19 +92,6 @@ cap-widget.demo-widget-highlight {
   display: block;
   width: fit-content !important;
   border-radius: 14px;
-  animation: demo-widget-pulse 1.6s ease-out 0.4s 2;
   height: 58px;
-}
-
-@keyframes demo-widget-pulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--vp-c-brand-1) 65%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 14px color-mix(in srgb, var(--vp-c-brand-1) 0%, transparent);
-  }
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--vp-c-brand-1) 0%, transparent);
-  }
 }
 </style>

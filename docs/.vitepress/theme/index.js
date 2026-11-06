@@ -1,15 +1,18 @@
 import DefaultTheme from "vitepress/theme";
+import { h } from "vue";
 import Benchmark from "./components/Benchmark.vue";
 import Compliance from "./components/Compliance.vue";
 import Demo from "./components/Demo.vue";
 import DemoReply from "./components/DemoReply.vue";
 import DemoTabs from "./components/DemoTabs.vue";
+import GithubStars from "./components/GithubStars.vue";
 import HomeV2 from "./components/HomeV2.vue";
 import "./style.css";
 
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
+  Layout: () => h(DefaultTheme.Layout, null, { "nav-bar-content-after": () => h(GithubStars) }),
   enhanceApp({ app, router, siteData }) {
     if (typeof window !== "undefined") {
       const known = Object.keys(siteData.value.locales).filter((k) => k !== "root");

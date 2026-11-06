@@ -80,10 +80,13 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     aimed: false,
     busy: false,
     churn: 0,
-    lastInput: 0,
+    lastInput: Number.NEGATIVE_INFINITY,
     phase: 0,
     wasIdle: false,
+    near: false,
+    idleSince: 0,
   };
+  const NEAR = 96;
   const IDLE_AFTER = 2600;
   let idleTimer = 0;
   const touched = () => {
@@ -91,7 +94,7 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     clearTimeout(idleTimer);
     if (!reduced) idleTimer = setTimeout(() => kick(), IDLE_AFTER + 50);
   };
-  const idling = (now) => !reduced && !state.focus && now - state.lastInput > IDLE_AFTER;
+  const idling = (now) => !reduced && !state.focus && !state.near && now - state.lastInput > IDLE_AFTER;
 
   const goal = () => ({
     half: state.focus ? 0.14 : width < 640 ? 0.4 : 0.28,
@@ -553,10 +556,11 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     if (idle && !state.wasIdle) {
       const k = wrapAngle(state.aim - rest) / amp;
       state.phase = Math.asin(Math.max(-1, Math.min(1, k)));
+      state.idleSince = now;
     }
     state.wasIdle = idle;
     if (idle) {
-      const t = (now - state.lastInput - IDLE_AFTER) / 1000;
+      const t = (now - state.idleSince) / 1000;
       state.target = rest + Math.sin(t * 0.32 + state.phase) * amp + Math.sin(t * 0.11) * 0.18;
     }
     const ease = reduced ? 1 : idle ? 0.045 : 0.16;
@@ -588,10 +592,38 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     aimAt(clientX - f.left, clientY - f.top);
   };
 
+  const release = () => {
+    if (!state.near) return;
+    state.near = false;
+    state.lastInput = Number.NEGATIVE_INFINITY;
+    clearTimeout(idleTimer);
+    kick();
+  };
+
   const onMove = (e) => {
-    if (e.target.closest?.("[data-torch-ignore]")) return;
-    touched();
+    if (e.pointerType === "touch") {
+      if (!field.contains(e.target) || e.target.closest?.("[data-torch-ignore]")) return;
+      touched();
+      aimClient(e.clientX, e.clientY);
+      return;
+    }
+    const f = field.getBoundingClientRect();
+    const inside =
+      e.clientX > f.left - NEAR && e.clientX < f.right + NEAR && e.clientY > f.top - NEAR && e.clientY < f.bottom + NEAR;
+    if (!inside) {
+      release();
+      return;
+    }
+    state.near = true;
+    state.lastInput = performance.now();
+    if (e.target.closest?.("[data-torch-ignore]")) {
+      kick();
+      return;
+    }
     aimClient(e.clientX, e.clientY);
+  };
+  const onOut = (e) => {
+    if (!e.relatedTarget) release();
   };
   const onDown = (e) => {
     if (e.target.closest?.("[data-torch-ignore]")) return;
@@ -607,7 +639,8 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     kick();
   };
 
-  field.addEventListener("pointermove", onMove, { passive: true });
+  window.addEventListener("pointermove", onMove, { passive: true });
+  document.addEventListener("pointerout", onOut, { passive: true });
   field.addEventListener("pointerdown", onDown, { passive: true });
   window.addEventListener("pointerup", onUp, { passive: true });
   window.addEventListener("pointercancel", onUp, { passive: true });
@@ -626,9 +659,14 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     build();
   });
   ro.observe(field);
+  const settle = () => {
+    if (!lastSize) return;
+    measureOrigin();
+    drawBase();
+    render(performance.now());
+  };
+  field.addEventListener("animationend", settle);
   for (const el of avoid()) if (el) ro.observe(el);
-
-  touched();
 
   const io = new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
@@ -662,8 +700,10 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
       cancelAnimationFrame(state.frame);
       ro.disconnect();
       io.disconnect();
-      field.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerout", onOut);
       field.removeEventListener("pointerdown", onDown);
+      field.removeEventListener("animationend", settle);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     },

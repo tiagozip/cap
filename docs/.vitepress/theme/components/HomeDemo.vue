@@ -306,6 +306,24 @@ onBeforeUnmount(() => {
 }
 #homev2 .field.is-lit .field-canvas {
   opacity: 1;
+  transition: opacity 1800ms ease 200ms;
+}
+@media (prefers-reduced-motion: no-preference) {
+  #homev2 .hero .demo {
+    animation: hero-card 1200ms var(--ease-out) 780ms both;
+  }
+}
+@keyframes hero-card {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
 }
 #homev2 .field-copy,
 #homev2 .demo {
