@@ -94,14 +94,14 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
   const idling = (now) => !reduced && !state.focus && now - state.lastInput > IDLE_AFTER;
 
   const goal = () => ({
-    half: state.focus ? 0.14 : 0.28,
+    half: state.focus ? 0.14 : width < 640 ? 0.4 : 0.28,
     reach: state.focus ? Math.max(width, height) * 1.1 : Math.min(900, Math.max(width, height) * 0.72),
   });
 
   const measureOrigin = () => {
     const f = field.getBoundingClientRect();
     const l = lamp().getBoundingClientRect();
-    state.ox = l.left - f.left + 28;
+    state.ox = l.left - f.left + (f.width < 640 ? l.width / 2 : 28);
     state.oy = l.top - f.top + l.height / 2;
   };
 
@@ -153,17 +153,19 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
 
   const drawBase = () => {
     const zones = rects();
+    const narrow = width < 640;
     for (let r = 0; r < rows; r++) {
       const y = r * cellH + cellH / 2;
       for (let c = 0; c < cols; c++) {
         const x = c * cellW + cellW / 2;
         let m = 1;
         let s = 1;
-        for (const z of zones) {
+        zones.forEach((z, k) => {
           const d = Math.hypot(Math.max(z.l - x, 0, x - z.r), Math.max(z.t - y, 0, y - z.b));
-          m = Math.min(m, smooth(8, 64, d));
-          s *= smooth(4, 190, d);
-        }
+          const soft = narrow && k < zones.length - 1;
+          m = Math.min(m, soft ? Math.max(0.16, smooth(4, 40, d)) : smooth(8, 64, d));
+          s *= soft ? Math.max(0.62, smooth(4, 90, d)) : smooth(4, 190, d);
+        });
         mask[r * cols + c] = m;
         shade[r * cols + c] = Math.min(m, s);
       }
@@ -437,7 +439,7 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
           ctx.fillRect(x0, r * cellH, Math.ceil(cellW) + 1, cellH);
         }
         lctx.fillStyle = light > 0.6 ? `rgb(${core})` : palette.lit;
-        lctx.globalAlpha = Math.min(0.9, (0.14 + edge[i] * 1.2) * light * 1.15);
+        lctx.globalAlpha = Math.min(0.9, (0.14 + edge[i] * 1.2) * light * (width < 640 ? 2 : 1.15));
         lctx.fillText(glyph, c * cellW, y);
       }
     }
@@ -472,7 +474,7 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     wctx.drawImage(zone, 0, 0, cols * cellW, rows * cellH);
 
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = 0.18;
+    ctx.globalAlpha = width < 640 ? 0.3 : 0.18;
     ctx.drawImage(wash, 0, 0, width, height);
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "source-over";
@@ -547,14 +549,15 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     state.frame = 0;
     const g = goal();
     const idle = idling(now);
+    const amp = width < 640 ? 0.55 : 1.45;
     if (idle && !state.wasIdle) {
-      const k = (wrapAngle(state.aim) + Math.PI / 2) / 1.45;
+      const k = (wrapAngle(state.aim) + Math.PI / 2) / amp;
       state.phase = Math.asin(Math.max(-1, Math.min(1, k)));
     }
     state.wasIdle = idle;
     if (idle) {
       const t = (now - state.lastInput - IDLE_AFTER) / 1000;
-      state.target = -Math.PI / 2 + Math.sin(t * 0.32 + state.phase) * 1.45 + Math.sin(t * 0.11) * 0.18;
+      state.target = -Math.PI / 2 + Math.sin(t * 0.32 + state.phase) * amp + Math.sin(t * 0.11) * 0.18;
     }
     const ease = reduced ? 1 : idle ? 0.045 : 0.16;
     const da = wrapAngle(state.target - state.aim);
