@@ -160,12 +160,11 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
         const x = c * cellW + cellW / 2;
         let m = 1;
         let s = 1;
-        zones.forEach((z, k) => {
+        for (const z of zones) {
           const d = Math.hypot(Math.max(z.l - x, 0, x - z.r), Math.max(z.t - y, 0, y - z.b));
-          const soft = narrow && k < zones.length - 1;
-          m = Math.min(m, soft ? Math.max(0.16, smooth(4, 40, d)) : smooth(8, 64, d));
-          s *= soft ? Math.max(0.62, smooth(4, 90, d)) : smooth(4, 190, d);
-        });
+          m = Math.min(m, smooth(8, 64, d));
+          s *= smooth(4, narrow ? 90 : 190, d);
+        }
         mask[r * cols + c] = m;
         shade[r * cols + c] = Math.min(m, s);
       }
@@ -550,14 +549,15 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     const g = goal();
     const idle = idling(now);
     const amp = width < 640 ? 0.55 : 1.45;
+    const rest = width < 640 ? Math.PI / 2 : -Math.PI / 2;
     if (idle && !state.wasIdle) {
-      const k = (wrapAngle(state.aim) + Math.PI / 2) / amp;
+      const k = wrapAngle(state.aim - rest) / amp;
       state.phase = Math.asin(Math.max(-1, Math.min(1, k)));
     }
     state.wasIdle = idle;
     if (idle) {
       const t = (now - state.lastInput - IDLE_AFTER) / 1000;
-      state.target = -Math.PI / 2 + Math.sin(t * 0.32 + state.phase) * amp + Math.sin(t * 0.11) * 0.18;
+      state.target = rest + Math.sin(t * 0.32 + state.phase) * amp + Math.sin(t * 0.11) * 0.18;
     }
     const ease = reduced ? 1 : idle ? 0.045 : 0.16;
     const da = wrapAngle(state.target - state.aim);

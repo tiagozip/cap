@@ -342,6 +342,11 @@ onBeforeUnmount(() => {
     display: none;
   }
 }
+@media (max-width: 639px) {
+  #homev2 .field {
+    padding-bottom: 200px;
+  }
+}
 #homev2 .demo-bar {
   display: flex;
   align-items: center;
