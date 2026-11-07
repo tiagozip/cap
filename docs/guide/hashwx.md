@@ -5,7 +5,7 @@ description: "HashWX is Cap's GPU-resistant proof of work. Each challenge genera
 
 # HashWX
 
-HashWX is Cap's default proof of work. Where SHA-256 uses one fixed hash function, HashWX generates a new one for every block of nonces, built from integer operations and branches that GPUs run poorly. It was designed by [tevador](https://github.com/tevador/hashwx), who also wrote RandomX, and Cap uses his reference WebAssembly build.
+HashWX is Cap's default proof of work. Where SHA-256 uses one fixed hash function, HashWX generates a new one for every block of nonces, built from integer operations and branches that GPUs run poorly. It was designed by [tevador](https://github.com/tevador/hashwx), who also wrote RandomX, and his [design document](https://github.com/tevador/hashwx/blob/master/doc/design.md) explains how it works. Cap uses his reference WebAssembly build.
 
 It's the default for new Standalone keys. In the core library it's [opt-in](./capjs-core.md#format-2-hashwx).
 
@@ -22,25 +22,6 @@ What matters for bot protection is how many challenges an attacker clears per ho
 The figures are tevador's, from his own unpublished CUDA implementation. Cap reproduced the RSW row: an M3 does 2.11 H/s per thread, which works out to 26 H/s on 16 Ryzen threads.
 
 RSW is deprecated. Existing keys keep working, but don't pick it for new ones.
-
-## How it works
-
-The server picks 32 random bytes `C` and a difficulty `d`. The client looks for a 64-bit nonce `N` where
-
-```
-H(N) <= (2^64 - 1) / d      where H = hashwx_make(sha256(C || u64le(N / n)))
-```
-
-Every `n` consecutive nonces share one generated function, so the client builds it, tries the whole block, and moves to the next. The expected work is `d` hashes. Cap uses `n = 65536`, where the reference protocol uses 463, because the browser has to compile each function into a WebAssembly module and a bigger block spreads that cost out. The ~2x figure above was measured at 65536.
-
-To verify, the server rebuilds the one function for the submitted nonce's block and runs it once.
-
-The [design document](https://github.com/tevador/hashwx/blob/master/doc/design.md) explains the GPU resistance in full. In short:
-
-- Each hash runs 256 branches, each taken half the time. A CPU mispredicts a few of them, while a GPU has to run both sides of each one in turn.
-- It reads a 16 KB scratchpad with unaligned loads. That fits in a CPU's L1 cache, but on a GPU it sits about 100 cycles away, and most GPUs need two loads for each unaligned one.
-- Its programs mix short and long chains of dependent loads. A CPU averages 2.75 loads per chain, while a GPU has to plan for the longest chain, 6, almost every time.
-- It only uses instructions WebAssembly 1.0 has, which is what lets it run in a browser.
 
 ## Cost
 

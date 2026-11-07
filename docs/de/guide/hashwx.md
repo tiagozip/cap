@@ -29,42 +29,6 @@ Die Zahlen stammen von tevador und beruhen auf seiner eigenen, nicht öffentlich
 
 RSW ist deprecated. Es lässt sich weiterhin pro Key auswählen und bestehende Keys laufen unverändert weiter, für neue Deployments sollte es aber nicht mehr eingesetzt werden.
 
-## Wie das Protokoll funktioniert
-
-### Erzeugung
-
-Der Server zieht 32 zufällige Bytes als Challenge `C` und legt eine Schwierigkeit `d` fest. Es gibt kein Schlüsselmaterial und keine Vorberechnung, die Erzeugung ist also ein Random-Read plus eine JWT-Signatur.
-
-Der Client bekommt `C`, `d` und `n`, die Anzahl der Nonces, die jede erzeugte Funktion abdeckt.
-
-### Lösen auf dem Client
-
-Der Client sucht eine 64-Bit-Nonce `N`, für die gilt
-
-```
-H(N) <= (2^64 - 1) / d      where H = hashwx_make(sha256(C || u64le(N / n)))
-```
-
-Jeder Block aus `n` aufeinanderfolgenden Nonces teilt sich eine erzeugte Hash-Funktion. Der Client baut diese Funktion, lässt sie über den Block laufen und geht zum nächsten Block, wenn nichts unter der Zielmarke landet. Der Erwartungswert der Arbeit sind `d` Hashes.
-
-Cap nutzt `n = 65536`. Das Referenzprotokoll verwendet 463 für native Clients; im Browser muss die Funktion für jeden Block per `WebAssembly.Module` JIT-kompiliert werden, ein größerer Block amortisiert diese Kosten also. tevador benennt den Tradeoff ausdrücklich: Mehr Nonces pro Funktion machen das Protokoll etwas anfälliger für JIT-kompilierte GPU-Kernel, und bei dieser Einstellung trägt die divergente Verzweigung die GPU-Resistenz. Die ~2x oben sind bei 65536 gemessen, das ist also schon berücksichtigt.
-
-### Was es GPU-resistent macht
-
-Vier Eigenschaften, alle aus dem [Design-Dokument](https://github.com/tevador/hashwx/blob/master/doc/design.md):
-
-Jede Instanz besteht aus 32 Programmen, jedes davon eine Schleife, die mit Wahrscheinlichkeit 1/2 an den eigenen Anfang zurückspringt, was exakt 256 Verzweigungen pro Hash ergibt. Auf einer CPU sind das eine Handvoll Fehlvorhersagen. Auf einer GPU spaltet das einen Warp in divergente Pfade, die nacheinander abgearbeitet werden müssen.
-
-Es gibt einen 16 KB großen Scratchpad, dessen Zugriffe absichtlich unaligned sind. Eine CPU hält ihn im L1 und versteckt die 3 bis 4 Zyklen Latenz durch Umsortieren. Eine GPU muss ihn im Local Memory hinter dem L2 halten, bei rund 100 Zyklen, und die meisten GPU-Architekturen müssen unaligned Loads emulieren, indem sie zwei benachbarte kombinieren.
-
-Die Quellregister stammen aus verschränkten "flachen" und "tiefen" Listen, eine CPU kommt damit auf durchschnittlich 2,75 abhängige Loads. Ein GPU-Interpreter muss auf die tiefe Liste hin spezialisieren, denn in etwa 95% der Fälle läuft mindestens ein Thread im Warp ein tiefes Programm, also frisst er jedes Mal die volle Kette aus 6 abhängigen Loads.
-
-Der Befehlssatz ist auf das beschränkt, was WebAssembly 1.0 bietet: 64-Bit-Multiplikation, Addition, Subtraktion, XOR, OR, Rotation und Shift, mit 6-Bit-Immediates. Genau das macht es überhaupt erst möglich, denselben Algorithmus im Browser laufen zu lassen.
-
-### Verifizierung auf dem Server
-
-Der Server berechnet den Seed aus `C` und dem Blockindex, der sich aus der eingereichten Nonce ergibt, erzeugt diese eine Hash-Funktion, lässt sie einmal laufen und vergleicht mit der Zielmarke. Die Programmerzeugung ist rund 5x günstiger als bei HashX, deshalb bleibt die Verifizierung im Bereich einiger Dutzend Mikrosekunden.
-
 ## Kosten {#cost}
 
 Serverkosten pro Challenge, gemessen auf einem Kern eines Apple M3, Median über 200 Erzeugungen und 40 Verifizierungen durch `validateChallenge`:

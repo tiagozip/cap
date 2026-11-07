@@ -29,42 +29,6 @@ Ces chiffres sont ceux de tevador, obtenus avec sa propre implémentation CUDA n
 
 RSW est déprécié. Il reste sélectionnable par clé et les clés existantes continuent de fonctionner, mais il ne faut plus le retenir pour un nouveau déploiement.
 
-## Fonctionnement du protocole
-
-### Émission
-
-Le serveur tire 32 octets aléatoires comme défi `C` et fixe une difficulté `d`. Il n'y a ni matériel de clé ni précalcul : émettre un défi, c'est une lecture aléatoire et une signature JWT.
-
-Le client reçoit `C`, `d` et `n`, le nombre de nonces que couvre chaque fonction générée.
-
-### Résolution côté client
-
-Le client cherche un nonce de 64 bits `N` tel que
-
-```
-H(N) <= (2^64 - 1) / d      where H = hashwx_make(sha256(C || u64le(N / n)))
-```
-
-Chaque bloc de `n` nonces consécutifs partage une même fonction de hachage générée. Le client construit cette fonction, la fait tourner sur le bloc, puis passe au bloc suivant si rien ne descend sous la cible. Le travail attendu est de `d` hachages.
-
-Cap utilise `n = 65536`. Le protocole de référence retient 463 pour les clients natifs ; dans un navigateur, la fonction doit être compilée à la volée via `WebAssembly.Module` pour chaque bloc, et un bloc plus grand amortit ce coût. tevador signale explicitement le compromis : plus il y a de nonces par fonction, plus le protocole devient sensible aux noyaux GPU compilés à la volée, et c'est la divergence des branchements qui porte encore la résistance aux GPU à ce réglage. Le ~2x ci-dessus est mesuré à 65536, il en tient donc déjà compte.
-
-### Ce qui le rend résistant aux GPU
-
-Quatre propriétés, toutes issues du [document de conception](https://github.com/tevador/hashwx/blob/master/doc/design.md) :
-
-Chaque instance compte 32 programmes, chacun étant une boucle qui rebranche sur son propre début avec une probabilité de 1/2, ce qui donne exactement 256 branchements par hachage. Sur un CPU, cela représente une poignée de mauvaises prédictions. Sur un GPU, cela scinde un warp en chemins divergents qu'il faut exécuter l'un après l'autre.
-
-Il y a un scratchpad de 16 Ko dont les lectures sont délibérément non alignées. Un CPU le garde en L1 et masque les 3 à 4 cycles de latence en réordonnant. Un GPU doit le garder en mémoire locale adossée au L2, autour de 100 cycles, et la plupart des architectures GPU doivent émuler les lectures non alignées en combinant deux lectures adjacentes.
-
-Les registres sources sont tirés de listes « superficielle » et « profonde » entrelacées, si bien qu'un CPU traite en moyenne 2,75 lectures dépendantes. Un interpréteur GPU doit se spécialiser pour la liste profonde, car dans environ 95% des cas au moins un thread du warp exécute un programme profond : il encaisse donc à chaque fois la chaîne complète de 6 lectures dépendantes.
-
-Le jeu d'instructions se limite à ce qu'offre WebAssembly 1.0 : multiplication, addition, soustraction, XOR, OU, rotation et décalage sur 64 bits, avec des immédiats de 6 bits. C'est ce qui permet au même algorithme de tourner dans un navigateur.
-
-### Vérification côté serveur
-
-Le serveur recalcule la graine à partir de `C` et de l'indice de bloc déduit du nonce soumis, génère cette unique fonction de hachage, l'exécute une fois et compare à la cible. La génération du programme coûte environ 5x moins cher que celle de HashX, ce qui maintient la vérification dans les dizaines de microsecondes.
-
 ## Coût {#cost}
 
 Coût serveur par défi, mesuré sur un cœur d'Apple M3, médiane sur 200 émissions et 40 vérifications via `validateChallenge` :

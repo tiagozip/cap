@@ -1,101 +1,66 @@
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 
-const difficulty = ref(4);
-const challenges = ref(50);
-const challengeSize = ref(32);
+const difficulty = ref(1_000_000);
+const subChallenges = ref(4);
 const workers = ref(8);
-const benchmarks = ref(1);
+const runs = ref(1);
 
 const isRunning = ref(false);
 const resultMessage = ref("");
 const progressValue = ref(0);
 
-const doBenchmark = async (i, total) => {
-  if (i < 1 || i > total) {
-    console.error("Invalid benchmark index 'i'");
-    return;
-  }
+onMounted(() => {
+  workers.value = Math.min(16, navigator.hardwareConcurrency || 8);
+});
 
-  const Cap = window.Cap;
+const hex = (bytes) =>
+  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, "0")).join("");
+
+const json = (body) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+
+const doBenchmark = async (i, total) => {
+  const each = Math.max(1, Math.round(difficulty.value / subChallenges.value));
+  window.CAP_CUSTOM_FETCH = async (url, options) => {
+    if (url === "/api/challenge") {
+      return json({
+        format: 2,
+        token: "benchmark",
+        expires: Date.now() + 600_000,
+        challenges: Array.from({ length: subChallenges.value }, () => ({
+          protocol: "hashwx",
+          payload: { c: hex(32), d: each, n: 65536 },
+        })),
+      });
+    }
+    if (url === "/api/redeem") {
+      return json({ success: true, token: "benchmark", expires: Date.now() + 60_000 });
+    }
+    return window.fetch(url, options);
+  };
+
+  const cap = new window.Cap({
+    apiEndpoint: "/api/",
+    "data-cap-worker-count": workers.value,
+  });
+
+  cap.addEventListener("progress", (event) => {
+    const overall = ((i - 1) / total) * 100 + event.detail.progress / total;
+    progressValue.value = Math.min(100, Math.max(0, overall));
+    resultMessage.value = `Run ${i} of ${total}: ${Math.round(event.detail.progress)}%`;
+  });
 
   try {
-    window.CAP_CUSTOM_FETCH = async (url, options) => {
-      if (url === "/api/challenge") {
-        const browserCrypto = window.crypto;
-        return new Response(
-          JSON.stringify({
-            challenge: Array.from({ length: challenges.value }, () => [
-              Array.from(
-                browserCrypto.getRandomValues(new Uint8Array(Math.ceil(challengeSize.value / 2))),
-              )
-                .map((byte) => byte.toString(16).padStart(2, "0"))
-                .join("")
-                .slice(0, challengeSize.value),
-
-              Array.from(
-                browserCrypto.getRandomValues(new Uint8Array(Math.ceil(difficulty.value / 2))),
-              )
-                .map((byte) => byte.toString(16).padStart(2, "0"))
-                .join("")
-                .slice(0, difficulty.value),
-            ]),
-            token: "",
-            expires: Date.now() + 6000 * 100,
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
-      }
-      if (url === "/api/redeem") {
-        return new Response(
-          JSON.stringify({
-            success: true,
-            token: "",
-            expires: Date.now() + 1000 * 60,
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
-      }
-      return await window.fetch(url, options);
-    };
-
-    const cap = new Cap({
-      apiEndpoint: "/api/",
-      workers: workers.value,
-    });
-
-    cap.addEventListener("progress", (event) => {
-      const { progress } = event.detail;
-
-      const completedRunsProgress = ((i - 1) / total) * 100;
-      const currentRunContribution = progress / total;
-      const overallProgress = completedRunsProgress + currentRunContribution;
-
-      progressValue.value = Math.min(100, Math.max(0, overallProgress));
-
-      resultMessage.value = `Running benchmark ${i}/${total}... ${progress.toFixed(
-        2,
-      )}% (Overall: ${overallProgress.toFixed(2)}%)`;
-    });
-
     const start = performance.now();
     await cap.solve();
-    const end = performance.now();
-    const time = end - start;
-
+    const time = performance.now() - start;
     progressValue.value = (i / total) * 100;
-
-    resultMessage.value = `Benchmark ${i}/${total} completed in ${Math.round(time)} ms.`;
+    resultMessage.value = `Run ${i} of ${total} took ${Math.round(time)} ms.`;
     return time;
   } catch (error) {
-    console.error(`Benchmark ${i}/${total} failed:`, error);
-    resultMessage.value = `Error during benchmark ${i}/${total}: ${error.message}`;
+    console.error(`Benchmark run ${i} failed:`, error);
+    resultMessage.value = `Run ${i} of ${total} failed: ${error.message}`;
     progressValue.value = ((i - 1) / total) * 100;
   }
 };
@@ -103,47 +68,46 @@ const doBenchmark = async (i, total) => {
 async function runBenchmark() {
   if (isRunning.value) return;
 
-  if (difficulty.value < 1 || difficulty.value > 10) {
-    resultMessage.value =
-      "Difficulty must be between 1 and 10. Difficulties above 10 may and will cause the widget to be unresponsive.";
+  if (!Number.isInteger(difficulty.value) || difficulty.value < 1000 || difficulty.value > 100_000_000) {
+    resultMessage.value = "Difficulty must be between 1,000 and 100,000,000.";
+    return;
+  }
+  if (!Number.isInteger(subChallenges.value) || subChallenges.value < 1 || subChallenges.value > 32) {
+    resultMessage.value = "Sub-challenges must be between 1 and 32.";
     return;
   }
 
   isRunning.value = true;
   progressValue.value = 0;
-  resultMessage.value = "Running benchmarks... 0%";
+  resultMessage.value = "Loading HashWX...";
 
   try {
-    const total = benchmarks.value;
+    const total = runs.value;
     const times = [];
     for (let i = 1; i <= total; i++) {
       const time = await doBenchmark(i, total);
-      if (time) {
-        times.push(time);
-      }
+      if (time) times.push(time);
     }
-    const totalTime = times.reduce((acc, time) => acc + time, 0);
-    const averageTime = totalTime / times.length;
-
-    resultMessage.value = `Average benchmark time: ${Math.round(
-      averageTime,
-    )} ms over ${total} runs.`;
+    if (!times.length) return;
+    const sorted = [...times].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    resultMessage.value =
+      total === 1
+        ? `Solved in ${Math.round(times[0])} ms.`
+        : `Median ${Math.round(median)} ms over ${times.length} runs, slowest ${Math.round(sorted.at(-1))} ms.`;
 
     try {
       plausible("benchmark", {
         props: {
+          protocol: "hashwx",
           difficulty: difficulty.value,
-          challenges: challenges.value,
-          challengeSize: challengeSize.value,
+          subChallenges: subChallenges.value,
           workers: workers.value,
-          benchmarks: benchmarks.value,
-          averageTime,
+          runs: total,
+          median,
         },
       });
-    } catch (e) {
-      console.log("[plausible] error on benchmark log", e);
-    }
-  } catch {
+    } catch {}
   } finally {
     progressValue.value = 100;
     isRunning.value = false;
@@ -155,64 +119,25 @@ async function runBenchmark() {
   <ClientOnly>
     <div class="benchmark-form" :style="{ '--progress-percent': progressValue }">
       <div class="benchmark-field">
-        <label for="difficulty">Challenge difficulty</label>
-        <input
-          type="number"
-          id="difficulty"
-          name="difficulty"
-          min="1"
-          max="10"
-          v-model.number="difficulty"
-        />
+        <label for="difficulty">Difficulty</label>
+        <input type="number" id="difficulty" name="difficulty" min="1000" step="100000" v-model.number="difficulty" />
       </div>
       <div class="benchmark-field">
-        <label for="challenges">Number of challenges</label>
-        <input
-          type="number"
-          id="challenges"
-          name="challenges"
-          min="1"
-          max="100"
-          v-model.number="challenges"
-        />
+        <label for="subChallenges">Sub-challenges</label>
+        <input type="number" id="subChallenges" name="subChallenges" min="1" max="32" v-model.number="subChallenges" />
       </div>
       <div class="benchmark-field">
-        <label for="challengeSize">Challenge size</label>
-        <input
-          type="number"
-          id="challengeSize"
-          name="challengeSize"
-          min="1"
-          max="120"
-          v-model.number="challengeSize"
-        />
+        <label for="workers">Workers</label>
+        <input type="number" id="workers" name="workers" min="1" max="32" v-model.number="workers" />
       </div>
       <div class="benchmark-field">
-        <label for="workers">Number of workers</label>
-        <input
-          type="number"
-          id="workers"
-          name="workers"
-          min="1"
-          max="28"
-          v-model.number="workers"
-        />
-      </div>
-      <div class="benchmark-field">
-        <label for="benchmarks">Number of benchmarks</label>
-        <input
-          type="number"
-          id="benchmarks"
-          name="benchmarks"
-          min="1"
-          max="100"
-          v-model.number="benchmarks"
-        />
+        <label for="runs">Runs</label>
+        <input type="number" id="runs" name="runs" min="1" max="50" v-model.number="runs" />
       </div>
       <button @click="runBenchmark" :disabled="isRunning">
         {{ isRunning ? "Running..." : "Run benchmark" }}
       </button>
-      <div v-if="resultMessage" class="benchmark-result">
+      <div v-if="resultMessage" class="benchmark-result" role="status">
         {{ resultMessage }}
       </div>
     </div>

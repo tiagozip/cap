@@ -1,21 +1,9 @@
 ---
-description: "Benchmark du CAPTCHA Cap : temps de résolution de la preuve de travail, de l'entrée de gamme au haut de gamme. Découvrez la vitesse du widget open source auto-hébergé dans de vrais navigateurs."
+description: "Benchmark du CAPTCHA Cap : lancez la preuve de travail HashWX dans votre propre navigateur et voyez combien de temps prend une résolution sur votre appareil."
 ---
 
 # Benchmark
 
+Cette page exécute la preuve de travail HashWX dans votre navigateur, face à un serveur fictif, pour vous montrer combien de temps prend une résolution sur votre appareil. Les valeurs par défaut correspondent à une nouvelle clé Standalone. Pour les mesures sur navigateurs de bureau et sur téléphones, consultez [HashWX](./hashwx.md#cost).
+
 <Benchmark />
-
-## Résultats du benchmark
-
-Ces mesures utilisent un serveur de test ; les vitesses peuvent varier selon votre configuration et la latence réseau.
-
-Ces benchmarks ont été réalisés avec une difficulté de défi de 4 et 50 défis, sur WASM 0.0.7.
-
-| Gamme        | Appareil           | Temps |
-| ------------ | ------------------ | ----- |
-| Entrée de gamme | Samsung Galaxy A34 | 795ms |
-| Entrée de gamme | iPhone SE (2020)   | 798ms |
-| Milieu de gamme | Google Pixel 7     | 423ms |
-| Haut de gamme   | Google Pixel 9     | 414ms |
-| Haut de gamme   | M3 Macbook         | 212ms |
