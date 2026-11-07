@@ -60,14 +60,12 @@ const browserChecks = [
 
 const fromWidget = ref(false);
 const fromWidgetHost = ref("");
-const solverHits = ref("");
 
 const quoteText = computed(() => {
   const s = t.value;
   return `${s.quoteLead}${s.quoteHl1}${s.quoteMid1}${s.quoteHl2}${s.quoteMid2}${s.quoteHl3}${s.quoteEnd}`.trim();
 });
 
-const statsText = computed(() => t.value.statsLine.replace("{n}", solverHits.value || t.value.statsFallback));
 
 const cleanups = [];
 
@@ -163,17 +161,6 @@ onMounted(() => {
       const formatted = n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
       write(formatted);
       sessionStorage.setItem("cap-gh-stars", formatted);
-    } catch {}
-  })();
-
-  (async () => {
-    try {
-      const res = await fetch(
-        "https://data.jsdelivr.com/v1/stats/packages/npm/@cap.js/wasm@0.0.6/files?period=year&by=hits&limit=1&page=1",
-      );
-      const total = (await res.json())[0]?.hits?.total;
-      if (!total) return;
-      solverHits.value = new Intl.NumberFormat(lang.value || "en").format(total);
     } catch {}
   })();
 
@@ -384,7 +371,6 @@ onBeforeUnmount(() => {
                 <span>{{ t.quoteRole }}</span>
               </figcaption>
             </figure>
-            <p class="stats">{{ statsText }}</p>
           </div>
         </div>
       </section>
@@ -396,13 +382,16 @@ onBeforeUnmount(() => {
               <h2>{{ t.faqTitle }}</h2>
               <a class="text-link" :href="`${lp}/guide/`">{{ t.faqMore }}</a>
             </div>
-            <dl class="faq">
-              <div v-for="item in faq" :key="item.q">
-                <dt>{{ item.q }}</dt>
-                <dd v-if="item.html" v-html="item.html"></dd>
-                <dd v-else>{{ item.a }}</dd>
-              </div>
-            </dl>
+            <div class="faq">
+              <details v-for="item in faq" :key="item.q">
+                <summary>
+                  <span>{{ item.q }}</span>
+                  <svg class="faq-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
+                </summary>
+                <div v-if="item.html" class="faq-a" v-html="item.html"></div>
+                <div v-else class="faq-a">{{ item.a }}</div>
+              </details>
+            </div>
           </div>
         </div>
       </section>
@@ -1257,11 +1246,6 @@ html.home-v2-active main.main {
 #homev2 .quote figcaption img {
   height: 22px;
 }
-#homev2 .stats {
-  margin-top: 48px;
-  font-size: 0.9375rem;
-  color: var(--text-faint);
-}
 #homev2 .faq-wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -1275,23 +1259,69 @@ html.home-v2-active main.main {
   gap: 12px;
   justify-items: start;
 }
-#homev2 .faq > div {
-  padding-block: 22px;
+#homev2 .faq details {
   box-shadow: inset 0 -1px 0 var(--edge);
 }
-#homev2 .faq > div:first-child {
+#homev2 .faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 20px;
+  list-style: none;
+  color: var(--text);
+  cursor: pointer;
+}
+#homev2 .faq details:first-child summary {
   padding-top: 0;
 }
-#homev2 .faq dt {
-  font-weight: 400;
-  color: var(--text);
+#homev2 .faq summary::-webkit-details-marker {
+  display: none;
 }
-#homev2 .faq dd {
-  margin-top: 6px;
+#homev2 .faq-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  transition:
+    rotate 240ms var(--ease-out),
+    stroke 120ms;
+}
+#homev2 .faq details[open] .faq-icon {
+  rotate: 45deg;
+}
+@media (hover: hover) {
+  #homev2 .faq summary:hover .faq-icon {
+    stroke: var(--text);
+  }
+}
+#homev2 .faq-a {
   max-width: 62ch;
+  padding-bottom: 22px;
   color: var(--text-secondary);
 }
-#homev2 .faq dd a {
+@media (prefers-reduced-motion: no-preference) {
+  #homev2 .faq {
+    interpolate-size: allow-keywords;
+  }
+  #homev2 .faq details::details-content {
+    height: 0;
+    overflow: clip;
+    opacity: 0;
+    transition:
+      height 280ms var(--ease-out),
+      opacity 200ms ease-out,
+      content-visibility 280ms allow-discrete;
+  }
+  #homev2 .faq details[open]::details-content {
+    height: auto;
+    opacity: 1;
+  }
+}
+#homev2 .faq-a a {
   color: var(--text);
   text-decoration: underline;
   text-decoration-color: #cdd6f466;
