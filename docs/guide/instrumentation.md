@@ -1,56 +1,33 @@
 ---
-description: "Cap's instrumentation challenges run server-generated JS to verify a real browser, working alongside proof-of-work in the self-hosted, open-source CAPTCHA."
+description: "Cap's instrumentation challenges run a server-generated script to confirm a real browser, alongside proof-of-work in the self-hosted, open-source CAPTCHA."
 ---
 
-# Instrumentation challenges
+# Instrumentation
 
-Instrumentation challenges are Cap's second layer of verification, running silently alongside the core proof-of-work system and present on Cap Standalone.
-
-They generate a unique JavaScript program on every request that is executed inside the visitor's browser. The output is checked server-side, allowing Cap to confirm that a genuine browser environment is present before accepting a token.
+Instrumentation challenges check that a challenge was solved in a real browser. They run next to the proof of work, are on by default for new Standalone keys, and are opt-in in the [core library](./capjs-core.md#instrumentation).
 
 ## How they work
 
-When a challenge is issued, the server generates a self-contained JavaScript bundle that runs a few browser API probes and evaluates a main computation chain, where multiple integer variables are initialised with random seed values and then mutated through randomised operations, including bitwise AND/OR/XOR/NAND, prototype-chain tricks, and DOM-based arithmetic that appends a tree of elements to the page, walks back up it accumulating values, and then removes them.
+For every challenge, the server generates a new JavaScript program. It starts from random integers and changes them through random operations, some of them plain arithmetic and some done through the DOM: it builds a tree of elements, walks back up it adding values, and removes it. The server tracks every operation as it generates them, so it knows the four numbers the program has to produce.
 
-The server tracks the expected result of every operation in parallel, so it knows what the final four values must be.
+The widget runs the program in a sandboxed iframe and sends the result back with the proof of work. Plain arithmetic is easy to reproduce outside a browser, but the DOM steps need a real rendering engine. Runtimes that fake the DOM tend to skip parts of it or get it wrong.
 
-All of these checks run inside an iframe, which `postMessage`s the answers back to the parent.
-
-## Why DOM operations
-
-Pure arithmetic can be replicated in a non-browser environment by simply running the JavaScript. DOM operations cannot - or at least, not cheaply. Constructing real element trees, reading values through the browser's layout engine, and tearing them down again exercises a part of the browser that non-browser runtimes often stub out, do incorrectly, or skip entirely for performance. This makes the challenge harder to replay outside a genuine rendering engine.
-
-Instrumentation challenges often also mix these with a preset list of checks.
+The programs are obfuscated, from level 1 to 10. Higher levels are harder to analyse and slower to generate, and the default is 3.
 
 ## Automated browser detection
 
-With `blockAutomatedBrowsers` enabled, the instrumentation script also collects a small vector of browser facts (text metrics, window geometry, `navigator.webdriver`, engine markers) and ships it back with the computation result. The server runs the detector over that vector. A client-side-only check is a suggestion that a stealth browser patches out, so nothing here trusts the client's own verdict.
+With **Attempt to block headless browsers** on in Standalone, or `blockAutomatedBrowsers` in core, the script also collects a few facts about the browser and the server checks them. The server makes the decision, since a check that runs only in the browser is easy to patch out.
 
-Seven checks can fail a request. Every one of them targets the automation layer or tampering, never which browser build you run. Widevine, H.264, `userAgentData` brand and similar build identity signals are not used to block, because a person on ungoogled-chromium looks identical to a stealth driver on the same binary in those fields.
+The checks look for automation tools and tampering, never for which browser someone uses. Signals like codec support or browser brand are left out, because someone on a niche Chromium fork looks the same in them as a stealth bot on that fork.
 
-| Check | What it catches | Why it is safe for humans |
-| --- | --- | --- |
-| `geometry_quantized` | Camoufox snaps text advance widths to whole pixels. Real Blink, Gecko and WebKit return fractional widths, and Firefox's resist-fingerprinting mode does not round them either. | Requires at least 5 of 17 font stacks to be whole pixels **and** at least 2 distinct integer values, so a single-font system cannot trip it. |
-| `webdriver_true` | Plain Selenium, Playwright, Puppeteer, rebrowser. | Spec-defined automation flag. No shipping browser sets it. |
-| `webdriver_stripped` | Stealth patches that delete `navigator.webdriver` on Chromium. | Real Chrome always exposes it as `false`. |
-| `gecko_contradiction` | Spoofers exposing `navigator.deviceMemory` or `userAgentData` on a Gecko engine. | Firefox has never shipped either API. |
-| `window_exceeds_screen` | CDP `Emulation.setDeviceMetricsOverride` shrinks `screen` to the viewport and leaves the window taller than the display. | Skipped when `screen.isExtended` is true, so a taller second monitor passes. |
-| `viewport_override` | Viewport exactly equal to the screen while browser chrome is present. | Skipped on mobile, where a full-screen viewport is normal. |
-| `headless_token` | `HeadlessChrome` in the UA or `userAgentData.brands`. | No consumer browser exposes it. |
+## Interaction detection
 
-Two more signals are collected but never block:
+This is experimental and off by default. Standalone's **Block automated clicks and typing** setting turns on `blockAutomatedInteractions`. In core, `detectAutomatedInteractions` reports without blocking.
 
-- `native_tamper`: `Function.prototype.toString` on canvas, WebGL and permissions methods is no longer `[native code]`. This catches puppeteer-stealth and selenium-stealth, but privacy extensions (Canvas Blocker, Chameleon, Trace) patch the exact same methods. It is returned as a risk flag so you can raise proof-of-work difficulty instead of blocking.
-- Browser-surface clusters (no `window.chrome`, no plugins, no PDF viewer) are not used at all. Mobile Chrome and Android WebView legitimately match all three.
+While the instrumentation script runs, the widget counts clicks and key presses that scripts dispatched rather than the user. After three of either, blocking mode rejects the solve with `instr_automated_interaction`, which Standalone returns as `automated_interaction_detected`. Report-only mode puts `interaction_synthetic_clicks` or `interaction_synthetic_keydowns` in `riskFlags`, and Standalone includes them in the `/siteverify` response.
 
-When a request is blocked, `validateChallenge` returns `reason: "instr_automated_browser"` with a `blockedBy` array naming the failed checks. Successful validations carry `riskFlags`. Cap Standalone surfaces the same reason as `automated_browser_detected`.
+The widget doesn't require any interaction, so a visitor who never touches the page passes. It doesn't read field values, and it ignores touch, pen, password fields, one-time code fields, shortcuts and paste. Accessibility tools can also dispatch synthetic events, and they haven't been tested against this, which is why it stays off by default.
 
-Known gaps: `undetected-chromedriver` and `nodriver` driving a headful stock Chrome pass all seven checks. Headless Firefox passes too, since Gecko has no `HeadlessChrome` equivalent. Even commercial CAPTCHAs like Turnstile are bypassed by these tools, and proof-of-work remains the layer that makes such traffic expensive.
+## Limits
 
-Open false-positive risks that have not been measured yet: Tor Browser's text metric rounding against `geometry_quantized`, and mixed-DPI multi-monitor setups against `window_exceeds_screen`. If you run either and see blocks, please open an issue with the `blockedBy` value.
-
-## Relationship to proof-of-work
-
-Instrumentation challenges and proof-of-work are complementary, not redundant. Proof-of-work proves *effort*: the client had to burn CPU cycles to find a hash. Instrumentation proves *environment*: the computation happened inside a browser, not a script. Together they raise the cost of abuse on two independent axes - neither alone is sufficient against a determined attacker, but both together are substantially harder to defeat simultaneously.
-
-Instrumentation is not foolproof. While challenges like these are deployed at massive scale by platforms such as [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) and [Twitter](https://x.com/i/js_inst), I do not recommend using them as a replacement for proof-of-work. Without PoW and with real browsers, attackers can cheaply mine these challenges.
+Instrumentation doesn't replace proof of work. Without it, an attacker running many real browsers could solve these scripts cheaply. Large platforms like [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) and [X](https://x.com/i/js_inst) use similar challenges, and Cap pairs them with proof of work so each solve has a cost.

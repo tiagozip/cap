@@ -1,8 +1,8 @@
 ---
-description: "Programmatischer Modus für Cap: new Cap() und solve() aufrufen, um das quelloffene CAPTCHA aus eigenem JavaScript heraus laufen zu lassen, mit Proof-of-Work und ohne sichtbares Widget."
+description: "Unsichtbarer Modus für Cap: new Cap() und solve() aufrufen, um das quelloffene CAPTCHA aus eigenem JavaScript heraus laufen zu lassen, mit Proof-of-Work und ohne sichtbares Widget."
 ---
 
-# Programmatischer Modus
+# Unsichtbarer Modus
 
 Du kannst `new Cap({ ... })` in deinem clientseitigen JavaScript verwenden, um eine neue Cap-Instanz zu erzeugen, und die Methode `solve()` aufrufen, um die Challenge zu lösen.
 

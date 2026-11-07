@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Les Checkpoints de Cap ajoutent une page intermédiaire de vérification du navigateur, à la manière de Cloudflare, pour bloquer les bots avant qu'ils n'atteignent votre site. CAPTCHA open source à preuve de travail, auto-hébergé."
 ---
 

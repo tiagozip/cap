@@ -3,82 +3,59 @@ outline: [2, 3]
 description: "HashWX is Cap's GPU-resistant proof of work. Each challenge generates a fresh hash function, so a GPU gains about 2x over a CPU instead of 150x."
 ---
 
-# HashWX proof of work
+# HashWX
 
-**HashWX** is Cap's default challenge protocol. Instead of a fixed hash function like SHA-256, every challenge generates a **new** one-way function from a seed, built out of integer operations and branches chosen so that a GPU cannot run it much faster than a CPU.
+HashWX is Cap's default proof of work. Where SHA-256 uses one fixed hash function, HashWX generates a new one for every block of nonces, built from integer operations and branches that GPUs run poorly. It was designed by [tevador](https://github.com/tevador/hashwx), who also wrote RandomX, and Cap uses his reference WebAssembly build.
 
-It was designed by [tevador](https://github.com/tevador/hashwx), who also wrote RandomX and HashX. Cap vendors the reference WebAssembly build.
+It's the default for new Standalone keys. In the core library it's [opt-in](./capjs-core.md#format-2-hashwx).
 
-::: tip
-HashWX is the default for new Standalone keys. In cap-core it is opt-in through the format-2 API, and SHA-256 proof of work stays the default there. See [HashWX challenges](./capjs-core.md#format-2-hashwx).
-:::
+## Why not SHA-256
 
-## Why HashWX
-
-The problem with SHA-256 proof of work is throughput. A GPU runs the same fixed function across thousands of lanes in lockstep, so it solves far more challenges per second than a CPU. That is the metric that matters for bot protection: an attacker does not care how long one challenge takes, only how many they can clear per hour.
-
-Cap previously shipped RSW time-lock puzzles for this. RSW wins on **latency**, since sequential squaring cannot be parallelised within one puzzle, but it loses badly on **throughput**, because a GPU can run thousands of independent puzzles at once. Measured against a consumer GPU:
+What matters for bot protection is how many challenges an attacker clears per hour, not how long one takes. A GPU runs a fixed function like SHA-256 on thousands of lanes at once. Cap used RSW time-lock puzzles before HashWX, which can't be parallelised within one puzzle, but a GPU still runs thousands of separate puzzles side by side. Measured against a consumer GPU:
 
 | Algorithm | CPU, Ryzen 3700X, 16 threads | GPU, RTX 5060 Ti | GPU advantage |
 |---|---:|---:|---:|
 | SHA-256 | 41 MH/s | 6150 MH/s | ~150x |
 | RSW | 26 H/s | 4400 H/s | ~170x |
-| **HashWX** | **2.8 MH/s** | **5.8 MH/s** | **~2x** |
+| HashWX | 2.8 MH/s | 5.8 MH/s | ~2x |
 
-Those figures are tevador's, using his own non-public CUDA implementation. We reproduced the RSW row independently: an M3 measures 2.112 H/s per thread, which lands on 26 H/s for 16 Ryzen threads.
+The figures are tevador's, from his own unpublished CUDA implementation. Cap reproduced the RSW row: an M3 does 2.11 H/s per thread, which works out to 26 H/s on 16 Ryzen threads.
 
-RSW is deprecated. It is still selectable per key, and existing keys keep working, but it should not be used for new deployments.
+RSW is deprecated. Existing keys keep working, but don't pick it for new ones.
 
-## How the protocol works
+## How it works
 
-### Mint
-
-The server picks 32 random bytes as the challenge `C` and a difficulty `d`. There is no key material and no precomputation, so minting is a random read and a JWT sign.
-
-The client is given `C`, `d`, and `n`, the number of nonces each generated function covers.
-
-### Client solve
-
-The client finds a 64-bit nonce `N` such that
+The server picks 32 random bytes `C` and a difficulty `d`. The client looks for a 64-bit nonce `N` where
 
 ```
 H(N) <= (2^64 - 1) / d      where H = hashwx_make(sha256(C || u64le(N / n)))
 ```
 
-Each block of `n` consecutive nonces shares one generated hash function. The client builds that function, runs it over the block, and moves to the next block if nothing lands under the target. Expected work is `d` hashes.
+Every `n` consecutive nonces share one generated function, so the client builds it, tries the whole block, and moves to the next. The expected work is `d` hashes. Cap uses `n = 65536`, where the reference protocol uses 463, because the browser has to compile each function into a WebAssembly module and a bigger block spreads that cost out. The ~2x figure above was measured at 65536.
 
-Cap uses `n = 65536`. The reference protocol uses 463 for native clients; in a browser the function has to be JIT-compiled through `WebAssembly.Module` for every block, so a larger block amortises that cost. tevador notes the tradeoff explicitly: more nonces per function makes the protocol somewhat more susceptible to JIT-compiled GPU kernels, and divergent branching is what still carries the GPU resistance at that setting. The ~2x figure above is measured at 65536, so it already accounts for this.
+To verify, the server rebuilds the one function for the submitted nonce's block and runs it once.
 
-### What makes it GPU-resistant
+The [design document](https://github.com/tevador/hashwx/blob/master/doc/design.md) explains the GPU resistance in full. In short:
 
-Four properties, all from the [design document](https://github.com/tevador/hashwx/blob/master/doc/design.md):
-
-Each instance is 32 programs, each a loop that branches back to its own start with probability 1/2, which works out to exactly 256 branches per hash. On a CPU that is a handful of mispredictions. On a GPU it splits a warp into divergent paths that have to be executed one after another.
-
-There is a 16 KB scratchpad and its loads are deliberately unaligned. A CPU keeps it in L1 and hides the 3 to 4 cycle latency by reordering. A GPU has to keep it in local memory backed by L2 at around 100 cycles, and most GPU architectures have to emulate unaligned loads by combining two adjacent ones.
-
-Source registers are drawn from interleaved "shallow" and "deep" lists, so a CPU handles 2.75 dependent loads on average. A GPU interpreter has to specialise for the deep list, because in about 95% of cases at least one thread in a warp is running a deep program, so it eats the full chain of 6 dependent loads every time.
-
-The instruction set is restricted to what WebAssembly 1.0 offers: 64-bit multiply, add, subtract, XOR, OR, rotate and shift, with 6-bit immediates. That is what lets the same algorithm run in a browser at all.
-
-### Server verify
-
-The server recomputes the seed from `C` and the block index implied by the submitted nonce, generates that one hash function, runs it once, and compares against the target. Program generation is about 5x cheaper than HashX, which is what keeps verification in the tens of microseconds.
+- Each hash runs 256 branches, each taken half the time. A CPU mispredicts a few of them, while a GPU has to run both sides of each one in turn.
+- It reads a 16 KB scratchpad with unaligned loads. That fits in a CPU's L1 cache, but on a GPU it sits about 100 cycles away, and most GPUs need two loads for each unaligned one.
+- Its programs mix short and long chains of dependent loads. A CPU averages 2.75 loads per chain, while a GPU has to plan for the longest chain, 6, almost every time.
+- It only uses instructions WebAssembly 1.0 has, which is what lets it run in a browser.
 
 ## Cost
 
-Server cost per challenge, measured on one core of an Apple M3, median over 200 mints and 40 verifications through `validateChallenge`:
+Server time per challenge on one Apple M3 core, median of 200 mints and 40 verifications:
 
 | Protocol | Mint | Verify | Total |
 |---|---:|---:|---:|
-| **HashWX**, 1 challenge | **14 µs** | **40 µs** | **54 µs** |
-| **HashWX**, 4 sub-challenges (default) | **20 µs** | **129 µs** | **149 µs** |
-| SHA-256 (50 challenges, difficulty 4) | 4 µs | 83 µs | 87 µs |
-| RSW (t = 75,000) | 1522 µs | 14 µs | 1536 µs |
+| HashWX, 1 challenge | 14 µs | 40 µs | 54 µs |
+| HashWX, 4 sub-challenges (default) | 20 µs | 129 µs | 149 µs |
+| SHA-256, 50 challenges at difficulty 4 | 4 µs | 83 µs | 87 µs |
+| RSW, t = 75,000 | 1522 µs | 14 µs | 1536 µs |
 
-A single HashWX challenge is the cheapest round trip of the three. The default of four sub-challenges costs about 150 µs, more than SHA-256 but a tenth of RSW, which pays for four real modular exponentiations on every mint. Difficulty does not change these numbers: verifying is one hash per sub-challenge however hard it was to find.
+Difficulty doesn't change these numbers, since verifying is one hash per sub-challenge however long it took to find.
 
-Client cost is the other side of that trade. One challenge on its own has an exponentially distributed solve time, which makes it a lottery: the same difficulty takes 30 ms for one visitor and three seconds for the next. So by default Cap splits the difficulty into four sub-challenges, which evens the solve time out. Measured through the widget in release Chrome on an M3 with 8 cores, 72 solves each, with the two difficulties tuned to about the same median:
+On the client, one challenge has a random solve time: the same difficulty can take 30 ms for one visitor and 3 s for the next. Cap splits the difficulty into four sub-challenges by default, which evens it out. Measured through the widget in Chrome on an 8-core M3, 72 solves each, with the two difficulties set for about the same median:
 
 | | 1 challenge, d = 1,330,000 | 4 sub-challenges, d = 1,000,000 |
 |---|---:|---:|
@@ -86,27 +63,25 @@ Client cost is the other side of that trade. One challenge on its own has an exp
 | p90 | 1447 ms | 778 ms |
 | Slowest of 72 | 2378 ms | 1490 ms |
 
-The right-hand column is the default. Against a Standalone key it measured a 578 ms median and a 0.9 s p90.
+The right column is the default. Against a Standalone key it measured a 578 ms median and a 0.9 s p90. Splitting doesn't change what an attacker pays, since the expected work is `d` hashes either way.
 
-Splitting does not change what an attacker pays for a given difficulty, since the expected work is `d` hashes however it is cut. What changes is the shape. The median of one challenge sits at 0.69 of its mean, while four sub-challenges put it at about 0.92 of the mean and shorten the tail. At the same difficulty, then, the split makes the typical solve about a third slower and cuts the p90 by about a quarter. The table holds the median fixed instead, which puts the split at 25% less difficulty and gives an attacker 25% less work per solve. The widget's own overhead is small. Its workers check for a stop every 16 ms, which bounds how long a handoff between sub-challenges can take.
+### Browsers
 
-### Browser engines
+The WebAssembly build runs at about 60% of native speed. Measured on the same M3:
 
-The wasm build runs at roughly 60% of native speed. The three major engines are close on a single worker, and Safari falls behind once every core is busy. Measured on the same M3 in one session, with each browser headless or in front:
-
-| Engine | 1 worker | 8 workers | Interpreted fallback |
+| Browser | 1 worker | 8 workers | Interpreted fallback |
 |---|---:|---:|---:|
 | Chrome 153 | 440 KH/s | 2050 KH/s | 94 KH/s |
 | Firefox 156 | 420 KH/s | 1850 KH/s | 105 KH/s |
 | Safari 27.2 | 410 KH/s | 1480 KH/s | 105 KH/s |
 
-On one worker all three are within 5% of each other. On eight, Safari reaches about 70% of Chrome's rate, so tune the difficulty against Safari: at d = 1,000,000 that is a mean of about 0.5 s on Chrome and 0.7 s on Safari.
+Safari reaches about 70% of Chrome's speed on all cores, so tune difficulty against Safari. At the default, that's about 0.5 s on Chrome and 0.7 s on Safari.
 
-If you benchmark this yourself, measure a release build of each browser with the tab in front. Playwright's bundled Firefox runs every WebAssembly workload three to six times slower than release Firefox, not just HashWX, and a backgrounded tab can land on the efficiency cores and halve every number.
+If you measure this yourself, use release builds with the tab in front. Playwright's Firefox runs all WebAssembly three to six times slower than real Firefox, and a background tab can end up on efficiency cores.
 
 ### Phones
 
-The default on real phones through BrowserStack, 15 solves each and 30 on the Vivo. Every run started on a freshly loaded page, the way a visitor arrives. Once the page had already run HashWX for a minute, the Pixel 6 took 24% less time per solve and the Vivo 29% less, so a benchmark that warms up first will look better than this.
+The default difficulty on real phones through BrowserStack, 15 solves each and 30 on the Vivo, each starting from a freshly loaded page:
 
 | Device | OS | All cores | Median | Slowest |
 |---|---|---:|---:|---:|
@@ -121,18 +96,14 @@ The default on real phones through BrowserStack, 15 solves each and 30 on the Vi
 | Galaxy M32 | Android 11 | 444 KH/s | 2.8 s | 6.1 s |
 | Vivo Y21 | Android 11 | 316 KH/s | 5.9 s | 11.0 s |
 
-Each solve includes two round trips to the test server, with a median of 80 to 190 ms per device. The Vivo, a budget Android, takes about ten times as long as the M3 desktop. If most of your traffic is mobile, lower the difficulty. Solve time scales linearly with it, so 500,000 roughly halves the solving part of every number here.
+Each solve includes two round trips to the test server, 80 to 190 ms each. A page that had already been running HashWX for a minute solved 24% to 29% faster, so benchmarks that warm up first look better than what visitors get.
 
-Clients without WebAssembly cannot solve HashWX at all and will get an error. If you need to support them, use SHA-256 proof of work, which has a pure-JS fallback. On iPhones the widget needs iOS 15 or newer.
+If most of your traffic is mobile, lower the difficulty. Solve time scales with it, so 500,000 roughly halves the solving part of these numbers.
 
-## What HashWX does not protect against
+HashWX needs WebAssembly, and iOS 15 or newer on iPhones. For browsers without WebAssembly, use SHA-256, which has a JavaScript fallback.
 
-The same thing RSW did not: custom silicon. An FPGA or ASIC built for this would still beat a CPU. The economics do not work for CAPTCHA farming, since an ASIC costs millions in non-recurring engineering, but it is not a cryptographic guarantee.
+## Limits
 
-It also does not stop a human solving farm, and it never will. Proof of work raises the cost per request. Pair it with [instrumentation challenges](./instrumentation.md) so that a real browser environment is required as well.
+Custom hardware would still beat a CPU. An FPGA or ASIC built for HashWX costs millions to design, which makes no sense for solving CAPTCHAs, but that's an economic argument and not a cryptographic one.
 
-## Trying it
-
-The cap-core API is documented in [HashWX challenges](./capjs-core.md#format-2-hashwx). The widget auto-detects format-2 responses, so upgrading the server is enough.
-
-On [Cap Standalone](./standalone/options.md#hashwx-proof-of-work), HashWX is the default for new keys and can be switched per key in the dashboard.
+It doesn't stop people paid to solve challenges by hand either. Pair it with [instrumentation](./instrumentation.md) so a real browser is required too.

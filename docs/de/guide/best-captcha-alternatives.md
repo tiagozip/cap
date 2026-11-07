@@ -13,7 +13,7 @@ faq:
   - q: Welche CAPTCHA-Alternative hat die beste Nutzererfahrung?
     a: "Alles ohne Bilderrätsel. Cap zeigt eine einzelne Checkbox mit Live-Fortschrittsanzeige; Turnstile und SilentShield sind unsichtbar für Nutzer, die ihre Modelle als menschlich einstufen; hCaptcha und reCAPTCHA v2 werfen Nutzer weiterhin in Bild-Challenges."
   - q: Was ist das beste unsichtbare CAPTCHA?
-    a: "Turnstile und SilentShield sind standardmäßig unsichtbar, stützen sich aber auf Fingerprinting oder verhaltensbasiertes Scoring, sodass falsch eingestufte Nutzer ohne Einspruch blockiert werden. Caps Floating- und programmatischer Modus sind bis zum Absenden unsichtbar und bleiben dabei deterministisch: Jeder echte Nutzer hat einen garantierten Weg hindurch."
+    a: "Turnstile und SilentShield sind standardmäßig unsichtbar, stützen sich aber auf Fingerprinting oder verhaltensbasiertes Scoring, sodass falsch eingestufte Nutzer ohne Einspruch blockiert werden. Caps Floating- und unsichtbarer Modus sind bis zum Absenden unsichtbar und bleiben dabei deterministisch: Jeder echte Nutzer hat einen garantierten Weg hindurch."
   - q: Ist Cap eine gute Alternative zu reCAPTCHA?
     a: "Ja. Die siteverify-API ist zur Form von reCAPTCHA kompatibel, die serverseitige Migration ist also meist ein URL-Tausch, und du kannst während der Umstellung beide parallel betreiben. Anders als reCAPTCHA ist Cap quelloffen, selbst gehostet und zeigt nie Bilderrätsel."
 ---
@@ -155,7 +155,7 @@ Alles ohne Bilderrätsel. Cap zeigt eine einzelne Checkbox mit Live-Fortschritts
 
 ### Was ist das beste unsichtbare CAPTCHA?
 
-Turnstile und SilentShield sind standardmäßig unsichtbar, stützen sich aber auf Fingerprinting oder verhaltensbasiertes Scoring, sodass falsch eingestufte Nutzer ohne Einspruch blockiert werden. Caps [Floating-](./floating.md) und [programmatischer](./programmatic.md) Modus sind bis zum Absenden unsichtbar und bleiben dabei deterministisch: Jeder echte Nutzer hat einen garantierten Weg hindurch.
+Turnstile und SilentShield sind standardmäßig unsichtbar, stützen sich aber auf Fingerprinting oder verhaltensbasiertes Scoring, sodass falsch eingestufte Nutzer ohne Einspruch blockiert werden. Caps [Floating-](./floating.md) und [unsichtbarer](./invisible.md) Modus sind bis zum Absenden unsichtbar und bleiben dabei deterministisch: Jeder echte Nutzer hat einen garantierten Weg hindurch.
 
 ### Ist Cap eine gute Alternative zu reCAPTCHA?
 

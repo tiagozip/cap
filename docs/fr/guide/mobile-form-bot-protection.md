@@ -38,7 +38,7 @@ C'est sur mobile que les CAPTCHA font le plus de dégâts à la conversion :
 
 ## Comment Cap se comporte sur les formulaires mobiles
 
-- **Un tap, puis la progression.** L'utilisateur tape sur une case ; un pourcentage se remplit pendant que la preuve de travail s'exécute dans le navigateur. Pas d'images, pas de saisie, pas de clavier qui se referme. En mode [flottant](./floating.md) ou [programmatique](./programmatic.md), rien n'est visible avant l'envoi.
+- **Un tap, puis la progression.** L'utilisateur tape sur une case ; un pourcentage se remplit pendant que la preuve de travail s'exécute dans le navigateur. Pas d'images, pas de saisie, pas de clavier qui se referme. En mode [flottant](./floating.md) ou [invisible](./invisible.md), rien n'est visible avant l'envoi.
 - **Widget d'environ 20 Ko.** Un simple composant web, sans dépendance à un framework, peu coûteux en cellulaire. Voir le [benchmark](./benchmark.md).
 - **Aucune pénalité liée aux empreintes.** Peu importe à Cap que le visiteur soit derrière un NAT opérateur, dans une webview Instagram ou sur Safari iOS avec la prévention du pistage. La preuve de travail est le même calcul pour tout le monde.
 - **La difficulté vous appartient.** Réglez-la par clé de site sur le [serveur standalone](./standalone/options.md) : plus légère pour le trafic de paiement grand public sur des Android de milieu de gamme, plus lourde pour des points d'inscription exposés aux abus.
@@ -57,9 +57,9 @@ Une contrepartie honnête : la preuve de travail consomme du temps CPU, et les t
 ## Notes d'implémentation
 
 - Placez le widget dans votre `<form>` et Cap injecte automatiquement le champ `cap-token` ; aucun JavaScript requis. [Démarrage rapide →](./index.md)
-- Pour les SPA et les webviews d'applications, utilisez l'événement `solve` ou le [mode programmatique](./programmatic.md) pour garder la main sur le parcours.
+- Pour les SPA et les webviews d'applications, utilisez l'événement `solve` ou le [mode invisible](./invisible.md) pour garder la main sur le parcours.
 - Testez sur un vrai Android de milieu de gamme en réseau cellulaire, pas seulement sur un modèle haut de gamme en Wi-Fi, et ajustez la difficulté jusqu'à ce que la résolution paraisse instantanée pour votre public.
-- Vous protégez l'API d'une application native plutôt qu'un formulaire web ? Le [serveur standalone](./standalone/api.md) de Cap vérifie les jetons de tout client capable d'exécuter le défi dans une webview.
+- Vous protégez l'API d'une application native plutôt qu'un formulaire web ? Le [serveur standalone](./standalone/index.md) de Cap vérifie les jetons de tout client capable d'exécuter le défi dans une webview.
 
 ## FAQ
 

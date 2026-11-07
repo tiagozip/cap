@@ -14,7 +14,7 @@ Cap is bot protection you can read, audit, and self-host:
 
 - A **~20 KB widget** that renders a single checkbox instead of image puzzles.
 - A **standalone server** that ships as one Docker container with a dashboard and multi-site-key support.
-- **Server libraries** (`@cap.js/server` and community ports) for verifying challenges in your own backend.
+- **A server library**, `capjs-core`, for running challenges inside your own backend, plus [community ports](./guide/community.md) to other languages.
 - A **siteverify API compatible with reCAPTCHA and hCaptcha**, so migrating is mostly a URL swap.
 
 The full source lives at [github.com/tiagozip/cap](https://github.com/tiagozip/cap) under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0).

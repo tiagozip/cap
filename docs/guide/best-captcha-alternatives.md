@@ -13,7 +13,7 @@ faq:
   - q: Which CAPTCHA alternative has the best user experience?
     a: "Anything without visual puzzles. Cap shows a single checkbox with a live progress indicator; Turnstile and SilentShield are invisible for users their models classify as human; hCaptcha and reCAPTCHA v2 still drop users into image challenges."
   - q: What is the best invisible CAPTCHA?
-    a: "Turnstile and SilentShield are invisible by default but rely on fingerprinting or behavioral scoring, so misclassified users get blocked with no recourse. Cap's floating and programmatic modes are invisible until submit while staying deterministic: every real user has a guaranteed path through."
+    a: "Turnstile and SilentShield are invisible by default but rely on fingerprinting or behavioral scoring, so misclassified users get blocked with no recourse. Cap's floating and invisible modes are invisible until submit while staying deterministic: every real user has a guaranteed path through."
   - q: Is Cap a good alternative to reCAPTCHA?
     a: "Yes. The siteverify API is compatible with reCAPTCHA's shape, so server-side migration is mostly a URL swap, and you can run both side by side during cut-over. Unlike reCAPTCHA, Cap is open source, self-hosted, and never shows image puzzles."
 ---
@@ -155,7 +155,7 @@ Anything without visual puzzles. Cap shows a single checkbox with a live progres
 
 ### What is the best invisible CAPTCHA?
 
-Turnstile and SilentShield are invisible by default but rely on fingerprinting or behavioral scoring, so misclassified users get blocked with no recourse. Cap's [floating](./floating.md) and [programmatic](./programmatic.md) modes are invisible until submit while staying deterministic: every real user has a guaranteed path through.
+Turnstile and SilentShield are invisible by default but rely on fingerprinting or behavioral scoring, so misclassified users get blocked with no recourse. Cap's [floating](./floating.md) and [invisible](./invisible.md) modes are invisible until submit while staying deterministic: every real user has a guaranteed path through.
 
 ### Is Cap a good alternative to reCAPTCHA?
 

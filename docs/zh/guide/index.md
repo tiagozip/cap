@@ -1,45 +1,32 @@
 ---
-outline: deep
-description: "约五分钟即可搭建好 Cap 这款开源自托管 CAPTCHA。用 Docker 运行服务端，放入验证组件，验证令牌。没有 Google，没有遥测，没有图像谜题。"
+outline: [2, 3]
+description: "约五分钟即可搭建好 Cap 这款开源自托管 CAPTCHA。用 Docker 或在你自己的后端中运行服务端，放入验证组件，验证令牌。没有 Google，没有遥测，没有图像谜题。"
 ---
 
 # 快速开始
 
-Cap 是一款自托管的 CAPTCHA（人机验证），它用不可见的工作量证明取代了图像谜题。用户只需点击一个复选框，计算在浏览器中静默完成，任何数据都不会离开你的服务器。没有 Google，没有遥测，没有按请求计费。
+Cap 由两部分组成：验证组件在访客的浏览器中运行并完成质询，然后交给你一个令牌；服务端负责签发质询并验证这些令牌。
 
-Cap 由两部分组成：负责运行质询并显示复选框的**验证组件**，以及负责签发质询、校验解答的**服务端**。大约五分钟就能把两者都运行起来。
+## 选择服务端 {#pick-a-server}
 
-**这就是验证组件，可以试一试：**
+- **[Standalone](./standalone/index.md)** 是一个 Docker 容器，自带控制台、数据分析和速率限制。如果你能运行容器，就选它。如果你正在从 reCAPTCHA 迁移，Standalone 的 `/siteverify` 支持相同的请求格式，你的验证代码只需改用你服务器的主机名即可。
 
-<Demo />
+- **[核心库](./capjs-core.md)** 是一个精简的 npm 包，负责 Cap 的基础功能。你的代码能在哪里运行，它就能在哪里运行，包括 Workers 这类无服务器平台。令牌存放在你自己的数据库中，但它不提供内置的数据分析。
 
-::: tip 已经在用 reCAPTCHA？
-Cap 的 `/siteverify` 与 reCAPTCHA 的 API 兼容。你只需改一个 URL，就能把现有的验证代码指向 Cap，两者并行运行，随时切换。无需重写代码，也没有孤注一掷的风险。参见[功能对比](./alternatives.md)。
-:::
+## 1. 运行服务端 {#_1-run-the-server}
 
-## 你需要准备
+### Standalone {#standalone}
 
-- [Docker](https://docs.docker.com/get-docker/)（运行服务端最快的方式）
-- 一个用户浏览器可以访问到的托管环境
-- 几分钟时间
-
-## 1. 运行服务端
-
-我们推荐使用 [Cap Standalone](./standalone/index.md)：一个单独的容器，提供小巧的 REST API 和用于管理密钥的控制台。它支持多个站点密钥，并兼容 reCAPTCHA 的 siteverify API。
-
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)
-
-创建 `docker-compose.yml`：
+把下面的内容保存为 `docker-compose.yml`，或者[用 Railway 部署](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)：
 
 ```yaml
 services:
   cap:
     image: tiago2/cap:latest
-    container_name: cap
     ports:
       - "3000:3000"
     environment:
-      ADMIN_KEY: your_secret_password
+      ADMIN_KEY: change_me_to_something_long
       REDIS_URL: redis://valkey:6379
     depends_on:
       valkey:
@@ -48,7 +35,6 @@ services:
 
   valkey:
     image: valkey/valkey:9-alpine
-    container_name: cap-valkey
     volumes:
       - valkey-data:/data
     command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
@@ -63,147 +49,167 @@ volumes:
   valkey-data:
 ```
 
-启动：
+记得修改管理员密钥，然后启动：
 
 ```bash
 docker compose up -d
 ```
 
-打开 `http://localhost:3000`（或你服务器 3000 端口对应的 IP 或域名），用 `ADMIN_KEY` 登录并创建一个站点密钥。你会得到一个**站点密钥（site key）**和一个**秘密密钥（secret key）**。两个都保存好，后面的步骤会用到。
+打开 `http://localhost:3000`，用 `ADMIN_KEY` 登录，它就是控制台密码。创建一个站点密钥（site key），然后把站点密钥和对应的秘密密钥都复制下来。
 
-::: tip 提示
+验证组件会从访客的浏览器直接访问这个服务端，所以在生产环境中它需要一个公开的 URL。我们推荐使用 [Cloudflare Tunnels](https://developers.cloudflare.com/tunnel/) 这类方案，[Standalone 文档](./standalone/index.md)也介绍了其他大多数情况，包括反向代理。
 
-- `ADMIN_KEY` 是你的控制台密码，长度至少 32 个字符。
-- 如果 3000 端口已被占用，修改 `3000:3000`。
-- 如果控制台无法访问，在 `cap` 服务下添加 `network_mode: "host"`。
-  :::
+### 核心库 {#core-library}
 
-## 2. 添加验证组件
+安装：
 
-验证组件是一个独立的 Web Component。如果你不想固定版本，可以把 `<version>` 替换为 `latest`。
+::: code-group
+
+```sh [npm]
+npm i capjs-core
+```
+
+```sh [pnpm]
+pnpm add capjs-core
+```
+
+```sh [bun]
+bun add capjs-core
+```
+
+:::
+
+在同一个前缀下添加两个路由。这个例子用的是 Hono 和 Redis，不过任何框架都可以，存储只要支持原子性的"不存在时才写入"操作就行：
+
+```js
+import { Hono } from "hono";
+import { Redis } from "ioredis";
+import { generateChallenge, validateChallenge } from "capjs-core";
+
+const SECRET = process.env.CAP_SECRET;
+const redis = new Redis(process.env.REDIS_URL);
+const app = new Hono();
+
+app.post("/cap/challenge", async (c) =>
+  c.json(await generateChallenge(SECRET, { format: 2, protocols: ["hashwx", "instrumentation"] })),
+);
+
+app.post("/cap/redeem", async (c) => {
+  const result = await validateChallenge(SECRET, await c.req.json(), {
+    consumeNonce: async (sig, ttlMs) =>
+      (await redis.set(`cap:nonce:${sig}`, "1", "NX", "PX", ttlMs)) === "OK",
+  });
+  if (result.success) {
+    await redis.set(`cap:token:${result.tokenKey}`, "1", "PX", result.expires - Date.now());
+  }
+  return c.json(result);
+});
+```
+
+`CAP_SECRET` 用于给每个质询签名。它应该足够长且随机，并且所有进程都要使用同一个值。
+
+## 2. 添加验证组件 {#_2-add-the-widget}
+
+加载脚本，并从[发布页面](https://github.com/tiagozip/cap/releases)选一个版本号固定下来：
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
 ```
 
-::: tip
-要固定哪个版本号，可参考[最新版本](https://github.com/tiagozip/cap/releases)。在高安全性场景下，你也可以自托管这个文件，而不是从 CDN 加载。
-:::
-
-### 简单方式：直接放进表单
-
-如果验证组件位于 `<form>` 内，Cap 会自动注入一个隐藏的 `cap-token` 字段，并随表单其他数据一起提交。无需任何 JavaScript。
+把验证组件放进你的表单：
 
 ```html
 <form action="/submit" method="POST">
-  <!-- 你的表单字段 -->
-  <cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
+  <cap-widget data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
   <button type="submit">Submit</button>
 </form>
 ```
 
-- `<your-instance>` 是你 Cap 服务端的公开 URL，比如 `cap.example.com`。它必须能被访客访问到，所以不能是 `localhost`。
-- `<site-key>` 是控制台中的站点密钥。
+使用 Standalone 时，端点是 `https://<your-instance>/<site-key>/`。使用核心库时，端点就是你的路由前缀，比如 `/cap/`。
 
-提交时，你的服务器会连同其他字段一起收到 `cap-token`。验证方法见[第 3 步](#_3-验证令牌)。
-
-### JavaScript 方式：需要更多控制时
-
-对于 SPA、自定义流程，或任何不是普通表单的场景，监听 `solve` 事件即可：
+访客完成验证后，验证组件会往表单里加一个隐藏的 `cap-token` 字段。如果不在表单里，就改为监听 `solve` 事件：
 
 ```js
-const widget = document.querySelector("cap-widget");
-widget.addEventListener("solve", (e) => {
+document.querySelector("cap-widget").addEventListener("solve", (e) => {
   const token = e.detail.token;
-  // 将令牌发送到你的服务器、启用提交按钮等
 });
 ```
 
-你也可以让组件不可见并以[编程方式](./programmatic.md)求解，或者使用[浮动模式](./floating.md)。各框架（React、Vue、Svelte 等）的代码片段见[验证组件页面](./widget.md#usage)。
+[验证组件页面](./widget.md)提供了 React、Vue、Svelte 等框架的代码片段。
 
-## 3. 验证令牌
+## 3. 验证令牌 {#_3-verify-the-token}
 
-在信任一次提交之前，你的服务器必须先验证令牌。向你实例的 `/siteverify` 端点发送 `POST` 请求：
+在信任一次提交之前，先在你的服务端检查它的令牌。
+
+### Standalone {#standalone-1}
+
+把令牌发送到 `/siteverify`：
 
 ::: code-group
 
-```sh [curl]
-curl "https://<your-instance>/<site-key>/siteverify" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{ "secret": "<key_secret>", "response": "<captcha_token>" }'
-```
-
 ```js [fetch]
-const { success } = await (
-  await fetch("https://<your-instance>/<site-key>/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ secret: "<key_secret>", response: "<captcha_token>" }),
-  })
-).json();
-
-if (!success) throw new Error("invalid cap token");
+const res = await fetch("https://cap.example.com/<site-key>/siteverify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ secret: "<secret>", response: token }),
+});
+const { success } = await res.json();
 ```
 
 ```py [python]
 import requests
 
 success = requests.post(
-    "https://<your-instance>/<site-key>/siteverify",
-    json={"secret": "<key_secret>", "response": "<captcha_token>"},
-).json().get("success")
+    "https://cap.example.com/<site-key>/siteverify",
+    json={"secret": "<secret>", "response": token},
+).json()["success"]
 ```
 
 ```php [php]
-<?php
-$data = json_decode(file_get_contents("https://<your-instance>/<site-key>/siteverify",
-  false, stream_context_create([
-    "http" => [
-      "method" => "POST",
-      "header" => "Content-Type: application/json",
-      "content" => json_encode(["secret"=>"<key_secret>","response"=>"<captcha_token>"])
-    ]
-  ])
-), true);
-var_dump($data['success'] ?? false);
+$res = file_get_contents("https://cap.example.com/<site-key>/siteverify", false, stream_context_create([
+  "http" => [
+    "method" => "POST",
+    "header" => "Content-Type: application/json",
+    "content" => json_encode(["secret" => "<secret>", "response" => $token]),
+  ],
+]));
+$success = json_decode($res, true)["success"] ?? false;
+```
+
+```sh [curl]
+curl -X POST "https://cap.example.com/<site-key>/siteverify" \
+  -H "Content-Type: application/json" \
+  -d '{"secret": "<secret>", "response": "<token>"}'
 ```
 
 :::
 
-- `<key_secret>` 是控制台中的**秘密密钥**，不是控制台的 `ADMIN_KEY`。混淆这两者是最常见的配置错误。
-- `<captcha_token>` 是来自验证组件的令牌（`cap-token` 表单字段或 `e.detail.token`）。
+`<secret>` 是站点密钥对应的秘密密钥，不是你的 `ADMIN_KEY`。把这两者搞混是最常见的配置错误。
 
-有效令牌会返回：
+有效的令牌会返回 `{ "success": true }`。每个令牌只能使用一次，所以对同一个令牌进行第二次验证会失败。把同一个令牌发送两次，就能快速地端到端检查整个配置。
 
-```json
-{ "success": true }
+### 核心库 {#core-library-1}
+
+在兑换路由写入的存储中查找这个令牌，然后删除它，这样它就不能被重复使用：
+
+```js
+import { createHash } from "node:crypto";
+
+app.post("/submit", async (c) => {
+  const [id, secret] = String((await c.req.parseBody())["cap-token"] ?? "").split(":");
+  const key = `cap:token:${id}:${createHash("sha256")
+    .update(secret ?? "")
+    .digest("hex")}`;
+
+  if ((await redis.del(key)) !== 1) {
+    return c.text("invalid captcha", 403);
+  }
+});
 ```
 
-令牌是一次性的，因此每个令牌只验证一次，然后再执行你自己的业务逻辑（创建账号、发送消息等）。
+## 下一步 {#next-steps}
 
-## 4. 确认一切正常
-
-一个快速的端到端检查：
-
-1. 加载你的页面。复选框应被勾选，你的 `solve` 处理函数（或表单字段）应产生一个令牌。
-2. 将该令牌发送到 `/siteverify`，应返回 `{ "success": true }`。
-3. 再次发送同一个令牌，这次应该失败，说明一次性机制在正常工作。
-
-如果验证总是失败，检查你用的是不是秘密密钥（而非管理员密钥），以及 `<your-instance>` 是否与验证组件指向的公开 URL 一致。
-
-整个集成到此完成。用户在浏览器中完成质询，你的服务器验证令牌，所有数据都掌握在你自己手中。
-
-## 为合规而生
-
-由于 Cap 是自托管的，没有 Cookie、没有跟踪、没有第三方调用，用户数据永远不会离开你的基础设施。Cap 的设计满足 GDPR、CCPA、HIPAA、LGPD 等隐私法规，并且工作量证明复选框避免了图像和音频谜题在 WCAG 2.2 下遇到的无障碍问题。完整细节以及 Cap 所遵循的法规，见[合规](./compliance.md)页面。
-
-## 下一步
-
-你的表单已经受到保护。接下来你可以：
-
-- 通过[框架代码片段](./widget.md#usage)把 Cap 集成进你的技术栈
-- [自定义验证组件](./widget.md#options)的外观和行为
-- 调整 [instrumentation](./instrumentation.md)（浏览器环境检测），并[配置](./standalone/options.md) CORS 和速率限制
-- 了解 Cap 与 [reCAPTCHA、Turnstile、hCaptcha 等](./alternatives.md)的对比
-- 如果你还在评估选型，可以阅读 [2026 年最佳 CAPTCHA 替代方案](./best-captcha-alternatives.md)指南
+- [自定义验证组件](./widget.md#attributes)的文字、语言和样式
+- [配置 Standalone](./standalone/options.md) 的 CORS、速率限制和资源服务器
+- 阅读[核心库参考](./capjs-core.md)
+- 了解 [Cap 的工作原理](./workings.md)

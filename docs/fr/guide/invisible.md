@@ -1,8 +1,8 @@
 ---
-description: "Mode programmatique de Cap : appelez new Cap() et solve() pour exécuter le CAPTCHA open source depuis votre propre JavaScript, avec preuve de travail et sans widget visible."
+description: "Mode invisible de Cap : appelez new Cap() et solve() pour exécuter le CAPTCHA open source depuis votre propre JavaScript, avec preuve de travail et sans widget visible."
 ---
 
-# Mode programmatique
+# Mode invisible
 
 Vous pouvez utiliser `new Cap({ ... })` dans votre JavaScript côté client pour créer une instance de Cap, puis la méthode `solve()` pour résoudre le défi.
 

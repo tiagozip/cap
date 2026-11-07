@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Füge einer Elysia-App mit der offiziellen Middleware einen Cap Checkpoint hinzu. Sichere Routen mit dem selbst gehosteten, quelloffenen Proof-of-Work-CAPTCHA in wenigen Zeilen ab."
 ---
 

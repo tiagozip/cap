@@ -20,7 +20,7 @@ Cap is a free, open-source, self-hosted CAPTCHA alternative that uses proof-of-w
 | GeeTest              | ❌          | ❌   | ❌      | 🟨            | 🟨              | 🟨               | ✅             | ❌           | 🟨            | ❌              | ❌          | 🟨                |
 | Arkose Labs          | ❌          | ❌   | ❌      | ❌            | ❌              | ❌               | ✅             | 🟨           | 🟨            | 🟨              | 🟨          | 🟨                |
 
-One criterion Cap deliberately fails: there is no managed hosting. If you refuse to run any infrastructure at all, Cloudflare Turnstile or FriendlyCaptcha is a better fit.
+The table leaves out hosting. Cap has no hosted version, so you always run it yourself. If you don't want to run any infrastructure, Cloudflare Turnstile or FriendlyCaptcha fits better.
 
 ::: tip Note
 

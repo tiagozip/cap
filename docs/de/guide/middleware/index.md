@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Cap Checkpoints setzen ein Browser-Check-Interstitial wie bei Cloudflare davor und blocken Bots, bevor sie deine Seite erreichen. Selbst gehostetes, quelloffenes Proof-of-Work-CAPTCHA."
 ---
 

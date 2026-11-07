@@ -1,4 +1,5 @@
 ---
+search: false
 description: "เพิ่ม Cap Checkpoint ให้ Express ด้วย @cap.js/checkpoint-express ปกป้องเส้นทางต่าง ๆ ด้วย CAPTCHA แบบ proof-of-work โอเพนซอร์สที่โฮสต์เองได้ พร้อมการตรวจสอบเบราว์เซอร์"
 ---
 

@@ -28,7 +28,7 @@ Turnstile 是 Cloudflare 推出的免费 CAPTCHA（人机验证）替代品，�
 
 ## 两者相似之处
 
-两者的客户端都很小（约 20-110 KB）。两者都有"隐形"模式（Cap 称之为[浮动模式](../floating.md)或[编程模式](../programmatic.md)）。两者都在主质询之上叠加了行为检测：Cap 称之为 [instrumentation 质询](../instrumentation.md)，Turnstile 则叫"托管质询（managed challenges）"。
+两者的客户端都很小（约 20-110 KB）。两者都有"隐形"模式（Cap 称之为[浮动模式](../floating.md)或[隐形模式](../invisible.md)）。两者都在主质询之上叠加了行为检测：Cap 称之为 [instrumentation 质询](../instrumentation.md)，Turnstile 则叫"托管质询（managed challenges）"。
 
 ## 迁移
 

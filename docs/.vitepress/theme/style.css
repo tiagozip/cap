@@ -50,7 +50,7 @@
   --font-serif: "Recife Text", "Iowan Old Style", Georgia, serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --frame: 1120px;
-  --fl: max(24px, calc((100vw - var(--frame)) / 2));
+  --fl: max(24px, calc((100% - var(--frame)) / 2));
   --fp: 48px;
   --sw: 256px;
 
@@ -169,6 +169,7 @@
 
 html {
   scrollbar-color: #ffffff24 var(--ground);
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -244,6 +245,7 @@ footer {
 }
 
 .VPNavBar .content-body {
+  position: static !important;
   justify-content: flex-start;
   column-gap: 16px;
 }
@@ -315,7 +317,7 @@ footer {
 
 .VPNavBar .search .DocSearch-Button-Placeholder {
   flex: 1;
-  padding: 0 0 0 8px;
+  padding: 0;
   text-align: start;
   font-size: 0.9375rem;
   font-weight: 400;
@@ -358,6 +360,7 @@ footer {
   align-items: center;
   gap: 7px;
   font-size: 0.9375rem;
+  font-weight: 300;
   white-space: nowrap;
   color: var(--text-secondary);
   transition: color 120ms;
@@ -508,16 +511,11 @@ footer {
   }
 
   .VPLocalNav .container {
+    max-width: 768px !important;
+    margin: 0 auto;
     padding: 0 40px;
   }
 
-  .VPLocalNav .VPLocalNavOutlineDropdown {
-    padding: 12px 0 !important;
-  }
-
-  .VPLocalNav .VPLocalNavOutlineDropdown > button {
-    padding-left: 0 !important;
-  }
 }
 
 .VPLocalNav,
@@ -527,7 +525,7 @@ footer {
 }
 
 .VPLocalNav .menu,
-.VPLocalNav .VPLocalNavOutlineDropdown > button {
+.VPLocalNav .toc-trigger {
   font-weight: 400;
 }
 
@@ -626,7 +624,7 @@ footer {
 
 .vp-doc {
   font-size: 1rem;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.7;
   color: var(--text-secondary);
 }
@@ -861,60 +859,222 @@ code {
   border-top-color: var(--edge) !important;
 }
 
-.VPLocalSearchBox .shell {
-  border: 1px solid var(--edge);
-  border-radius: 14px !important;
-  background: var(--raised) !important;
+html .VPLocalSearchBox .backdrop {
+  background: #0b0b1299;
+  backdrop-filter: blur(6px);
+}
+
+html .VPLocalSearchBox .shell {
+  gap: 0;
+  width: min(100vw - 40px, 640px);
+  height: auto;
+  max-height: min(100dvh - 160px, 640px);
+  margin: 96px auto auto;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--panel);
   box-shadow:
-    0 1px 2px #0000004d,
-    0 12px 32px #00000066,
-    0 32px 80px #00000059 !important;
+    0 0 0 1px var(--edge-strong),
+    0 2px 4px #0000003d,
+    0 12px 28px #00000052,
+    0 32px 72px #00000066;
 }
 
-.VPLocalSearchBox .search-bar {
-  border: 1px solid var(--edge) !important;
-  border-radius: 10px !important;
+html .VPLocalSearchBox .search-bar {
+  flex: none;
+  gap: 4px;
+  height: 56px;
+  padding: 0 14px 0 6px;
+  border: 0;
+  border-bottom: 1px solid var(--edge);
+  border-radius: 0;
+}
+
+html .VPLocalSearchBox .search-bar:focus-within {
+  border-color: var(--edge);
+}
+
+html .VPLocalSearchBox .search-bar::after {
+  content: "Esc";
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-faint);
+  box-shadow: inset 0 0 0 1px var(--edge-strong);
+}
+
+html .VPLocalSearchBox .search-icon {
+  font-size: 18px;
+  color: var(--text-faint);
+}
+
+html .VPLocalSearchBox .search-input {
+  padding: 0 4px;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+html .VPLocalSearchBox .search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+html .VPLocalSearchBox .search-input::placeholder {
+  color: var(--text-faint);
+}
+
+html .VPLocalSearchBox .search-actions:not(.before) {
+  display: none;
+}
+
+html .VPLocalSearchBox .results {
+  gap: 2px;
+  padding: 6px;
+}
+
+html .VPLocalSearchBox .results:empty {
+  display: none;
+}
+
+html .VPLocalSearchBox .result {
+  border: 0;
+  border-radius: 10px;
+  line-height: 20px;
+}
+
+html .VPLocalSearchBox .result > div {
+  margin: 8px 12px;
+}
+
+html .VPLocalSearchBox .result.selected {
+  background: #ffffff0d;
+}
+
+html .VPLocalSearchBox .titles {
+  gap: 2px 4px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+html .VPLocalSearchBox .title-icon {
+  display: none;
+}
+
+html .VPLocalSearchBox .title .local-search-icon {
+  font-size: 12px;
+}
+
+html .VPLocalSearchBox .title.main {
+  flex-basis: 100%;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+html .VPLocalSearchBox .result.selected .titles,
+html .VPLocalSearchBox .result.selected .title-icon {
+  color: var(--text-faint) !important;
+}
+
+html .VPLocalSearchBox .result.selected .title.main {
+  color: var(--text);
+}
+
+html .VPLocalSearchBox .excerpt-wrapper {
+  margin: 6px 0 2px 2px;
+  padding-left: 12px;
+  box-shadow: inset 1px 0 var(--edge-strong);
+}
+
+html .VPLocalSearchBox .excerpt {
+  max-height: 60px;
+  margin: 0;
+  opacity: 1;
+  color: var(--text-secondary);
+  mask-image: linear-gradient(#000 70%, transparent);
+}
+
+html .VPLocalSearchBox .excerpt :is(h1, h2, h3, h4, h5, h6) {
+  display: none;
+}
+
+html .VPLocalSearchBox .excerpt :is(p, li, td) {
+  color: var(--text-secondary);
+}
+
+html .VPLocalSearchBox .excerpt * {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 20px !important;
+}
+
+html .VPLocalSearchBox .excerpt :is(div[class*="language-"], .vp-code-group, table, img, .custom-block) {
+  display: none;
+}
+
+html .VPLocalSearchBox .excerpt :not(pre) > code {
+  padding: 0 4px;
+  background: #ffffff0d;
+  color: var(--text-secondary);
+}
+
+html .VPLocalSearchBox .excerpt-gradient-bottom,
+html .VPLocalSearchBox .excerpt-gradient-top {
+  display: none;
+}
+
+html .VPLocalSearchBox .result mark {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+html .VPLocalSearchBox .no-results {
+  padding: 28px 12px;
+  font-size: 14px;
+  color: var(--text-faint);
+}
+
+html .VPLocalSearchBox .search-keyboard-shortcuts {
+  flex: none;
+  gap: 18px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--edge);
   background: var(--ground);
+  font-size: 12px;
+  opacity: 1;
+  color: var(--text-faint);
 }
 
-.VPLocalSearchBox .search-bar:focus-within {
-  border-color: var(--edge-strong) !important;
+html .VPLocalSearchBox .search-keyboard-shortcuts kbd {
+  min-width: 20px;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--edge-strong);
 }
 
-.VPLocalSearchBox .search-input {
-  font-weight: 400;
-}
+@media (max-width: 767px) {
+  html .VPLocalSearchBox .shell {
+    width: 100vw;
+    max-height: none;
+    margin: 0;
+    border-radius: 0;
+  }
 
-.VPLocalSearchBox .result {
-  border: 1px solid transparent !important;
-  border-radius: 10px !important;
-  background: transparent !important;
-  transition: none !important;
-}
-
-.VPLocalSearchBox .result.selected {
-  border-color: var(--edge) !important;
-  background: #ffffff0a !important;
-}
-
-.VPLocalSearchBox .result .titles {
-  font-weight: 400;
-}
-
-.VPLocalSearchBox .result.selected .title-icon,
-.VPLocalSearchBox .result.selected .titles .title:last-child {
-  color: var(--text) !important;
-}
-
-.VPLocalSearchBox mark {
-  padding: 0 !important;
-  background: none !important;
-  color: var(--accent) !important;
-}
-
-.VPLocalSearchBox .search-keyboard-shortcuts kbd {
-  border-color: var(--edge-strong);
-  box-shadow: none;
+  html .VPLocalSearchBox .search-bar::after {
+    display: none;
+  }
 }
 
 html:lang(zh-CN) .vp-doc :is(h1, h2, h3),

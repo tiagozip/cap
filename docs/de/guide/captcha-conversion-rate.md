@@ -64,7 +64,7 @@ Für conversion-sensible Abläufe heißt das:
 - Nie Bilderrätsel. Es gibt keinen "harten Modus", in den man fallen kann.
 - Keine Risiko-Scores, also keine stillen Strafen für VPNs oder Privacy-Browser.
 - Du steuerst die Schwierigkeit pro Site-Key: bei der Anmeldung hochdrehen, im Checkout federleicht halten.
-- [Floating-](./floating.md) und [programmatischer](./programmatic.md) Modus machen es bis zum Absenden vollständig unsichtbar.
+- [Floating-](./floating.md) und [unsichtbarer](./invisible.md) Modus machen es bis zum Absenden vollständig unsichtbar.
 - Das Widget liegt bei etwa 20 KB, es bremst also nicht die Seite aus, die es schützen soll. Siehe den [Benchmark](./benchmark.md).
 
 Weil Caps Proof-of-Work deterministisch ist, wird nie ein Mensch von einem Risiko-Score falsch eingestuft: Jeder Browser, der die Challenge ausführen kann, kommt durch. Abbrüche beschränken sich auf Nutzer, die die wenigen Sekunden des Lösens nicht abwarten wollen, und die Fortschrittsanzeige des Widgets hält diese Wartezeit lesbar.

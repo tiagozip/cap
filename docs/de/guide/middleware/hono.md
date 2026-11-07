@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Füge einer Hono-App mit @cap.js/checkpoint-hono einen Cap Checkpoint hinzu. Schütze Routen mit dem selbst gehosteten, quelloffenen Proof-of-Work-CAPTCHA und einem Browser-Check."
 ---
 

@@ -38,7 +38,7 @@ Mobile is where CAPTCHAs do the most conversion damage:
 
 ## How Cap works on mobile forms
 
-- **One tap, then progress.** The user taps a checkbox; a progress percentage fills while the proof-of-work runs in the browser. No images, no typing, no keyboard dismissal. In [floating](./floating.md) or [programmatic](./programmatic.md) mode there's nothing visible at all until submit.
+- **One tap, then progress.** The user taps a checkbox; a progress percentage fills while the proof-of-work runs in the browser. No images, no typing, no keyboard dismissal. In [floating](./floating.md) or [invisible](./invisible.md) mode there's nothing visible at all until submit.
 - **~20 KB widget.** A single web component, no framework dependency, cheap over cellular. See the [benchmark](./benchmark.md).
 - **No fingerprint penalty.** Cap doesn't care that the visitor is behind carrier NAT, inside an Instagram webview, or on iOS Safari with tracking prevention. The proof-of-work is the same computation for everyone.
 - **Difficulty is yours to tune.** Set it per site key on the [standalone server](./standalone/options.md): lighter for consumer checkout traffic on mid-range Androids, heavier for abuse-prone signup endpoints.
@@ -57,9 +57,9 @@ One honest tradeoff: proof-of-work costs CPU time, and low-end phones solve slow
 ## Implementation notes
 
 - Put the widget inside your `<form>` and Cap injects the `cap-token` field automatically; no JavaScript needed. [Quickstart →](./index.md)
-- For SPAs and app webviews, use the `solve` event or [programmatic mode](./programmatic.md) to keep full control of the flow.
+- For SPAs and app webviews, use the `solve` event or [invisible mode](./invisible.md) to keep full control of the flow.
 - Test on a real mid-range Android over cellular, not just a flagship on Wi-Fi, and tune difficulty until solve time feels instant for your audience.
-- Protecting a native app's API rather than a web form? Cap's [standalone server](./standalone/api.md) verifies tokens from any client that can run the challenge in a webview.
+- Protecting a native app's API rather than a web form? Cap's [standalone server](./standalone/index.md) verifies tokens from any client that can run the challenge in a webview.
 
 ## FAQ
 

@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Cap Checkpoints เพิ่มหน้าคั่นสำหรับตรวจสอบเบราว์เซอร์แบบเดียวกับของ Cloudflare เพื่อสกัดบอทก่อนเข้าถึงเว็บของคุณ เป็น CAPTCHA แบบ proof-of-work โอเพนซอร์สที่โฮสต์เองได้"
 ---
 

@@ -28,7 +28,7 @@ Turnstile is genuinely good if you're already on Cloudflare and accept that the 
 
 ## Where they're similar
 
-Both ship a small (~20-110 KB) client. Both run an "invisible" mode (Cap calls it [floating mode](../floating.md) or [programmatic mode](../programmatic.md)). Both layer behavioral checks on top of a primary challenge: Cap calls those [instrumentation challenges](../instrumentation.md), Turnstile calls them "managed challenges."
+Both ship a small (~20-110 KB) client. Both run an "invisible" mode (Cap calls it [floating mode](../floating.md) or [invisible mode](../invisible.md)). Both layer behavioral checks on top of a primary challenge: Cap calls those [instrumentation challenges](../instrumentation.md), Turnstile calls them "managed challenges."
 
 ## Migration
 

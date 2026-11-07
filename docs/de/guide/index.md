@@ -1,45 +1,32 @@
 ---
-outline: deep
-description: "Richte Cap, das quelloffene, selbst gehostete CAPTCHA, in rund fünf Minuten ein. Server per Docker starten, Widget einbauen, Tokens verifizieren. Kein Google, keine Telemetrie, keine Bilderrätsel."
+outline: [2, 3]
+description: "Richte Cap, das quelloffene, selbst gehostete CAPTCHA, in rund fünf Minuten ein. Starte den Server mit Docker oder in deinem eigenen Backend, bau das Widget ein und verifiziere Tokens. Kein Google, keine Telemetrie, keine Bilderrätsel."
 ---
 
 # Schnellstart
 
-Cap ist ein selbst gehostetes CAPTCHA, das Bilderrätsel durch unsichtbaren Proof-of-Work ersetzt. Deine Nutzer klicken eine Checkbox an, die Arbeit läuft still in ihrem Browser, und keine ihrer Daten verlassen jemals deine Server. Kein Google, keine Telemetrie, keine Gebühren pro Anfrage.
+Cap besteht aus zwei Teilen. Das Widget läuft im Browser deiner Besucher, löst dort Challenges und gibt dir ein Token. Der Server stellt Challenges aus und verifiziert diese Tokens.
 
-Cap besteht aus zwei Teilen: einem **Widget**, das die Challenge ausführt und die Checkbox zeigt, und einem **Server**, der Challenges ausstellt und Lösungen verifiziert. Beides läuft in etwa fünf Minuten.
+## Server wählen {#pick-a-server}
 
-**Hier ist das Widget, live:**
+- **[Standalone](./standalone/index.md)** ist ein Docker-Container mit Dashboard, Analytics und Rate Limiting. Nimm ihn, wenn du einen Container betreiben kannst. Falls du von reCAPTCHA wechselst: Der `/siteverify`-Endpunkt von Standalone akzeptiert dasselbe Anfrageformat, also musst du in deinem Verifizierungscode nur den Hostnamen auf deinen Server ändern.
 
-<Demo />
+- **Die [Core-Bibliothek](./capjs-core.md)** ist ein minimales npm-Paket, das die Grundfunktionen von Cap abdeckt. Sie läuft überall, wo dein Code läuft, auch auf Serverless-Plattformen wie Workers. Die Tokens speicherst du in deiner eigenen Datenbank, eingebaute Analytics gibt es nicht.
 
-::: tip Du nutzt bereits reCAPTCHA?
-Caps `/siteverify` ist zur API von reCAPTCHA kompatibel. Du kannst deinen bestehenden Verifizierungscode mit einer einzigen URL-Änderung auf Cap zeigen lassen, beide parallel betreiben und umschalten, wann du bereit bist. Kein Rewrite, kein riskanter Big-Bang-Wechsel. Siehe den [Funktionsvergleich](./alternatives.md).
-:::
+## 1. Den Server starten {#_1-run-the-server}
 
-## Was du brauchst
+### Standalone {#standalone}
 
-- [Docker](https://docs.docker.com/get-docker/) (der schnellste Weg, den Server zu betreiben)
-- Einen Hosting-Ort, der aus den Browsern deiner Nutzer erreichbar ist
-- Ein paar Minuten
-
-## 1. Den Server starten
-
-Wir empfehlen [Cap Standalone](./standalone/index.md), einen einzelnen Container mit einer kleinen REST-API und einem Dashboard zur Key-Verwaltung. Er unterstützt mehrere Site-Keys und ist zur siteverify-API von reCAPTCHA kompatibel.
-
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)
-
-Lege eine `docker-compose.yml` an:
+Speichere das hier als `docker-compose.yml` oder [deploye mit Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic):
 
 ```yaml
 services:
   cap:
     image: tiago2/cap:latest
-    container_name: cap
     ports:
       - "3000:3000"
     environment:
-      ADMIN_KEY: your_secret_password
+      ADMIN_KEY: change_me_to_something_long
       REDIS_URL: redis://valkey:6379
     depends_on:
       valkey:
@@ -48,7 +35,6 @@ services:
 
   valkey:
     image: valkey/valkey:9-alpine
-    container_name: cap-valkey
     volumes:
       - valkey-data:/data
     command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
@@ -63,147 +49,167 @@ volumes:
   valkey-data:
 ```
 
-Starte sie:
+Ändere unbedingt deinen Admin-Key. Dann starte den Container:
 
 ```bash
 docker compose up -d
 ```
 
-Öffne `http://localhost:3000` (oder die IP bzw. Domain deines Servers auf Port 3000), melde dich mit deinem `ADMIN_KEY` an und lege einen Site-Key an. Du bekommst einen **Site-Key** und einen **Secret-Key**. Behalte beide, du brauchst sie in den nächsten Schritten.
+Öffne `http://localhost:3000` und melde dich mit deinem `ADMIN_KEY` an, das ist das Passwort fürs Dashboard. Lege einen Site-Key an und kopiere den Site-Key und sein Secret.
 
-::: tip Tipps
+Das Widget spricht aus den Browsern deiner Besucher mit diesem Server, also braucht er in Produktion eine öffentliche URL. Wir empfehlen etwas wie [Cloudflare Tunnels](https://developers.cloudflare.com/tunnel/), aber [die Standalone-Doku](./standalone/index.md) deckt die meisten anderen Fälle ab, auch Reverse Proxies.
 
-- `ADMIN_KEY` ist dein Dashboard-Passwort. Nimm mindestens 32 Zeichen.
-- Ändere `3000:3000`, falls der Port schon belegt ist.
-- Ist das Dashboard nicht erreichbar, ergänze `network_mode: "host"` unter dem Service `cap`.
-  :::
+### Core-Bibliothek {#core-library}
 
-## 2. Das Widget einbauen
+Installiere sie:
 
-Das Widget ist eine einzelne Web Component. Wenn du keine Versionen pinnen möchtest, ersetze `<version>` durch `latest`.
+::: code-group
+
+```sh [npm]
+npm i capjs-core
+```
+
+```sh [pnpm]
+pnpm add capjs-core
+```
+
+```sh [bun]
+bun add capjs-core
+```
+
+:::
+
+Lege zwei Routen unter einem gemeinsamen Präfix an. Dieses Beispiel nutzt Hono und Redis, aber jedes Framework und jeder Store mit einem atomaren "set if missing" funktioniert:
+
+```js
+import { Hono } from "hono";
+import { Redis } from "ioredis";
+import { generateChallenge, validateChallenge } from "capjs-core";
+
+const SECRET = process.env.CAP_SECRET;
+const redis = new Redis(process.env.REDIS_URL);
+const app = new Hono();
+
+app.post("/cap/challenge", async (c) =>
+  c.json(await generateChallenge(SECRET, { format: 2, protocols: ["hashwx", "instrumentation"] })),
+);
+
+app.post("/cap/redeem", async (c) => {
+  const result = await validateChallenge(SECRET, await c.req.json(), {
+    consumeNonce: async (sig, ttlMs) =>
+      (await redis.set(`cap:nonce:${sig}`, "1", "NX", "PX", ttlMs)) === "OK",
+  });
+  if (result.success) {
+    await redis.set(`cap:token:${result.tokenKey}`, "1", "PX", result.expires - Date.now());
+  }
+  return c.json(result);
+});
+```
+
+`CAP_SECRET` signiert jede Challenge. Mach es lang und zufällig und nutze in jedem Prozess dasselbe.
+
+## 2. Das Widget einbauen {#_2-add-the-widget}
+
+Lade das Skript und pinne dabei eine Version von der [Releases-Seite](https://github.com/tiagozip/cap/releases):
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
 ```
 
-::: tip
-Schau im [neuesten Release](https://github.com/tiagozip/cap/releases) nach, welche Version du pinnen solltest. In Setups mit hohen Sicherheitsanforderungen kannst du diese Datei selbst hosten, statt sie vom CDN zu laden.
-:::
-
-### Der einfache Weg: ins Formular einsetzen
-
-Liegt dein Widget in einem `<form>`, fügt Cap automatisch ein verstecktes Feld `cap-token` ein und schickt es mit den übrigen Formulardaten mit. Kein JavaScript nötig.
+Setz das Widget in dein Formular:
 
 ```html
 <form action="/submit" method="POST">
-  <!-- deine Felder -->
-  <cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
-  <button type="submit">Absenden</button>
+  <cap-widget data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit">Submit</button>
 </form>
 ```
 
-- `<your-instance>` ist die öffentliche URL deines Cap-Servers, z. B. `cap.example.com`. Sie muss für deine Besucher erreichbar sein, also nicht `localhost`.
-- `<site-key>` ist der Site-Key aus deinem Dashboard.
+Mit Standalone ist der Endpunkt `https://<your-instance>/<site-key>/`. Mit der Core-Bibliothek ist es dein Routen-Präfix, zum Beispiel `/cap/`.
 
-Beim Absenden erhält dein Server `cap-token` neben den anderen Feldern. Spring zu [Schritt 3](#_3-verify-the-token), um es zu prüfen.
-
-### Mit JavaScript: wenn du Kontrolle brauchst
-
-Für SPAs, eigene Abläufe oder alles, was kein simples Formular ist, lausche auf das `solve`-Event:
+Sobald der Besucher die Challenge gelöst hat, fügt das Widget dem Formular ein verstecktes Feld `cap-token` hinzu. Außerhalb eines Formulars lauschst du stattdessen auf das `solve`-Event:
 
 ```js
-const widget = document.querySelector("cap-widget");
-widget.addEventListener("solve", (e) => {
+document.querySelector("cap-widget").addEventListener("solve", (e) => {
   const token = e.detail.token;
-  // Token an deinen Server schicken, Submit-Button aktivieren usw.
 });
 ```
 
-Du kannst das Widget auch unsichtbar rendern und [programmatisch](./programmatic.md) lösen oder den [Floating-Modus](./floating.md) nutzen. Framework-Snippets (React, Vue, Svelte und mehr) findest du auf der [Widget-Seite](./widget.md#usage).
+Auf der [Widget-Seite](./widget.md) findest du Snippets für React, Vue, Svelte und andere Frameworks.
 
 ## 3. Das Token verifizieren {#_3-verify-the-token}
 
-Bevor du einer Übermittlung traust, muss dein Server das Token verifizieren. Schicke ein `POST` an den `/siteverify`-Endpunkt deiner Instanz:
+Bevor du einer Übermittlung traust, prüf ihr Token auf deinem Server.
+
+### Standalone {#standalone-1}
+
+Schick das Token an `/siteverify`:
 
 ::: code-group
 
-```sh [curl]
-curl "https://<your-instance>/<site-key>/siteverify" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{ "secret": "<key_secret>", "response": "<captcha_token>" }'
-```
-
 ```js [fetch]
-const { success } = await (
-  await fetch("https://<your-instance>/<site-key>/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ secret: "<key_secret>", response: "<captcha_token>" }),
-  })
-).json();
-
-if (!success) throw new Error("invalid cap token");
+const res = await fetch("https://cap.example.com/<site-key>/siteverify", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ secret: "<secret>", response: token }),
+});
+const { success } = await res.json();
 ```
 
 ```py [python]
 import requests
 
 success = requests.post(
-    "https://<your-instance>/<site-key>/siteverify",
-    json={"secret": "<key_secret>", "response": "<captcha_token>"},
-).json().get("success")
+    "https://cap.example.com/<site-key>/siteverify",
+    json={"secret": "<secret>", "response": token},
+).json()["success"]
 ```
 
 ```php [php]
-<?php
-$data = json_decode(file_get_contents("https://<your-instance>/<site-key>/siteverify",
-  false, stream_context_create([
-    "http" => [
-      "method" => "POST",
-      "header" => "Content-Type: application/json",
-      "content" => json_encode(["secret"=>"<key_secret>","response"=>"<captcha_token>"])
-    ]
-  ])
-), true);
-var_dump($data['success'] ?? false);
+$res = file_get_contents("https://cap.example.com/<site-key>/siteverify", false, stream_context_create([
+  "http" => [
+    "method" => "POST",
+    "header" => "Content-Type: application/json",
+    "content" => json_encode(["secret" => "<secret>", "response" => $token]),
+  ],
+]));
+$success = json_decode($res, true)["success"] ?? false;
+```
+
+```sh [curl]
+curl -X POST "https://cap.example.com/<site-key>/siteverify" \
+  -H "Content-Type: application/json" \
+  -d '{"secret": "<secret>", "response": "<token>"}'
 ```
 
 :::
 
-- `<key_secret>` ist der **Secret-Key** aus deinem Dashboard, nicht der `ADMIN_KEY` des Dashboards. Die beiden zu verwechseln ist der häufigste Einrichtungsfehler.
-- `<captcha_token>` ist das Token aus dem Widget (das Formularfeld `cap-token` oder `e.detail.token`).
+`<secret>` ist das Secret des Site-Keys, nicht dein `ADMIN_KEY`. Die beiden zu verwechseln ist der häufigste Einrichtungsfehler.
 
-Ein gültiges Token liefert:
+Ein gültiges Token liefert `{ "success": true }`. Jedes Token funktioniert nur einmal, eine zweite Verifizierung desselben Tokens schlägt also fehl. Wenn du es zweimal schickst, kannst du das Setup schnell von Anfang bis Ende prüfen.
 
-```json
-{ "success": true }
+### Core-Bibliothek {#core-library-1}
+
+Schlag das Token in dem Store nach, in den deine Redeem-Route geschrieben hat, und lösch es danach, damit es nicht zweimal genutzt werden kann:
+
+```js
+import { createHash } from "node:crypto";
+
+app.post("/submit", async (c) => {
+  const [id, secret] = String((await c.req.parseBody())["cap-token"] ?? "").split(":");
+  const key = `cap:token:${id}:${createHash("sha256")
+    .update(secret ?? "")
+    .digest("hex")}`;
+
+  if ((await redis.del(key)) !== 1) {
+    return c.text("invalid captcha", 403);
+  }
+});
 ```
 
-Tokens sind einmalig nutzbar. Verifiziere jedes also genau einmal und führe danach deine eigene Logik aus (Konto anlegen, Nachricht senden und so weiter).
+## Nächste Schritte {#next-steps}
 
-## 4. Prüfen, ob es funktioniert
-
-Ein schneller End-to-End-Check:
-
-1. Lade deine Seite. Die Checkbox sollte anhaken und dein `solve`-Handler (oder das Formularfeld) sollte ein Token liefern.
-2. Schicke dieses Token an `/siteverify`. Du solltest `{ "success": true }` zurückbekommen.
-3. Schicke dasselbe Token erneut. Jetzt sollte es fehlschlagen, was bestätigt, dass die Einmalnutzung greift.
-
-Schlägt die Verifizierung immer fehl, prüfe, ob du den Secret-Key (nicht den Admin-Key) verwendest und ob `<your-instance>` dieselbe öffentliche URL ist, auf die das Widget zeigt.
-
-Das ist die komplette Integration. Nutzer lösen Challenges in ihrem Browser, dein Server verifiziert Tokens, und jedes Byte der Daten bleibt bei dir.
-
-## Für Compliance gebaut
-
-Weil Cap selbst gehostet ist, ohne Cookies, ohne Tracking und ohne Drittanbieter-Aufrufe, verlassen die Daten deiner Nutzer nie deine Infrastruktur. Cap ist darauf ausgelegt, DSGVO, CCPA, HIPAA, LGPD und weitere Datenschutzregime zu erfüllen, und die Proof-of-Work-Checkbox umgeht die WCAG-2.2-Hürden, an denen Bild- und Audiorätsel scheitern. Alle Details und die Regelwerke, um die herum Cap gebaut ist, findest du auf der Seite [Compliance](./compliance.md).
-
-## Nächste Schritte
-
-Deine Formulare sind geschützt. Von hier aus kannst du:
-
-- Cap mit einem [Framework-Snippet](./widget.md#usage) in deinen Stack einbauen
-- [Aussehen und Verhalten des Widgets anpassen](./widget.md#options)
-- [Instrumentation](./instrumentation.md) feinjustieren sowie CORS und Rate Limiting [konfigurieren](./standalone/options.md)
-- Nachsehen, wie Cap im Vergleich zu [reCAPTCHA, Turnstile, hCaptcha und anderen](./alternatives.md) abschneidet
-- Den Guide [beste CAPTCHA-Alternativen 2026](./best-captcha-alternatives.md) lesen, falls du noch evaluierst
+- [Das Widget anpassen](./widget.md#attributes): Beschriftungen, Sprache und Styling
+- [Standalone konfigurieren](./standalone/options.md): CORS, Rate Limits und der Asset-Server
+- Die [Referenz der Core-Bibliothek](./capjs-core.md) lesen
+- Lesen, [wie Cap funktioniert](./workings.md)

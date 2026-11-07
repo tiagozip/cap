@@ -64,7 +64,7 @@ Pour les parcours sensibles à la conversion, cela signifie :
 - Jamais de puzzles d'images. Il n'existe aucun « mode difficile » dans lequel tomber.
 - Aucun score de risque, donc aucune pénalité silencieuse pour les VPN ou les navigateurs axés sur la vie privée.
 - Vous contrôlez la difficulté par clé de site : montez-la à l'inscription, gardez-la très légère au paiement.
-- Les modes [flottant](./floating.md) et [programmatique](./programmatic.md) le rendent totalement invisible jusqu'à l'envoi.
+- Les modes [flottant](./floating.md) et [invisible](./invisible.md) le rendent totalement invisible jusqu'à l'envoi.
 - Le widget fait environ 20 Ko : il ne ralentit pas la page qu'il est censé protéger. Voir le [benchmark](./benchmark.md).
 
 Parce que la preuve de travail de Cap est déterministe, aucun humain n'est jamais mal classé par un score de risque : tout navigateur capable d'exécuter le défi passe. L'abandon se limite aux utilisateurs qui refusent d'attendre les quelques secondes que prend la résolution, et l'indicateur de progression du widget rend cette attente lisible.

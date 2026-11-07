@@ -73,7 +73,7 @@ Ce sont des implémentations de l'API Cap sous forme de hooks React, permettant 
 
 - **[clysss/capito](https://github.com/clysss/capito)** : serveur PHP Capito pour Cap
 - **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)** : portage PHP du serveur de captcha à preuve de travail Cap
-- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)** : extension WordPress intégrant Cap aux commentaires, à la connexion, à l'inscription et au paiement WooCommerce, avec widget visible ou mode invisible (programmatique)
+- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)** : extension WordPress intégrant Cap aux commentaires, à la connexion, à l'inscription et au paiement WooCommerce, avec widget visible ou mode invisible
 - **[laravel-cap](https://github.com/oli217/laravel-cap)** : intégration Laravel pour Cap, avec directives Blade, middleware, règles de validation et façade pour la vérification côté serveur (`composer require oliweb/laravel-cap`)
 - **[statamic-cap](https://github.com/oli217/statamic-cap)** : module Statamic intégrant Cap aux formulaires, avec rendu du widget, validation automatique des jetons et configuration souple dans le panneau de contrôle (`composer require oliweb/statamic-cap`)
 - **[cap-captcha-wordpress](https://github.com/forge28labs/cap-captcha-wordpress)** : une extension WordPress qui intègre Cap aux parcours d'authentification ainsi qu'aux nouveaux commentaires. Instance, clés et couleurs se configurent depuis l'administration WordPress.

@@ -1,104 +1,50 @@
 ---
-description: "Cap Standalone is the easiest way to self-host the open-source CAPTCHA backend: Docker, instrumentation, a reCAPTCHA-compatible API, and a web dashboard."
+description: "Cap Standalone is the easiest way to self-host the open-source CAPTCHA backend: one Docker container with a dashboard, multiple site keys and a reCAPTCHA-compatible API."
 ---
 
-# Cap Standalone
+# Standalone
 
-Cap Standalone is the recommended way to self-host Cap's backend. It runs on Bun and keeps idle memory usage around 50 MB. It ships with built-in support for instrumentation challenges, which significantly raise the bar for bots, a siteverify API compatible with reCAPTCHA, and a web dashboard for managing multiple site keys.
+Cap Standalone is the Cap server as a Docker image. It serves challenges to the widget, verifies tokens for your backend, and has a dashboard for site keys, stats and settings. It runs on Bun, idles at about 50 MB of memory, and stores everything in Redis or Valkey.
 
-We recommend using [Docker](https://docs.docker.com/get-docker/) to run Cap Standalone.
+Use the [core library](../capjs-core.md) instead if you can't run a container, or want challenges inside an existing service or on a serverless platform.
 
-## Installation
+## Running it
 
-Create a `docker-compose.yml` file:
+The [quickstart](../index.md#_1-run-the-server) has a compose file that runs Standalone with Valkey. Two environment variables matter on first run:
 
-```yaml
-services:
-  cap:
-    image: tiago2/cap:latest
-    container_name: cap
-    ports:
-      - "3000:3000"
-    environment:
-      ADMIN_KEY: your_secret_password
-      REDIS_URL: redis://valkey:6379
-    depends_on:
-      valkey:
-        condition: service_healthy
-    restart: unless-stopped
+- `ADMIN_KEY` is the dashboard password. The server refuses to start without one, or with one shorter than 12 characters.
+- `REDIS_URL` points at Redis or Valkey. It defaults to `redis://localhost:6379`.
 
-  valkey:
-    image: valkey/valkey:9-alpine
-    container_name: cap-valkey
-    volumes:
-      - valkey-data:/data
-    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
+Everything else is in [Configuration](./options.md).
 
-volumes:
-  valkey-data:
-```
-
-::: tip Tips
-
-- `ADMIN_KEY` is your dashboard's login. We recommend making it at least 32 characters
-- Change `3000:3000` if that port is already in use on your host.
-- If the dashboard is unreachable, try adding `network_mode: "host"` under the `cap` service.
-  :::
-
-Start the container:
+To update, pull the new image and recreate the container:
 
 ```bash
-docker compose up -d
+docker compose pull && docker compose up -d
 ```
 
-Open `http://localhost:3000` (or your server's IP/domain on port 3000) to access the dashboard. Log in with your admin key, create a site key, and note down both the **site key** and its **secret key**, you'll need both.
+## Putting it online
 
-Instrumentation challenges are enabled by default when creating new site keys. We recommend keeping them on, as they significantly raise the bar for bots. You can also enable headless browser detection for additional protection.
+The widget calls Standalone from your visitors' browsers, so the server needs a public HTTPS URL. Put it behind your usual reverse proxy and keep port 3000 closed to the internet.
 
-Your Cap Standalone instance must be publicly reachable from the internet so the widget can communicate with it. If you're using a reverse proxy, review the [options guide](/guide/standalone/options.md) to configure rate-limiting correctly.
+Standalone rate-limits challenges per client IP, which only works if it sees the real IP. Read [client IPs behind a proxy](./options.md#client-ips-behind-a-proxy) before you go live, otherwise every visitor shares one rate-limit bucket.
 
-## Usage
+## Site keys
 
-### Client-side
+Each site key has its own secret, stats and settings: the challenge protocol and difficulty, [instrumentation](../instrumentation.md), rate limits and block rules. New keys use [HashWX](../hashwx.md) with instrumentation on.
 
-Point the widget at your instance by setting the `data-cap-api-endpoint` attribute:
+The secret is shown once, when you create the key. If you lose it, rotate it from the key's page.
 
-```
-https://<instance_url>/<site_key>/
-```
+## Endpoints
 
-- `<instance_url>` — the public URL of your Cap Standalone instance
-- `<site_key>` — the site key from your dashboard
+With a site key `abc123` on `cap.example.com`:
 
-Example:
+| URL | Called by |
+| --- | --- |
+| `https://cap.example.com/abc123/` | The widget, as `data-cap-api-endpoint` |
+| `https://cap.example.com/abc123/siteverify` | Your backend, with the secret and the token |
+| `https://cap.example.com/` | You, for the dashboard |
 
-```html
-<cap-widget data-cap-api-endpoint="https://cap.example.com/d9256640cb53/"></cap-widget>
-```
+`/siteverify` takes JSON with `secret` and `response`, like reCAPTCHA's, and returns `{ "success": true }` for a valid token. A failed check returns `success: false` with an `error` message and a 4xx status. Tokens work once.
 
-We recommend reading our [widget documentation](../widget.md) for more details and example snippets for multiple frameworks.
-
-### Server-side
-
-Once a user completes the CAPTCHA, your backend must verify the token before trusting it. Send a `POST` request to your instance's `/siteverify` endpoint with the following JSON body:
-
-```bash
-curl "https://<instance_url>/<site_key>/siteverify" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{ "secret": "<key_secret>", "response": "<captcha_token>" }'
-```
-
-Where `<key_secret>` is the secret key from your dashboard (**not** the dashboard admin key), and `<captcha_token>` is the challenge token generated by the widget.
-
-A successful verification returns:
-
-```json
-{ "success": true }
-```
+The dashboard also has a [REST API](./options.md#api) for managing keys from scripts.

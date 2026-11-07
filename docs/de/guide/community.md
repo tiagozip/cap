@@ -73,7 +73,7 @@ Das sind React-Hook-Implementierungen der Cap-API, die eine vollständige Anpass
 
 - **[clysss/capito](https://github.com/clysss/capito)**: Capito Cap PHP Server
 - **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)**: PHP-Portierung des Cap-Proof-of-Work-Captcha-Servers
-- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**: WordPress-Plugin, das Cap in Kommentare, Login, Registrierung und den WooCommerce-Checkout integriert, mit sichtbarem Widget und unsichtbarem (programmatischem) Modus
+- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**: WordPress-Plugin, das Cap in Kommentare, Login, Registrierung und den WooCommerce-Checkout integriert, mit sichtbarem Widget und unsichtbarem Modus
 - **[laravel-cap](https://github.com/oli217/laravel-cap)**: Laravel-Integration für Cap mit Blade-Direktiven, Middleware, Validierungsregeln und Facade für die serverseitige Token-Verifizierung (`composer require oliweb/laravel-cap`)
 - **[statamic-cap](https://github.com/oli217/statamic-cap)**: Statamic-Addon, das Cap in Formulare integriert: Widget-Rendering, automatische Token-Validierung und flexible Konfiguration im Control Panel (`composer require oliweb/statamic-cap`)
 - **[cap-captcha-wordpress](https://github.com/forge28labs/cap-captcha-wordpress)**: Ein WordPress-Plugin, das Cap in die Auth-Abläufe sowie in neue Kommentare integriert. Instanz, Keys und Farben lassen sich im WordPress-Adminbereich konfigurieren.

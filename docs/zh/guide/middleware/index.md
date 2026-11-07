@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Cap Checkpoint 会像 Cloudflare 一样添加一个浏览器检查过渡页，在机器人到达你的网站之前将其拦截。自托管、开源的工作量证明 CAPTCHA。"
 ---
 

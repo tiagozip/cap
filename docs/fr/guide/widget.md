@@ -5,7 +5,7 @@ description: "Le widget client de Cap demande, résout et affiche les défis de 
 
 # Widget
 
-Le widget côté client de Cap se charge de demander, résoudre et afficher les défis à l'aide d'un composant web natif et de WASM écrit en Rust. Il inclut également le [mode programmatique](./programmatic).
+Le widget côté client de Cap se charge de demander, résoudre et afficher les défis à l'aide d'un composant web natif et de WASM écrit en Rust. Il inclut également le [mode invisible](./invisible).
 
 ## Installation
 
@@ -229,9 +229,9 @@ export default component$(() => {
 });
 ```
 
-## Mode programmatique
+## Mode invisible
 
-Si vous ne voulez pas de widget visible, par exemple pour protéger une action d'arrière-plan comme la publication d'un message, utilisez le [mode programmatique](./programmatic) :
+Si vous ne voulez pas de widget visible, par exemple pour protéger une action d'arrière-plan comme la publication d'un message, utilisez le [mode invisible](./invisible) :
 
 ```js
 import Cap from "cap-widget";
@@ -279,7 +279,7 @@ window.CAP_DISABLE_HAPTICS = true;
 <cap-widget data-cap-disable-haptics data-cap-api-endpoint="..."></cap-widget>
 ```
 
-Le retour haptique est automatiquement désactivé en [mode programmatique](./programmatic), puisqu'aucun widget visible n'est proposé à l'utilisateur.
+Le retour haptique est automatiquement désactivé en [mode invisible](./invisible), puisqu'aucun widget visible n'est proposé à l'utilisateur.
 
 ### Attributs
 

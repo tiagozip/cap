@@ -5,7 +5,7 @@ description: "Caps Client-Widget fordert Proof-of-Work-Challenges an, löst sie 
 
 # Widget
 
-Caps clientseitiges Widget übernimmt das Anfordern, Lösen und Darstellen von Challenges mithilfe einer nativen Web Component und Rust-basiertem WASM. Es enthält außerdem den [programmatischen Modus](./programmatic).
+Caps clientseitiges Widget übernimmt das Anfordern, Lösen und Darstellen von Challenges mithilfe einer nativen Web Component und Rust-basiertem WASM. Es enthält außerdem den [unsichtbaren Modus](./invisible).
 
 ## Installation
 
@@ -229,9 +229,9 @@ export default component$(() => {
 });
 ```
 
-## Programmatischer Modus
+## Unsichtbarer Modus
 
-Wenn du kein sichtbares Widget möchtest, etwa beim Absichern einer Hintergrundaktion wie dem Absenden eines Beitrags, nutze den [programmatischen Modus](./programmatic):
+Wenn du kein sichtbares Widget möchtest, etwa beim Absichern einer Hintergrundaktion wie dem Absenden eines Beitrags, nutze den [unsichtbaren Modus](./invisible):
 
 ```js
 import Cap from "cap-widget";
@@ -279,7 +279,7 @@ window.CAP_DISABLE_HAPTICS = true;
 <cap-widget data-cap-disable-haptics data-cap-api-endpoint="..."></cap-widget>
 ```
 
-Im [programmatischen Modus](./programmatic) ist haptisches Feedback automatisch deaktiviert, da es kein sichtbares Widget gibt, mit dem der Nutzer interagieren könnte.
+Im [unsichtbaren Modus](./invisible) ist haptisches Feedback automatisch deaktiviert, da es kein sichtbares Widget gibt, mit dem der Nutzer interagieren könnte.
 
 ### Attribute
 

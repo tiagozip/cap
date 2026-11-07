@@ -28,7 +28,7 @@ Turnstile est réellement bon si vous êtes déjà chez Cloudflare et acceptez q
 
 ## Ce qu'ils ont en commun
 
-Les deux livrent un client léger (environ 20 à 110 Ko). Les deux proposent un mode « invisible » (Cap l'appelle [mode flottant](../floating.md) ou [mode programmatique](../programmatic.md)). Les deux ajoutent des contrôles comportementaux par-dessus un défi principal : Cap les nomme [défis d'instrumentation](../instrumentation.md), Turnstile les appelle « managed challenges ».
+Les deux livrent un client léger (environ 20 à 110 Ko). Les deux proposent un mode « invisible » (Cap l'appelle [mode flottant](../floating.md) ou [mode invisible](../invisible.md)). Les deux ajoutent des contrôles comportementaux par-dessus un défi principal : Cap les nomme [défis d'instrumentation](../instrumentation.md), Turnstile les appelle « managed challenges ».
 
 ## Migration
 

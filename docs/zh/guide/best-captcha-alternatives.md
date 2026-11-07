@@ -13,7 +13,7 @@ faq:
   - q: 哪个 CAPTCHA 替代方案的用户体验最好？
     a: "任何没有视觉谜题的方案。Cap 只显示一个带实时进度指示的复选框；Turnstile 和 SilentShield 对被其模型判定为人类的用户是不可见的；而 hCaptcha 和 reCAPTCHA v2 仍会让用户陷入图片挑战。"
   - q: 最好的隐形 CAPTCHA 是什么？
-    a: "Turnstile 和 SilentShield 默认不可见，但依赖指纹追踪或行为评分，被误判的用户会被直接拦截且无处申诉。Cap 的浮动模式和编程模式在提交前同样不可见，同时保持确定性：每个真实用户都有一条保证通过的路径。"
+    a: "Turnstile 和 SilentShield 默认不可见，但依赖指纹追踪或行为评分，被误判的用户会被直接拦截且无处申诉。Cap 的浮动模式和隐形模式在提交前同样不可见，同时保持确定性：每个真实用户都有一条保证通过的路径。"
   - q: Cap 是 reCAPTCHA 的好替代品吗？
     a: "是的。其 siteverify API 与 reCAPTCHA 的接口形式兼容，服务端迁移基本上只是换个 URL，切换期间还可以两者并行运行。与 reCAPTCHA 不同，Cap 是开源、自托管的，并且永远不会显示图片谜题。"
 ---
@@ -155,7 +155,7 @@ Cap。小巧的 Docker 部署、Web 仪表盘、多站点密钥支持，且无�
 
 ### 最好的隐形 CAPTCHA 是什么？
 
-Turnstile 和 SilentShield 默认不可见，但依赖指纹追踪或行为评分，被误判的用户会被直接拦截且无处申诉。Cap 的[浮动模式](./floating.md)和[编程模式](./programmatic.md)在提交前同样不可见，同时保持确定性：每个真实用户都有一条保证通过的路径。
+Turnstile 和 SilentShield 默认不可见，但依赖指纹追踪或行为评分，被误判的用户会被直接拦截且无处申诉。Cap 的[浮动模式](./floating.md)和[隐形模式](./invisible.md)在提交前同样不可见，同时保持确定性：每个真实用户都有一条保证通过的路径。
 
 ### Cap 是 reCAPTCHA 的好替代品吗？
 

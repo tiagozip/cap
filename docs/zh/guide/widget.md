@@ -5,7 +5,7 @@ description: "Cap 的客户端验证组件基于原生 Web Component 和 WASM，
 
 # 验证组件
 
-Cap 的客户端验证组件负责请求、求解并展示质询，基于原生 Web Component 和 Rust 编写的 WASM。它还内置了[编程模式](./programmatic)。
+Cap 的客户端验证组件负责请求、求解并展示质询，基于原生 Web Component 和 Rust 编写的 WASM。它还内置了[隐形模式](./invisible)。
 
 ## 安装
 
@@ -229,9 +229,9 @@ export default component$(() => {
 });
 ```
 
-## 编程模式
+## 隐形模式
 
-如果你不想显示可见的验证组件，比如在保护发帖之类的后台操作时，可以使用[编程模式](./programmatic)：
+如果你不想显示可见的验证组件，比如在保护发帖之类的后台操作时，可以使用[隐形模式](./invisible)：
 
 ```js
 import Cap from "cap-widget";
@@ -279,7 +279,7 @@ window.CAP_DISABLE_HAPTICS = true;
 <cap-widget data-cap-disable-haptics data-cap-api-endpoint="..."></cap-widget>
 ```
 
-在[编程模式](./programmatic)下触感反馈会自动禁用，因为没有可供用户交互的可见组件
+在[隐形模式](./invisible)下触感反馈会自动禁用，因为没有可供用户交互的可见组件
 
 ### 属性
 

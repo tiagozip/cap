@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Ajoutez un Checkpoint Cap à une application Elysia avec le middleware officiel. Protégez vos routes derrière le CAPTCHA open source auto-hébergé à preuve de travail en quelques lignes."
 ---
 

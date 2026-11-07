@@ -1,77 +1,38 @@
 ---
-description: "Configuration options and environment variables for Cap Standalone, the self-hosted open-source CAPTCHA: CORS, asset server, widget and WASM versions, and more."
+description: "Configuration for Cap Standalone, the self-hosted open-source CAPTCHA: environment variables, CORS, rate limiting behind a proxy, the asset server, health checks and challenge protocols."
 ---
 
-# Options
+# Configuration
 
-## CORS
+Most settings live in the dashboard, either globally under **Settings** or per site key under its **Configuration** tab. Environment variables cover what has to be known at boot.
 
-You can change the default CORS settings for redeeming and generating challenges by setting the `CORS_ORIGIN` environment variable when running the server. This defaults to `*`, which allows all origins. You can add multiple origins by separating them with commas, like `domain1.tld,domain2.tld,...`.
+## Environment variables
 
-## Asset server
+| Variable | Default | What it does |
+| --- | --- | --- |
+| `ADMIN_KEY` | none | Dashboard password, at least 12 characters. Required. |
+| `REDIS_URL` | `redis://localhost:6379` | Redis or Valkey connection string. `VALKEY_URL` also works. |
+| `REDIS_PREFIX` | empty | Prefix for every key, for sharing one Redis between deployments. |
+| `SERVER_PORT` | `3000` | Port to listen on. |
+| `SERVER_HOSTNAME` | `0.0.0.0` | Address to bind to. |
+| `CORS_ORIGIN` | `*` | Origins allowed to request challenges, comma-separated. The dashboard setting overrides it. |
+| `RATELIMIT_IP_HEADER` | see [below](#client-ips-behind-a-proxy) | Header that carries the client IP. |
+| `HIDE_RATELIMIT_IP_WARNING` | `false` | Silences the startup warning when no client IP can be found. |
+| `ENABLE_ASSETS_SERVER` | `false` | Serves the widget and WASM files from `/assets`. |
+| `WIDGET_VERSION` | `latest` | Widget version the asset server serves. |
+| `WASM_VERSION` | `latest` | `@cap.js/wasm` version the asset server serves. |
+| `CACHE_HOST` | `https://cdn.jsdelivr.net` | Where the asset server downloads from. |
+| `SHOW_ERRORS` | `false` | Returns full error messages instead of redacted ones. |
+| `DISABLE_ERROR_LOGGING` | `false` | Stops logging errors to the console. |
+| `RSW_BITS` | `2048` | Modulus size for the deprecated RSW protocol. |
 
-The asset server is disabled by default. You can enable it by setting the `ENABLE_ASSETS_SERVER` environment variable to `true`. This will serve the assets from the `/assets` endpoint.
+## Client IPs behind a proxy
 
-Then, make sure to set `WIDGET_VERSION` and `WASM_VERSION` to the correct version of the widget and WASM files you want to serve. This defaults to `latest`, which will serve the latest version of the widget and WASM files, although these are not recommended in production as they might serve breaking changes.
+Challenge endpoints are rate-limited per client IP, 30 requests per 5 seconds by default. You can change the limit under **Settings**, or per key in its **Configuration** tab. Over the limit, requests get a `429`. `/siteverify` is meant for your backend and isn't rate-limited.
 
-The available versions are the published npm releases of [`@cap.js/widget`](https://www.npmjs.com/package/@cap.js/widget?activeTab=versions) and [`@cap.js/wasm`](https://www.npmjs.com/package/@cap.js/wasm?activeTab=versions). For example:
+Standalone reads the client IP from `X-Forwarded-For`, then `X-Real-IP`, then `CF-Connecting-IP`, then the socket address. If your proxy uses another header, set `RATELIMIT_IP_HEADER` or change it under **Settings > Headers**. Behind Cloudflare, use `cf-connecting-ip`.
 
-```env
-ENABLE_ASSETS_SERVER=true
-WIDGET_VERSION=0.1.58
-WASM_VERSION=0.0.8
-```
-
-Your assets will be served from the following paths:
-
-- `/assets/widget.js`
-- `/assets/floating.js`
-- `/assets/cap_wasm_bg.wasm`
-- `/assets/hashwx.wasm`
-- `/assets/cap_wasm.js`
-
-You can use these in your app by setting the widget's script source to the appropriate path, like this:
-
-```html
-<script src="https://<server url>/assets/widget.js"></script>
-```
-
-For the floating mode, use:
-
-```html
-<script src="https://<server url>/assets/floating.js"></script>
-```
-
-And by setting `window.CAP_CUSTOM_WASM_URL` and `window.CAP_CUSTOM_HASHWX_URL` to the paths of the `cap_wasm_bg.wasm` and `hashwx.wasm` files, like this:
-
-```js
-window.CAP_CUSTOM_WASM_URL = "https://<server url>/assets/cap_wasm_bg.wasm";
-window.CAP_CUSTOM_HASHWX_URL = "https://<server url>/assets/hashwx.wasm";
-```
-
-`hashwx.wasm` ships in `@cap.js/wasm` 0.0.8 and newer. With an older `WASM_VERSION`, `/assets/hashwx.wasm` responds with a 503, so leave `CAP_CUSTOM_HASHWX_URL` unset and the widget will load it from jsdelivr.
-
-By default, these fetch from `process.env.CACHE_HOST` (which defaults to `https://cdn.jsdelivr.net`). You can change this by setting the `CACHE_HOST` env variable when running the server.
-
-### Troubleshooting
-
-The assets are downloaded from `CACHE_HOST` into Redis at startup, then refreshed hourly. If an asset endpoint responds with `Asset not cached yet`, the download hasn't happened. Check that:
-
-- `ENABLE_ASSETS_SERVER=true` is actually set on the Cap container. If you changed it in a compose file, recreate the container. When it isn't set, the `/assets/*` endpoints respond with a 404 explaining that the asset server is disabled.
-- The container has outbound network access to `CACHE_HOST`. If a download fails, the server logs a line containing `[asset server] failed to update assets cache` at startup and retries every hour.
-- `WIDGET_VERSION` and `WASM_VERSION` point to versions that actually exist on npm.
-
-## Rate-limiting
-
-Challenge endpoints are rate-limited per client IP using a fixed window, defaulting to 30 requests every 5 seconds. You can change the global limit under **Settings** in the dashboard (or via `PUT /settings/ratelimit`), and override it per site key in the key's **Configuration** tab. When the limit is exceeded, requests get a `429` response with an `X-RateLimit-Remaining: 0` header.
-
-The `/siteverify` endpoint is intended for server-to-server use, so it's not ratelimited by default.
-
-### Client IPs behind a proxy
-
-Standalone identifies clients by checking the `X-Forwarded-For`, `X-Real-IP` and `CF-Connecting-IP` headers (in that order), falling back to the socket address. If you're behind a reverse proxy that uses a different header, set `RATELIMIT_IP_HEADER` in your env (or the IP header under **Settings > Headers** in the dashboard). For example, behind Cloudflare you might set it to `cf-connecting-ip`.
-
-Make sure your proxy actually forwards the client IP. For nginx:
+Your proxy has to forward the IP. With nginx:
 
 ```nginx
 location / {
@@ -80,39 +41,79 @@ location / {
 }
 ```
 
-Without this, every request appears to come from the proxy's own IP and all clients share a single rate-limit bucket. Also note that `X-Forwarded-For` is trusted as-is, so the server must not be directly reachable from the internet, otherwise clients can spoof the header and bypass rate limiting.
+Without it, every request comes from the proxy's IP and all visitors share one bucket. Standalone trusts these headers as sent, so don't expose port 3000 directly, or clients can set their own IP and skip the limit.
 
-## Redis / Valkey
+## Challenge protocol {#hashwx-proof-of-work}
 
-Cap Standalone uses Redis (or Valkey) for all data storage. Set the `REDIS_URL` environment variable to your Redis connection string. This defaults to `redis://localhost:6379`.
+Each site key picks its protocol under **Configuration > Challenge protocol**. The widget detects the protocol on its own, so switching needs no client changes.
 
-The recommended setup uses Valkey (a Redis-compatible store) via the docker-compose file provided in the [quickstart guide](/guide/standalone/).
+- **[HashWX](../hashwx.md)** is the default for new keys. A GPU solves it about twice as fast as a CPU, where SHA-256 gives a GPU around 150 times the speed. **HashWX difficulty** is the expected number of hashes per solve, from `50_000` to `5_000_000`. The default `1_000_000` took a median 578 ms on a desktop and 1.1 to 5.9 s on [phones](../hashwx.md#phones). Browsers without WebAssembly can't solve it.
+- **SHA-256** has a pure-JavaScript fallback, so it works without WebAssembly.
+- **RSW** is deprecated. A GPU clears about 170 times as many RSW puzzles per second as a CPU, so it doesn't deliver the GPU resistance it was added for. Existing keys keep working.
 
-If you share a single Redis instance across multiple Cap deployments (or with other apps), set `REDIS_PREFIX` to namespace all keys. For example, `REDIS_PREFIX=cap:` stores sessions as `cap:session:...`, metrics as `cap:metrics:...`, and so on. It's empty by default, so existing deployments are unaffected.
+Keys created before HashWX became the default keep their protocol until you change it.
 
-## Health checks and shutdown
+## Instrumentation
 
-Cap Standalone has two unauthenticated endpoints for orchestrators and uptime monitors:
+[Instrumentation challenges](../instrumentation.md) are on for new keys. Each key can turn them off, raise the obfuscation level, or block headless browsers with **Attempt to block headless browsers**.
 
-- `GET /health` returns `200 {"status":"ok"}` when Redis answers a `PING` within 2 seconds, and `503 {"status":"unavailable"}` otherwise. Use it for readiness checks and alerts.
-- `GET /health/live` returns `200` as long as the process is running, even while Redis is down. Use it for liveness checks, so an orchestrator doesn't restart Cap in a loop during a Redis outage.
+Higher obfuscation levels take longer to generate. Level 3 is the default, and level 1 is faster if generation becomes a bottleneck.
 
-Checks that arrive within the same second share one `PING`, so polling `/health` adds no load on Redis.
+## Asset server
+
+By default the widget loads its script and WASM files from jsDelivr. With `ENABLE_ASSETS_SERVER=true`, Standalone serves them itself:
+
+- `/assets/widget.js`
+- `/assets/floating.js`
+- `/assets/cap_wasm.js`
+- `/assets/cap_wasm_bg.wasm`
+- `/assets/hashwx.wasm`
+
+Pin the versions it serves, since `latest` can pick up breaking changes:
+
+```dotenv
+ENABLE_ASSETS_SERVER=true
+WIDGET_VERSION=0.1.58
+WASM_VERSION=0.0.8
+```
+
+The versions are the npm releases of [`@cap.js/widget`](https://www.npmjs.com/package/@cap.js/widget?activeTab=versions) and [`@cap.js/wasm`](https://www.npmjs.com/package/@cap.js/wasm?activeTab=versions). `hashwx.wasm` needs `@cap.js/wasm` 0.0.8 or newer, and returns a `503` on older versions.
+
+[Self-hosting the widget](../widget.md#self-hosting-the-widget) shows how to point the widget at these files.
+
+Standalone downloads the files into Redis at startup and refreshes them every hour. If an asset returns `Asset not cached yet`, check that the container can reach `CACHE_HOST`, that the versions exist on npm, and look for `[asset server] failed to update assets cache` in the logs.
+
+## Redis
+
+Standalone keeps all its data in Redis or Valkey. If several deployments share one instance, give each a `REDIS_PREFIX`, for example `cap:`.
+
+## IP data
+
+Country and network lookups use DB-IP Lite, MaxMind GeoLite2 or IPInfo's API, set under **Settings > IP Data**. DB-IP and MaxMind download `.mmdb` files into `/usr/src/app/data`.
+
+The container runs as UID 1000. If you bind-mount a host directory there, it has to be writable by that user, or the download fails with `EACCES`:
+
+```bash
+mkdir -p ./cap-data && sudo chown 1000:1000 ./cap-data
+```
+
+A named volume avoids the problem, and so does IPInfo, which needs no local files.
+
+## Health checks
+
+- `GET /health` returns `200` when Redis answers within 2 seconds, and `503` otherwise. Use it for readiness checks and alerts.
+- `GET /health/live` returns `200` while the process runs, even if Redis is down. Use it for liveness checks, so an orchestrator doesn't restart Cap in a loop during a Redis outage.
 
 In Kubernetes:
 
 ```yaml
 readinessProbe:
-  httpGet:
-    path: /health
-    port: 3000
+  httpGet: { path: /health, port: 3000 }
 livenessProbe:
-  httpGet:
-    path: /health/live
-    port: 3000
+  httpGet: { path: /health/live, port: 3000 }
 ```
 
-With Docker Compose, add this to the `cap` service. Plain Docker only marks the container as unhealthy, it doesn't restart it.
+In Docker Compose:
 
 ```yaml
 healthcheck:
@@ -122,62 +123,28 @@ healthcheck:
   retries: 3
 ```
 
-On `SIGTERM` or `SIGINT`, Cap stops accepting connections, lets requests already in progress finish, closes its Redis connection and exits with code 0. If a request is still running after 8 seconds, Cap exits with code 1 anyway, which keeps it inside Docker's default 10-second stop timeout. A second signal exits immediately.
+On `SIGTERM` or `SIGINT`, Standalone stops accepting connections, finishes requests in flight and exits. It gives up after 8 seconds, inside Docker's default 10-second stop timeout.
 
-## Error messages
+## API
 
-Error messages are redacted by default and instead logged to the console. To disable error logging, set `DISABLE_ERROR_LOGGING=true`. To disable error message redaction, set `SHOW_ERRORS=true`.
+Everything the dashboard does is also available over a REST API. The full list of endpoints and request bodies is at `/swagger` on your instance.
 
-## HashWX proof of work
+Create an API key under **Settings > API keys**. It's shown once, so store it somewhere safe. Send it with every request:
 
-Standalone uses [HashWX](../hashwx.md), a GPU-resistant proof of work, as the default challenge protocol for new keys. It's configured per site key, so individual keys can use SHA-256 while others stay on HashWX. Keys created before HashWX became the default keep whatever they were on until you change them.
-
-To change the protocol, open a key's **Configuration** tab and pick one under **Challenge protocol**. HashWX needs no setup: there's no keypair to generate or persist.
-
-Difficulty is controlled by the **HashWX difficulty** slider, the expected number of hashes a client must compute. It defaults to `1_000_000`, split into four sub-challenges, which measured a 578 ms median on an 8-core desktop in Chrome and 1.1 to 5.9 s on phones. See [the phone measurements](../hashwx.md#phones) before you raise it. The valid range is `50_000`-`5_000_000`.
-
-Clients without WebAssembly cannot solve HashWX. If you need to support them, put that key on SHA-256 proof of work instead, which has a pure-JS fallback.
-
-RSW time-lock puzzles are still selectable for existing deployments, but they are deprecated: a GPU clears about 170 times as many of them per second as a CPU, so they do not deliver the GPU resistance they were added for. The **RSW difficulty** slider sets `t`, the number of sequential squarings, in the range `10_000`-`300_000`, and `RSW_BITS=2048` overrides the modulus size at boot.
-
-::: tip
-The widget auto-detects the protocol from the wire format, so switching a key is the only change you need to make. Outside Standalone, cap-core still defaults to SHA-256 PoW unless you opt in.
-:::
-
-## Instrumentation challenges
-
-Cap Standalone supports JavaScript instrumentation challenges to defeat proof-of-work solvers, along with options to block headless browsers from solving them. Instrumentation challenges are enabled by default when creating new site keys.
-
-You can toggle instrumentation challenges on or off in your site key config. To block headless browsers, turn on "Attempt to block headless browsers" in the key settings.
-
-Note that high instrumentation levels can significantly reduce generation throughput. We recommend keeping it at level 3 unless you need stronger obfuscation. If you find level 3 is too slow, level 1 is significantly faster on a single core.
-
-## IP database
-
-Country and ASN lookups can use one of three providers, configured under `Settings > IP Data > Country & ASN data` in the dashboard: DB-IP Lite, MaxMind GeoLite2 and IPInfo's API.
-
-For DB-IP and MaxMind, the `.mmdb` files are downloaded into `/usr/src/app/data/` inside the container.
-
-### Docker volume permissions
-
-The container runs as the unprivileged `bun` user (UID 1000). If you bind-mount a host directory onto `/usr/src/app/data`, the host directory must be writable by UID 1000, otherwise the download will fail with `EACCES: permission denied`.
-
-```bash
-mkdir -p ./cap-data
-sudo chown 1000:1000 ./cap-data
+```http
+Authorization: Bot <api-key>
 ```
 
-```yaml
-services:
-  cap:
-    image: tiago2/cap:latest
-    volumes:
-      - ./cap-data:/usr/src/app/data
-    # ...
+A key can read and change everything by default. When you create one, you can limit it:
+
+- **Site key access** restricts it to the `/server/keys/:siteKey/...` endpoints of the keys you pick, and `GET /server/keys` lists only those. Every other endpoint returns `403`.
+- **Read-only** allows only `GET` requests.
+
+A read-only key scoped to one site key is safe to give to that site's owner, for example to pull their stats into their own dashboard. You can also create scoped keys through the API:
+
+```http
+POST /server/settings/apikeys
+Content-Type: application/json
+
+{ "name": "acme stats", "siteKeys": ["<site-key>"], "readonly": true }
 ```
-
-If you can't change ownership on your host (some platforms like Coolify make this awkward), the simplest alternatives are:
-
-- Skip the bind mount entirely and let Docker manage the data directory — the image already creates it with the correct ownership.
-- Use a named volume instead of a bind mount.
-- Switch to an IP Data provider that doesn't require any local files.

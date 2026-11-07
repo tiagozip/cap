@@ -41,10 +41,13 @@ const checkIds = [
   "webdriver_true",
   "webdriver_stripped",
   "headless_token",
+  "chrome_object_missing",
   "geometry_quantized",
+  "juggler_package",
   "gecko_contradiction",
   "window_exceeds_screen",
   "viewport_override",
+  "worker_mismatch",
 ];
 
 const ghPath = "M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z";
@@ -233,8 +236,7 @@ onBeforeUnmount(() => {
             <a class="gh-link nav-link" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="nav">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path :d="ghPath" /></svg>
               <span class="sr-only">GitHub, </span>
-              <span class="homev2-gh-stars">6.2k</span>
-              <span class="gh-stars-label">{{ t.navGithubStars }}</span>
+              <span><span class="homev2-gh-stars">6.2k</span><span class="gh-stars-label">{{ ` ${t.navGithubStars}` }}</span></span>
             </a>
           </div>
         </div>
@@ -615,13 +617,11 @@ html.home-v2-active main.main {
     inset 1px 0 var(--edge),
     inset -1px 0 var(--edge);
 }
-#homev2 .band + .band,
-#homev2 .top {
-  border-bottom: 1px solid var(--edge);
-}
 #homev2 .band + .band {
-  border-bottom: 0;
   border-top: 1px solid var(--edge);
+}
+#homev2 .top {
+  box-shadow: inset 0 -1px var(--edge);
 }
 #homev2 .band + .band > .wrap,
 #homev2 .top > .wrap {
@@ -644,7 +644,7 @@ html.home-v2-active main.main {
 #homev2 .top > .wrap::before,
 #homev2 .top > .wrap::after {
   top: auto;
-  bottom: -6px;
+  bottom: -5px;
 }
 #homev2 .band + .band > .wrap::before,
 #homev2 .top > .wrap::before {

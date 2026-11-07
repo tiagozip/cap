@@ -28,7 +28,7 @@ Turnstile ist wirklich gut, wenn du ohnehin auf Cloudflare bist und akzeptierst,
 
 ## Wo sie sich ähneln
 
-Beide liefern einen kleinen Client (~20-110 KB). Beide haben einen "unsichtbaren" Modus (bei Cap heißt er [Floating-Modus](../floating.md) oder [programmatischer Modus](../programmatic.md)). Beide legen Verhaltensprüfungen über eine primäre Challenge: Cap nennt sie [Instrumentation-Challenges](../instrumentation.md), Turnstile nennt sie "Managed Challenges".
+Beide liefern einen kleinen Client (~20-110 KB). Beide haben einen "unsichtbaren" Modus (bei Cap heißt er [Floating-Modus](../floating.md) oder [unsichtbarer Modus](../invisible.md)). Beide legen Verhaltensprüfungen über eine primäre Challenge: Cap nennt sie [Instrumentation-Challenges](../instrumentation.md), Turnstile nennt sie "Managed Challenges".
 
 ## Migration
 

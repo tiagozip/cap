@@ -73,7 +73,7 @@ description: "ไลบรารีที่ชุมชนดูแล สำ�
 
 - **[clysss/capito](https://github.com/clysss/capito)**: เซิร์ฟเวอร์ PHP ชื่อ Capito สำหรับ Cap
 - **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)**: เวอร์ชัน PHP ของเซิร์ฟเวอร์ captcha แบบ proof-of-work ของ Cap
-- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**: ปลั๊กอิน WordPress ที่ผนวก Cap เข้ากับความคิดเห็น การเข้าสู่ระบบ การสมัครสมาชิก และหน้าชำระเงินของ WooCommerce รองรับทั้งวิดเจ็ตแบบมองเห็นและโหมดล่องหน (programmatic)
+- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**: ปลั๊กอิน WordPress ที่ผนวก Cap เข้ากับความคิดเห็น การเข้าสู่ระบบ การสมัครสมาชิก และหน้าชำระเงินของ WooCommerce รองรับทั้งวิดเจ็ตแบบมองเห็นและโหมดล่องหน
 - **[laravel-cap](https://github.com/oli217/laravel-cap)**: การผนวก Cap เข้ากับ Laravel พร้อม Blade directive, มิดเดิลแวร์, กฎการตรวจสอบ และ facade สำหรับตรวจสอบ token ฝั่งเซิร์ฟเวอร์ (`composer require oliweb/laravel-cap`)
 - **[statamic-cap](https://github.com/oli217/statamic-cap)**: ส่วนเสริมของ Statamic ที่ผนวก Cap เข้ากับฟอร์ม ทั้งการเรนเดอร์วิดเจ็ต การตรวจสอบ token อัตโนมัติ และการตั้งค่าที่ยืดหยุ่นใน control panel (`composer require oliweb/statamic-cap`)
 - **[cap-captcha-wordpress](https://github.com/forge28labs/cap-captcha-wordpress)**: ปลั๊กอิน WordPress ที่ผนวก Cap เข้ากับขั้นตอนยืนยันตัวตนและการแสดงความคิดเห็นใหม่ ตั้งค่าอินสแตนซ์ คีย์ และสีได้จากหน้าผู้ดูแลระบบของ WordPress

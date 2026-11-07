@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Ajoutez un Checkpoint Cap à Express avec @cap.js/checkpoint-express. Protégez vos routes avec le CAPTCHA open source auto-hébergé à preuve de travail et une vérification du navigateur."
 ---
 

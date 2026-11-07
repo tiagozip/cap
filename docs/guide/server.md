@@ -1,4 +1,5 @@
 ---
+search: false
 head:
   - - meta
     - name: robots

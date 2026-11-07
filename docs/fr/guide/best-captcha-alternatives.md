@@ -13,7 +13,7 @@ faq:
   - q: Quelle alternative aux CAPTCHA offre la meilleure expérience utilisateur ?
     a: "Tout ce qui n'utilise pas de puzzles visuels. Cap affiche une simple case à cocher avec un indicateur de progression en direct ; Turnstile et SilentShield sont invisibles pour les utilisateurs que leurs modèles classent comme humains ; hCaptcha et reCAPTCHA v2 imposent encore des défis d'images."
   - q: Quel est le meilleur CAPTCHA invisible ?
-    a: "Turnstile et SilentShield sont invisibles par défaut, mais reposent sur le fingerprinting ou le scoring comportemental : les utilisateurs mal classés sont bloqués sans recours. Les modes flottant et programmatique de Cap sont invisibles jusqu'à l'envoi tout en restant déterministes : chaque utilisateur réel dispose d'un chemin garanti."
+    a: "Turnstile et SilentShield sont invisibles par défaut, mais reposent sur le fingerprinting ou le scoring comportemental : les utilisateurs mal classés sont bloqués sans recours. Les modes flottant et invisible de Cap sont invisibles jusqu'à l'envoi tout en restant déterministes : chaque utilisateur réel dispose d'un chemin garanti."
   - q: Cap est-il une bonne alternative à reCAPTCHA ?
     a: "Oui. L'API siteverify est compatible avec la forme de celle de reCAPTCHA, la migration côté serveur se résume donc surtout à un changement d'URL, et vous pouvez faire tourner les deux en parallèle pendant la bascule. Contrairement à reCAPTCHA, Cap est open source, auto-hébergé et n'affiche jamais de puzzles d'images."
 ---
@@ -155,7 +155,7 @@ Tout ce qui n'utilise pas de puzzles visuels. Cap affiche une simple case à coc
 
 ### Quel est le meilleur CAPTCHA invisible ?
 
-Turnstile et SilentShield sont invisibles par défaut, mais reposent sur le fingerprinting ou le scoring comportemental : les utilisateurs mal classés sont bloqués sans recours. Les modes [flottant](./floating.md) et [programmatique](./programmatic.md) de Cap sont invisibles jusqu'à l'envoi tout en restant déterministes : chaque utilisateur réel dispose d'un chemin garanti.
+Turnstile et SilentShield sont invisibles par défaut, mais reposent sur le fingerprinting ou le scoring comportemental : les utilisateurs mal classés sont bloqués sans recours. Les modes [flottant](./floating.md) et [invisible](./invisible.md) de Cap sont invisibles jusqu'à l'envoi tout en restant déterministes : chaque utilisateur réel dispose d'un chemin garanti.
 
 ### Cap est-il une bonne alternative à reCAPTCHA ?
 

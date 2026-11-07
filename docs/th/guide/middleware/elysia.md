@@ -1,4 +1,5 @@
 ---
+search: false
 description: "เพิ่ม Cap Checkpoint ให้แอป Elysia ด้วยมิดเดิลแวร์อย่างเป็นทางการ ปกป้องเส้นทางต่าง ๆ ด้วย CAPTCHA แบบ proof-of-work โอเพนซอร์สที่โฮสต์เองได้ ในโค้ดไม่กี่บรรทัด"
 ---
 

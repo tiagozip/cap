@@ -1,22 +1,22 @@
 ---
-outline: [2, 3, 4]
-description: "Cap's client widget requests, solves and displays proof-of-work challenges with a native web component and WASM. Client-side docs for the open-source CAPTCHA."
+outline: [2, 3]
+description: "Cap's client widget requests, solves and displays proof-of-work challenges with a native web component and WASM. Install it, use it in any framework, and customize it."
 ---
 
 # Widget
 
-Cap's client-side widget handles requesting, solving and displaying challenges using a native web component and rust-flavoured WASM. It also includes the [programmatic mode](./programmatic).
+The widget is a `<cap-widget>` web component. It fetches a challenge from your server, solves it in Web Workers with WebAssembly, and gives you a token to verify.
 
-## Installation
+## Install
 
 ::: code-group
 
-```sh [pnpm]
-pnpm add cap-widget
-```
-
 ```sh [npm]
 npm i cap-widget
+```
+
+```sh [pnpm]
+pnpm add cap-widget
 ```
 
 ```sh [bun]
@@ -24,342 +24,171 @@ bun add cap-widget
 ```
 
 ```html [cdn]
-<!--
-
-* you should pin a specific version in production to avoid breaking changes. alternatively, you can also use the standalone asset server
-* `cdn.jsdelivr.net` is blocked in some jurisdictions, like some parts of China. if your website needs to be reachable from these jurisdictions, we recommend that you use npm.
-
--->
-
-<script type="module" src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
 ```
 
 :::
 
-## Self-hosting the widget
-
-The jsdelivr script tag above is the easiest way to start, and stays the default. If you'd rather not depend on a CDN, you can serve everything from your own domain instead. There are two parts to it: the widget JavaScript, and the WASM files the solver loads at runtime.
-
-### Serving the widget JavaScript
-
-Load the `cap-widget` package from a path you control instead of jsdelivr. You have two options:
-
-- Install it from npm (`pnpm add cap-widget`) and `import "cap-widget"` in your app, letting your bundler serve it alongside your other code. The framework examples below already do this.
-- Serve the prebuilt file directly. The [Standalone asset server](./standalone/options#asset-server) exposes it at `/assets/widget.js` once you set `ENABLE_ASSETS_SERVER=true`, so you can point a plain script tag at your own instance:
-
-```html
-<script src="https://<your-instance>/assets/widget.js"></script>
-```
-
-### Pointing the WASM solver at your own copies
-
-By default the widget fetches its two WASM files (`cap_wasm_bg.wasm` and `hashwx.wasm`) from jsdelivr at solve time. Override the URLs with `window.CAP_CUSTOM_WASM_URL` and `window.CAP_CUSTOM_HASHWX_URL`. Set them before the widget solves a challenge, so the simplest place is an inline script before you load the widget:
-
-```html
-<script>
-  window.CAP_CUSTOM_WASM_URL = "https://<your-instance>/assets/cap_wasm_bg.wasm";
-  window.CAP_CUSTOM_HASHWX_URL = "https://<your-instance>/assets/hashwx.wasm";
-</script>
-
-<cap-widget data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
-
-<script src="https://<your-instance>/assets/widget.js"></script>
-```
-
-If you use a bundler, set the two globals before the import runs:
-
-```js
-window.CAP_CUSTOM_WASM_URL = "https://<your-instance>/assets/cap_wasm_bg.wasm";
-window.CAP_CUSTOM_HASHWX_URL = "https://<your-instance>/assets/hashwx.wasm";
-
-import "cap-widget";
-```
-
-The URLs can point anywhere you host the files, not just a Standalone instance. The [Standalone asset server](./standalone/options#asset-server) is one way to host them: with `ENABLE_ASSETS_SERVER=true` it serves `/assets/cap_wasm_bg.wasm` and `/assets/hashwx.wasm` (alongside `/assets/widget.js` and `/assets/floating.js`), downloaded once from `CACHE_HOST` and refreshed hourly. Set `WIDGET_VERSION` and `WASM_VERSION` to pin the versions it serves.
-
-::: warning
-`hashwx.wasm` only ships in `@cap.js/wasm` 0.0.8 and newer. If your `WASM_VERSION` is older, `/assets/hashwx.wasm` responds with a 503, so leave `CAP_CUSTOM_HASHWX_URL` unset and the widget will load HashWX from jsdelivr.
-:::
+Pin a version from the [releases page](https://github.com/tiagozip/cap/releases) when you use the CDN. jsDelivr is blocked in parts of China, so if your visitors are there, install from npm or [self-host the widget](#self-hosting-the-widget).
 
 ## Usage
 
-The widget requires a `data-cap-api-endpoint` pointing at your Cap deployment. For Standalone instances, this is:
+Point `data-cap-api-endpoint` at your server. For Standalone, that's `https://<instance>/<site-key>/`.
 
-```
-https://<your-instance>/<site-key>/
-```
+::: code-group
 
-### Vanilla
+```html [HTML]
+<cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
 
-```html
-<form>
-  <cap-widget id="cap" required data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
-  <button type="submit">Submit</button>
-</form>
-
-<script type="module">
-  import "https://cdn.jsdelivr.net/npm/cap-widget";
-
+<script>
   document.getElementById("cap").addEventListener("solve", (e) => {
-    console.log("token:", e.detail.token);
+    console.log(e.detail.token);
   });
 </script>
 ```
 
-::: tip
-
-When the widget lives inside a `<form>`, it automatically injects a hidden `cap-token` input, and the token is submitted alongside your other fields with no extra JavaScript needed.
-
-:::
-
-### React
-
-```jsx
+```jsx [React]
 import "cap-widget";
 
-export default function ContactForm() {
+export default function Form() {
   return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        onsolve={(e) => console.log("token:", e.detail.token)}
-        onprogress={(e) => console.log(e.detail.progress)}
-        onerror={(e) => console.error(e.detail.message)}
-      />
-      <button type="submit">Submit</button>
-    </form>
+    <cap-widget
+      data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+      onsolve={(e) => console.log(e.detail.token)}
+    />
   );
 }
 ```
 
-::: tip
-
-We recommend using React 19 or later as it improves custom element event handling
-
-:::
-
-### Vue
-
-```vue
+```vue [Vue]
 <script setup>
 import "cap-widget";
 </script>
 
 <template>
-  <form>
-    <cap-widget
-      data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-      @solve="(e) => console.log('token:', e.detail.token)"
-      @progress="(e) => console.log(e.detail.progress)"
-      @error="(e) => console.error(e.detail.message)"
-    />
-    <button type="submit">Submit</button>
-  </form>
+  <cap-widget
+    data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+    @solve="(e) => console.log(e.detail.token)"
+  />
 </template>
 ```
 
-If you're getting an unknown-component warning, add this to your `vite.config.js`:
-
-```js
-export default defineConfig({
-  plugins: [
-    vue({
-      template: {
-        compilerOptions: { isCustomElement: (tag) => tag.startsWith("cap-") },
-      },
-    }),
-  ],
-});
-```
-
-### Svelte 5
-
-```svelte
+```svelte [Svelte]
 <script>
   import "cap-widget";
 </script>
 
-<form>
-  <cap-widget
-    data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-    on:solve={(e) => console.log("token:", e.detail.token)}
-    on:progress={(e) => console.log(e.detail.progress)}
-    on:error={(e) => console.error(e.detail.message)}
-  />
-  <button type="submit">Submit</button>
-</form>
+<cap-widget
+  data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+  onsolve={(e) => console.log(e.detail.token)}
+></cap-widget>
 ```
 
-### SolidJS
-
-```jsx
+```jsx [Solid]
 import "cap-widget";
 
-export default function ContactForm() {
+export default function Form() {
   return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        on:solve={(e) => console.log("token:", e.detail.token)}
-        on:progress={(e) => console.log(e.detail.progress)}
-        on:error={(e) => console.error(e.detail.message)}
-      />
-      <button type="submit">Submit</button>
-    </form>
+    <cap-widget
+      data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+      on:solve={(e) => console.log(e.detail.token)}
+    />
   );
 }
 ```
 
-### Astro
+```tsx [Qwik]
+import { component$ } from "@builder.io/qwik";
+import "cap-widget";
 
-```astro
----
-// ContactForm.astro
----
+export default component$(() => (
+  <cap-widget
+    data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+    on:solve$={(e: CustomEvent) => console.log(e.detail.token)}
+  />
+));
+```
 
-<form>
-  <cap-widget id="cap" data-cap-api-endpoint="https://<your-instance>/<site-key>/" />
-  <button type="submit">Submit</button>
-</form>
+```astro [Astro]
+<cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/" />
 
 <script>
   import "cap-widget";
 
   document.getElementById("cap").addEventListener("solve", (e) => {
-    console.log("token:", e.detail.token);
+    console.log(e.detail.token);
   });
 </script>
 ```
 
-If you're rendering a React/Vue/Svelte component inside Astro, follow that framework's guide above and add `client:load` to the component.
+:::
 
-### Preact
+A few framework notes:
 
-```jsx
-import "cap-widget";
+- React handles custom element events properly from version 19. Preact uses the same syntax.
+- Vue may warn about an unknown component. Tell its compiler that `cap-` tags are custom elements:
 
-export default function ContactForm() {
-  return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        onsolve={(e) => console.log("token:", e.detail.token)}
-        onprogress={(e) => console.log(e.detail.progress)}
-        onerror={(e) => console.error(e.detail.message)}
-      />
-      <button type="submit">Submit</button>
-    </form>
-  );
-}
+  ```js
+  vue({ template: { compilerOptions: { isCustomElement: (tag) => tag.startsWith("cap-") } } })
+  ```
+
+- The Svelte example is Svelte 5. On Svelte 4, use `on:solve`.
+
+### In a form
+
+Inside a `<form>`, the widget adds a hidden `cap-token` input when it's solved, so the token is submitted with the other fields. Add `required` to stop the form from submitting before then.
+
+```html
+<form action="/submit" method="POST">
+  <cap-widget required data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit">Submit</button>
+</form>
 ```
 
-### Qwik
-
-```tsx
-import { component$ } from "@builder.io/qwik";
-import "cap-widget";
-
-export default component$(() => {
-  return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        on:solve$={(e: CustomEvent) => console.log("token:", e.detail.token)}
-        on:progress$={(e: CustomEvent) => console.log(e.detail.progress)}
-        on:error$={(e: CustomEvent) => console.error(e.detail.message)}
-      />
-      <button type="submit">Submit</button>
-    </form>
-  );
-});
-```
-
-## Programmatic mode
-
-If you don't want a visible widget, for example when protecting a background action like a post submission, use the [programmatic mode](./programmatic):
-
-```js
-import Cap from "cap-widget";
-
-const cap = new Cap({
-  apiEndpoint: "https://<your-instance>/<site-key>/",
-});
-
-const { token } = await cap.solve();
-```
+To solve without showing a widget, use [invisible mode](./invisible.md). To show it only when a button is pressed, use [floating mode](./floating.md).
 
 ## Events
 
-All events are dispatched as CustomEvent.
+Each event is a `CustomEvent`.
 
-| Event      | When it fires                  | Detail                 |
-| ---------- | ------------------------------ | ---------------------- |
-| `solve`    | Challenge solved successfully  | `{ token: string }`    |
-| `progress` | Progress update during solving | `{ progress: number }` |
-| `error`    | An error occurred              | `{ message: string }`  |
-| `reset`    | Widget reset to initial state  | `{}`                   |
+| Event | Fires when | `detail` |
+| --- | --- | --- |
+| `solve` | The challenge is solved | `{ token }` |
+| `progress` | Solving progresses | `{ progress }`, from 0 to 100 |
+| `error` | Something fails | `{ message, code }` |
+| `reset` | The widget resets | `{}` |
 
-## Options
+## Attributes
 
-You can also specify a custom fetch function with `window.CAP_CUSTOM_FETCH`:
+| Attribute | What it does |
+| --- | --- |
+| `data-cap-api-endpoint` | Your server's endpoint. Required. |
+| `data-cap-worker-count` | Number of solver workers. Defaults to the number of CPU cores, or 8. |
+| `data-cap-hidden-field-name` | Name of the hidden form input. Defaults to `cap-token`. |
+| `data-cap-lang` | Forces a [language](#languages). |
+| `data-cap-troubleshooting-url` | Where the troubleshooting link points when a visitor is blocked. |
+| `data-cap-disable-haptics` | Turns off vibration on phones. |
+| `required` | Blocks form submission until the widget is solved. |
 
-```js
-window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
-```
+## Languages
 
-If you serve the widget under a strict Content-Security-Policy, you can supply nonces so the widget's injected `<style>` and `<script>` elements aren't blocked:
+The widget follows the browser's language for Arabic, Chinese (Simplified), French, German, Hindi, Japanese, Portuguese, Russian and Spanish, and uses English otherwise. Set `data-cap-lang="de"` on a widget, or `window.CAP_LANG = "de"` for the whole page, to choose one yourself.
 
-- `window.CAP_CSS_NONCE` — applied to the widget's `<style>` tag. Also used as a fallback nonce for injected scripts if `CAP_SCRIPT_NONCE` is unset.
-- `window.CAP_SCRIPT_NONCE` — applied to the scripts the widget injects: the pako decompression fallback and the instrumentation challenge iframe.
-
-You can also set a custom WASM url (for example the Standalone asset server's) with `window.CAP_CUSTOM_WASM_URL`, and the HashWX one with `window.CAP_CUSTOM_HASHWX_URL`. See [self-hosting the widget](#self-hosting-the-widget) for a full example.
-
-To disable haptic feedback (vibrations on mobile devices), set `window.CAP_DISABLE_HAPTICS = true` globally or add the `data-cap-disable-haptics` attribute to individual widgets:
-
-```js
-window.CAP_DISABLE_HAPTICS = true;
-```
-
-```html
-<cap-widget data-cap-disable-haptics data-cap-api-endpoint="..."></cap-widget>
-```
-
-Haptic feedback is automatically disabled in [programmatic mode](./programmatic) since there is no visible widget for the user to interact with
-
-### Attributes
-
-| Attribute                      | Description                                                                   |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| `data-cap-api-endpoint`        | **Required.** Your Cap endpoint: `https://<instance>/<site-key>/`             |
-| `data-cap-worker-count`        | Number of solver workers (defaults to `navigator.hardwareConcurrency \|\| 8`) |
-| `data-cap-hidden-field-name`   | Name of the hidden token input in a `<form>` (default: `cap-token`)           |
-| `data-cap-troubleshooting-url` | Custom URL for the "Troubleshooting" link shown when a user is blocked        |
-| `data-cap-disable-haptics`     | Disable haptic feedback (vibrations) on this widget                           |
-
-#### i18n
-
-All widget labels can be overridden with `data-cap-i18n-*` attributes. These default to English
+To change any label, set its `data-cap-i18n-*` attribute:
 
 ```html
 <cap-widget
-  data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-  data-cap-i18n-initial-state="Verify you're human"
-  data-cap-i18n-verifying-label="Verifying..."
-  data-cap-i18n-solved-label="You're human"
-  data-cap-i18n-error-label="Error"
-  data-cap-i18n-troubleshooting-label="Troubleshooting"
-  data-cap-i18n-wasm-disabled="Enable WASM for significantly faster solving"
-  data-cap-i18n-verify-aria-label="Click to verify you're a human"
-  data-cap-i18n-verifying-aria-label="Verifying, please wait"
-  data-cap-i18n-verified-aria-label="Verified"
-  data-cap-i18n-required-label="Please verify you're human"
-  data-cap-i18n-error-aria-label="An error occurred, please try again"
+  data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+  data-cap-i18n-initial-state="I'm not a robot"
+  data-cap-i18n-solved-label="Done"
 ></cap-widget>
 ```
 
-### Styling
+The keys are `initial-state`, `verifying-label`, `solved-label`, `error-label`, `required-label`, `troubleshooting-label`, `wasm-disabled`, and the screen reader labels `group-aria-label`, `verify-aria-label`, `verifying-aria-label`, `verified-aria-label` and `error-aria-label`.
 
-Override any of these CSS variables on the `cap-widget` element:
+## Styling
+
+Override these CSS variables on `cap-widget`. The values shown are the defaults.
 
 ```css
 cap-widget {
@@ -382,3 +211,34 @@ cap-widget {
   --cap-spinner-thickness: 5px;
 }
 ```
+
+## Page-wide options {#options}
+
+Set these on `window` before the widget loads.
+
+| Option | What it does |
+| --- | --- |
+| `CAP_CUSTOM_FETCH` | Replaces `fetch` for the widget's requests. |
+| `CAP_CSS_NONCE` | Nonce for the injected `<style>` tag, for a strict Content Security Policy. Also used for scripts if `CAP_SCRIPT_NONCE` is unset. |
+| `CAP_SCRIPT_NONCE` | Nonce for injected scripts: the decompression fallback and the instrumentation iframe. |
+| `CAP_CUSTOM_WASM_URL` | URL of `cap_wasm_bg.wasm`. |
+| `CAP_CUSTOM_HASHWX_URL` | URL of `hashwx.wasm`. |
+| `CAP_LANG` | Forces a [language](#languages) on every widget. |
+| `CAP_DISABLE_HAPTICS` | Turns off vibration on every widget. |
+
+## Self-hosting the widget
+
+The widget loads from jsDelivr by default, and so do the two WASM files its solver fetches. To serve all of it from your own domain:
+
+1. Serve the script yourself, either by importing `cap-widget` through your bundler or from Standalone's [asset server](./standalone/options.md#asset-server) at `/assets/widget.js`.
+2. Point the solver at your copies of the WASM files before the widget solves anything:
+
+```html
+<script>
+  window.CAP_CUSTOM_WASM_URL = "https://cap.example.com/assets/cap_wasm_bg.wasm";
+  window.CAP_CUSTOM_HASHWX_URL = "https://cap.example.com/assets/hashwx.wasm";
+</script>
+<script src="https://cap.example.com/assets/widget.js"></script>
+```
+
+With a bundler, set the two globals before `import "cap-widget"` runs. The URLs can point anywhere you host the files.

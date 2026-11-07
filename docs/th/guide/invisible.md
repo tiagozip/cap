@@ -1,8 +1,8 @@
 ---
-description: "โหมด programmatic ของ Cap: เรียก new Cap() และ solve() เพื่อรัน CAPTCHA โอเพนซอร์สจาก JavaScript ของคุณเอง พร้อม proof-of-work และไม่ต้องแสดงวิดเจ็ต"
+description: "โหมดล่องหน ของ Cap: เรียก new Cap() และ solve() เพื่อรัน CAPTCHA โอเพนซอร์สจาก JavaScript ของคุณเอง พร้อม proof-of-work และไม่ต้องแสดงวิดเจ็ต"
 ---
 
-# โหมด programmatic
+# โหมดล่องหน
 
 คุณสามารถใช้ `new Cap({ ... })` ใน JavaScript ฝั่งไคลเอนต์เพื่อสร้างอินสแตนซ์ Cap ใหม่ แล้วใช้เมธอด `solve()` เพื่อแก้ challenge
 

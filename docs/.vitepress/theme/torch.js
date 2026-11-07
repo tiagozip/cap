@@ -626,7 +626,7 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     if (!e.relatedTarget) release();
   };
   const onDown = (e) => {
-    if (e.target.closest?.("[data-torch-ignore]")) return;
+    if (e.target.closest?.("[data-torch-ignore], a, button, input, select, textarea, label, [role='button']")) return;
     touched();
     aimClient(e.clientX, e.clientY);
     if (e.pointerType === "touch") return;

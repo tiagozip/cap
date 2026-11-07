@@ -64,7 +64,7 @@ For conversion-sensitive flows this means:
 - No image puzzles, ever. There is no "hard mode" to fall into.
 - No risk scores, so no silent penalties for VPNs or privacy browsers.
 - You control difficulty per site key: crank it up on signup, keep it feather-light on checkout.
-- [Floating](./floating.md) and [programmatic](./programmatic.md) modes make it fully invisible until submit.
+- [Floating](./floating.md) and [invisible](./invisible.md) modes make it fully invisible until submit.
 - The widget is ~20 KB, so it doesn't slow the page it's supposed to protect. See the [benchmark](./benchmark.md).
 
 Because Cap's proof-of-work is deterministic, no human is ever misclassified by a risk score: any browser that can run the challenge passes. Abandonment is limited to users unwilling to wait the few seconds the solve takes, and the widget's progress indicator keeps that wait legible.

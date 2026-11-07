@@ -4,39 +4,30 @@ description: "Floating mode for Cap's widget hides the open-source CAPTCHA until
 
 # Floating mode
 
-Cap can automatically hide the CAPTCHA until a button is pressed. To use this, add the `data-cap-floating` attribute to your trigger with the query selector of the `cap-widget` element you want to use.
+Floating mode keeps the widget hidden until someone presses a button. The widget then appears next to the button, solves, hides again, and clicks the button a second time, so a submit button goes on to submit the form with the token in it.
+
+Load the floating script after the widget:
 
 ```html
-<cap-widget
-  id="floating"
-  onsolve="console.log(`token: ${event.detail.token}`)"
-  data-cap-api-endpoint="<api endpoint>"
-></cap-widget>
-
-<button data-cap-floating="#floating" data-cap-floating-position="bottom">
-  Trigger floating mode
-</button>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>/cap-floating.min.js"></script>
 ```
 
-You'll also need to import both the Cap library and the floating mode script from JSDelivr:
+From Standalone's [asset server](./standalone/options.md#asset-server), the floating script is at `/assets/floating.js`.
 
-```html{2}
-<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
-<script src="https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js"></script> <!-- [!code ++] -->
-```
-
-Or from the standalone server:
+Then point a button at a widget with a CSS selector:
 
 ```html
-<script src="https://<server url>/assets/widget.js"></script>
-<script src="https://<server url>/assets/floating.js"></script>
-<!-- [!code ++] -->
+<form action="/submit" method="POST">
+  <cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit" data-cap-floating="#cap">Submit</button>
+</form>
 ```
 
-If you want to serve everything from your own domain and keep the solver off the CDN too, see [self-hosting the widget](./widget#self-hosting-the-widget).
+| Attribute | What it does |
+| --- | --- |
+| `data-cap-floating` | Selector of the widget to show. |
+| `data-cap-floating-position` | `top` or `bottom` of the button. Defaults to `top`. |
+| `data-cap-floating-offset` | Gap between the button and the widget, in pixels. Defaults to `8`. |
 
-The following attributes are supported:
-
-- `data-cap-floating`: The CSS selector of the `cap-widget` element you want to use.
-- `data-cap-floating-position`: The position of the floating widget. Can be `top` or `bottom`.
-- `data-cap-floating-offset`: The offset of the floating widget from the trigger element.
+After a solve, the button also carries the token in `data-cap-token`.

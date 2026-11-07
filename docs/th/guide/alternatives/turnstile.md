@@ -28,7 +28,7 @@ Turnstile ดีจริงถ้าคุณใช้ Cloudflare อยู่�
 
 ## สิ่งที่คล้ายกัน
 
-ทั้งคู่ส่งไคลเอนต์ขนาดเล็ก (ราว 20-110 KB) ทั้งคู่มีโหมด "ล่องหน" (Cap เรียกว่า[โหมดลอย](../floating.md) หรือ[โหมด programmatic](../programmatic.md)) และทั้งคู่ซ้อนการตรวจเชิงพฤติกรรมทับ challenge หลัก โดย Cap เรียกมันว่า [challenge แบบ instrumentation](../instrumentation.md) ส่วน Turnstile เรียกว่า "managed challenge"
+ทั้งคู่ส่งไคลเอนต์ขนาดเล็ก (ราว 20-110 KB) ทั้งคู่มีโหมด "ล่องหน" (Cap เรียกว่า[โหมดลอย](../floating.md) หรือ[โหมดล่องหน](../invisible.md)) และทั้งคู่ซ้อนการตรวจเชิงพฤติกรรมทับ challenge หลัก โดย Cap เรียกมันว่า [challenge แบบ instrumentation](../instrumentation.md) ส่วน Turnstile เรียกว่า "managed challenge"
 
 ## การย้ายระบบ
 

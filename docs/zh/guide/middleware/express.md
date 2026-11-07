@@ -1,4 +1,5 @@
 ---
+search: false
 description: "使用 @cap.js/checkpoint-express 为 Express 添加 Cap Checkpoint，用自托管、开源的工作量证明 CAPTCHA 和浏览器检查保护你的路由。"
 ---
 

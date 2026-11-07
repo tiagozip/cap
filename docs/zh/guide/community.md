@@ -73,7 +73,7 @@ description: "社区维护的 Cap 库：在更多语言和框架中使用这个�
 
 - **[clysss/capito](https://github.com/clysss/capito)**：Capito Cap PHP 服务端
 - **[trilbymedia/cap-php](https://github.com/trilbymedia/cap-php)**：Cap 工作量证明验证服务端的 PHP 移植版
-- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**：将 Cap 集成到评论、登录、注册和 WooCommerce 结账流程的 WordPress 插件，同时支持可见的验证组件和不可见（编程模式）两种方式
+- **[oliweb-proof-of-work-for-cap](https://github.com/oli217/oliweb-proof-of-work-for-cap)**：将 Cap 集成到评论、登录、注册和 WooCommerce 结账流程的 WordPress 插件，同时支持可见的验证组件和隐形模式两种方式
 - **[laravel-cap](https://github.com/oli217/laravel-cap)**：Cap 的 Laravel 集成，提供 Blade 指令、中间件、验证规则和用于服务端令牌验证的 facade（`composer require oliweb/laravel-cap`）
 - **[statamic-cap](https://github.com/oli217/statamic-cap)**：将 Cap 集成到表单的 Statamic 插件，支持验证组件渲染、自动令牌校验和灵活的控制面板配置（`composer require oliweb/statamic-cap`）
 - **[cap-captcha-wordpress](https://github.com/forge28labs/cap-captcha-wordpress)**：将 Cap 集成到认证流程和新评论中的 WordPress 插件。可通过 WordPress 管理后台配置（实例、密钥和颜色）。

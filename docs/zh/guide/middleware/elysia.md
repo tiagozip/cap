@@ -1,4 +1,5 @@
 ---
+search: false
 description: "使用官方中间件为 Elysia 应用添加 Cap Checkpoint，只需几行代码即可让路由受自托管、开源的工作量证明 CAPTCHA 保护。"
 ---
 

@@ -38,7 +38,7 @@ Auf Mobilgeräten richten CAPTCHAs den größten Conversion-Schaden an:
 
 ## Wie Cap auf mobilen Formularen funktioniert
 
-- **Ein Tipp, dann Fortschritt.** Der Nutzer tippt eine Checkbox an; ein Fortschrittswert füllt sich, während der Proof-of-Work im Browser läuft. Keine Bilder, kein Tippen, kein Ausblenden der Tastatur. Im [Floating-](./floating.md) oder [programmatischen](./programmatic.md) Modus ist bis zum Absenden gar nichts sichtbar.
+- **Ein Tipp, dann Fortschritt.** Der Nutzer tippt eine Checkbox an; ein Fortschrittswert füllt sich, während der Proof-of-Work im Browser läuft. Keine Bilder, kein Tippen, kein Ausblenden der Tastatur. Im [Floating-](./floating.md) oder [unsichtbaren](./invisible.md) Modus ist bis zum Absenden gar nichts sichtbar.
 - **Widget mit etwa 20 KB.** Eine einzelne Web Component, keine Framework-Abhängigkeit, günstig im Mobilfunknetz. Siehe den [Benchmark](./benchmark.md).
 - **Keine Fingerprint-Strafe.** Cap ist es egal, ob der Besucher hinter Carrier-NAT sitzt, in einem Instagram-Webview steckt oder iOS Safari mit Tracking-Abwehr nutzt. Der Proof-of-Work ist für alle dieselbe Berechnung.
 - **Die Schwierigkeit gehört dir.** Stelle sie pro Site-Key auf dem [Standalone-Server](./standalone/options.md) ein: leichter für Consumer-Checkout-Traffic auf Mittelklasse-Androids, schwerer für missbrauchsanfällige Anmelde-Endpunkte.
@@ -57,9 +57,9 @@ Ein ehrlicher Kompromiss: Proof-of-Work kostet CPU-Zeit, und schwache Handys lö
 ## Hinweise zur Umsetzung
 
 - Setz das Widget in dein `<form>`, dann fügt Cap das Feld `cap-token` automatisch ein; kein JavaScript nötig. [Schnellstart →](./index.md)
-- Für SPAs und App-Webviews nutzt du das `solve`-Event oder den [programmatischen Modus](./programmatic.md), um die volle Kontrolle über den Ablauf zu behalten.
+- Für SPAs und App-Webviews nutzt du das `solve`-Event oder den [unsichtbaren Modus](./invisible.md), um die volle Kontrolle über den Ablauf zu behalten.
 - Teste auf einem echten Mittelklasse-Android im Mobilfunknetz, nicht nur auf einem Flaggschiff im WLAN, und justiere die Schwierigkeit, bis sich die Lösezeit für dein Publikum sofortig anfühlt.
-- Du schützt die API einer nativen App statt eines Web-Formulars? Caps [Standalone-Server](./standalone/api.md) verifiziert Tokens von jedem Client, der die Challenge in einem Webview ausführen kann.
+- Du schützt die API einer nativen App statt eines Web-Formulars? Caps [Standalone-Server](./standalone/index.md) verifiziert Tokens von jedem Client, der die Challenge in einem Webview ausführen kann.
 
 ## FAQ
 

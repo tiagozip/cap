@@ -1,4 +1,5 @@
 ---
+search: false
 description: "Ajoutez un Checkpoint Cap à une application Hono avec @cap.js/checkpoint-hono. Protégez vos routes avec le CAPTCHA open source auto-hébergé à preuve de travail et une vérification du navigateur."
 ---
 

@@ -1,8 +1,8 @@
 ---
-description: "Cap 的编程模式：调用 new Cap() 和 solve()，直接在你自己的 JavaScript 中运行这个开源 CAPTCHA，基于工作量证明，无可见组件。"
+description: "Cap 的隐形模式：调用 new Cap() 和 solve()，直接在你自己的 JavaScript 中运行这个开源 CAPTCHA，基于工作量证明，无可见组件。"
 ---
 
-# 编程模式
+# 隐形模式
 
 在客户端 JavaScript 中，你可以用 `new Cap({ ... })` 创建一个 Cap 实例，再用 `solve()` 方法求解质询。
 
