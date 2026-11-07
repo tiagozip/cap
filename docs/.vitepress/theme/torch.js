@@ -94,6 +94,7 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     clearTimeout(idleTimer);
     if (!reduced) idleTimer = setTimeout(() => kick(), IDLE_AFTER + 50);
   };
+  const sweep = () => (width < 640 ? { rest: Math.PI / 2, amp: 0.55 } : { rest: -Math.PI / 2, amp: 1.45 });
   const idling = (now) => !reduced && !state.focus && !state.near && now - state.lastInput > IDLE_AFTER;
 
   const goal = () => ({
@@ -323,10 +324,11 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     const box = boxes[boxes.length - 1] ?? { c0: 0, c1: 0, r0: 0, r1: 0 };
     placePins(true);
     const pool = lines.filter((l) => l.text.length < cols - 4);
-    const wanted = Math.max(8, Math.round(n / 170));
+    const wanted = Math.max(8, Math.round(n / 110));
     let placed = 0;
     const firstAim = (cols - box.c1) * cellW < 300 ? Math.PI * 0.42 : -0.1;
     const firstReach = goal().reach;
+    const used = new Set();
     for (const at of [0.4, 0.58, 0.76]) {
       const line = pool[placed % pool.length];
       if (!line) break;
@@ -336,9 +338,28 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
       const col = Math.round(x / cellW - line.text.length / 2);
       if (!fits(line.text, row, col, boxes)) continue;
       place(line.text, line.kind, row, col, rand);
+      used.add(line);
       placed++;
     }
-    const used = new Set();
+    const { rest, amp } = sweep();
+    const arc = placed + Math.round(wanted * 0.6);
+    for (let attempt = 0; attempt < wanted * 30 && placed < arc && used.size < pool.length; attempt++) {
+      const a = rest + amp * (rand() * 2 - 1);
+      const d = firstReach * (0.22 + rand() * 0.75);
+      const row = Math.min(rows - 2, Math.max(1, Math.round((state.oy + Math.sin(a) * d - cellH / 2) / cellH)));
+      const x = (state.ox + Math.cos(a) * d) / cellW;
+      const skip = Math.floor(rand() * pool.length);
+      for (let j = 0; j < pool.length; j++) {
+        const line = pool[(skip + j) % pool.length];
+        if (used.has(line)) continue;
+        const col = Math.round(x - line.text.length / 2);
+        if (!fits(line.text, row, col, boxes)) continue;
+        place(line.text, line.kind, row, col, rand);
+        used.add(line);
+        placed++;
+        break;
+      }
+    }
     for (let attempt = 0; attempt < wanted * 60 && placed < wanted && used.size < pool.length; attempt++) {
       const line = pool[Math.floor(rand() * pool.length)];
       if (used.has(line)) continue;
@@ -365,19 +386,20 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     return h % 5 < 2 ? NOISE[(h >>> 8) % NOISE.length] : noise[i];
   };
 
-  const lightAt = (x, y, i) => {
+  const lightAt = (x, y, i, label) => {
     const { ox, oy, aim, half, reach } = state;
     const dx = x - ox;
     const dy = y - oy;
     const d = Math.hypot(dx, dy);
-    if (d > reach || d < 4) return 0;
+    if (d > reach * (label ? 1.3 : 1) || d < 4) return 0;
     const off = Math.abs(wrapAngle(Math.atan2(dy, dx) - aim));
     if (off > half * 1.35) return 0;
     const angular = Math.exp(-((off / (half * 0.6)) ** 2));
-    const radial = (1 - smooth(reach * 0.38, reach, d)) * smooth(0, 70, d);
+    const fade = 1 - smooth(reach * 0.38, reach, d);
+    const radial = (label ? Math.max(fade, 1 - smooth(reach * 0.9, reach * 1.3, d)) : fade) * smooth(0, 70, d);
     const pd = Math.hypot(x - (ox + Math.cos(aim) * reach * 0.5), y - (oy + Math.sin(aim) * reach * 0.5));
     const pool = Math.exp(-((pd / (reach * 0.2)) ** 2)) * 0.5;
-    return shade[i] * Math.min(1, angular * radial * (0.8 + pool));
+    return (label ? mask[i] : shade[i]) * Math.min(1, angular * radial * (0.8 + pool));
   };
 
   const cone = (spread, peak, rgb) => {
@@ -412,19 +434,20 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     lctx.textBaseline = "middle";
 
     const { ox, oy, aim, reach } = state;
-    const c0 = Math.max(0, Math.floor((ox - reach) / cellW));
-    const c1 = Math.min(cols - 1, Math.ceil((ox + reach) / cellW));
-    const r0 = Math.max(0, Math.floor((oy - reach) / cellH));
-    const r1 = Math.min(rows - 1, Math.ceil((oy + reach) / cellH));
+    const span = reach * 1.3;
+    const c0 = Math.max(0, Math.floor((ox - span) / cellW));
+    const c1 = Math.min(cols - 1, Math.ceil((ox + span) / cellW));
+    const r0 = Math.max(0, Math.floor((oy - span) / cellH));
+    const r1 = Math.min(rows - 1, Math.ceil((oy + span) / cellH));
 
     for (let r = r0; r <= r1; r++) {
       const y = r * cellH + cellH / 2;
       for (let c = c0; c <= c1; c++) {
         const i = r * cols + c;
         if (pinned[i]) continue;
-        const light = lightAt(c * cellW + cellW / 2, y, i);
-        if (light < 0.03) continue;
         const k = kind[i];
+        const light = lightAt(c * cellW + cellW / 2, y, i, k > 0);
+        if (light < 0.03) continue;
         const x0 = Math.floor(c * cellW);
         if (k && light > threshold[i] - 0.06) {
           ctx.fillStyle = palette.bg;
@@ -551,8 +574,7 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
     state.frame = 0;
     const g = goal();
     const idle = idling(now);
-    const amp = width < 640 ? 0.55 : 1.45;
-    const rest = width < 640 ? Math.PI / 2 : -Math.PI / 2;
+    const { rest, amp } = sweep();
     if (idle && !state.wasIdle) {
       const k = wrapAngle(state.aim - rest) / amp;
       state.phase = Math.asin(Math.max(-1, Math.min(1, k)));
