@@ -5,8 +5,6 @@ import llmstxt from "vitepress-plugin-llms";
 import { withMermaid } from "vitepress-plugin-mermaid";
 import { homeV2Strings } from "./theme/components/homeV2.strings.js";
 
-const GITHUB_STARS = 6632;
-
 const LOCALE_INFO = {
   root: { lang: "en-US", label: "English", hreflang: "en", prefix: "" },
   zh: { lang: "zh-CN", label: "简体中文", hreflang: "zh-CN", prefix: "/zh" },
@@ -16,6 +14,23 @@ const LOCALE_INFO = {
 };
 
 const LOCALES = Object.keys(LOCALE_INFO).filter((k) => k !== "root");
+
+const GITHUB_STARS = await (async () => {
+  try {
+    const res = await fetch("https://api.github.com/repos/tiagozip/cap", {
+      headers: {
+        Accept: "application/vnd.github+json",
+        ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+    const n = res.ok ? (await res.json()).stargazers_count : null;
+    return typeof n === "number" ? n : 8275;
+  } catch {
+    return 8275;
+  }
+})();
+const GITHUB_STARS_LABEL = GITHUB_STARS >= 1000 ? `${(GITHUB_STARS / 1000).toFixed(1)}k` : `${GITHUB_STARS}`;
 
 const DOCS_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const gitDatesCache = new Map();
@@ -647,7 +662,9 @@ export default withMermaid({
     root: { label: "English", lang: "en-US" },
     ...Object.fromEntries(LOCALES.map((loc) => [loc, localeConfig(loc)])),
   },
+  vue: { template: { compilerOptions: { isCustomElement: (tag) => tag.startsWith("cap-") } } },
   vite: {
+    define: { __CAP_STARS__: JSON.stringify(GITHUB_STARS_LABEL) },
     plugins: [
       llmstxt({
         ignoreFiles: [

@@ -5,7 +5,7 @@ import { homeV2Strings } from "./homeV2.strings.js";
 
 const { localeIndex } = useData();
 const label = computed(() => (homeV2Strings[localeIndex.value] ?? homeV2Strings.en).navGithubStars ?? homeV2Strings.en.navGithubStars);
-const stars = ref("6.2k");
+const stars = ref(__CAP_STARS__);
 
 onMounted(async () => {
   try {

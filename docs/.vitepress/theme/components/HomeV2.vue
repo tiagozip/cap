@@ -18,6 +18,7 @@ const trustParts = computed(() => t.value.trustLine.split("{n}"));
 const numLang = computed(() => (localeIndex.value === "root" ? "en" : localeIndex.value));
 const lp = computed(() => (localeIndex.value === "root" ? "" : `/${localeIndex.value}`));
 
+const starsFallback = __CAP_STARS__;
 const faq = computed(() => {
   const s = t.value;
   const p = lp.value;
@@ -223,7 +224,7 @@ onBeforeUnmount(() => {
             <a class="gh-link nav-link" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="nav">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path :d="ghPath" /></svg>
               <span class="sr-only">GitHub, </span>
-              <span><span class="homev2-gh-stars">6.2k</span><span class="gh-stars-label">{{ ` ${t.navGithubStars}` }}</span></span>
+              <span><span class="homev2-gh-stars">{{ starsFallback }}</span><span class="gh-stars-label">{{ ` ${t.navGithubStars}` }}</span></span>
             </a>
           </div>
         </div>
