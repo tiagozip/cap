@@ -1,7 +1,7 @@
 <div align="center">
     <br/>
     <p>
-        <img src="/docs/public/logo.png" alt="cap logo" width="80" />
+        <img src="assets/banner.png" alt="cap logo" width="5000" />
     </p>
     <p>
         a privacy-first and self-hosted CAPTCHA.
