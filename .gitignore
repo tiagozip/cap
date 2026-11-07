@@ -100,3 +100,5 @@ standalone/data/
 trycap
 .claude
 bench
+.wrangler
+.cloudflare
