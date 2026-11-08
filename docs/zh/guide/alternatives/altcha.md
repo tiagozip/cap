@@ -7,7 +7,7 @@ description: "Cap 对比 Altcha：两个开源、自托管的工作量证明 CAP
 
 Altcha 是理念上与 Cap 最接近的项目：开源、工作量证明、无指纹追踪、不依赖第三方。两者都是不错的选择，差异主要在功能和运维形态上。
 
-Altcha 还有一个名为 **Altcha Sentinel** 的商业产品，在开源验证组件之上叠加了基于机器学习的威胁检测。下面的对比主要针对 Cap 与开源版 Altcha 验证组件；如果你在考虑 Sentinel，那就是在比较付费 SaaS 和自托管开源项目，是另一个层面的决策了。
+Altcha 还有一个名为 **Altcha Sentinel** 的商业产品，在开源验证组件之上叠加了基于机器学习的威胁检测。下面的对比主要针对 Cap 与开源版 Altcha 验证组件；如果你在考虑 Sentinel，那就是在比较每月 99 欧元起的付费授权和免费的开源项目，是另一个层面的决策了。
 
 ## 快速结论
 
@@ -23,6 +23,7 @@ Altcha 还有一个名为 **Altcha Sentinel** 的商业产品，在开源验证�
 
 - **两层独立验证，免费。** Cap 同时运行工作量证明*和*动态 JavaScript [instrumentation 质询](../instrumentation.md)，两者都包含在内。攻破其中一层并不等于攻破另一层。开源版 Altcha 只有 PoW；第二层（基于机器学习）需要为 Sentinel 付费。
 - **带控制台的自托管服务端，免费。** Cap 一个 Docker 容器就能部署，自带 Web 控制台、多站点密钥管理、数据分析，以及兼容 reCAPTCHA 的 siteverify 端点。Altcha 的开源部分需要你自己拼装这些；一体化的体验只有 Sentinel 才有。
+- **自适应难度，免费。** Cap 的规则可以给请求过于频繁的访客，或来自你指定的网络、国家或列表的访客，一个[难度最高 10 倍的谜题](../capd/index.md#adaptive-difficulty)。开源版 Altcha 对所有访客使用同样的难度，自适应质询需要 Altcha Cloud 或 Sentinel。
 - **验证组件更小。** Cap 约 20 KB，Altcha gzip 后约 34 KB。
 - **进度显示。** Cap 的验证组件会以百分比向用户展示求解进度，短暂的等待中也有明确的反馈。
 - **浮动模式和隐形模式。** Cap 可以完全隐藏，或悬浮在按钮上直到表单提交。Altcha 的展示模式更简单。

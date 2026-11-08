@@ -23,6 +23,7 @@ FriendlyCaptcha 是早期的工作量证明 CAPTCHA（人机验证）之一，�
 - **服务端开源。** FriendlyCaptcha 的框架集成是开源的，但服务端是专有的。Cap 从头到尾都是 Apache-2.0。
 - **自托管。** Cap 运行在你自己的基础设施上，一台 5 美元的 VPS 即可，没有第三方网络往返。
 - **两层验证。** Cap 在工作量证明之上增加了 [instrumentation 质询](../instrumentation.md)。FriendlyCaptcha 只有 PoW。
+- **自适应难度，免费。** Cap 的规则可以给请求过于频繁的访客，或来自你指定的网络、国家或列表的访客，一个[难度最高 10 倍的谜题](../capd/index.md#adaptive-difficulty)。FriendlyCaptcha 的 Smart Difficulty Scaling 需要 Advanced 或 Enterprise 套餐。
 - **没有"供应商风险"。** 开源、自托管、Apache 2.0。不会突然涨价，也不会突然停服。
 
 ## 两者相似之处

@@ -23,6 +23,7 @@ Si vous avez précisément besoin d'un produit payant, hébergé en Europe, sout
 - **Le serveur est open source.** Les intégrations de FriendlyCaptcha pour les frameworks sont open source, mais le serveur est propriétaire. Cap est entièrement sous Apache 2.0, de bout en bout.
 - **Auto-hébergé.** Cap tourne sur votre propre infrastructure, sur un VPS à 5 $, sans aucun aller-retour vers un tiers.
 - **Deux couches de vérification.** Cap ajoute des [défis d'instrumentation](../instrumentation.md) par-dessus la preuve de travail. FriendlyCaptcha se limite à la preuve de travail.
+- **Difficulté adaptative, gratuitement.** Les règles de Cap peuvent donner un [défi jusqu'à 10 fois plus difficile](../capd/index.md#adaptive-difficulty) aux visiteurs qui demandent trop souvent, ou qui viennent de réseaux, de pays ou de listes que vous choisissez. Le Smart Difficulty Scaling de FriendlyCaptcha demande l'offre Advanced ou Enterprise.
 - **Aucun « risque éditeur ».** Open source, auto-hébergé, Apache 2.0. Pas de changement de tarif surprise, pas d'arrêt surprise.
 
 ## Ce qu'ils ont en commun

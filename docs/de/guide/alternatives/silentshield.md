@@ -35,7 +35,7 @@ Cap ist die bessere Wahl für Teams, die ein quelloffenes, selbst gehostetes CAP
 | Kostenlos nutzbar | ✅ Bei jedem Volumen | 🟨 Kostenlos bis 500 Requests/Monat |
 | Gebühren pro Request | ✅ Keine | ❌ Gestaffelt: 9 €/Mon. für 5.000, 29 €/Mon. für 25.000 Requests |
 | Primärer Mechanismus | Proof-of-Work plus Instrumentation | Verhaltensanalyse (Maus, Tastatur, Scrollen, Timing) |
-| Deterministische Schwierigkeit | ✅ Du legst sie fest, pro Site-Key | ❌ Das Modell entscheidet |
+| Schwierigkeit unter deiner Kontrolle | ✅ Du legst sie pro Site-Key fest, und deine Regeln erhöhen sie für verdächtigen Traffic | ❌ Das Modell entscheidet |
 | Prüfbare Erkennungslogik | ✅ Code lesbar | ❌ Proprietär |
 | Daten verlassen deine Infrastruktur | ✅ Nie | ❌ Interaktionssignale werden von SilentShield verarbeitet |
 | Funktioniert ohne Verhaltensprofil | ✅ | ❌ Verhaltenssignale sind das Produkt |
@@ -54,7 +54,7 @@ Cap ist die bessere Wahl für Teams, die ein quelloffenes, selbst gehostetes CAP
 
 - **Quelloffen, von vorn bis hinten.** Cap steht unter Apache 2.0: Widget, Server, Dashboard. Du kannst genau prüfen, was in den Browsern deiner Nutzer und auf deinen Servern läuft. SilentShields Erkennung ist konstruktionsbedingt eine Blackbox.
 - **Selbst gehostet, keine Quoten.** Cap läuft auf deiner Infrastruktur (ein 5-$-VPS deckt die meisten Seiten ab), ohne Gebühren pro Request und ohne monatliche Obergrenze. SilentShields kostenloser Tarif liegt bei 500 Requests/Monat, was belebtere Formulare schnell überschreiten.
-- **Das Urteil gehört dir.** Verhaltenssysteme liefern einen Score, und wenn das Modell danebenliegt, gibt es für dich keinen Regler. Caps Schwierigkeit ist deterministisch und pro Site-Key konfigurierbar: Du entscheidest, wie teuer eine Challenge ist, und jeder Nutzer hat einen garantierten Weg hindurch.
+- **Das Urteil gehört dir.** Verhaltenssysteme liefern einen Score, und wenn das Modell danebenliegt, gibt es für dich keinen Regler. Bei Cap legst du die Schwierigkeit pro Site-Key fest und [erhöhst sie mit Regeln](../capd/index.md#adaptive-difficulty) für Traffic, dem du nicht traust. Du entscheidest, wie teuer eine Challenge ist, und jeder Nutzer hat einen garantierten Weg hindurch.
 - **Kostenbasiert statt ratebasiert.** Verhaltensanalyse ist ein Klassifikationsproblem, und Bots, die aufgezeichnete menschliche Eingaben abspielen oder Browser-Automatisierung mit vermenschlichten Cursorbewegungen nutzen, greifen den Klassifikator direkt an. Caps Proof-of-Work erzeugt reale Rechenkosten, die auch gegen einen sich perfekt verhaltenden Bot bestehen, und [Instrumentation-Challenges](../instrumentation.md) legen eine zweite, unabhängige Ebene darüber.
 - **Kein Dritter im Request-Pfad.** Mit Cap geht nichts über deine Besucher an einen Anbieter, weder Interaktionsmuster noch IPs. SilentShield ist DSGVO-orientiert und EU-gehostet, aber das Modell verlangt weiterhin, Interaktionssignale an ihre Server zu schicken.
 - **Migration im Vorbeigehen.** Caps `/siteverify`-Endpunkt ist zur API-Form von reCAPTCHA kompatibel und passt daher mit einem URL-Tausch in bestehenden Verifizierungscode.

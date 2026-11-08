@@ -92,6 +92,12 @@ Chaque clé de site a son propre secret, ses statistiques et ses réglages : le 
 
 Vous pouvez à nouveau afficher ou copier le secret sous **Add Cap to your site**, sur la page **Settings** de la clé, à côté d'un extrait `.env` contenant les deux clés. La réinitialisation se trouve sous **Danger zone**. Cap le stocke chiffré avec une clé dérivée de `ADMIN_KEY`, donc une copie des seules données Valkey ne le révèle pas. Changer `ADMIN_KEY` rend les secrets stockés illisibles, réinitialisez donc le secret ensuite pour en obtenir un nouveau que vous pourrez afficher.
 
+## Difficulté adaptative {#adaptive-difficulty}
+
+Une règle avec l'action **Harder puzzle** multiplie la difficulté de la clé pour les requêtes qu'elle cible, par 1,5 à 10, ou par 2 si vous ne choisissez pas de facteur. Sur les clés HashWX, elle augmente la difficulté, et sur les clés SHA-256, le nombre de défis, jusqu'à 500. Les règles peuvent porter sur les défis par minute d'une IP ou d'un visiteur, le pays, le réseau, le user agent, les en-têtes et les listes partagées. Les visiteurs trop pressés ou les réseaux douteux paient donc plus cher, pendant que tous les autres résolvent le défi habituel.
+
+Le modèle **Harder puzzles for fast repeat visitors** donne un défi 4 fois plus difficile aux IP qui demandent plus de 20 défis par minute. La page Events affiche ces requêtes comme **Puzzle ×4**.
+
 ## Points d'accès {#endpoints}
 
 Avec une clé de site `abc123` sur `cap.example.com` :

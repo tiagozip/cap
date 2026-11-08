@@ -35,7 +35,7 @@ Cap is the better choice for teams that want an open-source, self-hosted CAPTCHA
 | Free to use | ✅ At any volume | 🟨 Free up to 500 requests/month |
 | Per-request fees | ✅ None | ❌ Tiered: €9/mo for 5,000, €29/mo for 25,000 requests |
 | Primary mechanism | Proof-of-work + instrumentation | Behavioral analysis (mouse, keyboard, scroll, timing) |
-| Deterministic difficulty | ✅ You set it, per site key | ❌ Model decides |
+| Difficulty you control | ✅ You set it per site key, and your rules raise it for suspicious traffic | ❌ Model decides |
 | Auditable detection logic | ✅ Read the code | ❌ Proprietary |
 | Data leaves your infrastructure | ✅ Never | ❌ Interaction signals processed by SilentShield |
 | Works without behavioral profiling | ✅ | ❌ Behavioral signals are the product |
@@ -54,7 +54,7 @@ Cap is the better choice for teams that want an open-source, self-hosted CAPTCHA
 
 - **Open source, end to end.** Cap is Apache 2.0: widget, server, dashboard. You can audit exactly what runs in your users' browsers and on your servers. SilentShield's detection is a black box by design.
 - **Self-hosted, no quotas.** Cap runs on your own infrastructure (a $5 VPS covers most sites) with no per-request fees and no monthly cap. SilentShield's free tier is 500 requests/month, which busier forms can exceed quickly.
-- **The verdict is yours.** Behavioral systems produce a score, and when the model misfires there's no knob for you to turn. Cap's difficulty is deterministic and configured per site key: you decide how expensive a challenge is, and every user has a guaranteed path through.
+- **The verdict is yours.** Behavioral systems produce a score, and when the model misfires there's no knob for you to turn. With Cap you set the difficulty per site key and [raise it with rules](../capd/index.md#adaptive-difficulty) for traffic you don't trust. You decide how expensive a challenge is, and every user has a guaranteed path through.
 - **Cost-based, not guess-based.** Behavioral analysis is a classification problem, and bots that replay recorded human input or use browser automation with humanized cursors attack the classifier directly. Cap's proof-of-work imposes a real computational cost that holds even against a bot that behaves perfectly, and [instrumentation challenges](../instrumentation.md) add a second, independent layer.
 - **No third-party in the request path.** With Cap, nothing about your visitors (not their interaction patterns, not their IPs) is sent to a vendor. SilentShield is GDPR-oriented and EU-hosted, but the model still requires shipping interaction signals to their servers.
 - **Drop-in migration path.** Cap's `/siteverify` endpoint is compatible with reCAPTCHA's API shape, so it slots into existing verification code with a URL swap.

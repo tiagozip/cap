@@ -23,6 +23,7 @@ Wenn du gezielt ein kostenpflichtiges, in der EU gehostetes Produkt mit Herstell
 - **Der Server ist quelloffen.** Die Framework-Integrationen von FriendlyCaptcha sind quelloffen, der Server aber proprietär. Cap steht durchgehend unter Apache 2.0.
 - **Selbst gehostet.** Cap läuft auf deiner eigenen Infrastruktur, auf einem 5-$-VPS, ganz ohne Round-Trip zu Dritten.
 - **Zwei Verifizierungsebenen.** Cap legt [Instrumentation-Challenges](../instrumentation.md) über den Proof-of-Work. FriendlyCaptcha bietet nur PoW.
+- **Adaptive Schwierigkeit, kostenlos.** Mit Caps Regeln bekommen Besucher, die zu oft anfragen oder aus Netzen, Ländern oder Listen kommen, die du auswählst, ein [bis zu 10-mal schwereres Rätsel](../capd/index.md#adaptive-difficulty). FriendlyCaptchas Smart Difficulty Scaling gibt es nur im Advanced- oder Enterprise-Plan.
 - **Kein "Anbieterrisiko".** Quelloffen, selbst gehostet, Apache 2.0. Keine überraschenden Preisänderungen, keine überraschenden Abschaltungen.
 
 ## Wo sie sich ähneln

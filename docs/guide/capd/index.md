@@ -80,6 +80,12 @@ Each site key has its own secret, stats and settings: the challenge protocol and
 
 You can reveal or copy the secret again under **Add Cap to your site** on the key's **Settings** page, next to a `.env` snippet with both keys. Resetting it is under **Danger zone**. Cap stores it encrypted with a key derived from `ADMIN_KEY`, so a copy of the Valkey data alone doesn't give it away. Changing `ADMIN_KEY` makes stored secrets unreadable, so reset the secret afterwards to get one you can reveal again.
 
+## Adaptive difficulty {#adaptive-difficulty}
+
+A rule with the **Harder puzzle** action multiplies the key's difficulty for the requests it matches, by 1.5x to 10x, or 2x if you don't pick a factor. On HashWX keys it raises the difficulty, and on SHA-256 keys it raises the challenge count, up to 500. Rules can match on challenges per minute from an IP or a visitor, country, network, user agent, headers and shared lists, so fast repeat visitors or networks you don't trust pay more while everyone else solves the usual puzzle.
+
+The **Harder puzzles for fast repeat visitors** template gives a 4x puzzle to IPs that ask for more than 20 challenges a minute. The Events page shows these requests as **Puzzle ×4**.
+
 ## Endpoints
 
 With a site key `abc123` on `cap.example.com`:

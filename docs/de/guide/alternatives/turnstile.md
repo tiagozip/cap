@@ -9,7 +9,7 @@ Turnstile ist Cloudflares kostenloser CAPTCHA-Ersatz. Er setzt auf unsichtbare C
 
 ## Kurzes Fazit
 
-Turnstile ist wirklich gut, wenn du ohnehin auf Cloudflare bist und akzeptierst, dass die Entscheidung bei ihnen liegt. Cap passt besser, wenn du Self-Hosting willst, deterministische Schwierigkeit, keine Abhängigkeit von Dritten und die Möglichkeit, Entscheidungen für deine eigenen Nutzer zu übersteuern.
+Turnstile ist wirklich gut, wenn du ohnehin auf Cloudflare bist und akzeptierst, dass die Entscheidung bei ihnen liegt. Cap passt besser, wenn du Self-Hosting willst, Schwierigkeit unter deiner Kontrolle, keine Abhängigkeit von Dritten und die Möglichkeit, Entscheidungen für deine eigenen Nutzer zu übersteuern.
 
 ## Wo Turnstile sinnvoll ist
 
@@ -20,7 +20,7 @@ Turnstile ist wirklich gut, wenn du ohnehin auf Cloudflare bist und akzeptierst,
 ## Wo Cap die bessere Wahl ist
 
 - **Selbst gehostet.** Cap läuft auf deinen Servern. Bei Turnstile muss jede Challenge über Cloudflare laufen.
-- **Die Policy gehört dir.** Entscheidet Cloudflares Algorithmus bei Turnstile, dass ein Nutzer verdächtig aussieht (häufig bei Brave, Librewolf, Tor oder VPN-Nutzern), gibt es kein Übersteuern. Cap legt den Schwierigkeitsregler in deine Hand.
+- **Die Policy gehört dir.** Entscheidet Cloudflares Algorithmus bei Turnstile, dass ein Nutzer verdächtig aussieht (häufig bei Brave, Librewolf, Tor oder VPN-Nutzern), gibt es kein Übersteuern. Bei Cap legst du die Schwierigkeit selbst fest und [erhöhst sie mit Regeln](../capd/index.md#adaptive-difficulty) für Traffic, dem du nicht traust.
 - **Geringere Fehlerquote bei datenschutzbewussten Nutzern.** Es wird vielfach berichtet, dass Turnstile gehärtete Browser falsch einordnet. Caps Proof-of-Work interessieren Fingerprints nicht.
 - **Open Source.** Apache 2.0, gegenüber dem Closed-Source-Client und -Server von Turnstile.
 - **Keine Telemetrie.** Cap funkt nicht nach Hause und setzt keine Cookies. Turnstiles Client kommuniziert bei jedem Seitenaufruf mit `challenges.cloudflare.com`.

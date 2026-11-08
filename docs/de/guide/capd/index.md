@@ -92,6 +92,12 @@ Jeder Site-Key hat sein eigenes Secret, eigene Statistiken und Einstellungen fü
 
 Du kannst das Secret auf der **Settings**-Seite des Keys unter **Add Cap to your site** erneut anzeigen oder kopieren, neben einem `.env`-Snippet mit beiden Keys. Zurücksetzen kannst du es unter **Danger zone**. Cap speichert es verschlüsselt mit einem aus `ADMIN_KEY` abgeleiteten Schlüssel. Eine Kopie der Valkey-Daten allein gibt es deshalb nicht preis. Wenn du `ADMIN_KEY` änderst, werden gespeicherte Secrets unlesbar. Setze das Secret danach zurück, um ein neues zu erhalten, das du wieder anzeigen kannst.
 
+## Adaptive Schwierigkeit {#adaptive-difficulty}
+
+Eine Regel mit der Aktion **Harder puzzle** multipliziert die Schwierigkeit des Keys für passende Anfragen mit 1,5 bis 10, oder mit 2, wenn du keinen Faktor wählst. Bei HashWX-Keys steigt die Schwierigkeit, bei SHA-256-Keys die Anzahl der Challenges, bis höchstens 500. Regeln können auf Challenges pro Minute von einer IP oder einem Besucher, Land, Netz, User-Agent, Header und geteilte Listen prüfen. So zahlen schnelle Wiederholungsbesucher oder Netze, denen du nicht traust, mehr, während alle anderen das übliche Rätsel lösen.
+
+Die Vorlage **Harder puzzles for fast repeat visitors** gibt IPs, die mehr als 20 Challenges pro Minute anfordern, ein 4-mal schwereres Rätsel. Auf der Events-Seite erscheinen diese Anfragen als **Puzzle ×4**.
+
 ## Endpunkte
 
 Mit dem Site-Key `abc123` auf `cap.example.com`:

@@ -49,7 +49,7 @@ The full 12-criteria matrix (error rates, GDPR, customization, RSW support and m
 Cap is an open-source (Apache 2.0), self-hosted CAPTCHA that makes automation expensive instead of guessing who's human. Users click one checkbox; a proof-of-work challenge runs silently in their browser while [instrumentation challenges](./instrumentation.md) verify the environment is a real browser.
 
 - **Best for:** teams that want full control, real privacy, and no bill at any traffic volume.
-- **Key strengths:** two independent verification layers (PoW + instrumentation), ~20 KB widget, deterministic difficulty you control per site key, reCAPTCHA-compatible `/siteverify` API, dashboard with multi-site-key management, works in Brave, Librewolf, and Tor Browser.
+- **Key strengths:** two independent verification layers (PoW + instrumentation), ~20 KB widget, difficulty you set per site key and raise with rules for suspicious traffic, reCAPTCHA-compatible `/siteverify` API, dashboard with multi-site-key management, works in Brave, Librewolf, and Tor Browser.
 - **Tradeoffs:** you host it (one Docker container plus Valkey; a $5 VPS covers most sites). If you refuse to run any backend service, a managed option fits better.
 - **Privacy:** no cookies, no fingerprinting, no third-party calls. Data never leaves your servers. See [Compliance](./compliance.md).
 

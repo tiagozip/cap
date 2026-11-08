@@ -7,7 +7,7 @@ description: "Cap vs. Altcha: zwei quelloffene, selbst gehostete Proof-of-Work-C
 
 Altcha ist im Geist das Cap am nächsten stehende Projekt: quelloffen, Proof-of-Work, kein Fingerprinting, keine Abhängigkeit von Dritten. Beide sind gute Optionen. Die Unterschiede liegen bei Funktionsumfang und Betriebsform.
 
-Altcha hat außerdem ein kommerzielles Produkt namens **Altcha Sentinel**, das ML-basierte Bedrohungserkennung über das quelloffene Widget legt. Der folgende Vergleich bezieht sich überwiegend auf Cap und das quelloffene Altcha-Widget. Wenn du Sentinel erwägst, vergleichst du ein bezahltes SaaS mit einem selbst gehosteten OSS-Projekt, was eine andere Entscheidung ist.
+Altcha hat außerdem ein kommerzielles Produkt namens **Altcha Sentinel**, das ML-basierte Bedrohungserkennung über das quelloffene Widget legt. Der folgende Vergleich bezieht sich überwiegend auf Cap und das quelloffene Altcha-Widget. Wenn du Sentinel erwägst, vergleichst du eine bezahlte Lizenz ab 99 € im Monat mit einem kostenlosen Open-Source-Projekt, was eine andere Entscheidung ist.
 
 ## Kurzes Fazit
 
@@ -23,6 +23,7 @@ Willst du ein minimales, bibliotheksartiges PoW-CAPTCHA, das du in ein Node-Proj
 
 - **Zwei unabhängige Verifizierungsebenen, kostenlos.** Cap fährt Proof-of-Work *und* dynamische JavaScript-[Instrumentation-Challenges](../instrumentation.md) parallel, beides inklusive. Eine zu überwinden überwindet die andere nicht. Das quelloffene Altcha bietet nur PoW; die zweite (ML-basierte) Ebene erfordert das kostenpflichtige Sentinel.
 - **Selbst gehosteter Server mit Dashboard, kostenlos.** Cap liefert ein Deployment in einem Docker-Container mit Web-Dashboard, Verwaltung mehrerer Site-Keys, Analytics und einem reCAPTCHA-kompatiblen siteverify-Endpunkt. Auf der Open-Source-Seite von Altcha musst du das selbst zusammenbauen; das Rundum-Erlebnis gibt es nur mit Sentinel.
+- **Adaptive Schwierigkeit, kostenlos.** Mit Caps Regeln bekommen Besucher, die zu oft anfragen oder aus Netzen, Ländern oder Listen kommen, die du auswählst, ein [bis zu 10-mal schwereres Rätsel](../capd/index.md#adaptive-difficulty). Das quelloffene Altcha gibt allen Besuchern dieselbe Schwierigkeit, und adaptive Challenges gibt es nur mit Altcha Cloud oder Sentinel.
 - **Kleineres Widget.** Cap liegt bei etwa 20 KB. Altcha bei etwa 34 KB gzipped.
 - **Fortschrittsanzeige.** Caps Widget meldet den Lösefortschritt als Prozentwert an den Nutzer, sinnvolles UX-Feedback während der kurzen Wartezeit.
 - **Floating- und unsichtbarer Modus.** Cap kann sich komplett verstecken oder bis zum Absenden über einem Button schweben. Altchas Anzeigemodi sind einfacher gehalten.

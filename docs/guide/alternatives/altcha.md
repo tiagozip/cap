@@ -7,7 +7,7 @@ description: "Cap vs Altcha: two open-source, self-hosted proof-of-work CAPTCHAs
 
 Altcha is the closest project in spirit to Cap: open-source, proof-of-work, no fingerprinting, no third-party dependency. Both are good choices. The differences come down to features and operational shape.
 
-Altcha also has a commercial product called **Altcha Sentinel** that layers ML-based threat detection on top of the open-source widget. The comparison below is mostly between Cap and the open-source Altcha widget; if you're considering Sentinel, you're comparing a paid SaaS to a self-hosted OSS project, which is a different decision.
+Altcha also has a commercial product called **Altcha Sentinel** that layers ML-based threat detection on top of the open-source widget. The comparison below is mostly between Cap and the open-source Altcha widget; if you're considering Sentinel, you're comparing a paid license, from €99 a month, to a free open-source project, which is a different decision.
 
 ## Quick verdict
 
@@ -23,6 +23,7 @@ If you want a minimal, library-style PoW CAPTCHA you can drop into a Node projec
 
 - **Two independent verification layers, free.** Cap runs proof-of-work *and* dynamic JavaScript [instrumentation challenges](../instrumentation.md) in parallel, both included. Defeating one doesn't defeat the other. The open-source Altcha is PoW only; the second layer (ML-based) requires paying for Sentinel.
 - **Self-hosted server with dashboard, free.** Cap ships a one-Docker-container deployment with a web dashboard, multi-site-key management, analytics, and a reCAPTCHA-compatible siteverify endpoint. Altcha's open-source side leaves you to wire those yourself; the all-in-one experience is Sentinel-only.
+- **Adaptive difficulty, free.** Cap's rules can give visitors who ask too often, or who come from networks, countries or lists you pick, a [puzzle up to 10x harder](../capd/index.md#adaptive-difficulty). The open-source Altcha gives every visitor the same difficulty, and its adaptive challenges need Altcha Cloud or Sentinel.
 - **Smaller widget.** Cap is ~20 KB. Altcha is ~34 KB gzipped.
 - **Progress tracking.** Cap's widget reports solve progress to the user as a percentage, meaningful UX feedback during the small wait.
 - **Floating and invisible modes.** Cap can hide entirely or float over a button until form submit. Altcha's display modes are simpler.

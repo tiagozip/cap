@@ -7,7 +7,7 @@ description: "Cap vs Altcha : deux CAPTCHA open source, auto-hébergés et fond�
 
 Altcha est le projet le plus proche de Cap par l'esprit : open source, preuve de travail, sans fingerprinting, sans dépendance à un tiers. Les deux sont de bons choix. Les différences tiennent aux fonctionnalités et au mode d'exploitation.
 
-Altcha propose aussi un produit commercial, **Altcha Sentinel**, qui ajoute une détection de menaces fondée sur le machine learning par-dessus le widget open source. La comparaison ci-dessous porte principalement sur Cap et le widget Altcha open source ; si vous envisagez Sentinel, vous comparez un SaaS payant à un projet open source auto-hébergé, ce qui est une autre décision.
+Altcha propose aussi un produit commercial, **Altcha Sentinel**, qui ajoute une détection de menaces fondée sur le machine learning par-dessus le widget open source. La comparaison ci-dessous porte principalement sur Cap et le widget Altcha open source ; si vous envisagez Sentinel, vous comparez une licence payante, à partir de 99 € par mois, à un projet open source gratuit, ce qui est une autre décision.
 
 ## Verdict rapide
 
@@ -23,6 +23,7 @@ Si vous voulez un CAPTCHA à preuve de travail minimal, façon bibliothèque, à
 
 - **Deux couches de vérification indépendantes, gratuitement.** Cap exécute en parallèle la preuve de travail *et* des [défis d'instrumentation](../instrumentation.md) JavaScript dynamiques, les deux inclus. Vaincre l'une ne vainc pas l'autre. L'Altcha open source se limite à la preuve de travail ; la seconde couche (par machine learning) exige de payer Sentinel.
 - **Serveur auto-hébergé avec tableau de bord, gratuitement.** Cap livre un déploiement en un seul conteneur Docker, avec tableau de bord web, gestion multi-clés, statistiques et un point d'accès siteverify compatible reCAPTCHA. Côté open source, Altcha vous laisse tout câbler vous-même ; l'expérience tout-en-un est réservée à Sentinel.
+- **Difficulté adaptative, gratuitement.** Les règles de Cap peuvent donner un [défi jusqu'à 10 fois plus difficile](../capd/index.md#adaptive-difficulty) aux visiteurs qui demandent trop souvent, ou qui viennent de réseaux, de pays ou de listes que vous choisissez. Altcha open source donne la même difficulté à tous les visiteurs, et ses défis adaptatifs demandent Altcha Cloud ou Sentinel.
 - **Widget plus léger.** Cap fait environ 20 Ko. Altcha environ 34 Ko compressé en gzip.
 - **Suivi de progression.** Le widget de Cap indique à l'utilisateur la progression de la résolution en pourcentage : un retour d'interface utile pendant la courte attente.
 - **Modes flottant et invisible.** Cap peut se masquer entièrement ou flotter au-dessus d'un bouton jusqu'à l'envoi du formulaire. Les modes d'affichage d'Altcha sont plus simples.

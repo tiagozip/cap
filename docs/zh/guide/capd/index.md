@@ -92,6 +92,12 @@ Events 页面的实时模式使用 `/server/live` 上的 WebSocket。大多数�
 
 在密钥的 **Settings** 页面中，你可以在 **Add Cap to your site** 下再次显示或复制秘密密钥，旁边的 `.env` 代码片段包含两个密钥。重置功能位于 **Danger zone** 下。Cap 使用从 `ADMIN_KEY` 派生的密钥加密存储秘密密钥，因此仅获取 Valkey 数据的副本无法得到它。更改 `ADMIN_KEY` 会使已存储的秘密密钥无法读取，之后请重置秘密密钥，生成一个可以再次显示的新值。
 
+## 自适应难度 {#adaptive-difficulty}
+
+动作为 **Harder puzzle** 的规则，会把命中请求的密钥难度乘以 1.5 到 10 倍，不选倍数时为 2 倍。HashWX 密钥提高的是难度，SHA-256 密钥提高的是质询数量，最多 500 个。规则可以匹配来自某个 IP 或访客的每分钟质询数、国家、网络、User-Agent、请求头和共享列表，所以频繁重复的访客或你不信任的网络要付出更多，其他人仍然解平常的谜题。
+
+**Harder puzzles for fast repeat visitors** 模板会给每分钟请求超过 20 次质询的 IP 一个 4 倍难度的谜题。事件页面会把这些请求显示为 **Puzzle ×4**。
+
 ## 端点
 
 假设站点密钥为 `abc123`，服务位于 `cap.example.com`：

@@ -49,7 +49,7 @@ La matrice complète à 12 critères (taux d'erreur, RGPD, personnalisation, pri
 Cap est un CAPTCHA open source (Apache 2.0) et auto-hébergé, qui rend l'automatisation coûteuse au lieu de deviner qui est humain. L'utilisateur coche une case ; un défi de preuve de travail s'exécute silencieusement dans son navigateur pendant que des [défis d'instrumentation](./instrumentation.md) vérifient qu'il s'agit bien d'un véritable navigateur.
 
 - **Idéal pour :** les équipes qui veulent un contrôle total, une vraie confidentialité, et aucune facture quel que soit le volume de trafic.
-- **Points forts :** deux couches de vérification indépendantes (PoW et instrumentation), widget d'environ 20 Ko, difficulté déterministe que vous réglez par clé de site, API `/siteverify` compatible reCAPTCHA, tableau de bord avec gestion multi-clés, fonctionne dans Brave, Librewolf et le Navigateur Tor.
+- **Points forts :** deux couches de vérification indépendantes (PoW et instrumentation), widget d'environ 20 Ko, difficulté que vous réglez par clé de site et que des règles augmentent pour le trafic suspect, API `/siteverify` compatible reCAPTCHA, tableau de bord avec gestion multi-clés, fonctionne dans Brave, Librewolf et le Navigateur Tor.
 - **Contreparties :** c'est vous qui l'hébergez (un conteneur Docker plus Valkey ; un VPS à 5 $ suffit à la plupart des sites). Si vous refusez de faire tourner le moindre service backend, une option gérée conviendra mieux.
 - **Vie privée :** pas de cookies, pas de fingerprinting, aucun appel tiers. Les données ne quittent jamais vos serveurs. Voir [Conformité](./compliance.md).
 

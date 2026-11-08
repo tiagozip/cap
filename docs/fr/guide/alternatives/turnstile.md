@@ -9,7 +9,7 @@ Turnstile est le remplaçant gratuit des CAPTCHA proposé par Cloudflare. Il rep
 
 ## Verdict rapide
 
-Turnstile est réellement bon si vous êtes déjà chez Cloudflare et acceptez que le verdict leur appartienne. Cap convient mieux quand vous voulez l'auto-hébergement, une difficulté déterministe, aucune dépendance à un tiers, et la possibilité de passer outre les décisions pour vos propres utilisateurs.
+Turnstile est réellement bon si vous êtes déjà chez Cloudflare et acceptez que le verdict leur appartienne. Cap convient mieux quand vous voulez l'auto-hébergement, une difficulté sous votre contrôle, aucune dépendance à un tiers, et la possibilité de passer outre les décisions pour vos propres utilisateurs.
 
 ## Quand Turnstile a du sens
 
@@ -20,7 +20,7 @@ Turnstile est réellement bon si vous êtes déjà chez Cloudflare et acceptez q
 ## Quand Cap est le meilleur choix
 
 - **Auto-hébergé.** Cap tourne sur vos serveurs. Turnstile exige que chaque défi fasse un aller-retour par Cloudflare.
-- **La politique vous appartient.** Avec Turnstile, si l'algorithme de Cloudflare juge un utilisateur suspect (fréquent pour les utilisateurs de Brave, Librewolf, Tor ou VPN), il n'y a aucun recours. Cap vous confie le bouton de difficulté.
+- **La politique vous appartient.** Avec Turnstile, si l'algorithme de Cloudflare juge un utilisateur suspect (fréquent pour les utilisateurs de Brave, Librewolf, Tor ou VPN), il n'y a aucun recours. Avec Cap, vous fixez la difficulté vous-même et [l'augmentez avec des règles](../capd/index.md#adaptive-difficulty) pour le trafic auquel vous ne faites pas confiance.
 - **Moins d'erreurs pour les utilisateurs soucieux de leur vie privée.** De nombreux retours indiquent que Turnstile classe mal les navigateurs durcis. La preuve de travail de Cap se moque des empreintes.
 - **Open source.** Apache 2.0, face au client et au serveur propriétaires de Turnstile.
 - **Aucune télémétrie.** Cap ne renvoie rien vers l'extérieur et ne pose pas de cookies. Le client de Turnstile communique avec `challenges.cloudflare.com` à chaque chargement de page.

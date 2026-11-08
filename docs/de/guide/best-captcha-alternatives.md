@@ -49,7 +49,7 @@ Die vollständige Matrix mit 12 Kriterien (Fehlerquoten, DSGVO, Anpassbarkeit, R
 Cap ist ein quelloffenes (Apache 2.0), selbst gehostetes CAPTCHA, das Automatisierung teuer macht, statt zu raten, wer ein Mensch ist. Nutzer klicken eine Checkbox; eine Proof-of-Work-Challenge läuft still in ihrem Browser, während [Instrumentation-Challenges](./instrumentation.md) prüfen, dass die Umgebung ein echter Browser ist.
 
 - **Am besten für:** Teams, die volle Kontrolle, echten Datenschutz und bei jedem Traffic-Volumen keine Rechnung wollen.
-- **Stärken:** zwei unabhängige Verifizierungsebenen (PoW plus Instrumentation), Widget mit etwa 20 KB, deterministische Schwierigkeit pro Site-Key, reCAPTCHA-kompatible `/siteverify`-API, Dashboard mit Verwaltung mehrerer Site-Keys, funktioniert in Brave, Librewolf und dem Tor Browser.
+- **Stärken:** zwei unabhängige Verifizierungsebenen (PoW plus Instrumentation), Widget mit etwa 20 KB, Schwierigkeit pro Site-Key, die Regeln für verdächtigen Traffic erhöhen, reCAPTCHA-kompatible `/siteverify`-API, Dashboard mit Verwaltung mehrerer Site-Keys, funktioniert in Brave, Librewolf und dem Tor Browser.
 - **Kompromisse:** Du hostest es selbst (ein Docker-Container plus Valkey; ein 5-$-VPS deckt die meisten Seiten ab). Wenn du gar keinen Backend-Dienst betreiben willst, passt eine gemanagte Option besser.
 - **Datenschutz:** keine Cookies, kein Fingerprinting, keine Drittanbieter-Aufrufe. Daten verlassen nie deine Server. Siehe [Compliance](./compliance.md).
 

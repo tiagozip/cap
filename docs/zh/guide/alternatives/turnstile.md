@@ -9,7 +9,7 @@ Turnstile 是 Cloudflare 推出的免费 CAPTCHA（人机验证）替代品，�
 
 ## 快速结论
 
-如果你已经在用 Cloudflare，并且接受"判定权归他们"这一点，Turnstile 确实很不错。如果你想要自托管、确定性的难度、不依赖第三方，还能为自己的用户推翻判定，那 Cap 更合适。
+如果你已经在用 Cloudflare，并且接受"判定权归他们"这一点，Turnstile 确实很不错。如果你想要自托管、由你掌控的难度、不依赖第三方，还能为自己的用户推翻判定，那 Cap 更合适。
 
 ## Turnstile 合适的场景
 
@@ -20,7 +20,7 @@ Turnstile 是 Cloudflare 推出的免费 CAPTCHA（人机验证）替代品，�
 ## Cap 更胜一筹的场景
 
 - **自托管。** Cap 运行在你自己的服务器上。Turnstile 的每次质询都必须绕道 Cloudflare。
-- **策略由你掌控。** 使用 Turnstile 时，如果 Cloudflare 的算法认定某个用户可疑（Brave、Librewolf、Tor 或 VPN 用户很常见），你无法干预。Cap 把难度旋钮交到你手上。
+- **策略由你掌控。** 使用 Turnstile 时，如果 Cloudflare 的算法认定某个用户可疑（Brave、Librewolf、Tor 或 VPN 用户很常见），你无法干预。在 Cap 中，难度由你自己设置，还可以[用规则提高](../capd/index.md#adaptive-difficulty)你不信任的流量的难度。
 - **对注重隐私的用户误判率更低。** 大量用户反馈 Turnstile 会误判加固过的浏览器。Cap 的工作量证明根本不关心指纹。
 - **开源。** Apache 2.0，而 Turnstile 的客户端和服务端都是闭源的。
 - **无遥测。** Cap 不会回传数据，也不设置 Cookie。Turnstile 的客户端在每次页面加载时都会与 `challenges.cloudflare.com` 通信。

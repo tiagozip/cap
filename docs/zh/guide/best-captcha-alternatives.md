@@ -49,7 +49,7 @@ Cap 是一个免费、开源的 CAPTCHA 替代方案，用工作量证明和 [in
 Cap 是一个开源（Apache 2.0）、自托管的 CAPTCHA，它让自动化变得昂贵，而不是去猜测谁是人类。用户只需点击一个复选框；工作量证明质询在其浏览器中静默运行，同时 [instrumentation 质询](./instrumentation.md)验证运行环境是真实浏览器。
 
 - **最适合：** 想要完全掌控、真正的隐私、且在任何流量规模下都无需付费的团队。
-- **核心优势：** 两层独立验证（PoW + instrumentation）、约 20 KB 的验证组件、可按站点密钥控制的确定性难度、兼容 reCAPTCHA 的 `/siteverify` API、支持多站点密钥管理的仪表盘、在 Brave、Librewolf 和 Tor Browser 中均可正常工作。
+- **核心优势：** 两层独立验证（PoW + instrumentation）、约 20 KB 的验证组件、按站点密钥设置、并可用规则对可疑流量提高的难度、兼容 reCAPTCHA 的 `/siteverify` API、支持多站点密钥管理的仪表盘、在 Brave、Librewolf 和 Tor Browser 中均可正常工作。
 - **权衡：** 需要自己托管（一个 Docker 容器加 Valkey；一台 5 美元的 VPS 能满足大多数网站）。如果你完全不想运行任何后端服务，托管式方案更合适。
 - **隐私：** 无 Cookie、无指纹追踪、无第三方调用。数据永远不会离开你的服务器。见[合规性](./compliance.md)。
 

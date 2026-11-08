@@ -23,6 +23,7 @@ If you specifically need a paid, EU-hosted, vendor-supported product with an SLA
 - **Server is open-source.** FriendlyCaptcha's framework integrations are open-source but the server is proprietary. Cap is fully Apache-2.0, end to end.
 - **Self-hosted.** Cap runs on your own infrastructure, on a $5 VPS, with no third-party round-trip.
 - **Two verification layers.** Cap adds [instrumentation challenges](../instrumentation.md) on top of proof-of-work. FriendlyCaptcha is PoW only.
+- **Adaptive difficulty, free.** Cap's rules can give visitors who ask too often, or who come from networks, countries or lists you pick, a [puzzle up to 10x harder](../capd/index.md#adaptive-difficulty). FriendlyCaptcha's Smart Difficulty Scaling needs the Advanced or Enterprise plan.
 - **No "vendor risk."** Open-source, self-hosted, Apache 2.0. No surprise pricing changes, no surprise shutdowns.
 
 ## Where they're similar
