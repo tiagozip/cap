@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import { transform } from "lightningcss";
 import { chromium } from "playwright";
@@ -78,7 +79,11 @@ const bundle = rawMain
   .replace("%%workerScript%%", () => JSON.stringify(minifiedWorker))
   .replace("%%capCSS%%", () => minifiedCSS)
   .replace("%%i18nKeys%%", () => shippedKeys.join(","))
-  .replace("%%i18nData%%", () => i18nJSON);
+  .replace("%%i18nData%%", () => i18nJSON)
+  .replace(
+    "%%widgetVersion%%",
+    () => JSON.parse(readFileSync("./src/package.json", "utf-8")).version,
+  );
 
 await fs.writeFile("./src/cap.min.js", bundle);
 await fs.writeFile("./src/cap.min.js", await minifyJS(bundle));

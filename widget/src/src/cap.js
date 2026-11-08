@@ -1,5 +1,6 @@
 (() => {
   const WASM_VERSION = "0.0.8";
+  const WIDGET_VERSION = "%%widgetVersion%%";
   const _browserHasHaptics =
     "vibrate" in navigator &&
     !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -548,6 +549,8 @@
     #trigger;
     #credits;
     #troubleshootLink;
+    #lastServerFailure = null;
+    #solveStartedAt = 0;
     #host;
     #solving = false;
     #eventHandlers;
@@ -1184,6 +1187,8 @@
 
       this.#enforceCredits();
       const _solveT0 = performance.now();
+      this.#solveStartedAt = Date.now();
+      this.#lastServerFailure = null;
       let usedResp = null;
       let reported = null;
       const signal = this.#abort?.signal;
@@ -1387,6 +1392,14 @@
             }).catch(() => {});
 
             const csp = instrFail.__error === "csp_blocked";
+            this.#lastServerFailure = {
+              instrFailure: {
+                error: instrFail.__error ?? null,
+                blocked: !!instrFail.__blocked,
+                timeout: !!instrFail.__timeout,
+                blockReason: instrFail.blockReason ?? null,
+              },
+            };
             this.updateUIBlocked(
               csp
                 ? this.getI18nText(
@@ -1394,7 +1407,7 @@
                     this.#i18n?.["error-label"] || "Blocked by this page",
                   )
                 : this.getI18nText("error-label", "Error"),
-              !!instrFail.__blocked,
+              true,
             );
             this.#trigger.setAttribute(
               "aria-label",
@@ -1458,7 +1471,16 @@
           if (signal?.aborted || !this.#speculative) return;
 
           this.dispatchEvent("progress", { progress: 100 });
-          if (!resp.success) throw _err("invalid_solution", resp.error || "Invalid solution");
+          if (!resp.success) {
+            this.#lastServerFailure = {
+              status: redeemResponse.status,
+              reason: resp.reason ?? null,
+              error: resp.error ?? null,
+              instrError: resp.instr_error === true,
+              blockedBy: resp.blockedBy ?? resp.flags ?? null,
+            };
+            throw _err("invalid_solution", resp.error || "Invalid solution");
+          }
 
           this.#setToken(resp.token);
 
@@ -2023,10 +2045,7 @@
 
       if (this.#troubleshootLink) {
         if (showTroubleshooting) {
-          const troubleshootingUrl =
-            this.getAttribute("data-cap-troubleshooting-url") ||
-            "https://trycap.dev/guide/troubleshooting/instrumentation.html";
-          this.#troubleshootLink.setAttribute("href", troubleshootingUrl);
+          this.#troubleshootLink.setAttribute("href", this.#troubleshootHref());
           this.#troubleshootLink.textContent = this.getI18nText(
             "troubleshooting-label",
             "Troubleshoot",
@@ -2076,11 +2095,85 @@
       this.#div?.classList.remove("invalid");
     }
 
+    #troubleshootHref(extra = {}) {
+      const base =
+        this.getAttribute("data-cap-troubleshooting-url") ||
+        "https://trycap.dev/guide/troubleshooting/instrumentation.html";
+      if (this.hasAttribute("data-cap-troubleshooting-url")) return base;
+      const attrs = {};
+      for (const a of this.attributes) {
+        if (a.name.startsWith("data-cap-") || a.name === "id" || a.name === "class") {
+          attrs[a.name] = a.value.slice(0, 200);
+        }
+      }
+      let endpoint = this.getAttribute("data-cap-api-endpoint") || "";
+      try {
+        endpoint = new URL(endpoint, location.href).href;
+      } catch {}
+      const nav = navigator;
+      const info = {
+        v: WIDGET_VERSION,
+        from: location.href,
+        title: document.title.slice(0, 200),
+        referrer: document.referrer,
+        endpoint,
+        attrs,
+        server: this.#lastServerFailure,
+        solveMs: this.#solveStartedAt ? Date.now() - this.#solveStartedAt : null,
+        at: new Date().toISOString(),
+        framed: window.top !== window,
+        customFetch: typeof window.CAP_CUSTOM_FETCH === "function",
+        isolate: !!window.CAP_ISOLATE,
+        nonce: !!window.CAP_SCRIPT_NONCE,
+        pageLang: document.documentElement.lang || null,
+        ua: nav.userAgent,
+        languages: nav.languages,
+        webdriver: nav.webdriver,
+        cores: nav.hardwareConcurrency,
+        memory: nav.deviceMemory ?? null,
+        screen: [screen.width, screen.height, devicePixelRatio],
+        viewport: [innerWidth, innerHeight],
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        ...extra,
+      };
+      try {
+        let json = JSON.stringify(info);
+        if (json.length > 6000) {
+          info.from = info.from.slice(0, 2000);
+          info.referrer = info.referrer.slice(0, 1000);
+          json = JSON.stringify(info).slice(0, 6000);
+        }
+        const bytes = new TextEncoder().encode(json);
+        let bin = "";
+        for (const b of bytes) bin += String.fromCharCode(b);
+        const encoded = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        return `${base}#r=${encoded}`;
+      } catch {
+        return base;
+      }
+    }
+
     handleError(event) {
       this.updateUI(
         "error",
         this.getI18nText("error-label", "Error. Try again."),
       );
+      if (
+        event?.detail?.code === "invalid_solution" &&
+        this.#lastServerFailure?.reason &&
+        this.#troubleshootLink
+      ) {
+        this.#troubleshootLink.setAttribute(
+          "href",
+          this.#troubleshootHref({ code: event.detail.code, message: event.detail.message }),
+        );
+        this.#troubleshootLink.textContent = this.getI18nText(
+          "troubleshooting-label",
+          "Troubleshoot",
+        );
+        this.#troubleshootLink.hidden = false;
+        this.#div?.classList.add("has-troubleshoot");
+      }
       this.executeAttributeCode("onerror", event);
 
       if (this.#hasHaptics) navigator.vibrate([10, 40, 10]);
