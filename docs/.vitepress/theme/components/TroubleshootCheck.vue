@@ -94,7 +94,7 @@ const guessSetup = () => {
   return { browser, os, deviceType: device };
 };
 
-const form = ref({ device: "", network: "", note: "", contact: "" });
+const form = ref({ device: "", network: "", note: "" });
 const setup = ref({ browser: "", os: "", deviceType: "" });
 const formState = ref("idle");
 const deviceGuess = ref({ mode: "field", label: "" });
@@ -770,17 +770,12 @@ onBeforeUnmount(() => {
                   <span>{{ t.fNote }} <span class="ts-opt">{{ t.optional }}</span></span>
                   <textarea v-model="form.note" rows="2" maxlength="2000"></textarea>
                 </label>
-                <label class="ts-field">
-                  <span>{{ t.fContact }} <span class="ts-opt">{{ t.optional }}</span></span>
-                  <input v-model="form.contact" type="email" maxlength="200" autocomplete="email" inputmode="email" />
-                </label>
                 <div class="ts-form-foot">
                   <button type="submit" class="ts-primary" :disabled="formState === 'sending'">
                     {{ formState === "sending" ? t.sending : ["site", "unfinished"].includes(category) ? t.sendPlain : t.send }}
                   </button>
                   <p v-if="formState === 'failed'" class="ts-form-error" role="alert">{{ t.formFailed }}</p>
                 </div>
-                <p class="ts-privacy">{{ t.privacy }}</p>
               </form>
             </div>
           </section>
@@ -800,6 +795,7 @@ onBeforeUnmount(() => {
                   </span>
                 </button>
               </span>
+              <a class="ts-owners" :href="ownersLink">{{ t.owners }}</a>
             </div>
             <div v-show="techOpen" id="ts-tech" class="ts-tech">
               <ul v-if="noticed.length" class="ts-noticed">
@@ -822,7 +818,6 @@ onBeforeUnmount(() => {
                 <pre>{{ sentJson }}</pre>
               </template>
             </div>
-            <a class="ts-owners" :href="ownersLink">{{ t.owners }}</a>
           </footer>
         </div>
       </Transition>
@@ -1223,9 +1218,8 @@ onBeforeUnmount(() => {
   gap: 12px;
   justify-items: start;
   margin: 0 20px;
-  padding-top: 24px;
-  box-shadow: inset 0 1px 0 var(--ts-line);
-  font-size: 14px;
+  padding-top: 8px;
+  font-size: 13px;
   line-height: 20px;
   color: var(--ts-muted);
 }
@@ -1234,8 +1228,16 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
+  justify-content: flex-start;
+  gap: 4px 6px;
+}
+
+.ts-foot-row > * + *::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--ts-muted);
+  text-decoration: none;
+  display: inline-block;
 }
 
 .ts-tech-toggle {
@@ -1302,6 +1304,10 @@ onBeforeUnmount(() => {
 }
 
 .ts-device-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
   margin: 0;
   font-size: 15px;
   line-height: 22px;
@@ -1333,14 +1339,6 @@ onBeforeUnmount(() => {
 
 .ts-form .ts-quiet {
   margin: 0;
-}
-
-.ts-privacy {
-  margin: -6px 0 0;
-  font-size: 13px;
-  line-height: 18px;
-  color: var(--ts-muted);
-  text-wrap: pretty;
 }
 
 .ts-foot.solo {
