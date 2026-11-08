@@ -2,7 +2,7 @@
   "scripts": {
     "start": "bun run demo-dashboard && bunx --bun vitepress dev",
     "dev": "bun run demo-dashboard && bunx --bun vitepress dev",
-    "build": "vitepress build",
+    "build": "bun run demo-dashboard && vitepress build",
     "preview": "vitepress preview",
     "demo-dashboard": "test -f public/demo/index.html || (cd ../capd && bun install --frozen-lockfile && cd ../demo-dashboard && bun install --frozen-lockfile && bun run build)"
   },
