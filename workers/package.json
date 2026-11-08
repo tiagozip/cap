@@ -1,0 +1,23 @@
+{
+  "name": "cap-workers",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-dashboard.mjs",
+    "dev": "npm run build && wrangler d1 migrations apply DB --local && wrangler dev",
+    "deploy": "npm run build && wrangler deploy && wrangler d1 migrations apply DB --remote",
+    "lint": "biome check scripts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.13",
+    "playwright-core": "1.52.0",
+    "wrangler": "4.158.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ADMIN_KEY": {
+        "description": "Admin key for the dashboard and /admin API. Generate one with `openssl rand -hex 32`."
+      }
+    }
+  }
+}

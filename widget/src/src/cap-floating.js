@@ -23,8 +23,6 @@
       capWidget.style.marginTop = "0";
     }, 5);
 
-    // `position: absolute` is resolved against the nearest positioned ancestor (capWidget.offsetParent),
-    // but getBoundingClientRect() returns viewport-relative coords, convert to container-relative coords.
     const triggerRect = element.getBoundingClientRect();
     const containerRect = (
       capWidget.offsetParent ?? document.documentElement
@@ -51,7 +49,7 @@
       capWidget.style.top = `${clampedTop - containerRect.top}px`;
     }
 
-    capWidget.solve();
+    capWidget.solve().catch(() => {});
   };
 
   const hideWidget = (capWidget) => {

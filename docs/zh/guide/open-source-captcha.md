@@ -9,7 +9,7 @@ faq:
   - q: Cap 是免费的吗？
     a: "完全免费。Apache 2.0 许可，无配额，无付费版本，不限流量。"
   - q: Cap 比 ALTCHA 更好吗？
-    a: "Cap 提供的更多（instrumentation 层、独立服务端、仪表盘、进度体验、更小的验证组件）；ALTCHA 则刻意保持精简。按你想自己动手的程度来选。"
+    a: "Cap 提供的更多（instrumentation 层、自托管服务端、仪表盘、进度体验、更小的验证组件）；ALTCHA 则刻意保持精简。按你想自己动手的程度来选。"
   - q: 开源 CAPTCHA 能保护隐私吗？
     a: "它让隐私变得可审计，而不是只靠承诺。自托管的工作量证明不需要指纹追踪、不需要行为画像、不需要第三方调用，而且你可以直接读代码来确认这一点。"
 ---
@@ -40,7 +40,7 @@ faq:
 
 ### Cap
 
-Cap 是一套 Apache 2.0 许可下的完整开源 CAPTCHA 方案：约 20 KB 的 Web Component 验证组件，加上 [Cap Standalone](./standalone/index.md)：一个小巧的 Docker 部署（一个容器加 Valkey），提供 REST API、支持多站点密钥管理的仪表盘，以及与 reCAPTCHA API 形式兼容的 `/siteverify` 端点。
+Cap 是一套 Apache 2.0 许可下的完整开源 CAPTCHA 方案：约 20 KB 的 Web Component 验证组件，加上 [capd](./capd/index.md)，一个小巧的 Docker 部署（一个容器加 Valkey），提供 REST API、支持多站点密钥管理的仪表盘，以及与 reCAPTCHA API 形式兼容的 `/siteverify` 端点。
 
 防护来自两个相互独立的层：抗 GPU 的 [HashWX 工作量证明](./hashwx.md)，以及验证运行环境是真实浏览器的动态 [instrumentation 质询](./instrumentation.md)。攻破其中一层并不等于攻破另一层。
 
@@ -79,7 +79,7 @@ Anubis 是一个开源的工作量证明*反爬虫墙*：它在反向代理层�
 | 活跃维护 | ✅ | ✅ | 🟨 1.0 之前，发布缓慢 | ✅ |
 | 机制 | PoW + instrumentation | PoW | PoW | PoW |
 | 作用范围 | 按操作（表单、API） | 按操作 | 按操作 | 整站门禁 |
-| 独立服务端 + 仪表盘 | ✅ | ❌ | ✅ | ❌ |
+| 自托管服务端 + 仪表盘 | ✅ | ❌ | ✅ | ❌ |
 | 兼容 reCAPTCHA 的 siteverify | ✅ | ❌ | ❌ | ❌ |
 | 验证组件体积 | 约 20 KB | 约 34 KB | 更大 | 不适用（透明） |
 | 抗 GPU 的 PoW 选项 | ✅ [HashWX](./hashwx.md) | ❌ | ❌ | ❌ |
@@ -107,7 +107,7 @@ Anubis 是一个开源的工作量证明*反爬虫墙*：它在反向代理层�
 
 ### Cap 比 ALTCHA 更好吗？
 
-Cap 提供的更多（instrumentation 层、独立服务端、仪表盘、进度体验、更小的验证组件）；ALTCHA 则刻意保持精简。按你想自己动手的程度来选。
+Cap 提供的更多（instrumentation 层、自托管服务端、仪表盘、进度体验、更小的验证组件）；ALTCHA 则刻意保持精简。按你想自己动手的程度来选。
 
 ### 开源 CAPTCHA 能保护隐私吗？
 

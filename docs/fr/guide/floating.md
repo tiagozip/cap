@@ -4,37 +4,32 @@ description: "Le mode flottant du widget Cap masque le CAPTCHA open source jusqu
 
 # Mode flottant
 
-Cap peut masquer automatiquement le CAPTCHA jusqu'à ce qu'un bouton soit pressé. Pour cela, ajoutez l'attribut `data-cap-floating` à votre déclencheur, avec le sélecteur de l'élément `cap-widget` que vous voulez utiliser.
+Le mode flottant garde le widget masqué jusqu'à ce qu'un bouton soit pressé. Le widget apparaît alors à côté du bouton, résout le défi, se masque à nouveau et clique une seconde fois sur le bouton. Un bouton d'envoi soumet donc le formulaire avec son jeton.
+
+Chargez le script du mode flottant après le widget :
 
 ```html
-<cap-widget
-  id="floating"
-  onsolve="console.log(`token: ${event.detail.token}`)"
-  data-cap-api-endpoint="<api endpoint>"
-></cap-widget>
-
-<button data-cap-floating="#floating" data-cap-floating-position="bottom">
-  Déclencher le mode flottant
-</button>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>/cap-floating.min.js"></script>
 ```
 
-Vous devrez aussi importer la bibliothèque Cap et le script du mode flottant depuis JSDelivr :
+Sur le [serveur d'assets](./capd/options.md#asset-server) de capd, le script du mode flottant se trouve à `/assets/floating.js`.
 
-```html{2}
-<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
-<script src="https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js"></script> <!-- [!code ++] -->
-```
-
-Ou depuis le serveur standalone :
+Faites ensuite pointer un bouton vers un widget avec un sélecteur CSS :
 
 ```html
-<script src="https://<server url>/assets/widget.js"></script>
-<script src="https://<server url>/assets/floating.js"></script>
-<!-- [!code ++] -->
+<form action="/submit" method="POST">
+  <cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit" data-cap-floating="#cap">Submit</button>
+</form>
 ```
 
-Les attributs suivants sont pris en charge :
+| Attribut | Description |
+| --- | --- |
+| `data-cap-floating` | Sélecteur du widget à afficher. |
+| `data-cap-floating-position` | `top` ou `bottom` du bouton. Valeur par défaut : `top`. |
+| `data-cap-floating-offset` | Espace entre le bouton et le widget, en pixels. Valeur par défaut : `8`. |
 
-- `data-cap-floating` : le sélecteur CSS de l'élément `cap-widget` à utiliser.
-- `data-cap-floating-position` : la position du widget flottant. Valeurs possibles : `top` ou `bottom`.
-- `data-cap-floating-offset` : le décalage du widget flottant par rapport à l'élément déclencheur.
+Après une résolution, le bouton porte aussi le jeton dans `data-cap-token`.
+
+Le widget commence à résoudre le défi dès qu'il apparaît, sans clic dessus. Avec les clés qui [évaluent le comportement](./instrumentation.md#behavior-scoring) et exigent une interaction, les résolutions flottantes échouent avec `behavior_no_interaction`, comme les résolutions [invisibles](./invisible.md#keys-with-behavior-scoring).

@@ -1,0 +1,52 @@
+CREATE TABLE kv (
+  k TEXT NOT NULL,
+  f TEXT NOT NULL DEFAULT '',
+  t TEXT NOT NULL,
+  v BLOB,
+  exp INTEGER,
+  PRIMARY KEY (k, f)
+) WITHOUT ROWID;
+
+CREATE INDEX kv_exp ON kv (exp) WHERE exp IS NOT NULL;
+
+CREATE TABLE events (
+  id TEXT NOT NULL,
+  ts INTEGER NOT NULL,
+  site_key TEXT NOT NULL,
+  type TEXT NOT NULL,
+  outcome TEXT NOT NULL,
+  reason TEXT NOT NULL DEFAULT '',
+  ip TEXT NOT NULL DEFAULT '',
+  country TEXT NOT NULL DEFAULT '',
+  asn INTEGER NOT NULL DEFAULT 0,
+  asn_org TEXT NOT NULL DEFAULT '',
+  ua TEXT NOT NULL DEFAULT '',
+  browser TEXT NOT NULL DEFAULT '',
+  os TEXT NOT NULL DEFAULT '',
+  platform TEXT NOT NULL DEFAULT '',
+  origin TEXT NOT NULL DEFAULT '',
+  lang TEXT NOT NULL DEFAULT '',
+  fp TEXT NOT NULL DEFAULT '',
+  protocol TEXT NOT NULL DEFAULT '',
+  solve_ms INTEGER,
+  score REAL,
+  verdict TEXT NOT NULL DEFAULT '',
+  agent TEXT NOT NULL DEFAULT '',
+  agent_confidence TEXT NOT NULL DEFAULT '',
+  agent_verified INTEGER NOT NULL DEFAULT 0,
+  flags TEXT NOT NULL DEFAULT '[]',
+  rule TEXT NOT NULL DEFAULT '',
+  token_id TEXT NOT NULL DEFAULT '',
+  PRIMARY KEY (site_key, ts, id)
+) WITHOUT ROWID;
+
+CREATE INDEX events_ts ON events (ts);
+
+CREATE TABLE rollup (
+  site_key TEXT NOT NULL,
+  hour INTEGER NOT NULL,
+  verified INTEGER NOT NULL DEFAULT 0,
+  failed INTEGER NOT NULL DEFAULT 0,
+  ratelimited INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (site_key, hour)
+) WITHOUT ROWID;

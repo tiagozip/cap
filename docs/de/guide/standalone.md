@@ -6,6 +6,6 @@ head:
       content: noindex, follow
 ---
 
-# Standalone-Server
+# capd
 
-[**Diese Seite ist umgezogen**](standalone/index.md)
+[**Diese Seite ist umgezogen**](capd/index.md)

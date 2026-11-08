@@ -81,7 +81,6 @@ function hexOf(bi, byteLen) {
   return s;
 }
 
-// generation is expensive (~700 ms for 2048-bit on a modern CPU); persist the result.
 export function generateRswKeypair(bits = 2048) {
   if (bits % 2 !== 0) throw new Error("rsw bits must be even");
   const p = randomPrime(bits >> 1);
@@ -92,15 +91,23 @@ export function generateRswKeypair(bits = 2048) {
 }
 
 export function serializeRswKeypair(kp) {
-  return { N: kp.N.toString(), p: kp.p.toString(), q: kp.q.toString(), bits: kp.bits ?? null };
+  return {
+    N: kp.N.toString(),
+    p: kp.p.toString(),
+    q: kp.q.toString(),
+    bits: kp.bits ?? null,
+  };
 }
 export function deserializeRswKeypair(s) {
-  if (!s || typeof s !== "object") throw new Error("invalid serialized rsw keypair");
+  if (!s || typeof s !== "object")
+    throw new Error("invalid serialized rsw keypair");
   const N = typeof s.N === "string" ? BigInt(s.N) : s.N;
   const p = typeof s.p === "string" ? BigInt(s.p) : s.p;
   const q = typeof s.q === "string" ? BigInt(s.q) : s.q;
   if (typeof N !== "bigint" || typeof p !== "bigint" || typeof q !== "bigint") {
-    throw new Error("rsw keypair fields must be bigint or string-encoded bigint");
+    throw new Error(
+      "rsw keypair fields must be bigint or string-encoded bigint",
+    );
   }
   return { N, p, q, bits: s.bits ?? N.toString(2).length };
 }
@@ -161,7 +168,8 @@ export function buildRswMinter({ N, p, q, t, g }, opts = {}) {
 }
 
 export function verifyRswSolution(expectedYHex, claimedYHex) {
-  if (typeof claimedYHex !== "string" || typeof expectedYHex !== "string") return false;
+  if (typeof claimedYHex !== "string" || typeof expectedYHex !== "string")
+    return false;
   const norm = (s) => s.replace(/^0x/, "").toLowerCase().replace(/^0+/, "");
   return norm(expectedYHex) === norm(claimedYHex);
 }

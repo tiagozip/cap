@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { prng } from "../src/prng.js";
 
 describe("prng", () => {
-  test("deterministic — same seed gives same output", () => {
+  test("deterministic, same seed gives same output", () => {
     expect(prng("seed", 32)).toBe(prng("seed", 32));
     expect(prng("hello", 16)).toBe(prng("hello", 16));
   });
@@ -28,7 +28,7 @@ describe("prng", () => {
     expect(prng("x", 100)).toHaveLength(100);
   });
 
-  test("matches widget-side prng (regression — wire format)", () => {
+  test("matches widget-side prng (regression, wire format)", () => {
     function widgetPrng(seed, length) {
       function fnv1a(str) {
         let hash = 2166136261;

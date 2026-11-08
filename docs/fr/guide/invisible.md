@@ -4,64 +4,66 @@ description: "Mode invisible de Cap : appelez new Cap() et solve() pour exécute
 
 # Mode invisible
 
-Vous pouvez utiliser `new Cap({ ... })` dans votre JavaScript côté client pour créer une instance de Cap, puis la méthode `solve()` pour résoudre le défi.
+Le mode invisible résout un défi depuis votre propre code, sans rien afficher sur la page. Il convient aux actions sans formulaire, comme un bouton J'aime ou une requête en arrière-plan.
+
+```js
+import Cap from "cap-widget";
+
+const cap = new Cap({ apiEndpoint: "https://cap.example.com/<site-key>/" });
+const { token } = await cap.solve();
+```
+
+Avec le script du CDN, `Cap` est une variable globale et n'a pas besoin d'import.
+
+## API
+
+### `new Cap(config, element?)`
+
+`config.apiEndpoint` est obligatoire, sauf si vous définissez [`CAP_CUSTOM_FETCH`](./widget.md#options). Toute autre clé devient un attribut du widget, donc les [attributs du widget](./widget.md#attributes) fonctionnent aussi ici :
 
 ```js
 const cap = new Cap({
-  apiEndpoint: "https://<your-instance>/<site-key>/",
-  // ou : apiEndpoint: "/api/",
+  apiEndpoint: "https://cap.example.com/<site-key>/",
+  "data-cap-worker-count": "4",
 });
-const solution = await cap.solve();
-
-console.log(solution.token);
 ```
 
-Vous pouvez aussi mettre en place des [écouteurs d'événements](widget.md#evenements-pris-en-charge) :
+Sans `element`, Cap crée un `<cap-widget>` masqué avec le retour haptique désactivé. Un widget masqué ne récupère ni ne résout rien à l'avance. Tout le travail a donc lieu quand vous appelez `solve()`. Passez un widget existant pour piloter celui-ci.
+
+### `cap.solve()`
+
+Demande un défi et le résout. La promesse renvoie `{ success, token }`.
+
+Un échec émet un événement `error` et rejette la promesse avec une `Error` dont le `code` est l'un des [codes d'erreur](./troubleshooting/instrumentation.md#error-codes), par exemple `instr_csp_blocked` pour une [iframe bloquée](./widget.md#content-security-policy) :
 
 ```js
-const cap = new Cap({
-  apiEndpoint: "https://<your-instance>/<site-key>/",
-  // ou : apiEndpoint: "/api/",
-});
-
-cap.addEventListener("progress", (event) => {
-  console.log(`Résolution... ${event.detail.progress}% terminé`);
-});
-```
-
-En coulisses, Cap crée un élément `cap-widget` masqué et s'en sert pour résoudre le défi.
-
-## Méthodes et arguments pris en charge
-
-Les méthodes suivantes sont disponibles :
-
-#### `new Cap({ ... })`
-
-Crée une instance de Cap. Si un second argument est fourni, Cap utilisera cet élément au lieu d'en créer un nouveau en mémoire.
-
-**Arguments**
-
-```json
-{
-  apiEndpoint: ..., // point d'accès API, équivalent à l'attribut `data-cap-api-endpoint` du widget
-  workers: navigator.hardwareConcurrency || 8 // nombre de threads de travail à utiliser
+try {
+  const { token } = await cap.solve();
+} catch (err) {
+  console.error(err.code, err.message);
 }
 ```
 
-#### `cap.solve()`
+Un appel effectué pendant une résolution en cours renvoie une promesse résolue avec `undefined`.
 
-Demande un défi et le résout.
+### `cap.token`
 
-**Sortie :** `{ token }`
+Le jeton de la dernière résolution, ou `null`.
 
-#### `cap.token`
+### `cap.reset()`
 
-Renvoie le jeton de la dernière résolution.
+Efface le jeton.
 
-#### `cap.reset()`
+### `cap.addEventListener(type, listener)`
 
-Réinitialise `cap.token`.
+Écoute les [événements](./widget.md#events) du widget :
 
-#### `cap.addEventListener(..., function () { ... })`
+```js
+cap.addEventListener("progress", (e) => {
+  console.log(`${e.detail.progress}%`);
+});
+```
 
-Écoute un événement du widget Cap. Voir les [événements pris en charge](widget.md#evenements-pris-en-charge).
+## Clés avec évaluation du comportement {#keys-with-behavior-scoring}
+
+Les résolutions invisibles n'ont pas de clic sur un widget. Avec les clés qui [évaluent le comportement](./instrumentation.md#behavior-scoring), leur verdict est `no_interaction`. Elles échouent donc avec les clés qui bloquent et exigent une interaction. Dans la bibliothèque core, définissez `requireInteraction: false` dans la politique `behavior` de ces routes.

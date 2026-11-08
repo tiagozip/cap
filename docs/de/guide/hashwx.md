@@ -3,46 +3,40 @@ outline: [2, 3]
 description: "HashWX ist Caps GPU-resistenter Proof-of-Work. Jede Challenge erzeugt eine frische Hash-Funktion, damit liegt eine GPU nur noch etwa 2x statt 150x vor einer CPU."
 ---
 
-# HashWX-Proof-of-Work
+# HashWX
 
-**HashWX** ist Caps Standard-Challenge-Protokoll. Statt einer festen Hash-Funktion wie SHA-256 erzeugt jede Challenge aus einem Seed eine **neue** Einwegfunktion, gebaut aus Integer-Operationen und Verzweigungen, die so gewählt sind, dass eine GPU sie nicht wesentlich schneller ausführen kann als eine CPU.
+HashWX ist Caps Standard-Proof-of-Work. Während SHA-256 eine feste Hash-Funktion nutzt, erzeugt HashWX für jeden Nonce-Block eine neue, gebaut aus Integer-Operationen und Verzweigungen, die GPUs schlecht ausführen. Entworfen hat es [tevador](https://github.com/tevador/hashwx), von dem auch RandomX stammt. Sein [Designdokument](https://github.com/tevador/hashwx/blob/master/doc/design.md) erklärt die Funktionsweise. Cap nutzt seinen WebAssembly-Referenz-Build.
 
-Entworfen hat sie [tevador](https://github.com/tevador/hashwx), von dem auch RandomX und HashX stammen. Cap liefert den WebAssembly-Referenz-Build mit.
+Es ist in capd der Standard für neue Keys. In der Core-Bibliothek ist es [opt-in](./capjs-core.md#format-2-hashwx).
 
-::: tip
-HashWX ist der Standard für neue Standalone-Keys. In cap-core ist es über die Format-2-API opt-in, dort bleibt SHA-256-Proof-of-Work der Standard. Siehe [HashWX-Challenges](./capjs-core.md#format-2-hashwx).
-:::
+## Warum nicht SHA-256
 
-## Warum HashWX
-
-Das Problem mit SHA-256-Proof-of-Work ist der Durchsatz. Eine GPU fährt dieselbe feste Funktion über Tausende Lanes im Gleichschritt und löst damit weit mehr Challenges pro Sekunde als eine CPU. Genau darauf kommt es beim Bot-Schutz an: Einem Angreifer ist egal, wie lange eine einzelne Challenge dauert, ihn interessiert nur, wie viele er pro Stunde schafft.
-
-Cap hat dafür früher RSW-Time-Lock-Puzzles ausgeliefert. RSW gewinnt bei der **Latenz**, weil sich sequenzielles Quadrieren innerhalb eines Puzzles nicht parallelisieren lässt, verliert aber klar beim **Durchsatz**, weil eine GPU Tausende unabhängige Puzzles gleichzeitig rechnet. Gemessen gegen eine Consumer-GPU:
+Beim Bot-Schutz zählt, wie viele Challenges ein Angreifer pro Stunde löst, nicht wie lange eine einzelne dauert. Eine GPU führt eine feste Funktion wie SHA-256 gleichzeitig auf Tausenden Lanes aus. Vor HashWX nutzte Cap RSW-Time-Lock-Puzzles, die sich innerhalb eines Puzzles nicht parallelisieren lassen. Eine GPU rechnet aber trotzdem Tausende unabhängige Puzzles nebeneinander. Gemessen gegen eine Consumer-GPU:
 
 | Algorithmus | CPU, Ryzen 3700X, 16 Threads | GPU, RTX 5060 Ti | GPU-Vorteil |
 |---|---:|---:|---:|
 | SHA-256 | 41 MH/s | 6150 MH/s | ~150x |
 | RSW | 26 H/s | 4400 H/s | ~170x |
-| **HashWX** | **2,8 MH/s** | **5,8 MH/s** | **~2x** |
+| HashWX | 2,8 MH/s | 5,8 MH/s | ~2x |
 
-Die Zahlen stammen von tevador und beruhen auf seiner eigenen, nicht öffentlichen CUDA-Implementierung. Die RSW-Zeile haben wir unabhängig nachgemessen: Ein M3 schafft 2,112 H/s pro Thread, was für 16 Ryzen-Threads auf 26 H/s hinausläuft.
+Die Zahlen stammen von tevador und beruhen auf seiner eigenen, nicht veröffentlichten CUDA-Implementierung. Cap hat die RSW-Zeile nachgemessen. Ein M3 schafft 2,11 H/s pro Thread, was für 16 Ryzen-Threads auf 26 H/s hinausläuft.
 
-RSW ist deprecated. Es lässt sich weiterhin pro Key auswählen und bestehende Keys laufen unverändert weiter, für neue Deployments sollte es aber nicht mehr eingesetzt werden.
+RSW ist abgekündigt. capd liefert jetzt HashWX an Keys aus, die auf RSW eingestellt waren. Die Core-Bibliothek stellt auf Anfrage weiterhin RSW-Challenges aus, wähle es aber nicht für neue Setups.
 
 ## Kosten {#cost}
 
-Serverkosten pro Challenge, gemessen auf einem Kern eines Apple M3, Median über 200 Erzeugungen und 40 Verifizierungen durch `validateChallenge`:
+Serverzeit pro Challenge auf einem Kern eines Apple M3, Median über 200 Erzeugungen und 40 Verifizierungen:
 
 | Protokoll | Erzeugung | Verifizierung | Gesamt |
 |---|---:|---:|---:|
-| **HashWX**, 1 Challenge | **14 µs** | **40 µs** | **54 µs** |
-| **HashWX**, 4 Teil-Challenges (Standard) | **20 µs** | **129 µs** | **149 µs** |
-| SHA-256 (50 Challenges, Schwierigkeit 4) | 4 µs | 83 µs | 87 µs |
-| RSW (t = 75.000) | 1522 µs | 14 µs | 1536 µs |
+| HashWX, 1 Challenge | 14 µs | 40 µs | 54 µs |
+| HashWX, 4 Teil-Challenges (Standard) | 20 µs | 129 µs | 149 µs |
+| SHA-256, 50 Challenges mit Schwierigkeit 4 | 4 µs | 83 µs | 87 µs |
+| RSW, t = 75.000 | 1522 µs | 14 µs | 1536 µs |
 
-Eine einzelne HashWX-Challenge hat von den dreien den günstigsten Roundtrip. Die standardmäßigen vier Teil-Challenges kosten etwa 150 µs, mehr als SHA-256, aber ein Zehntel von RSW, das bei jedem Erzeugen vier echte modulare Exponentiationen bezahlt. Die Schwierigkeit ändert an diesen Zahlen nichts: Verifizieren ist ein Hash pro Teil-Challenge, egal wie schwer er zu finden war.
+Die Schwierigkeit ändert an diesen Zahlen nichts. Verifizieren ist ein Hash pro Teil-Challenge, egal wie lange es gedauert hat, ihn zu finden.
 
-Die Kosten auf dem Client sind die andere Seite dieses Tauschs. Eine einzelne Challenge hat eine exponentialverteilte Lösungszeit und ist damit eine Lotterie: Dieselbe Schwierigkeit dauert für einen Besucher 30 ms und für den nächsten drei Sekunden. Deshalb teilt Cap die Schwierigkeit standardmäßig auf vier Teil-Challenges auf, was die Lösungszeit gleichmäßiger macht. Gemessen durch das Widget im Release-Chrome auf einem M3 mit 8 Kernen, je 72 Lösungen, beide Schwierigkeiten auf ungefähr denselben Median abgestimmt:
+Auf dem Client hat eine einzelne Challenge eine zufällige Lösungszeit. Dieselbe Schwierigkeit kann bei einem Besucher 30 ms und beim nächsten 3 s dauern. Cap teilt die Schwierigkeit standardmäßig auf vier Teil-Challenges auf, was die Lösungszeit gleichmäßiger macht. Gemessen durch das Widget in Chrome auf einem M3 mit 8 Kernen, je 72 Lösungen, beide Schwierigkeiten auf ungefähr denselben Median abgestimmt:
 
 | | 1 Challenge, d = 1.330.000 | 4 Teil-Challenges, d = 1.000.000 |
 |---|---:|---:|
@@ -50,27 +44,25 @@ Die Kosten auf dem Client sind die andere Seite dieses Tauschs. Eine einzelne Ch
 | p90 | 1447 ms | 778 ms |
 | Langsamste von 72 | 2378 ms | 1490 ms |
 
-Die rechte Spalte ist der Standard. Gegen einen Standalone-Key ergab er einen Median von 578 ms und ein p90 von 0,9 s.
+Die rechte Spalte ist der Standard. Gegen einen capd-Key ergab er einen Median von 578 ms und ein p90 von 0,9 s. Das Aufteilen ändert nichts daran, was ein Angreifer bezahlt, denn die erwartete Arbeit bleibt in beiden Fällen `d` Hashes.
 
-Bei gegebener Schwierigkeit ändert das Aufteilen nichts daran, was ein Angreifer bezahlt, denn die erwartete Arbeit bleibt `d` Hashes, egal wie sie aufgeteilt wird. Was sich ändert, ist die Form der Verteilung. Der Median einer einzelnen Challenge liegt bei 0,69 ihres Mittelwerts, vier Teil-Challenges schieben ihn auf etwa 0,92 und kürzen den Ausläufer. Bei gleicher Schwierigkeit wird die typische Lösung also etwa ein Drittel langsamer, und das p90 sinkt um etwa ein Viertel. Die Tabelle hält stattdessen den Median fest, was die Aufteilung auf 25% weniger Schwierigkeit setzt und einem Angreifer 25% weniger Arbeit pro Lösung abverlangt. Der eigene Overhead des Widgets ist gering. Seine Worker prüfen alle 16 ms, ob sie anhalten sollen, und das begrenzt, wie lange eine Übergabe zwischen Teil-Challenges dauern kann.
+### Browser
 
-### Browser-Engines
+Der WebAssembly-Build läuft mit etwa 60% der nativen Geschwindigkeit. Gemessen auf demselben M3:
 
-Der wasm-Build läuft mit etwa 60% der nativen Geschwindigkeit. Auf einem einzelnen Worker liegen die drei großen Engines dicht beieinander, sobald alle Kerne ausgelastet sind, fällt Safari zurück. Gemessen auf demselben M3 in einer Sitzung, jeder Browser headless oder im Vordergrund:
-
-| Engine | 1 Worker | 8 Worker | Interpretierter Fallback |
+| Browser | 1 Worker | 8 Worker | Interpretierter Fallback |
 |---|---:|---:|---:|
 | Chrome 153 | 440 KH/s | 2050 KH/s | 94 KH/s |
 | Firefox 156 | 420 KH/s | 1850 KH/s | 105 KH/s |
 | Safari 27.2 | 410 KH/s | 1480 KH/s | 105 KH/s |
 
-Auf einem Worker liegen alle drei innerhalb von 5% zueinander. Auf acht erreicht Safari etwa 70% der Rate von Chrome, stimme die Schwierigkeit also auf Safari ab: Bei d = 1.000.000 sind das im Mittel etwa 0,5 s auf Chrome und 0,7 s auf Safari.
+Safari erreicht auf allen Kernen etwa 70% der Geschwindigkeit von Chrome. Stimme die Schwierigkeit also auf Safari ab. Beim Standard sind das etwa 0,5 s auf Chrome und 0,7 s auf Safari.
 
-Wenn du selbst misst, nimm jeweils einen Release-Build des Browsers und lass den Tab im Vordergrund. Das von Playwright mitgelieferte Firefox führt jede WebAssembly-Last drei- bis sechsmal langsamer aus als ein Release-Firefox, nicht nur HashWX, und ein Tab im Hintergrund kann auf den Effizienzkernen landen und jede Zahl halbieren.
+Wenn du selbst misst, nutze Release-Builds und lass den Tab im Vordergrund. Playwrights Firefox führt WebAssembly drei- bis sechsmal langsamer aus als echtes Firefox, und ein Tab im Hintergrund kann auf den Effizienzkernen laufen.
 
 ### Smartphones {#phones}
 
-Der Standard auf echten Smartphones über BrowserStack, je 15 Lösungen und 30 auf dem Vivo. Jeder Lauf begann auf einer frisch geladenen Seite, so wie ein Besucher ankommt. Nachdem die Seite schon eine Minute lang HashWX ausgeführt hatte, brauchte das Pixel 6 pro Lösung 24% weniger Zeit und das Vivo 29% weniger. Ein Benchmark mit Aufwärmphase sieht also besser aus als diese Zahlen.
+Die Standardschwierigkeit auf echten Smartphones über BrowserStack, je 15 Lösungen und 30 auf dem Vivo, jeweils mit einer frisch geladenen Seite:
 
 | Gerät | System | Alle Kerne | Median | Langsamste |
 |---|---|---:|---:|---:|
@@ -85,18 +77,14 @@ Der Standard auf echten Smartphones über BrowserStack, je 15 Lösungen und 30 a
 | Galaxy M32 | Android 11 | 444 KH/s | 2,8 s | 6,1 s |
 | Vivo Y21 | Android 11 | 316 KH/s | 5,9 s | 11,0 s |
 
-Jede Lösung enthält zwei Roundtrips zum Testserver, im Median 80 bis 190 ms je Gerät. Das Vivo, ein günstiges Android, braucht etwa zehnmal so lange wie der M3-Desktop. Kommt der Großteil deines Traffics von Mobilgeräten, senke die Schwierigkeit. Die Lösungszeit wächst linear mit ihr, 500.000 halbiert also ungefähr den Rechenanteil jeder Zahl hier.
+Jede Lösung enthält zwei Roundtrips zum Testserver von je 80 bis 190 ms. Eine Seite, auf der HashWX bereits eine Minute lief, löste 24% bis 29% schneller. Benchmarks mit Aufwärmphase sehen also besser aus als das, was Besucher erleben.
 
-Clients ohne WebAssembly können HashWX gar nicht lösen und bekommen einen Fehler. Musst du sie unterstützen, nimm SHA-256-Proof-of-Work, der hat einen reinen JS-Fallback. Auf iPhones braucht das Widget iOS 15 oder neuer.
+Kommt der Großteil deines Traffics von Mobilgeräten, senke die Schwierigkeit. Die Lösungszeit skaliert mit ihr. 500.000 halbiert also ungefähr den Rechenanteil dieser Zahlen.
 
-## Wogegen HashWX nicht schützt
+HashWX braucht WebAssembly und auf iPhones iOS 15 oder neuer. Für Browser ohne WebAssembly nutze SHA-256, das einen JavaScript-Fallback hat.
 
-Gegen dasselbe wie RSW: eigenes Silizium. Ein FPGA oder ASIC, der dafür gebaut ist, schlägt eine CPU weiterhin. Für CAPTCHA-Farming geht die Rechnung nicht auf, da ein ASIC Millionen an Entwicklungskosten verschlingt, eine kryptografische Garantie ist das aber nicht.
+## Grenzen
 
-Eine Solving-Farm mit echten Menschen hält es ebenfalls nicht auf, und das wird es nie. Proof-of-Work erhöht die Kosten pro Anfrage. Kombiniere es mit [Instrumentation-Challenges](./instrumentation.md), damit zusätzlich eine echte Browser-Umgebung verlangt wird.
+Spezialhardware würde eine CPU weiterhin schlagen. Ein für HashWX gebauter FPGA oder ASIC kostet Millionen in der Entwicklung, was sich fürs CAPTCHA-Lösen nicht rechnet. Das ist aber ein wirtschaftliches Argument und kein kryptografisches.
 
-## Ausprobieren
-
-Die cap-core-API ist unter [HashWX-Challenges](./capjs-core.md#format-2-hashwx) dokumentiert. Das Widget erkennt Format-2-Antworten automatisch, ein Upgrade des Servers genügt also.
-
-In [Cap Standalone](./standalone/options.md#hashwx-proof-of-work) ist HashWX der Standard für neue Keys und lässt sich pro Key im Dashboard umstellen.
+Menschen, die fürs manuelle Lösen von Challenges bezahlt werden, hält es ebenfalls nicht auf. Kombiniere es mit [Instrumentation](./instrumentation.md), damit zusätzlich ein echter Browser erforderlich ist.

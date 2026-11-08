@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cap dashboard demo</title>
+    <link rel="icon" href="./public/logo-small.webp" />
+    <script>
+      (() => {
+        let pref = new URLSearchParams(location.search).get("theme");
+        if (pref !== "dark" && pref !== "light") {
+          try {
+            pref = localStorage.getItem("cap_theme") || "system";
+          } catch {
+            pref = "system";
+          }
+        }
+        const dark = pref === "dark" || (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

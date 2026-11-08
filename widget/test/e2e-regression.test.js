@@ -238,7 +238,7 @@ if (!SHOULD_RUN_E2E) {
   });
 
   describe("regression e2e", () => {
-    test("regression: shadow root re-attach (#243/#250) — repeated mount survives", async () => {
+    test("regression: shadow root re-attach (#243/#250), repeated mount survives", async () => {
       const page = await browser.newPage();
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));

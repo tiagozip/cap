@@ -6,6 +6,7 @@ declare global {
     CAP_PAKO_URL?: string;
     CAP_CSS_NONCE?: string;
     CAP_SCRIPT_NONCE?: string;
+    CAP_ISOLATE?: boolean;
     CAP_DONT_SKIP_REDEFINE?: boolean;
     CAP_DEBUG?: boolean;
     CAP_SILENT?: boolean;
@@ -29,12 +30,20 @@ type CapErrorCode =
   | "solve_failed"
   | "instr_timeout"
   | "instr_blocked"
+  | "instr_csp_blocked"
+  | "instr_natives_tampered"
+  | "instr_env_failed"
+  | "instr_script_failed"
   | "redeem_failed"
   | "invalid_solution"
   | "invalid_expires"
   | "wasm_load_failed"
   | "worker_spawn_failed"
   | "unknown";
+
+interface CapSolveError extends Error {
+  code: CapErrorCode;
+}
 
 interface CapErrorEventDetail {
   isCap: boolean;
@@ -137,6 +146,7 @@ export {
   type CapSolveEvent,
   type CapErrorEvent,
   type CapErrorCode,
+  type CapSolveError,
   type CapResetEvent,
   type SolveResult,
 };

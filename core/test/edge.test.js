@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { jwtVerify } from "../src/crypto.js";
 import { generateChallenge, validateChallenge } from "../src/index.js";
+import { generateInstrumentation } from "../src/instrumentation.js";
 import { solveChallengeFromPublic, TEST_SECRET } from "./helpers.js";
 
 describe("edge cases", () => {
@@ -145,5 +146,26 @@ describe("generateChallenge: instrumentation as boolean vs object", () => {
     });
     expect(called).toBe(true);
     expect(r.instrumentation).toBe("Y3VzdG9t");
+  });
+});
+
+describe("custom generator compatibility", () => {
+  test("a generator that drops binding throws at issue time", async () => {
+    await expect(
+      generateChallenge(TEST_SECRET, {
+        instrumentation: { obfuscationLevel: 1 },
+        instrumentationGenerator: async (o) => {
+          const r = await generateInstrumentation(o);
+          return {
+            id: r.id,
+            expires: r.expires,
+            vars: r.vars,
+            expectedVals: r.expectedVals,
+            blockAutomatedBrowsers: r.blockAutomatedBrowsers,
+            instrumentation: r.instrumentation,
+          };
+        },
+      }),
+    ).rejects.toThrow("instrumentationGenerator");
   });
 });

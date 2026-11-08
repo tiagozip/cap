@@ -1,33 +1,44 @@
 ---
-description: "Cap's instrumentation challenges run a server-generated script to confirm a real browser, alongside proof-of-work in the self-hosted, open-source CAPTCHA."
+outline: [2, 3]
+description: "Cap's instrumentation challenges run a script generated per challenge in a sandboxed frame to confirm a real browser, alongside proof of work in the self-hosted, open-source CAPTCHA."
 ---
 
 # Instrumentation
 
-Instrumentation challenges check that a challenge was solved in a real browser. They run next to the proof of work, are on by default for new Standalone keys, and are opt-in in the [core library](./capjs-core.md#instrumentation).
+Instrumentation challenges check that a challenge was solved in a real browser. They run next to the proof of work, are on by default for new keys in capd, and are opt-in in the [core library](./capjs-core.md#instrumentation).
 
-## How they work
+<InstrumentationFlow />
 
-For every challenge, the server generates a new JavaScript program. It starts from random integers and changes them through random operations, some of them plain arithmetic and some done through the DOM: it builds a tree of elements, walks back up it adding values, and removes it. The server tracks every operation as it generates them, so it knows the four numbers the program has to produce.
+## How it works
 
-The widget runs the program in a sandboxed iframe and sends the result back with the proof of work. Plain arithmetic is easy to reproduce outside a browser, but the DOM steps need a real rendering engine. Runtimes that fake the DOM tend to skip parts of it or get it wrong.
+Every challenge comes with a program the server has never sent before. Its arithmetic changes every time, so a solver has to parse and run each new program instead of replaying an old answer. Everything the program notes about the page is hashed into its answer, and the server recomputes that answer, so a client can't edit the notes without failing.
 
-The programs are obfuscated, from level 1 to 10. Higher levels are harder to analyse and slower to generate, and the default is 3.
+The frame shares the page's origin so the program can see the page around it. Pages with a strict Content Security Policy need `window.CAP_SCRIPT_NONCE`, and [pages with an HTML injection bug](./widget.md#pages-with-an-html-injection-bug) can isolate the frame with `CAP_ISOLATE`. Isolate it as well when the endpoint is a server you don't control, because without `CAP_ISOLATE` that server's script can run in your page.
 
 ## Automated browser detection
 
-With **Attempt to block headless browsers** on in Standalone, or `blockAutomatedBrowsers` in core, the script also collects a few facts about the browser and the server checks them. The server makes the decision, since a check that runs only in the browser is easy to patch out.
-
-The checks look for automation tools and tampering, never for which browser someone uses. Signals like codec support or browser brand are left out, because someone on a niche Chromium fork looks the same in them as a stealth bot on that fork.
+With **Attempt to block headless browsers** on in capd, or `blockAutomatedBrowsers` in core, the server blocks browsers that show automation markers: `navigator.webdriver`, headless user agents, stealth plugin patches, Playwright's Firefox protocol, or a page and Web Worker that disagree about the device. The checks look for automation and tampering, never for which browser someone uses. Failed checks are listed in `blockedBy`, and weaker hints go to `riskFlags` without blocking.
 
 ## Interaction detection
 
-This is experimental and off by default. Standalone's **Block automated clicks and typing** setting turns on `blockAutomatedInteractions`. In core, `detectAutomatedInteractions` reports without blocking.
+This is experimental and off by default. With **Block automated clicks and typing** on, the program counts clicks and key presses that a script dispatched instead of the visitor, and three of either fail the solve. It never reads field values, and it ignores password, one-time code and payment card fields.
 
-While the instrumentation script runs, the widget counts clicks and key presses that scripts dispatched rather than the user. After three of either, blocking mode rejects the solve with `instr_automated_interaction`, which Standalone returns as `automated_interaction_detected`. Report-only mode puts `interaction_synthetic_clicks` or `interaction_synthetic_keydowns` in `riskFlags`, and Standalone includes them in the `/siteverify` response.
+## Behavior scoring
 
-The widget doesn't require any interaction, so a visitor who never touches the page passes. It doesn't read field values, and it ignores touch, pen, password fields, one-time code fields, shortcuts and paste. Accessibility tools can also dispatch synthetic events, and they haven't been tested against this, which is why it stays off by default.
+Behavior scoring is off by default and set per key. The program records how the pointer reached the widget and the rhythm of key presses, never which keys. The server turns that into a score from 0 to 1 and a verdict of `ok`, `suspicious`, `automated` or `agent`, and blocks `automated` at 0.75 by default. A straight-line pointer path, a script-dispatched press or typing at a perfectly even pace all push the score up.
 
-## Limits
+[Invisible](./invisible.md) and [floating](./floating.md) modes call `solve()` without a press on the widget, so they fail on keys that require one.
 
-Instrumentation doesn't replace proof of work. Without it, an attacker running many real browsers could solve these scripts cheaply. Large platforms like [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) and [X](https://x.com/i/js_inst) use similar challenges, and Cap pairs them with proof of work so each solve has a cost.
+## AI agent detection
+
+Cap names AI agents from marks their tools leave in the page, from click and typing patterns, and from `User-Agent` and signed `Signature-Agent` headers. A detected agent adds `agent:<name>` to `riskFlags`. Keys can block every agent, only the ones identified with high confidence, or let agents with a verified [Web Bot Auth](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) signature through.
+
+## What it can't stop
+
+The program runs in the visitor's browser, so the defenses make faking it cost more than running it: frozen built-ins, hashes over every field, results tied to one challenge, and failure markers that only ever fail. Cap still can't tell a person from a real browser that a person drives, so it doesn't stop paid human solvers, agents whose input arrives as ordinary operating system events, or browsers rebuilt from source to hide automation. Proof of work is what still charges each of those solves.
+
+The failure codes are listed in [troubleshooting](./troubleshooting/instrumentation.md#error-codes).
+
+## Widgets from earlier releases
+
+Older widgets keep solving against a new server, and their solves carry the `legacy_widget` risk flag. They fail with `instr_widget_outdated` on keys that block automated interactions, score behavior or block agents. Updating the widget fixes it.

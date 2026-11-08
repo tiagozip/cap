@@ -4,7 +4,7 @@ description: "Bibliothèques maintenues par la communauté pour utiliser Cap, le
 
 # Bibliothèques communautaires
 
-Vous voulez utiliser Cap sans le serveur standalone et dans un autre langage ? Voici quelques bibliothèques maintenues par la communauté qui pourraient vous aider. Pour en ajouter une, n'hésitez pas à ouvrir une pull request !
+Vous voulez utiliser Cap sans capd et dans un autre langage ? Voici quelques bibliothèques maintenues par la communauté qui pourraient vous aider. Pour en ajouter une, n'hésitez pas à ouvrir une pull request !
 
 **Remarque :** ces bibliothèques ne prennent souvent **pas** en charge les fonctionnalités récentes comme les défis avec graine ou les défis d'instrumentation.
 

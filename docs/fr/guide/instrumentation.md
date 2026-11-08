@@ -1,33 +1,44 @@
 ---
-description: "Les défis d'instrumentation de Cap exécutent du JS généré par le serveur pour vérifier la présence d'un vrai navigateur, en complément de la preuve de travail du CAPTCHA open source auto-hébergé."
+outline: [2, 3]
+description: "Les défis d'instrumentation de Cap exécutent un script généré par défi dans une iframe isolée pour confirmer la présence d'un vrai navigateur, en complément de la preuve de travail du CAPTCHA open source auto-hébergé."
 ---
 
-# Défis d'instrumentation
+# Instrumentation
 
-Les défis d'instrumentation constituent la deuxième couche de vérification de Cap. Ils s'exécutent silencieusement aux côtés du système de preuve de travail et sont présents dans Cap Standalone.
+Les défis d'instrumentation vérifient qu'un défi a été résolu dans un vrai navigateur. Ils s'exécutent aux côtés de la preuve de travail, sont activés par défaut pour les nouvelles clés dans capd et s'activent explicitement dans la [bibliothèque core](./capjs-core.md#instrumentation).
 
-À chaque requête, ils génèrent un programme JavaScript unique, exécuté dans le navigateur du visiteur. La sortie est vérifiée côté serveur, ce qui permet à Cap de confirmer la présence d'un véritable environnement navigateur avant d'accepter un jeton.
+<InstrumentationFlow />
 
-## Leur fonctionnement
+## Fonctionnement {#how-it-works}
 
-Lorsqu'un défi est émis, le serveur génère un bundle JavaScript autonome qui exécute quelques sondes sur les API du navigateur et évalue une chaîne de calcul principale : plusieurs variables entières sont initialisées avec des graines aléatoires, puis modifiées par des opérations tirées au hasard, dont des AND/OR/XOR/NAND bit à bit, des astuces sur la chaîne de prototypes et de l'arithmétique fondée sur le DOM qui ajoute un arbre d'éléments à la page, le remonte en accumulant des valeurs, puis le supprime.
+Chaque défi arrive avec un programme que le serveur n'a encore jamais envoyé. Son arithmétique change à chaque fois, donc un solveur doit analyser et exécuter chaque nouveau programme au lieu de rejouer une ancienne réponse. Tout ce que le programme relève sur la page est haché dans sa réponse, et le serveur recalcule cette réponse. Un client ne peut donc pas modifier ces relevés sans échouer.
 
-Le serveur suit en parallèle le résultat attendu de chaque opération, il sait donc quelles doivent être les quatre valeurs finales.
+L'iframe partage l'origine de la page pour que le programme puisse voir la page qui l'entoure. Les pages avec une Content Security Policy stricte doivent définir `window.CAP_SCRIPT_NONCE`, et les [pages avec une faille d'injection HTML](./widget.md#pages-with-an-html-injection-bug) peuvent isoler l'iframe avec `CAP_ISOLATE`.
 
-Toutes ces vérifications s'exécutent dans une iframe, qui renvoie les réponses au parent via `postMessage`.
+## Détection des navigateurs automatisés {#automated-browser-detection}
 
-## Pourquoi des opérations DOM
+Avec **Attempt to block headless browsers** activé dans capd, ou `blockAutomatedBrowsers` dans core, le serveur bloque les navigateurs qui présentent des marqueurs d'automatisation : `navigator.webdriver`, des user agents headless, les modifications des plugins stealth, le protocole Firefox de Playwright, ou une page et un Web Worker qui ne s'accordent pas sur l'appareil. Les vérifications cherchent l'automatisation et les altérations, jamais le navigateur utilisé. Les vérifications échouées sont listées dans `blockedBy`, et les indices plus faibles sont ajoutés à `riskFlags` sans bloquer.
 
-L'arithmétique pure peut être reproduite hors navigateur en se contentant d'exécuter le JavaScript. Les opérations DOM, non, du moins pas à moindre coût. Construire de véritables arbres d'éléments, lire des valeurs via le moteur de rendu du navigateur, puis les démonter, sollicite une partie du navigateur que les runtimes non-navigateur remplacent souvent par des stubs, implémentent mal, ou ignorent complètement par souci de performance. Le défi devient ainsi bien plus difficile à rejouer en dehors d'un vrai moteur de rendu.
+## Détection des interactions {#interaction-detection}
 
-Les défis d'instrumentation combinent souvent ces opérations avec une liste prédéfinie de vérifications.
+Cette fonction est expérimentale et désactivée par défaut. Avec **Block automated clicks and typing** activé, le programme compte les clics et les pressions de touches déclenchés par un script plutôt que par le visiteur, et trois de l'un ou l'autre type font échouer la résolution. Il ne lit jamais les valeurs des champs et ignore les champs de mot de passe, de code à usage unique et de carte de paiement.
 
-## Détection des navigateurs automatisés
+## Évaluation du comportement {#behavior-scoring}
 
-Les défis d'instrumentation peuvent aussi, en option, tenter de bloquer les webdrivers automatisés. Nous effectuons énormément de vérifications à ce sujet, mais elles ne sont pas infaillibles. Même des CAPTCHA commerciaux et propriétaires comme Turnstile peuvent être contournés par des attaquants au moyen de navigateurs furtifs patchés.
+L'évaluation du comportement est désactivée par défaut et se règle par clé. Le programme enregistre comment le pointeur a atteint le widget et le rythme des pressions de touches, jamais de quelles touches il s'agit. Le serveur en tire un score de 0 à 1 et un verdict `ok`, `suspicious`, `automated` ou `agent`, et bloque `automated` à partir de 0,75 par défaut. Un trajet du pointeur en ligne droite, une pression déclenchée par un script ou une frappe à un rythme parfaitement régulier font tous monter le score.
 
-## Relation avec la preuve de travail
+Le [mode invisible](./invisible.md) et le [mode flottant](./floating.md) appellent `solve()` sans pression sur le widget. Ils échouent donc avec les clés qui en exigent une.
 
-Les défis d'instrumentation et la preuve de travail sont complémentaires, pas redondants. La preuve de travail atteste d'un *effort* : le client a dû brûler des cycles CPU pour trouver un hachage. L'instrumentation atteste d'un *environnement* : le calcul s'est produit dans un navigateur, pas dans un script. Ensemble, ils augmentent le coût de l'abus sur deux axes indépendants ; aucun des deux ne suffit seul face à un attaquant déterminé, mais les vaincre tous les deux simultanément est nettement plus difficile.
+## Détection des agents IA {#ai-agent-detection}
 
-L'instrumentation n'est pas infaillible. Même si des défis de ce type sont déployés à très grande échelle par des plateformes comme [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) et [Twitter](https://x.com/i/js_inst), je ne recommande pas de les utiliser en remplacement de la preuve de travail. Sans PoW et avec de vrais navigateurs, des attaquants peuvent résoudre ces défis à faible coût.
+Cap identifie les agents IA à partir des marques que leurs outils laissent dans la page, des schémas de clics et de frappe, et des en-têtes `User-Agent` et `Signature-Agent` signés. Un agent détecté ajoute `agent:<name>` à `riskFlags`. Les clés peuvent bloquer tous les agents, seulement ceux identifiés avec une confiance élevée, ou laisser passer les agents dont la signature [Web Bot Auth](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) est vérifiée.
+
+## Ce qu'elle ne peut pas arrêter {#what-it-cant-stop}
+
+Le programme tourne dans le navigateur du visiteur. Les défenses rendent donc sa falsification plus coûteuse que son exécution : fonctions intégrées gelées, hachages sur chaque champ, résultats liés à un seul défi et marqueurs d'échec qui entraînent toujours un échec. Cap ne peut toujours pas distinguer une personne d'un vrai navigateur piloté par une personne. Il n'arrête donc pas les personnes payées pour résoudre les défis, les agents dont les interactions arrivent sous forme d'événements ordinaires du système d'exploitation, ni les navigateurs recompilés depuis les sources pour masquer l'automatisation. La preuve de travail continue d'imposer un coût à chacune de ces résolutions.
+
+Les codes d'échec sont listés dans le [dépannage](./troubleshooting/instrumentation.md#error-codes).
+
+## Widgets de versions antérieures {#widgets-from-earlier-releases}
+
+Les anciens widgets continuent de résoudre les défis d'un nouveau serveur, et leurs résolutions portent l'indicateur de risque `legacy_widget`. Ils échouent avec `instr_widget_outdated` sur les clés qui bloquent les interactions automatisées, évaluent le comportement ou bloquent les agents. Mettre le widget à jour corrige le problème.

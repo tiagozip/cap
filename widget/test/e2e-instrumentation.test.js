@@ -157,10 +157,6 @@ if (!SHOULD_RUN_E2E) {
       );
 
       await evilPage.evaluate(() => {
-        // Burst-fire forged messages the moment any iframe is added to the
-        // DOM — beats the legitimate sandboxed iframe's srcdoc script to
-        // posting back, since those bursts are queued synchronously while
-        // the real script still has to load + execute async.
         window.__capForgeObserver = new MutationObserver((muts) => {
           for (const m of muts) {
             for (const node of m.addedNodes) {
@@ -205,17 +201,212 @@ if (!SHOULD_RUN_E2E) {
         () => document.getElementById("errorResult").textContent,
       );
 
-      // Without the origin/source check, the forged blocked/error messages
-      // would resolve runInstrumentationChallenge with __blocked or __timeout
-      // long before the legitimate sandboxed iframe's script could respond,
-      // which propagates to the widget's `error` handler.
-      // With the fix, forged messages are dropped (ev.source mismatch) and
-      // the legitimate flow completes — yielding a valid token.
       expect(error).toBe("");
       expect(token).toMatch(/^[a-z0-9]+:[a-f0-9]+$/);
 
       await evilPage.close();
     }, 90_000);
+  });
+
+  describe("observe phase", () => {
+    test("an observing script holds its result until finalize", async () => {
+      const meta = await generateInstrumentation({
+        obfuscationLevel: 5,
+        behavior: true,
+        behaviorEnforced: true,
+      });
+      const src = inflateRawSync(
+        Buffer.from(meta.instrumentation, "base64"),
+      ).toString();
+      const p = await browser.newPage();
+      await p.goto(baseUrl, { waitUntil: "domcontentloaded" });
+      const out = await p.evaluate(
+        (script) =>
+          new Promise((resolve) => {
+            const iframe = document.createElement("iframe");
+            iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
+            const seen = [];
+            let finalizedAt = 0;
+            let early = null;
+            window.addEventListener("message", (e) => {
+              if (e.source !== iframe.contentWindow) return;
+              if (e.data?.type === "cap:instr" && e.data.early === true) {
+                early = { at: seen.length, result: e.data.result };
+                return;
+              }
+              seen.push(e.data?.type);
+              if (e.data?.type === "cap:ready") {
+                setTimeout(() => {
+                  finalizedAt = seen.length;
+                  iframe.contentWindow.postMessage(
+                    { type: "cap:finalize", nonce: "wrong" },
+                    "*",
+                  );
+                  window.postMessage(
+                    { type: "cap:finalize", nonce: e.data.nonce },
+                    "*",
+                  );
+                  setTimeout(() => {
+                    iframe.contentWindow.postMessage(
+                      { type: "cap:finalize", nonce: e.data.nonce },
+                      "*",
+                    );
+                  }, 300);
+                }, 600);
+              }
+              if (e.data?.type === "cap:instr") {
+                resolve({
+                  seen,
+                  finalizedAt,
+                  early,
+                  result: e.data.result,
+                  ready: seen[0],
+                });
+              }
+            });
+            iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>${script}\n</scr${"ipt"}></body></html>`;
+            document.body.appendChild(iframe);
+            setTimeout(() => resolve({ seen, timeout: true }), 15_000);
+          }),
+        src,
+      );
+      await p.close();
+      expect(out.timeout).toBeUndefined();
+      expect(out.ready).toBe("cap:ready");
+      expect(out.finalizedAt).toBe(1);
+      expect(out.early?.at).toBe(1);
+      expect(out.result).not.toEqual(out.early.result);
+      expect(JSON.parse(out.early.result.d).bh).toBeNull();
+      expect(verifyInstrumentationResult(meta, out.early.result)).toEqual({
+        valid: false,
+        reason: "instr_widget_outdated",
+      });
+      const verdict = verifyInstrumentationResult(meta, out.result);
+      expect(verdict.valid).toBe(true);
+      expect(verdict.trace).not.toBeNull();
+      expect(verdict.riskFlags).not.toContain("legacy_widget");
+    }, 30_000);
+  });
+
+  describe("realm tampering", () => {
+    const run = async (meta, { hook = false, pre = "", userAgent } = {}) => {
+      const src = inflateRawSync(
+        Buffer.from(meta.instrumentation, "base64"),
+      ).toString();
+      const ctx = await browser.newContext(userAgent ? { userAgent } : {});
+      const p = await ctx.newPage();
+      await p.goto(baseUrl, { waitUntil: "domcontentloaded" });
+      const out = await p.evaluate(
+        ([script, hookIt, preScript]) =>
+          new Promise((resolve) => {
+            window.__stagehandV3__ = 1;
+            const iframe = document.createElement("iframe");
+            iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
+            const swapped = [];
+            window.addEventListener("message", (e) => {
+              if (e.source !== iframe.contentWindow) return;
+              const d = e.data;
+              if (d?.type === "cap:instr" && d.early === true) return;
+              if (d?.type === "cap:ready") {
+                if (hookIt) {
+                  const w = iframe.contentWindow;
+                  const tries = [
+                    () => {
+                      w.JSON.stringify = () => "{}";
+                    },
+                    () => {
+                      w.JSON = { stringify: () => "{}", parse: JSON.parse };
+                    },
+                    () => {
+                      w.Object.keys = () => [];
+                    },
+                    () => {
+                      w.Array.prototype.sort = () => [];
+                    },
+                    () => {
+                      w.Array.prototype.slice = () => [];
+                    },
+                    () => {
+                      w.String.prototype.charCodeAt = () => 0;
+                    },
+                    () => {
+                      Object.defineProperty(w.Array.prototype, "indexOf", {
+                        value: () => 0,
+                      });
+                    },
+                  ];
+                  for (const t of tries) {
+                    try {
+                      t();
+                    } catch {}
+                  }
+                  swapped.push(
+                    w.JSON.stringify({ a: 1 }) === '{"a":1}',
+                    w.Object.keys({ a: 1 }).length === 1,
+                    [2, 1].sort()[0] === 1,
+                    "a".charCodeAt(0) === 97,
+                  );
+                }
+                if (d.observe) {
+                  iframe.contentWindow.postMessage(
+                    { type: "cap:finalize", nonce: d.nonce },
+                    "*",
+                  );
+                }
+              }
+              if (d?.type === "cap:instr" || d?.type === "cap:error") {
+                resolve({ type: d.type, result: d.result, swapped });
+              }
+            });
+            iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script>${preScript}</scr${"ipt"}><script>${script}\n</scr${"ipt"}></body></html>`;
+            document.body.appendChild(iframe);
+            setTimeout(() => resolve({ type: "timeout" }), 15_000);
+          }),
+        [src, hook, pre],
+      );
+      await ctx.close();
+      return out;
+    };
+
+    test("hooks set on the frame after it starts do not reach the result", async () => {
+      for (const level of [3, 9]) {
+        const meta = await generateInstrumentation({
+          obfuscationLevel: level,
+          behavior: true,
+          detectAutomatedInteractions: true,
+        });
+        const out = await run(meta, { hook: true });
+        expect(out.type).toBe("cap:instr");
+        expect(out.swapped).toEqual([true, true, true, true]);
+        const verdict = verifyInstrumentationResult(meta, out.result);
+        expect(verdict.valid).toBe(true);
+        expect(verdict.agent.all).toContain("stagehand");
+      }
+    }, 30_000);
+
+    test("a frame whose natives were replaced before the script fails closed", async () => {
+      const meta = await generateInstrumentation({ obfuscationLevel: 3 });
+      for (const pre of [
+        "Object.keys=function(o){return []}",
+        "Array.prototype.sort=function(){return this}",
+        "String.prototype.charCodeAt=function(){return 0}",
+      ]) {
+        const out = await run(meta, { pre });
+        expect(out.type).toBe("cap:error");
+      }
+    }, 30_000);
+
+    test("the frame serializer matches the server for awkward strings", async () => {
+      const meta = await generateInstrumentation({ obfuscationLevel: 3 });
+      const out = await run(meta, {
+        userAgent:
+          'Mozilla/5.0 "q" \\ \t \u00fc \u2028 \ud83d\ude00 \u0001 Chrome/120',
+      });
+      expect(out.type).toBe("cap:instr");
+      const verdict = verifyInstrumentationResult(meta, out.result);
+      expect(verdict.valid).toBe(true);
+      expect(JSON.parse(out.result.d).hp.nav.ua).toContain("\ud83d\ude00");
+    }, 30_000);
   });
 
   describe("obfuscation levels", () => {
@@ -231,10 +422,16 @@ if (!SHOULD_RUN_E2E) {
           (script) =>
             new Promise((resolve) => {
               const iframe = document.createElement("iframe");
-              iframe.setAttribute("sandbox", "allow-scripts");
+              iframe.setAttribute("sandbox", "allow-scripts allow-same-origin");
               const timer = setTimeout(() => resolve(null), 15_000);
               window.addEventListener("message", (e) => {
                 if (e.source !== iframe.contentWindow) return;
+                if (e.data?.type === "cap:ready" && e.data.observe) {
+                  iframe.contentWindow.postMessage(
+                    { type: "cap:finalize", nonce: e.data.nonce },
+                    "*",
+                  );
+                }
                 if (e.data?.type !== "cap:instr") return;
                 clearTimeout(timer);
                 resolve(e.data.result || null);
@@ -246,7 +443,15 @@ if (!SHOULD_RUN_E2E) {
         );
         await levelPage.close();
         expect(result).not.toBeNull();
-        expect(verifyInstrumentationResult(meta, result).valid).toBe(true);
+        const verdict = verifyInstrumentationResult(meta, result);
+        expect(verdict.valid).toBe(true);
+        if (level < 10) expect(verdict.riskFlags).toContain("cdp_console_trap");
+        expect(verdict.riskFlags).not.toContain("attach_shadow_patched");
+        expect(verdict.riskFlags).toContain("automation_globals");
+        expect(Object.keys(result).sort()).toEqual(["d", "i", "state"]);
+        const bound = JSON.parse(result.d);
+        expect(bound.ag).toContain("automation");
+        expect(bound.vp).toEqual([1280, 720]);
       }, 30_000);
     }
   });

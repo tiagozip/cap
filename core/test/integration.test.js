@@ -4,7 +4,11 @@ import {
   generateInstrumentation,
   verifyInstrumentationResult,
 } from "../src/instrumentation.js";
-import { solveChallengeFromPublic, TEST_SECRET } from "./helpers.js";
+import {
+  boundPayload,
+  solveChallengeFromPublic,
+  TEST_SECRET,
+} from "./helpers.js";
 
 describe("end-to-end (PoW only)", () => {
   test("full happy path: generate -> solve -> validate", async () => {
@@ -169,14 +173,7 @@ describe("end-to-end with custom storage callbacks", () => {
 describe("instrumentation result simulation", () => {
   test("a fully simulated instrumentation flow validates", async () => {
     const meta = await generateInstrumentation({ obfuscationLevel: 1 });
-    const state = {};
-    for (let i = 0; i < meta.vars.length; i++)
-      state[meta.vars[i]] = meta.expectedVals[i];
-    const result = verifyInstrumentationResult(meta, {
-      i: meta.id,
-      state,
-      ts: Date.now(),
-    });
+    const result = verifyInstrumentationResult(meta, boundPayload(meta));
     expect(result.valid).toBe(true);
   });
 });

@@ -37,7 +37,7 @@ Cap 的 `/siteverify` 端点刻意仿照了 reCAPTCHA 的请求形态，因此�
 
 ### 1. 部署一个 Cap 实例
 
-按照[快速上手](../index.md)用 Docker 运行 Cap Standalone 模式。在控制台中创建站点密钥，记下 **site key** 和对应的 **secret key**。保持 [instrumentation 质询](../instrumentation.md)开启（默认即开启）以获得最强的机器人防护。
+按照[快速上手](../index.md)用 Docker 运行 capd。在控制台中创建站点密钥，记下 **site key** 和对应的 **secret key**。保持 [instrumentation 质询](../instrumentation.md)开启（默认即开启）以获得最强的机器人防护。
 
 ### 2. 替换客户端验证组件
 

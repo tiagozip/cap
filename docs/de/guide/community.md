@@ -4,7 +4,7 @@ description: "Von der Community gepflegte Bibliotheken, um Cap, das selbst gehos
 
 # Community-Bibliotheken
 
-Du willst Cap ohne den Standalone-Server und in einer anderen Sprache nutzen? Hier sind einige von der Community gepflegte Bibliotheken, die dir helfen könnten. Wenn du eine Bibliothek ergänzen möchtest, öffne gerne einen Pull Request!
+Du willst Cap ohne capd und in einer anderen Sprache nutzen? Hier sind einige von der Community gepflegte Bibliotheken, die dir helfen könnten. Wenn du eine Bibliothek ergänzen möchtest, öffne gerne einen Pull Request!
 
 **Hinweis:** Diese Bibliotheken unterstützen neuere Funktionen wie Seeded Challenges oder Instrumentation-Challenges häufig **nicht**.
 

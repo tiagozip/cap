@@ -1,33 +1,44 @@
 ---
-description: "Cap 的 instrumentation 质询通过运行服务端生成的 JS 来验证真实浏览器，与工作量证明协同工作，是这个自托管开源 CAPTCHA 的一部分。"
+outline: [2, 3]
+description: "Cap 的 instrumentation 质询在沙箱框架中运行每次质询单独生成的脚本，以确认真实浏览器，与这个自托管开源 CAPTCHA 的工作量证明协同工作。"
 ---
 
-# Instrumentation 质询
+# Instrumentation
 
-Instrumentation（浏览器环境检测）质询是 Cap 的第二层验证，与核心的工作量证明系统一起静默运行，并已内置于 Cap Standalone。
+Instrumentation 质询检查质询是否在真实浏览器中求解。它们与工作量证明一起运行，capd 的新密钥默认开启，[核心库](./capjs-core.md#instrumentation)则需要主动启用。
 
-它们在每次请求时生成一段独一无二的 JavaScript 程序，在访问者的浏览器中执行。执行结果由服务端校验，Cap 借此在接受令牌前确认对方处于真实的浏览器环境。
+<InstrumentationFlow />
 
 ## 工作原理
 
-签发质询时，服务端会生成一个自包含的 JavaScript 包，先运行若干浏览器 API 探测，再执行一条主计算链：多个整数变量以随机种子值初始化，然后经过一系列随机化操作不断变换，包括按位 AND/OR/XOR/NAND、原型链技巧，以及基于 DOM 的运算（向页面追加一棵元素树，沿树回溯累加数值，最后把树移除）。
+每个质询都附带一个服务端从未发送过的程序。程序中的算术每次都不同，因此求解器必须解析并运行每个新程序，而不能重放旧答案。程序记录的关于页面的所有信息都会哈希进答案，服务端会重新计算这个答案，因此客户端修改记录就会失败。
 
-服务端会并行跟踪每一步操作的预期结果，因此它知道最终四个值必须是什么。
-
-所有这些检查都在一个 iframe 内运行，并通过 `postMessage` 把答案发回父页面。
-
-## 为什么要用 DOM 操作
-
-纯算术运算在非浏览器环境中只需直接运行这段 JavaScript 就能复现。DOM 操作做不到，至少无法低成本地做到。构建真实的元素树、通过浏览器排版引擎读取数值、再把它们拆除，这些会触及浏览器中那些非浏览器运行时常常只做桩实现、实现得不正确、或出于性能考虑干脆跳过的部分。质询因此很难在真实渲染引擎之外被重放。
-
-Instrumentation 质询通常还会把这些与一组预设检查混合使用。
+框架与页面同源，因此程序能看到框架外的页面。采用严格内容安全策略的页面需要设置 `window.CAP_SCRIPT_NONCE`，[存在 HTML 注入漏洞的页面](./widget.md#pages-with-an-html-injection-bug)可以用 `CAP_ISOLATE` 隔离框架。
 
 ## 自动化浏览器检测
 
-Instrumentation 质询还可以选择性地尝试拦截自动化 webdriver。虽然我们为此做了大量检查，但它们并非万无一失。即使是 Turnstile 这样的商业闭源 CAPTCHA，攻击者也能通过打过补丁的隐身浏览器绕过。
+在 capd 中开启 **Attempt to block headless browsers**，或在核心库中开启 `blockAutomatedBrowsers` 后，服务端会拦截带有自动化标记的浏览器，包括 `navigator.webdriver`、无头浏览器的 user agent、stealth 插件补丁、Playwright 的 Firefox 协议，以及页面与 Web Worker 对设备信息说法不一致的情况。这些检查寻找自动化工具和篡改痕迹，绝不根据访问者使用哪种浏览器来判断。失败的检查列在 `blockedBy` 中，较弱的迹象只加入 `riskFlags`，不会拦截。
 
-## 与工作量证明的关系
+## 交互检测
 
-Instrumentation 质询与工作量证明是互补的，而非冗余。工作量证明证明的是**付出**：客户端必须消耗 CPU 周期来寻找哈希。Instrumentation 证明的是**环境**：计算发生在浏览器里，而不是脚本里。二者结合，在两个独立维度上抬高了滥用成本。面对有决心的攻击者，单独任何一个都不够，但要同时攻破两者就难得多。
+这是一项实验性功能，默认关闭。开启 **Block automated clicks and typing** 后，程序会统计由脚本而非访问者派发的点击和按键，任意一类达到三次，求解就会失败。它从不读取字段值，并忽略密码、一次性验证码和支付卡字段。
 
-Instrumentation 并非万无一失。虽然 [YouTube](https://www.reddit.com/r/youtubedl/comments/1mkzmp3/what_is_a_po_token/) 和 [Twitter](https://x.com/i/js_inst) 等平台已在超大规模上部署了类似的质询，但我不建议用它替代工作量证明。在没有 PoW 的情况下，攻击者用真实浏览器就能低成本地批量通过这些质询。
+## 行为评分
+
+行为评分默认关闭，按密钥设置。程序记录指针如何到达验证组件以及按键的节奏，绝不记录具体按了哪个键。服务端据此算出一个 0 到 1 的分数和一个判定，判定为 `ok`、`suspicious`、`automated` 或 `agent`，默认在分数达到 0.75 时拦截 `automated`。直线移动的指针轨迹、脚本派发的按下操作，或节奏完全均匀的输入都会推高分数。
+
+[隐形模式](./invisible.md)和[浮动模式](./floating.md)调用 `solve()` 时不会按下验证组件，因此在要求按下的密钥上会失败。
+
+## AI 智能体检测
+
+Cap 根据智能体工具在页面中留下的标记、点击和输入模式，以及 `User-Agent` 和带签名的 `Signature-Agent` 请求头来识别 AI 智能体的名称。检测到的智能体会把 `agent:<name>` 加入 `riskFlags`。密钥可以拦截所有智能体，或只拦截高置信度识别出的智能体，也可以放行带有已验证 [Web Bot Auth](https://datatracker.ietf.org/doc/draft-meunier-web-bot-auth-architecture/) 签名的智能体。
+
+## 无法阻止的情况
+
+程序运行在访问者的浏览器中，所以这些防护的目的是让伪造结果比正常运行程序付出更多代价，具体做法包括冻结内置对象、对每个字段做哈希、把结果绑定到单个质询，以及只会导致失败的失败标记。Cap 仍然无法区分真人与真人操控的真实浏览器，因此无法阻止付费人工求解、通过普通操作系统事件输入的智能体，或从源码重新构建以隐藏自动化的浏览器。工作量证明仍然让这些求解每一次都付出代价。
+
+错误码列在[故障排查](./troubleshooting/instrumentation.md#错误码)中。
+
+## 旧版验证组件
+
+旧版验证组件仍能向新服务端求解，这些求解带有 `legacy_widget` 风险标志。在拦截自动化交互、进行行为评分或拦截智能体的密钥上，它们会以 `instr_widget_outdated` 失败。更新验证组件即可解决。

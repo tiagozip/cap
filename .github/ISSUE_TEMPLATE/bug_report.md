@@ -16,7 +16,7 @@ a clear and concise description of what the bug is and how it happened.
 
 **affects:**
 
-- [] standalone
+- [] capd
 - [] widget (ui)
 - [] widget (wasm solver)
 - [] js server

@@ -8,8 +8,8 @@ head:
 
 # @cap.js/server
 
-::: warning Legacy library — superseded by [`capjs-core`](./capjs-core.md)
-`@cap.js/server` is no longer the recommended Cap server library. New projects should use [`capjs-core`](./capjs-core.md), which is stateless (no filesystem, no in-memory token list, works on Cloudflare Workers / Lambda / edge), uses signed JWTs, and is what [Cap Standalone](./standalone/index.md) is built on internally. See the [migration table](./capjs-core.md#how-it-differs-from-cap-js-server).
+::: warning Legacy library
+`@cap.js/server` is superseded by [`capjs-core`](./capjs-core.md). New projects should use `capjs-core`, which keeps no state of its own, runs on Cloudflare Workers and Lambda, and is what [capd](./capd/index.md) is built on. `@cap.js/server` only issues SHA-256 challenges, without HashWX or instrumentation. See [migrating from `@cap.js/server`](./capjs-core.md#how-it-differs-from-cap-js-server).
 :::
 
 `@cap.js/server` is Cap's server-side library for creating and validating challenges. Install it using your preferred package manager:
@@ -207,7 +207,7 @@ fastify.listen({ port: 3000 });
 
 :::
 
-In this example, the Cap API is at `/cap/` — set that in your widget as `data-cap-api-endpoint` ([see widget docs](./widget.md)).
+In this example, the Cap API is at `/cap/`. Set that as the widget's `data-cap-api-endpoint`, as described in the [widget docs](./widget.md).
 
 When someone completes the CAPTCHA and sends the token back to your backend, you can validate the token and proceed with your logic.
 
@@ -285,7 +285,7 @@ You can always access or set the options of the `Cap` class by accessing or modi
 }
 ```
 
-**Response:** `{ success, token }`
+**Response:** `{ success, token, expires }` on success, `{ success: false, message }` on failure
 
 #### `await cap.validateToken("...", { ... })`
 

@@ -56,7 +56,6 @@
       const getCredits = () =>
         widget.shadowRoot && widget.shadowRoot.querySelector(".credits");
 
-      // Wait for the post-init 100ms enforce + first paint to settle.
       const runTamperTests = async () => {
         await wait(200);
 
@@ -66,7 +65,6 @@
           throw new Error("credits still exposes the 'part' attribute");
         }
 
-        // each tamper then trigger a fresh solve() to re-run the enforce
         const tamperAndVerify = async (label, tamper, assert) => {
           tamper(getCredits());
           widget.reset();

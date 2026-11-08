@@ -42,6 +42,10 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Install dependencies
         run: cd docs && bun install
+      - name: Build the dashboard demo
+        run: |
+          cd capd && bun install --frozen-lockfile
+          cd ../demo-dashboard && bun install --frozen-lockfile && bun run build
       - name: Build with VitePress
         run: cd docs && bun run build
       - name: Upload artifact

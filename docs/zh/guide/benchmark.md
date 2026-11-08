@@ -4,6 +4,6 @@ description: "Cap CAPTCHA 基准测试：在你自己的浏览器中运行 HashW
 
 # 基准测试
 
-本页面在你的浏览器中针对一个占位服务端运行 HashWX 工作量证明，让你看到在自己的设备上完成一次求解需要多久。默认值与新建的 Standalone 站点密钥一致。桌面浏览器和手机上的测量结果请参阅 [HashWX](./hashwx.md#cost)。
+本页面在你的浏览器中针对一个占位服务端运行 HashWX 工作量证明，让你看到在自己的设备上完成一次求解需要多久。默认值与 capd 中新建的站点密钥一致。桌面浏览器和手机上的测量结果请参阅 [HashWX](./hashwx.md#cost)。
 
 <Benchmark />

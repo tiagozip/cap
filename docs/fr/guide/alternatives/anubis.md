@@ -22,7 +22,7 @@ Utilisez **Anubis** quand vous voulez protéger un site entier ou un chemin cont
 - **Protection par action, pas par page vue.** Cap protège les formulaires, les inscriptions, les pages de contact et les points d'API, exactement là où l'abus se transforme en coût. Les visiteurs naviguent normalement.
 - **La difficulté se règle par action.** Le défi d'Anubis doit rester assez léger pour ne pas pénaliser chaque chargement de page, ce qui limite le niveau atteignable. Cap se configure par action : la difficulté peut être relevée sur les formulaires d'inscription ou de connexion sans gêner la navigation.
 - **Deux couches de vérification.** Cap superpose des [défis d'instrumentation](../instrumentation.md) à la preuve de travail : même les bots qui accélèrent la preuve de travail avec un GPU doivent encore simuler un véritable environnement navigateur.
-- **Serveur standalone avec tableau de bord.** Cap fournit d'emblée des statistiques, la gestion de plusieurs clés de site et un point d'accès siteverify compatible reCAPTCHA.
+- **Serveur auto-hébergé avec tableau de bord.** Cap fournit d'emblée des statistiques, la gestion de plusieurs clés de site et un point d'accès siteverify compatible reCAPTCHA.
 - **Interface du widget.** Cap est conçu pour être visible par les humains sur un formulaire : case à cocher, indicateur de progression et espace de marque. Anubis, lui, est un portail transparent.
 
 ## Ils peuvent coexister

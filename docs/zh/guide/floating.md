@@ -4,37 +4,32 @@ description: "Cap 验证组件的浮动模式会隐藏这个开源 CAPTCHA，直
 
 # 浮动模式
 
-Cap 可以自动隐藏 CAPTCHA，等按钮被按下时再显示。用法是在触发元素上添加 `data-cap-floating` 属性，值为你想使用的 `cap-widget` 元素的查询选择器。
+浮动模式会隐藏验证组件，直到有人按下按钮。随后组件会显示在按钮旁边，完成求解后再次隐藏，并第二次点击按钮，因此提交按钮会继续提交带有令牌的表单。
+
+在验证组件之后加载浮动模式脚本：
 
 ```html
-<cap-widget
-  id="floating"
-  onsolve="console.log(`token: ${event.detail.token}`)"
-  data-cap-api-endpoint="<api endpoint>"
-></cap-widget>
-
-<button data-cap-floating="#floating" data-cap-floating-position="bottom">
-  Trigger floating mode
-</button>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>/cap-floating.min.js"></script>
 ```
 
-你还需要从 JSDelivr 同时引入 Cap 库和浮动模式脚本：
+在 capd 的[静态资源服务器](./capd/options.md#asset-server)中，浮动模式脚本位于 `/assets/floating.js`。
 
-```html{2}
-<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
-<script src="https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js"></script> <!-- [!code ++] -->
-```
-
-或从 Standalone 服务端引入：
+然后使用 CSS 选择器将按钮指向验证组件：
 
 ```html
-<script src="https://<server url>/assets/widget.js"></script>
-<script src="https://<server url>/assets/floating.js"></script>
-<!-- [!code ++] -->
+<form action="/submit" method="POST">
+  <cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit" data-cap-floating="#cap">Submit</button>
+</form>
 ```
 
-支持以下属性：
+| 属性 | 说明 |
+| --- | --- |
+| `data-cap-floating` | 要显示的验证组件的选择器。 |
+| `data-cap-floating-position` | 显示在按钮的 `top` 或 `bottom`。默认为 `top`。 |
+| `data-cap-floating-offset` | 按钮与验证组件之间的间距，单位为像素。默认为 `8`。 |
 
-- `data-cap-floating`：你想使用的 `cap-widget` 元素的 CSS 选择器。
-- `data-cap-floating-position`：浮动组件的位置，可以是 `top` 或 `bottom`。
-- `data-cap-floating-offset`：浮动组件相对触发元素的偏移量。
+求解完成后，按钮的 `data-cap-token` 中也会包含令牌。
+
+验证组件一出现就会开始求解，无需点击它。在启用[行为评分](./instrumentation.md#行为评分)并要求交互的密钥上，浮动求解会以 `behavior_no_interaction` 失败，与[隐形求解](./invisible.md#启用行为评分的密钥)相同。

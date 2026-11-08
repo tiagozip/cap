@@ -5,7 +5,7 @@ faq:
   - q: Ist Cap besser als SilentShield?
     a: "Für Teams, die ein quelloffenes, selbst gehostetes CAPTCHA ohne Gebühren pro Request und mit voller Kontrolle über Schwierigkeit und Daten wollen, ist Cap die stärkere Wahl. SilentShield passt zu Teams, die einen gemanagten, unsichtbaren Dienst mit Verhaltensanalyse wollen und mit einer Request-Quote sowie einer Abhängigkeit von Dritten leben können."
   - q: Ist Cap quelloffen?
-    a: "Ja. Cap ist vollständig quelloffen unter der Apache-2.0-Lizenz, inklusive Widget, Server und dem Standalone-Docker-Deployment."
+    a: "Ja. Cap ist vollständig quelloffen unter der Apache-2.0-Lizenz, inklusive Widget, Server und capd, dem Docker-Deployment."
   - q: Ist SilentShield quelloffen?
     a: "Nein. SilentShield ist ein gehosteter Closed-Source-Dienst. Seine Erkennungslogik läuft auf den Servern von SilentShield und lässt sich weder prüfen noch selbst hosten."
   - q: Was eignet sich besser zum Selbst-Hosten?
@@ -78,7 +78,7 @@ Für Teams, die ein quelloffenes, selbst gehostetes CAPTCHA ohne Gebühren pro R
 
 ### Ist Cap quelloffen?
 
-Ja. Cap ist vollständig quelloffen unter der Apache-2.0-Lizenz, inklusive Widget, Server und dem Standalone-Docker-Deployment.
+Ja. Cap ist vollständig quelloffen unter der Apache-2.0-Lizenz, inklusive Widget, Server und capd, dem Docker-Deployment.
 
 ### Ist SilentShield quelloffen?
 

@@ -13,7 +13,7 @@ sidebar: false
 Cap est une protection anti-bot que vous pouvez lire, auditer et auto-héberger :
 
 - Un **widget d'environ 20 Ko** qui affiche une simple case à cocher au lieu de puzzles d'images.
-- Un **serveur standalone** livré sous forme d'un seul conteneur Docker, avec tableau de bord et prise en charge de plusieurs clés de site.
+- **capd**, un serveur livré sous forme d'un seul conteneur Docker, avec tableau de bord et prise en charge de plusieurs clés de site.
 - Des **bibliothèques serveur** (`@cap.js/server` et portages communautaires) pour vérifier les défis dans votre propre backend.
 - Une **API siteverify compatible avec reCAPTCHA et hCaptcha**, si bien que migrer revient surtout à changer une URL.
 

@@ -6,6 +6,6 @@ head:
       content: noindex, follow
 ---
 
-# Standalone 服务端
+# capd
 
-[**本页面已迁移**](standalone/index.md)
+[**本页面已迁移**](capd/index.md)

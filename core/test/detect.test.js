@@ -1,13 +1,31 @@
 import { describe, expect, test } from "bun:test";
 import { inflateRawSync } from "node:zlib";
 import { detectAutomation, geometryStats } from "../src/detect.js";
+import { validateChallenge } from "../src/index.js";
 import {
   generateInstrumentation,
   verifyInstrumentationResult,
 } from "../src/instrumentation.js";
+import {
+  boundPayload,
+  issue,
+  solveChallengeFromPublic,
+  TEST_SECRET,
+} from "./helpers.js";
 
 const frac = (n) => Array.from({ length: n }, (_, i) => 1200.88 + i * 3.17);
 const ints = (n) => Array.from({ length: n }, (_, i) => 1200 + i * 3);
+
+const nav = (over = {}) => ({
+  ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+  platform: "MacIntel",
+  languages: "en-US,en",
+  hc: 8,
+  tz: "Europe/Lisbon",
+  brands: "Google Chrome/151,Chromium/151,Not.A/Brand/99",
+  brave: false,
+  ...over,
+});
 
 const chromeHuman = () => ({
   ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
@@ -23,6 +41,10 @@ const chromeHuman = () => ({
   plugins: { length: 5 },
   pdfViewerEnabled: true,
   engine: { hasMozInnerScreenX: false, hasChrome: true },
+  maxTouchPoints: 0,
+  juggler: null,
+  mainNav: nav(),
+  workerNav: nav({ brands: null }),
   screen: { width: 1920, height: 1080 },
   innerWH: [945, 868],
   outerWH: [945, 1060],
@@ -48,6 +70,9 @@ const firefoxHuman = () => ({
   plugins: { length: 5 },
   pdfViewerEnabled: true,
   engine: { hasMozInnerScreenX: true, hasChrome: false },
+  maxTouchPoints: 0,
+  juggler: false,
+  mainNav: nav(),
   screen: { width: 1920, height: 1080 },
   innerWH: [1200, 900],
   outerWH: [1200, 985],
@@ -73,6 +98,8 @@ const safariHuman = () => ({
   plugins: { length: 2 },
   pdfViewerEnabled: true,
   engine: { hasMozInnerScreenX: false, hasChrome: false },
+  maxTouchPoints: 0,
+  mainNav: nav(),
   screen: { width: 1728, height: 1117 },
   innerWH: [1200, 900],
   outerWH: [1200, 980],
@@ -95,6 +122,7 @@ describe("geometryStats", () => {
   test("counts whole-pixel widths and distinct values", () => {
     expect(geometryStats([1200, 1200, 1200, 1300, 1.5, 2.5])).toEqual({
       count: 4,
+      blank: 0,
       distinct: 2,
       n: 6,
     });
@@ -166,6 +194,8 @@ describe("detectAutomation humans", () => {
       plugins: { length: 0 },
       pdfViewerEnabled: true,
       engine: { hasMozInnerScreenX: false, hasChrome: false },
+      maxTouchPoints: 5,
+      mainNav: nav(),
       screen: { width: 390, height: 844 },
       innerWH: [390, 664],
       outerWH: [390, 844],
@@ -258,9 +288,62 @@ describe("detectAutomation humans", () => {
     expect(r.riskFlags).toEqual(["native_tamper"]);
   });
 
+  test("CDP console trap and patched attachShadow are risk flags, not blocks", () => {
+    const S = chromeHuman();
+    S.cdp = { trap: true, shadow: false };
+    const r = detectAutomation(S, { fontStackCount: 17 });
+    expect(r.pass).toBe(true);
+    expect(r.riskFlags).toEqual(["cdp_console_trap", "attach_shadow_patched"]);
+  });
+
+  test("a clean or missing cdp field raises no flags", () => {
+    const S = chromeHuman();
+    expect(detectAutomation(S, { fontStackCount: 17 }).riskFlags).toEqual([]);
+    S.cdp = { trap: false, shadow: true };
+    expect(detectAutomation(S, { fontStackCount: 17 }).riskFlags).toEqual([]);
+  });
+
   test("missing viewport (old widget) does not block", () => {
     const S = chromeHuman();
     delete S.innerWH;
+    expect(detectAutomation(S).pass).toBe(true);
+  });
+
+  test("brave farbling cores and languages differently in a worker passes", () => {
+    const S = chromeHuman();
+    S.mainNav = nav({ brave: true, hc: 4, languages: "en-US" });
+    S.workerNav = nav({
+      brave: true,
+      hc: 6,
+      languages: "en-US,en",
+      brands: null,
+    });
+    expect(detectAutomation(S).pass).toBe(true);
+  });
+
+  test("worker that failed to start does not block", () => {
+    const S = chromeHuman();
+    S.workerNav = null;
+    expect(detectAutomation(S).pass).toBe(true);
+  });
+
+  test("chromium on a touch device without window.chrome passes", () => {
+    const S = chromeHuman();
+    S.engine.hasChrome = false;
+    S.maxTouchPoints = 5;
+    expect(detectAutomation(S).pass).toBe(true);
+  });
+
+  test("mobile chromium without window.chrome passes", () => {
+    const S = chromeHuman();
+    S.engine.hasChrome = false;
+    S.uaData.mobile = true;
+    expect(detectAutomation(S).pass).toBe(true);
+  });
+
+  test("juggler flag on a non-gecko engine is ignored", () => {
+    const S = safariHuman();
+    S.juggler = true;
     expect(detectAutomation(S).pass).toBe(true);
   });
 });
@@ -272,6 +355,14 @@ describe("detectAutomation bots", () => {
     const r = detectAutomation(S);
     expect(r.pass).toBe(false);
     expect(r.blockedBy).toEqual(["geometry_quantized"]);
+  });
+
+  test("font widths measured in an unrendered frame are all zero", () => {
+    const S = chromeHuman();
+    S.fontWidths = Array(17).fill(0);
+    const r = detectAutomation(S);
+    expect(r.pass).toBe(false);
+    expect(r.blockedBy).toEqual(["geometry_unmeasured"]);
   });
 
   test("plain playwright: webdriver true", () => {
@@ -392,16 +483,44 @@ describe("detectAutomation bots", () => {
     expect(detectAutomation(null).pass).toBe(false);
     expect(detectAutomation(null).blockedBy).toEqual(["probe_missing"]);
   });
+
+  test("playwright firefox: juggler package registered", () => {
+    const S = firefoxHuman();
+    S.juggler = true;
+    expect(detectAutomation(S).blockedBy).toEqual(["juggler_package"]);
+  });
+
+  test("headless shell with a spoofed ua: no window.chrome", () => {
+    const S = chromeHuman();
+    S.engine.hasChrome = false;
+    expect(detectAutomation(S).blockedBy).toEqual(["chrome_object_missing"]);
+  });
+
+  test("playwright locale option leaks through the worker", () => {
+    const S = chromeHuman();
+    S.mainNav = nav({ languages: "de-DE" });
+    S.workerNav = nav({ languages: "en-US", brands: null });
+    const r = detectAutomation(S);
+    expect(r.blockedBy).toEqual(["worker_mismatch"]);
+    expect(r.checks.find((c) => c.id === "worker_mismatch").detail).toBe(
+      "differs in worker: languages",
+    );
+  });
+
+  test("init script spoofing ua and cores leaks through the worker", () => {
+    const S = chromeHuman();
+    S.mainNav = nav({
+      ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/156.0.0.0",
+      hc: 16,
+    });
+    S.workerNav = nav({ brands: null });
+    expect(
+      detectAutomation(S).checks.find((c) => c.id === "worker_mismatch").detail,
+    ).toBe("differs in worker: ua, hc");
+  });
 });
 
 describe("verifyInstrumentationResult with probe", () => {
-  const stateFor = (r) => {
-    const state = {};
-    for (let i = 0; i < r.vars.length; i++)
-      state[r.vars[i]] = r.expectedVals[i];
-    return state;
-  };
-
   test("generated script collects the probe", async () => {
     const r = await generateInstrumentation({ obfuscationLevel: 1 });
     const js = inflateRawSync(
@@ -416,11 +535,7 @@ describe("verifyInstrumentationResult with probe", () => {
     const r = await generateInstrumentation({ blockAutomatedBrowsers: true });
     const S = chromeHuman();
     S.webdriver = true;
-    const v = verifyInstrumentationResult(r, {
-      i: r.id,
-      state: stateFor(r),
-      p: S,
-    });
+    const v = verifyInstrumentationResult(r, boundPayload(r, { p: S }));
     expect(v.valid).toBe(false);
     expect(v.reason).toBe("instr_automated_browser");
     expect(v.blockedBy).toEqual(["webdriver_true"]);
@@ -428,7 +543,7 @@ describe("verifyInstrumentationResult with probe", () => {
 
   test("blocking mode requires the probe", async () => {
     const r = await generateInstrumentation({ blockAutomatedBrowsers: true });
-    const v = verifyInstrumentationResult(r, { i: r.id, state: stateFor(r) });
+    const v = verifyInstrumentationResult(r, boundPayload(r));
     expect(v.valid).toBe(false);
     expect(v.reason).toBe("instr_probe_missing");
   });
@@ -439,12 +554,10 @@ describe("verifyInstrumentationResult with probe", () => {
     delete S.innerWH;
     S.screen = { width: 1280, height: 720 };
     S.outerWH = [1288, 805];
-    const v = verifyInstrumentationResult(r, {
-      i: r.id,
-      state: stateFor(r),
-      p: S,
-      vp: [1280, 720],
-    });
+    const v = verifyInstrumentationResult(
+      r,
+      boundPayload(r, { p: S, vp: [1280, 720] }),
+    );
     expect(v.valid).toBe(false);
     expect(v.blockedBy).toContain("viewport_override");
   });
@@ -454,11 +567,7 @@ describe("verifyInstrumentationResult with probe", () => {
     const S = chromeHuman();
     S.webdriver = true;
     S.tamper.toDataURL = false;
-    const v = verifyInstrumentationResult(r, {
-      i: r.id,
-      state: stateFor(r),
-      p: S,
-    });
+    const v = verifyInstrumentationResult(r, boundPayload(r, { p: S }));
     expect(v.valid).toBe(true);
     expect(v.riskFlags).toEqual(["native_tamper"]);
     expect(v.blockedBy).toEqual(["webdriver_true"]);
@@ -466,11 +575,184 @@ describe("verifyInstrumentationResult with probe", () => {
 
   test("human vector passes in blocking mode", async () => {
     const r = await generateInstrumentation({ blockAutomatedBrowsers: true });
-    const v = verifyInstrumentationResult(r, {
-      i: r.id,
-      state: stateFor(r),
-      p: chromeHuman(),
-    });
+    const v = verifyInstrumentationResult(
+      r,
+      boundPayload(r, { p: chromeHuman() }),
+    );
     expect(v.valid).toBe(true);
+  });
+});
+
+describe("detectAutomation headless research checks", () => {
+  const human = () => ({
+    ...chromeHuman(),
+    hev: {
+      pv: "15.1.0",
+      ar: "arm",
+      fv: "151.0.7000.1",
+      bi: "64",
+      fl: "Google Chrome,Chromium,Not.A/Brand",
+    },
+    lies: [],
+    stealth: { iframe: false, runtime: false },
+    activeText: ["rgb(255, 0, 0)", false],
+    evalLen: 33,
+    langs: [2, true],
+    host: {
+      nav: { ...nav(), webdriver: false },
+      doc: false,
+      cdp: false,
+    },
+  });
+
+  test("a desktop chrome with every new field passes with no flags", () => {
+    const r = detectAutomation(human());
+    expect(r.pass).toBe(true);
+    expect(r.riskFlags).toEqual([]);
+  });
+
+  test("a user agent override without hints blocks on desktop", () => {
+    const S = human();
+    S.uaData.brands = [];
+    S.hev = { pv: "", ar: "", fv: "", bi: "", fl: "" };
+    expect(detectAutomation(S).blockedBy).toContain("ua_hints_blank");
+  });
+
+  test("empty brands on android is not a block", () => {
+    const S = human();
+    S.ua =
+      "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Mobile Safari/537.36";
+    S.uaData = { mobile: true, brands: [] };
+    expect(detectAutomation(S).blockedBy).not.toContain("ua_hints_blank");
+  });
+
+  test("a fake chrome.runtime or attached iframe proxy blocks", () => {
+    const S = human();
+    S.stealth = { iframe: true, runtime: true };
+    expect(detectAutomation(S).blockedBy).toEqual(["stealth_patches"]);
+  });
+
+  test("proxied getters join native_tamper as a risk flag", () => {
+    const S = human();
+    S.lies = ["languages", "webdriver"];
+    const r = detectAutomation(S);
+    expect(r.pass).toBe(true);
+    expect(r.riskFlags).toEqual(["native_tamper"]);
+  });
+
+  test("a V8 engine claiming Firefox is flagged", () => {
+    const S = firefoxHuman();
+    S.evalLen = 33;
+    expect(detectAutomation(S).riskFlags).toContain("engine_mismatch");
+  });
+
+  test("windows claim rendering ActiveText red is flagged", () => {
+    const S = human();
+    S.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
+    expect(detectAutomation(S).riskFlags).toContain("os_mismatch");
+    S.activeText = ["rgb(0, 102, 204)", false];
+    expect(detectAutomation(S).riskFlags).not.toContain("os_mismatch");
+  });
+
+  test("forced colors on windows is not flagged", () => {
+    const S = human();
+    S.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
+    S.activeText = ["rgb(255, 0, 0)", true];
+    expect(detectAutomation(S).riskFlags).not.toContain("os_mismatch");
+  });
+
+  test("empty languages are flagged", () => {
+    const S = human();
+    S.langs = [0, false];
+    expect(detectAutomation(S).riskFlags).toContain("languages_inconsistent");
+  });
+
+  test("host page values that differ from Cap's frame are flagged", () => {
+    const S = human();
+    S.host.nav = { ...S.host.nav, languages: "de-DE", webdriver: true };
+    expect(detectAutomation(S).riskFlags).toContain("frame_mismatch");
+  });
+
+  test("a host user agent rewritten by an embedding app is not flagged", () => {
+    const S = human();
+    S.host.nav = { ...S.host.nav, ua: "Mozilla/5.0 Something/1.0" };
+    expect(detectAutomation(S).riskFlags).not.toContain("frame_mismatch");
+  });
+
+  test("an intercepted document and host cdp are risk flags", () => {
+    const S = human();
+    S.host.doc = true;
+    S.cdp = { trap: true, shadow: true };
+    const r = detectAutomation(S);
+    expect(r.pass).toBe(true);
+    expect(r.riskFlags).toEqual(["document_intercepted", "cdp_console_trap"]);
+  });
+
+  test("a worker reporting another webgl renderer is a mismatch", () => {
+    const S = human();
+    S.mainNav = nav({ gl: "Intel Iris OpenGL Engine" });
+    S.workerNav = nav({ brands: null, gl: "ANGLE (Apple, M3)" });
+    expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+  });
+});
+
+describe("malformed probe values", () => {
+  const evil = { toString: 1 };
+  const cases = {
+    "host brands": (d) => {
+      d.hp = { nav: { brands: evil } };
+    },
+    "main brands": (d) => {
+      d.p.mainNav.brands = evil;
+    },
+    webdriver: (d) => {
+      d.p.webdriver = evil;
+    },
+    ua: (d) => {
+      d.p.ua = evil;
+    },
+    "uaData brand": (d) => {
+      d.p.uaData.brands[0] = evil;
+    },
+    "first language": (d) => {
+      d.p.langs = [evil, true];
+    },
+  };
+
+  for (const [name, mutate] of Object.entries(cases)) {
+    for (const block of [false, true]) {
+      test(`${name} fails without throwing (block ${block})`, async () => {
+        const { challenge, meta } = await issue({
+          instrumentation: { blockAutomatedBrowsers: block },
+        });
+        const S = chromeHuman();
+        const d = { p: S };
+        mutate(d);
+        const r = await validateChallenge(TEST_SECRET, {
+          token: challenge.token,
+          solutions: await solveChallengeFromPublic(challenge),
+          instr: boundPayload(meta, d),
+        });
+        expect(r.success).toBe(false);
+        expect(r.reason).toBe("failed_challenge");
+        expect(() => detectAutomation({ ...S, host: d.hp })).not.toThrow();
+      });
+    }
+  }
+
+  test("a throw inside verification is a failure", () => {
+    const meta = { id: "x", vars: [] };
+    const payload = { i: "x", state: {} };
+    Object.defineProperty(meta, "binding", {
+      get() {
+        throw new Error("boom");
+      },
+    });
+    expect(verifyInstrumentationResult(meta, payload)).toEqual({
+      valid: false,
+      reason: "failed_challenge",
+    });
   });
 });

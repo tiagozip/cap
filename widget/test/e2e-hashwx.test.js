@@ -153,9 +153,11 @@ if (!SHOULD_RUN_E2E) {
         const wrapped = new WeakMap();
         window.Worker = class extends Base {
           addEventListener(type, fn, opts) {
-            if (type !== "message") return super.addEventListener(type, fn, opts);
+            if (type !== "message")
+              return super.addEventListener(type, fn, opts);
             const inner = (e) => {
-              if (e.data?.found === false && e.data?.error === "stopped") return;
+              if (e.data?.found === false && e.data?.error === "stopped")
+                return;
               fn(e);
             };
             wrapped.set(fn, inner);

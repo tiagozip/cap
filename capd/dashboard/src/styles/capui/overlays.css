@@ -1,0 +1,230 @@
+@keyframes combobox-erasing-in {
+  0%,
+  60% {
+    opacity: 0;
+  }
+}
+
+@keyframes calendar-month-in {
+  0% {
+    opacity: 0;
+    translate: calc(var(--calendar-month-from) * var(--calendar-month-side, 1))
+      0;
+  }
+}
+
+.popover-arrow {
+  background: var(--popover);
+  border: 0 solid var(--foreground);
+  width: 9px;
+  height: 9px;
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .popover-arrow {
+    border: 0 solid color-mix(in oklab, var(--foreground) 10%, transparent);
+  }
+}
+
+.popover-arrow {
+  pointer-events: none;
+  transform: rotate(45deg);
+}
+
+.popover-arrow[data-side="bottom"] {
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  border-top-width: 1px;
+  border-left-width: 1px;
+  border-top-left-radius: 2px;
+  top: -4.5px;
+}
+
+.popover-arrow[data-side="top"] {
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+  border-bottom-right-radius: 2px;
+  bottom: -4.5px;
+}
+
+.popover-arrow[data-side="right"],
+.popover-arrow[data-side="inline-end"] {
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+  border-bottom-left-radius: 2px;
+  left: -4.5px;
+}
+
+.popover-arrow[data-side="left"],
+.popover-arrow[data-side="inline-start"] {
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  border-top-width: 1px;
+  border-right-width: 1px;
+  border-top-right-radius: 2px;
+  right: -4.5px;
+}
+
+.popover-arrow[data-side="inline-end"]:is(
+    :lang(ae),
+    :lang(ar),
+    :lang(arc),
+    :lang(bcc),
+    :lang(bqi),
+    :lang(ckb),
+    :lang(dv),
+    :lang(fa),
+    :lang(glk),
+    :lang(he),
+    :lang(ku),
+    :lang(mzn),
+    :lang(nqo),
+    :lang(pnb),
+    :lang(ps),
+    :lang(sd),
+    :lang(ug),
+    :lang(ur),
+    :lang(yi)
+  ) {
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  border-width: 1px 1px 0 0;
+  border-radius: 0 2px 0 0;
+  left: auto;
+  right: -4.5px;
+}
+
+.popover-arrow[data-side="inline-start"]:is(
+    :lang(ae),
+    :lang(ar),
+    :lang(arc),
+    :lang(bcc),
+    :lang(bqi),
+    :lang(ckb),
+    :lang(dv),
+    :lang(fa),
+    :lang(glk),
+    :lang(he),
+    :lang(ku),
+    :lang(mzn),
+    :lang(nqo),
+    :lang(pnb),
+    :lang(ps),
+    :lang(sd),
+    :lang(ug),
+    :lang(ur),
+    :lang(yi)
+  ) {
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  border-width: 0 0 1px 1px;
+  border-radius: 0 0 0 2px;
+  left: -4.5px;
+  right: auto;
+}
+
+@keyframes popover-flip-in {
+  0% {
+    transform: perspective(600px) rotateX(var(--popover-tilt-x, 0deg))
+      rotateY(var(--popover-tilt-y, 0deg)) scale(0.94);
+  }
+}
+
+@keyframes popover-flip-out {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.popover-panel[data-side="bottom"] {
+  --popover-tilt-x: -20deg;
+}
+
+.popover-panel[data-side="top"] {
+  --popover-tilt-x: 20deg;
+}
+
+.popover-panel[data-side="right"],
+.popover-panel[data-side="inline-end"] {
+  --popover-tilt-y: 20deg;
+}
+
+.popover-panel[data-side="left"],
+.popover-panel[data-side="inline-start"],
+.popover-panel[data-side="inline-end"]:is(
+    :lang(ae),
+    :lang(ar),
+    :lang(arc),
+    :lang(bcc),
+    :lang(bqi),
+    :lang(ckb),
+    :lang(dv),
+    :lang(fa),
+    :lang(glk),
+    :lang(he),
+    :lang(ku),
+    :lang(mzn),
+    :lang(nqo),
+    :lang(pnb),
+    :lang(ps),
+    :lang(sd),
+    :lang(ug),
+    :lang(ur),
+    :lang(yi)
+  ) {
+  --popover-tilt-y: -20deg;
+}
+
+.popover-panel[data-side="inline-start"]:is(
+    :lang(ae),
+    :lang(ar),
+    :lang(arc),
+    :lang(bcc),
+    :lang(bqi),
+    :lang(ckb),
+    :lang(dv),
+    :lang(fa),
+    :lang(glk),
+    :lang(he),
+    :lang(ku),
+    :lang(mzn),
+    :lang(nqo),
+    :lang(pnb),
+    :lang(ps),
+    :lang(sd),
+    :lang(ug),
+    :lang(ur),
+    :lang(yi)
+  ) {
+  --popover-tilt-y: 20deg;
+}
+
+.popover-panel[data-open] {
+  animation:
+    popover-flip-in 0.3s var(--ease-out),
+    popover-fade-in 0.16s var(--ease-out);
+}
+
+.popover-panel[data-closed] {
+  animation: popover-flip-out 0.16s var(--ease-exit) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popover-panel[data-open] {
+    animation: popover-fade-in 0.14s var(--ease-out);
+  }
+  .popover-panel[data-closed] {
+    animation: popover-fade-out 0.14s var(--ease-exit) forwards;
+  }
+}
+
+@keyframes popover-fade-in {
+  0% {
+    opacity: 0;
+  }
+}
+
+@keyframes popover-fade-out {
+  to {
+    opacity: 0;
+  }
+}

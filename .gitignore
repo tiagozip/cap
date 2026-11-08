@@ -94,11 +94,12 @@ debug/
 target/
 **/*.rs.bk
 *.pdb
-standalone/test-local.sh
-standalone/public/tester.html
-standalone/data/
+capd/test-local.sh
+capd/public/tester.html
+capd/data/
 trycap
 .claude
 bench
 .wrangler
 .cloudflare
+docs/public/demo/

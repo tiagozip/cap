@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useData } from "vitepress";
 import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNavBarSearch.vue";
 import VPNavBarTranslations from "vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue";
+import DashboardDemo from "./DashboardDemo.vue";
 import HomeDemo from "./HomeDemo.vue";
 import HomeOdometer from "./HomeOdometer.vue";
 import HomeToolbox from "./HomeToolbox.vue";
@@ -29,7 +30,7 @@ const faq = computed(() => {
     { q: s.faqCostQ, a: s.faqCostA },
     {
       q: s.faqOpenQ,
-      html: `${s.faqOpenA1}<a href="${p}/guide/standalone/">${s.faqOpenLink}</a>${s.faqOpenA2}`,
+      html: `${s.faqOpenA1}<a href="${p}/guide/capd/">${s.faqOpenLink}</a>${s.faqOpenA2}`,
     },
     {
       q: s.faqAltQ,
@@ -53,11 +54,60 @@ const checkIds = [
 
 const ghPath = "M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z";
 
-const browserChecks = [
+const browserChecks = ref([
   { label: "Verify the browser", hint: "Check the browser environment.", on: true },
   { label: "Block detected browser automation", hint: "Reject detected automation tools.", on: true },
   { label: "Block automated clicks and typing", hint: "Experimental. Blocks repeated synthetic clicks or key presses.", on: false },
-];
+]);
+const difficulty = ref(1000000);
+const difficultyLabel = computed(() => difficulty.value.toLocaleString("en-US"));
+
+const toggleCheck = (i) => {
+  if (i > 0 && !browserChecks.value[0].on) return;
+  browserChecks.value[i].on = !browserChecks.value[i].on;
+};
+
+const agentResult = computed(() => {
+  const c = browserChecks.value;
+  if (!c[0].on) return { success: true, reason: null, blockedBy: [], riskFlags: [] };
+  const blockedBy = [];
+  const riskFlags = [];
+  (c[1].on ? blockedBy : riskFlags).push("webdriver_true", "headless_token");
+  (c[2].on ? blockedBy : riskFlags).push("interaction_synthetic_clicks");
+  const reason = blockedBy.includes("webdriver_true")
+    ? "instr_automated_browser"
+    : blockedBy.length
+      ? "instr_automated_interaction"
+      : null;
+  return { success: blockedBy.length === 0, reason, blockedBy, riskFlags };
+});
+
+const activeChecks = computed(() => [...agentResult.value.blockedBy, ...agentResult.value.riskFlags]);
+
+const resultLines = computed(() => {
+  const r = agentResult.value;
+  const ind = (n) => ({ t: " ".repeat(n), c: "j-p" });
+  const key = (k) => ({ t: `"${k}"`, c: "j-k" });
+  const str = (s) => ({ t: `"${s}"`, c: "j-s" });
+  const colon = { t: ": ", c: "j-p" };
+  const comma = { t: ",", c: "j-p" };
+
+  const entries = [[[ind(2), key("success"), colon, { t: String(r.success), c: r.success ? "j-true" : "j-b" }]]];
+  if (r.reason) entries.push([[ind(2), key("reason"), colon, str(r.reason)]]);
+  const list = r.blockedBy.length ? r.blockedBy : r.riskFlags;
+  const listKey = r.blockedBy.length ? "blockedBy" : "riskFlags";
+  if (list.length) {
+    const group = [[ind(2), key(listKey), { t: ": [", c: "j-p" }]];
+    list.forEach((f, i) => group.push([ind(4), str(f), ...(i < list.length - 1 ? [comma] : [])]));
+    group.push([{ t: "  ]", c: "j-p" }]);
+    entries.push(group);
+  }
+  entries.forEach((g, gi) => {
+    if (gi < entries.length - 1) g[g.length - 1] = [...g[g.length - 1], comma];
+  });
+
+  return [[{ t: "{", c: "j-p" }], ...entries.flat(), [{ t: "}", c: "j-p" }]];
+});
 
 const fromWidget = ref(false);
 const fromWidgetHost = ref("");
@@ -266,6 +316,26 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
+      <section id="dashboard" class="band">
+        <div class="wrap">
+          <div class="frame section">
+            <div class="head">
+              <h2>{{ t.dashTitle }}</h2>
+              <div class="head-side">
+                <p>{{ t.dashBody }}</p>
+              </div>
+            </div>
+            <DashboardDemo class="shot" theme="dark" :title="t.dashAlt" :activating="t.dashActivating" />
+            <dl class="facts">
+              <div v-for="[title, body] in t.dashFacts" :key="title">
+                <dt>{{ title }}</dt>
+                <dd>{{ body }}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
       <section id="agents" class="band">
         <div class="wrap">
           <div class="frame section">
@@ -278,69 +348,49 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="agents">
-              <div class="ui-window settings" aria-hidden="true">
+              <div class="ui-window settings">
                 <div class="settings-row">
-                  <span class="settings-label">HashWX difficulty</span>
-                  <span class="settings-value">1,000,000</span>
+                  <label class="settings-label" for="agents-difficulty">HashWX difficulty</label>
+                  <span class="settings-value">{{ difficultyLabel }}</span>
                 </div>
-                <div class="slider"><span></span></div>
+                <input
+                  id="agents-difficulty"
+                  class="slider"
+                  type="range"
+                  min="50000"
+                  max="5000000"
+                  step="50000"
+                  v-model.number="difficulty"
+                />
                 <div class="settings-group">Browser checks</div>
-                <div v-for="opt in browserChecks" :key="opt.label" class="toggle-row">
+                <button
+                  v-for="(opt, i) in browserChecks"
+                  :key="opt.label"
+                  type="button"
+                  class="toggle-row"
+                  role="switch"
+                  :aria-checked="opt.on"
+                  :disabled="i > 0 && !browserChecks[0].on"
+                  @click="toggleCheck(i)"
+                >
                   <span class="toggle" :class="{ on: opt.on }"><span></span></span>
                   <span>
                     <span class="toggle-label">{{ opt.label }}</span>
                     <span class="toggle-hint">{{ opt.hint }}</span>
                   </span>
-                </div>
+                </button>
               </div>
 
               <div class="agents-result">
                 <div class="ui-window">
                   <div class="ui-title">{{ t.agentsResultLabel }}</div>
-                  <pre class="json"><code><span class="j-p">{</span>
-  <span class="j-k">"success"</span>: <span class="j-b">false</span>,
-  <span class="j-k">"reason"</span>: <span class="j-s">"instr_automated_browser"</span>,
-  <span class="j-k">"blockedBy"</span>: [
-    <span class="j-s">"webdriver_true"</span>,
-    <span class="j-s">"headless_token"</span>
-  ]
-<span class="j-p">}</span></code></pre>
+                  <pre class="json" aria-live="polite"><code><span v-for="(line, li) in resultLines" :key="li" class="j-line"><span v-for="(tok, ti) in line" :key="ti" :class="tok.c">{{ tok.t }}</span></span></code></pre>
                 </div>
                 <ul class="checks">
-                  <li v-for="id in checkIds" :key="id"><code>{{ id }}</code></li>
+                  <li v-for="id in checkIds" :key="id" :class="{ active: activeChecks.includes(id) }"><code>{{ id }}</code></li>
                 </ul>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="dashboard" class="band">
-        <div class="wrap">
-          <div class="frame section">
-            <div class="head">
-              <h2>{{ t.dashTitle }}</h2>
-              <div class="head-side">
-                <p>{{ t.dashBody }}</p>
-              </div>
-            </div>
-            <figure class="shot">
-              <img
-                src="/assets/home/dashboard.webp"
-                srcset="/assets/home/dashboard-1x.webp 1440w, /assets/home/dashboard.webp 2880w"
-                sizes="(max-width: 1120px) 100vw, 1024px"
-                width="2880"
-                height="1800"
-                :alt="t.dashAlt"
-                loading="lazy"
-              />
-            </figure>
-            <dl class="facts">
-              <div v-for="[title, body] in t.dashFacts" :key="title">
-                <dt>{{ title }}</dt>
-                <dd>{{ body }}</dd>
-              </div>
-            </dl>
           </div>
         </div>
       </section>
@@ -436,7 +486,7 @@ onBeforeUnmount(() => {
             <div>
               <h3>{{ t.ftProductLabel }}</h3>
               <a :href="`${lp}/guide/`" data-cta="docs" data-cta-location="footer">{{ t.ftQuickstart }}</a>
-              <a :href="`${lp}/guide/standalone/`">Standalone</a>
+              <a :href="`${lp}/guide/capd/`">capd</a>
               <a :href="`${lp}/guide/widget.html`">{{ t.ftWidget }}</a>
               <a :href="`${lp}/guide/demo.html`" data-cta="demo" data-cta-location="footer">{{ t.ftDemo }}</a>
             </div>
@@ -1069,28 +1119,18 @@ html.home-v2-active main.main {
   font-variant-numeric: tabular-nums;
 }
 #homev2 .slider {
-  position: relative;
-  height: 6px;
-  margin: 14px 0 22px;
-  border-radius: 3px;
-  background: #ffffff0f;
+  appearance: auto;
+  width: 100%;
+  height: 18px;
+  margin: 10px 0 18px;
+  background: transparent;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
-#homev2 .slider span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 20%;
+#homev2 .slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
   border-radius: 3px;
-  background: var(--accent);
-}
-#homev2 .slider span::after {
-  content: "";
-  position: absolute;
-  right: -8px;
-  top: -5px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
 }
 #homev2 .settings-group {
   padding-top: 18px;
@@ -1103,6 +1143,28 @@ html.home-v2-active main.main {
   gap: 14px;
   align-items: flex-start;
   padding-block: 10px;
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+#homev2 .toggle-row:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+#homev2 .toggle-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+#homev2 .toggle {
+  transition: background 160ms ease;
+}
+#homev2 .toggle span {
+  transition: left 160ms ease;
 }
 #homev2 .toggle {
   flex-shrink: 0;
@@ -1159,8 +1221,14 @@ html.home-v2-active main.main {
 #homev2 .j-b {
   color: var(--danger);
 }
+#homev2 .j-true {
+  color: var(--success);
+}
 #homev2 .j-p {
   color: var(--text-faint);
+}
+#homev2 .j-line {
+  display: block;
 }
 #homev2 .checks {
   list-style: none;
@@ -1175,24 +1243,16 @@ html.home-v2-active main.main {
   box-shadow: inset 0 0 0 1px var(--edge);
   font-size: 0.75rem;
   color: var(--text-secondary);
+  transition:
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+#homev2 .checks li.active {
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 60%, transparent);
 }
 #homev2 .shot {
   margin-top: 56px;
-  padding: 8px;
-  border-radius: 18px;
-  background: var(--panel);
-  box-shadow:
-    inset 0 0 0 1px var(--edge),
-    0 2px 4px #00000033,
-    0 24px 48px #00000040;
-}
-#homev2 .shot img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 11px;
-  outline: 1px solid #ffffff14;
-  outline-offset: -1px;
 }
 #homev2 .facts {
   margin-top: 40px;
@@ -1554,20 +1614,6 @@ html.home-v2-active main.main {
   }
   #homev2 .json {
     font-size: 0.75rem;
-  }
-  #homev2 .shot {
-    padding: 4px;
-    border-radius: 12px;
-  }
-  #homev2 .shot {
-    overflow: hidden;
-  }
-  #homev2 .shot img {
-    width: 210%;
-    max-width: none;
-    margin-left: -50%;
-    border-radius: 0;
-    outline: 0;
   }
   #homev2 .foot-cols {
     grid-template-columns: 1fr 1fr;

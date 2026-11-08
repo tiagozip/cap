@@ -6,16 +6,31 @@ export interface ChallengeSpec {
 
 export interface InstrumentationOptions {
   blockAutomatedBrowsers?: boolean;
+  detectAutomatedInteractions?: boolean;
+  blockAutomatedInteractions?: boolean;
   obfuscationLevel?: number;
   ttlMs?: number;
+  behavior?: boolean;
+}
+
+export interface InstrumentationBinding {
+  pv: number[];
+  sl: number[];
+  hs: [number, number];
+  j: [number, number];
 }
 
 export interface GeneratedInstrumentation {
   id: string;
+  iat?: number;
   expires: number;
-  expectedVals: number[];
   vars: string[];
+  binding?: InstrumentationBinding;
+  expectedVals?: number[];
   blockAutomatedBrowsers: boolean;
+  detectAutomatedInteractions?: boolean;
+  blockAutomatedInteractions?: boolean;
+  behavior?: boolean;
   instrumentation: string;
 }
 
@@ -47,8 +62,108 @@ export interface RswMinter {
   mint(): { x_hex: string; y_hex: string };
 }
 
+export interface BehaviorOptions {
+  block?: boolean;
+  threshold?: number;
+  strict?: boolean;
+  requireInteraction?: boolean;
+  blockAgents?: false | "identified" | "all";
+  allowVerifiedAgents?: boolean;
+}
+
+export interface AgentResult {
+  detected: boolean;
+  name: string | null;
+  confidence: "low" | "medium" | "high";
+  verified: boolean;
+  evidence: string[];
+}
+
+export interface BehaviorTrace {
+  v: 1;
+  res: number;
+  now: number;
+  vis: number;
+  last: number;
+  env: number[];
+  n: number[];
+  m: [number, number, number, number, number][];
+  k: [number, number][];
+  a: Record<string, number> | null;
+  us: number;
+}
+
+export interface BehaviorResult {
+  score: number | null;
+  verdict:
+    | "ok"
+    | "no_interaction"
+    | "suspicious"
+    | "agent"
+    | "automated"
+    | "missing";
+  flags: string[];
+  signals: Record<string, unknown>;
+  agent?: AgentResult;
+}
+
+export function verifyWebBotAuth(
+  req: {
+    method: string;
+    url: string;
+    headers: Headers | Record<string, string>;
+  },
+  opts?: {
+    fetch?: typeof fetch;
+    now?: number;
+    maxSkewSec?: number;
+    trustedOrigins?: string[];
+    nonceCheck?: (nonce: string, ttlMs: number) => boolean | Promise<boolean>;
+  },
+): Promise<{
+  verified: boolean;
+  agent?: string;
+  origin?: string;
+  keyid?: string;
+  reason?: string;
+}>;
+
+export interface AgentEvidence {
+  agent: string | null;
+  confidence: "low" | "medium" | "high";
+  evidence: string;
+}
+
+export function agentFromHeaders(
+  headers: Headers | Record<string, string>,
+): AgentEvidence[];
+
+export function agentFromTrace(trace: BehaviorTrace): AgentEvidence[];
+
+export function summarizeAgent(
+  found: AgentEvidence[],
+  verification?: {
+    verified: boolean;
+    agent?: string;
+    origin?: string;
+  } | null,
+): AgentResult | null;
+
+export function parseSignatureAgent(
+  value: string | null | undefined,
+): { label: string | null; url: string }[];
+
+export const BEHAVIOR_WEIGHTS: Record<string, number>;
+export const DEFAULT_BEHAVIOR_THRESHOLD: number;
+export const WEAK_CAP: number;
+
+export function analyzeBehavior(
+  trace: unknown,
+  ctx?: { replayed?: boolean; strict?: boolean; threshold?: number },
+): BehaviorResult & { digest: string | null };
+
 export interface GenerateChallengeOptions {
-  // ── format-1 (default) ──
+  behavior?: boolean | BehaviorOptions;
   challengeCount?: number;
   challengeSize?: number;
   challengeDifficulty?: number;
@@ -60,23 +175,14 @@ export interface GenerateChallengeOptions {
     opts: InstrumentationOptions,
   ) => Promise<GeneratedInstrumentation>;
 
-  // ── format-2 opt-in ──
   format?: 2;
   protocols?: ProtocolName[];
-  /** RSW keypair, either as raw BigInts (from `generateRswKeypair`) or as a
-   *  serialized JSON-friendly form (from `serializeRswKeypair`). cap-core
-   *  builds the minter on first call and memoizes it on this object. */
   keypair?: RswKeypair | SerializedRswKeypair;
-  /** Number of sequential squarings the client must perform. Default 75_000. */
   t?: number;
-  /** Alternative to `keypair`: pass a pre-built minter (advanced). */
   rsw?: RswMinter;
 
-  /** Expected number of HashWX hashes per solve, across all sub-challenges. Default 1_000_000. */
   hashwxDifficulty?: number;
-  /** Nonces covered by each generated hash function. Default 65_536. */
   hashwxNoncesPerHash?: number;
-  /** Independent sub-challenges the difficulty is split across. Default 4. */
   hashwxChallengeCount?: number;
 }
 
@@ -90,6 +196,7 @@ export interface Format1ChallengeResult {
   token: string;
   expires: number;
   instrumentation?: string;
+  behavior?: true;
 }
 
 export interface Format2ChallengeResult {
@@ -97,6 +204,7 @@ export interface Format2ChallengeResult {
   format: 2;
   challenges: Format2ChallengeEntry[];
   expires: number;
+  behavior?: true;
 }
 
 export type ChallengeResult = Format1ChallengeResult | Format2ChallengeResult;
@@ -134,13 +242,59 @@ export interface DetectionResult {
   riskFlags: string[];
 }
 
+export interface BoundData {
+  v: 1;
+  el: number;
+  p: ProbeVector | null;
+  vp: [number, number] | null;
+  hp: Record<string, unknown> | null;
+  ag: string[];
+  ia: [number, number] | null;
+  bh: BehaviorTrace | null;
+}
+
 export interface InstrumentationPayload {
   i: string;
   state: Record<string, number>;
-  p?: ProbeVector;
-  vp?: [number, number];
-  ts?: number;
+  d: string;
 }
+
+export interface InstrumentationVerdict {
+  valid: boolean;
+  reason?: string;
+  riskFlags?: string[];
+  blockedBy?: string[];
+  checks?: DetectionCheck[];
+  agent?: {
+    all: string[];
+    host: boolean;
+    legacy: boolean;
+    isolated: boolean;
+    browser: string | null;
+  };
+  trace?: BehaviorTrace | null;
+}
+
+export const MAX_BOUND_DATA: number;
+
+export function generateInstrumentation(
+  opts?: InstrumentationOptions,
+): Promise<GeneratedInstrumentation & { binding: InstrumentationBinding }>;
+
+export function canonicalize<T>(value: T): T;
+
+export function serializeBound(data: BoundData): string;
+
+export function boundValues(
+  binding: InstrumentationBinding,
+  serialized: string,
+): number[];
+
+export function verifyInstrumentationResult(
+  meta: GeneratedInstrumentation,
+  payload: InstrumentationPayload,
+  now?: number,
+): InstrumentationVerdict;
 
 export interface Format2SolutionShaPow {
   nonce: number | string;
@@ -155,6 +309,7 @@ export interface Format2SolutionInstrumentation {
   instr?: InstrumentationPayload;
   blocked?: boolean;
   timeout?: boolean;
+  error?: string;
 }
 export type Format2Solution =
   | Format2SolutionShaPow
@@ -164,12 +319,11 @@ export type Format2Solution =
 
 export interface ValidateChallengeBody {
   token: string;
-  /** Format-1: an array of nonces. Format-2: an array of protocol-specific
-   *  solution objects, in the same order as `challenges`. */
   solutions: number[] | Format2Solution[];
   instr?: InstrumentationPayload;
   instr_blocked?: boolean;
   instr_timeout?: boolean;
+  instr_error?: string;
 }
 
 export interface ValidateChallengeOptions {
@@ -184,6 +338,23 @@ export interface ValidateChallengeOptions {
     expires: number;
     iat?: number;
   }) => Promise<string> | string;
+  request?: {
+    method: string;
+    url: string;
+    headers: Headers | Record<string, string>;
+  };
+  verifyWebBotAuth?: boolean;
+  webBotAuthAuthority?: string;
+  fetch?: typeof fetch;
+  trustedSignatureAgents?: string[];
+  webBotAuthNonceCheck?: (
+    nonce: string,
+    ttlMs: number,
+  ) => Promise<boolean> | boolean;
+  behaviorReplayCheck?: (
+    digest: string,
+    ttlMs: number,
+  ) => Promise<boolean> | boolean;
 }
 
 export interface ValidateChallengeSuccess {
@@ -193,17 +364,18 @@ export interface ValidateChallengeSuccess {
   expires: number;
   scope: string | null;
   iat?: number;
-  /** Non-gating automation signals (e.g. `native_tamper`). Raise difficulty, do not block. */
   riskFlags: string[];
+  behavior?: BehaviorResult;
+  agent?: AgentResult;
 }
 
 export interface ValidateChallengeFailure {
   success: false;
   reason: string;
   instr_error?: boolean;
-  /** Ids of the gating detection checks that failed, when reason is `instr_automated_browser`. */
   blockedBy?: string[];
   error?: string;
+  behavior?: BehaviorResult;
 }
 
 export type ValidateChallengeResult =
@@ -221,25 +393,16 @@ export function validateChallenge(
   opts?: ValidateChallengeOptions,
 ): Promise<ValidateChallengeResult>;
 
-// ─── RSW (format-2) helpers ────────────────────────────────────────────────
-/** Generates a fresh 2048-bit-by-default RSA-style modulus + factors. Expensive
- *  (~700 ms to several seconds depending on prime-roll luck). Generate once
- *  at boot and persist the result. */
 export function generateRswKeypair(bits?: number): RswKeypair;
 
-/** JSON-friendly form, safe to write to disk or env. */
 export function serializeRswKeypair(kp: RswKeypair): SerializedRswKeypair;
 export function deserializeRswKeypair(s: SerializedRswKeypair): RswKeypair;
 
-/** Build a minter for a specific squaring count `t`. Memoized when used via
- *  `generateChallenge({ keypair, t })`; this direct API is for callers who
- *  want full control. */
 export function buildRswMinter(
   args: { N: bigint; p: bigint; q: bigint; t: number; g?: bigint },
   opts?: { bits?: number },
 ): RswMinter;
 
-// ─── HashWX (format-2) helpers ─────────────────────────────────────────────
 export const DEFAULT_HASHWX_DIFFICULTY: number;
 export const DEFAULT_HASHWX_NONCES_PER_HASH: number;
 export const DEFAULT_HASHWX_CHALLENGE_COUNT: number;
@@ -250,36 +413,28 @@ export interface HashwxState {
   seedPtr: number;
 }
 
-/** Supplies a precompiled HashWX module for runtimes that forbid compiling
- *  wasm at runtime. Cloudflare Workers pick up
- *  the bundled `hashwx.wasm` automatically. Must be called before the first
- *  verification or `hashwxReady()`. */
 export function setHashwxModule(module: WebAssembly.Module): void;
 
-/** Compiles and initializes the embedded HashWX wasm. Called automatically on
- *  first verification; await it at boot to move the cost off the first
- *  request. Resolves to a state handle reusable with `hashwxHash`. */
 export function hashwxReady(): Promise<HashwxState>;
 
-/** Largest 64-bit hash accepted at the given difficulty. */
 export function hashwxTarget(difficulty: number | bigint): bigint;
 
-/** sha256(challenge || u64le(block)), the seed for one generated hash
- *  function. Each seed covers `hashwxNoncesPerHash` consecutive nonces. */
 export function hashwxSeed(
   challenge: Uint8Array,
   block: number | bigint,
 ): Uint8Array;
 
-/** Generates the hash function for `seed` and runs it over `nonce`. Returns an
- *  unsigned 64-bit value; a solution needs it at or below `hashwxTarget(d)`. */
 export function hashwxHash(
   state: HashwxState,
   seed: Uint8Array,
   nonce: bigint,
 ): bigint;
 
-/** Pure server-side automation detector over the probe vector the
- *  instrumentation script ships back. Exposed for testing and for callers
- *  that run their own instrumentation pipeline. */
-export function detectAutomation(vector: ProbeVector): DetectionResult;
+export interface DetectAutomationOptions {
+  fontStackCount?: number;
+}
+
+export function detectAutomation(
+  vector: ProbeVector,
+  opts?: DetectAutomationOptions,
+): DetectionResult;

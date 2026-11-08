@@ -176,7 +176,7 @@ const UI = {
     darkMode: "Appearance",
     langMenu: "Change language",
     footerMessage: "Licensed under Apache 2.0",
-    segNames: {},
+    segNames: { capd: "capd" },
   },
   zh: {
     home: "首页",
@@ -219,8 +219,7 @@ const UI = {
     footerMessage: "基于 Apache 2.0 许可发布",
     segNames: {
       alternatives: "对比",
-      middleware: "中间件",
-      standalone: "Standalone",
+      capd: "capd",
       troubleshooting: "故障排查",
     },
   },
@@ -265,8 +264,7 @@ const UI = {
     footerMessage: "Lizenziert unter Apache 2.0",
     segNames: {
       alternatives: "Vergleich",
-      middleware: "Middleware",
-      standalone: "Standalone",
+      capd: "capd",
       troubleshooting: "Fehlerbehebung",
     },
   },
@@ -311,8 +309,7 @@ const UI = {
     footerMessage: "Sous licence Apache 2.0",
     segNames: {
       alternatives: "Comparatifs",
-      middleware: "Middleware",
-      standalone: "Standalone",
+      capd: "capd",
       troubleshooting: "Dépannage",
     },
   },
@@ -357,8 +354,7 @@ const UI = {
     footerMessage: "เผยแพร่ภายใต้สัญญาอนุญาต Apache 2.0",
     segNames: {
       alternatives: "เปรียบเทียบ",
-      middleware: "มิดเดิลแวร์",
-      standalone: "Standalone",
+      capd: "capd",
       troubleshooting: "แก้ปัญหา",
     },
   },
@@ -419,8 +415,9 @@ const mainSidebar = (loc) => {
       text: t.server,
       collapsed: false,
       items: [
-        { text: "Standalone", link: `${p}/guide/standalone/index.md` },
-        { text: t.options, link: `${p}/guide/standalone/options.md` },
+        { text: "capd", link: `${p}/guide/capd/index.md` },
+        { text: t.options, link: `${p}/guide/capd/options.md` },
+        { text: "Workers", link: `${p}/guide/capd/workers.md` },
         { text: t.core, link: `${p}/guide/capjs-core.md` },
       ],
     },
@@ -669,8 +666,9 @@ export default withMermaid({
       llmstxt({
         ignoreFiles: [
           ...LOCALES.map((l) => `${l}/**`),
-          "guide/standalone/installation.md",
-          "guide/standalone/usage.md",
+          "guide/capd/installation.md",
+          "guide/capd/usage.md",
+          "guide/capd/migrate-v3-v4.md",
           "guide/effectiveness.md",
           "guide/solver.md",
         ],
@@ -983,8 +981,9 @@ export default withMermaid({
       const excluded = [
         "guide/standalone.html",
         "guide/server.html",
-        "guide/standalone/usage.html",
-        "guide/standalone/installation.html",
+        "guide/capd/usage.html",
+        "guide/capd/installation.html",
+        "guide/capd/migrate-v3-v4.html",
       ];
       return items.filter(
         (item) =>

@@ -37,7 +37,7 @@ Caps `/siteverify`-Endpunkt spiegelt bewusst die Request-Form von reCAPTCHA, die
 
 ### 1. Eine Cap-Instanz aufsetzen
 
-Folge dem [Schnellstart](../index.md), um Cap Standalone mit Docker zu betreiben. Lege im Dashboard einen Site-Key an und notiere sowohl den **Site-Key** als auch seinen **Secret-Key**. Lass die [Instrumentation-Challenges](../instrumentation.md) aktiviert (Standard), um den stärksten Bot-Schutz zu bekommen.
+Folge dem [Schnellstart](../index.md), um capd mit Docker zu betreiben. Lege im Dashboard einen Site-Key an und notiere sowohl den **Site-Key** als auch seinen **Secret-Key**. Lass die [Instrumentation-Challenges](../instrumentation.md) aktiviert (Standard), um den stärksten Bot-Schutz zu bekommen.
 
 ### 2. Das Client-Widget tauschen
 
@@ -119,7 +119,7 @@ Du musst nie einen Schalter umlegen und beten. Hänge Cap an ein separates Eleme
 
 ## Siehe auch
 
-- [Live-Demo](../demo.md) — löse selbst eine Cap-Challenge und stoppe die Zeit gegen reCAPTCHA
-- [Cap vs. reCAPTCHA](./recaptcha.md) — der vollständige Vergleich
-- [Wie Cap Bots erkennt](../effectiveness.md) — das Modell aus Proof-of-Work und Instrumentation
-- [Schnellstart](../index.md) — Cap in fünf Minuten von null aufsetzen
+- [Live-Demo](../demo.md): löse selbst eine Cap-Challenge und stoppe die Zeit gegen reCAPTCHA
+- [Cap vs. reCAPTCHA](./recaptcha.md): der vollständige Vergleich
+- [Wie Cap Bots erkennt](../effectiveness.md): das Modell aus Proof-of-Work und Instrumentation
+- [Schnellstart](../index.md): Cap in fünf Minuten von null aufsetzen

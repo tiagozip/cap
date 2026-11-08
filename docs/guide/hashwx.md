@@ -7,7 +7,7 @@ description: "HashWX is Cap's GPU-resistant proof of work. Each challenge genera
 
 HashWX is Cap's default proof of work. Where SHA-256 uses one fixed hash function, HashWX generates a new one for every block of nonces, built from integer operations and branches that GPUs run poorly. It was designed by [tevador](https://github.com/tevador/hashwx), who also wrote RandomX, and his [design document](https://github.com/tevador/hashwx/blob/master/doc/design.md) explains how it works. Cap uses his reference WebAssembly build.
 
-It's the default for new Standalone keys. In the core library it's [opt-in](./capjs-core.md#format-2-hashwx).
+It's the default for new keys in capd. In the core library it's [opt-in](./capjs-core.md#format-2-hashwx).
 
 ## Why not SHA-256
 
@@ -21,7 +21,7 @@ What matters for bot protection is how many challenges an attacker clears per ho
 
 The figures are tevador's, from his own unpublished CUDA implementation. Cap reproduced the RSW row: an M3 does 2.11 H/s per thread, which works out to 26 H/s on 16 Ryzen threads.
 
-RSW is deprecated. Existing keys keep working, but don't pick it for new ones.
+RSW is deprecated. capd now serves HashWX to keys that were set to RSW. The core library still issues RSW challenges when you ask for them, but don't pick it for new setups.
 
 ## Cost
 
@@ -44,7 +44,7 @@ On the client, one challenge has a random solve time: the same difficulty can ta
 | p90 | 1447 ms | 778 ms |
 | Slowest of 72 | 2378 ms | 1490 ms |
 
-The right column is the default. Against a Standalone key it measured a 578 ms median and a 0.9 s p90. Splitting doesn't change what an attacker pays, since the expected work is `d` hashes either way.
+The right column is the default. Against a capd key it measured a 578 ms median and a 0.9 s p90. Splitting doesn't change what an attacker pays, since the expected work is `d` hashes either way.
 
 ### Browsers
 

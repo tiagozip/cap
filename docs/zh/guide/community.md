@@ -4,7 +4,7 @@ description: "社区维护的 Cap 库：在更多语言和框架中使用这个�
 
 # 社区库
 
-不想运行 Standalone 服务端，又想在其他语言中使用 Cap？下面这些社区维护的库或许能帮到你。如果你想添加一个库，欢迎提交 pull request！
+这些库由其他人维护，并非由 Cap 维护。它们没有经过安全审查，很多也不支持 HashWX 或 instrumentation 等较新的功能。要添加一个库，请提交 pull request。
 
 **注意：** 这些库通常**不**支持种子质询（seeded challenges）或 instrumentation（浏览器环境检测）质询等新特性。
 

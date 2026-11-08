@@ -4,6 +4,6 @@ description: "Cap-CAPTCHA-Benchmark: Führe HashWX-Proof-of-Work in deinem eigen
 
 # Benchmark
 
-Diese Seite führt HashWX-Proof-of-Work in deinem Browser gegen einen Platzhalter-Server aus, damit du siehst, wie lange eine Lösung auf deinem Gerät dauert. Die Standardwerte entsprechen einem neuen Standalone-Key. Messungen auf Desktop-Browsern und Smartphones findest du unter [HashWX](./hashwx.md#cost).
+Diese Seite führt HashWX-Proof-of-Work in deinem Browser gegen einen Platzhalter-Server aus, damit du siehst, wie lange eine Lösung auf deinem Gerät dauert. Die Standardwerte entsprechen einem neuen Key in capd. Messungen auf Desktop-Browsern und Smartphones findest du unter [HashWX](./hashwx.md#cost).
 
 <Benchmark />

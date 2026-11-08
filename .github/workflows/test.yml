@@ -64,6 +64,24 @@ jobs:
       - name: Run e2e (instrumentation)
         working-directory: widget
         run: bun test test/e2e-instrumentation.test.js
+      - name: Run e2e (behavior)
+        working-directory: widget
+        run: bun test test/e2e-behavior.test.js
+      - name: Run e2e (interactions)
+        working-directory: widget
+        run: bun test test/e2e-interactions.test.js
+      - name: Run e2e (speculative)
+        working-directory: widget
+        run: bun test test/e2e-speculative.test.js
+      - name: Run e2e (csp)
+        working-directory: widget
+        run: bun test test/e2e-csp.test.js
+      - name: Run e2e (isolate)
+        working-directory: widget
+        run: bun test test/e2e-isolate.test.js
+      - name: Run e2e (legacy)
+        working-directory: widget
+        run: bun test test/e2e-legacy.test.js
       - name: Run e2e (regression)
         working-directory: widget
         run: bun test test/e2e-regression.test.js
@@ -74,8 +92,8 @@ jobs:
         working-directory: widget
         run: bun test test/e2e-hashwx.test.js
 
-  standalone:
-    name: cap-standalone
+  capd:
+    name: capd
     runs-on: ubuntu-latest
     services:
       valkey:
@@ -95,11 +113,44 @@ jobs:
       - name: Install (core)
         working-directory: core
         run: bun install --frozen-lockfile
-      - name: Install (standalone)
-        working-directory: standalone
+      - name: Install (capd)
+        working-directory: capd
         run: bun install --frozen-lockfile
+      - name: Use the local core
+        working-directory: capd
+        run: rm -rf node_modules/capjs-core && ln -s ../../core node_modules/capjs-core
       - name: Test
-        working-directory: standalone
+        working-directory: capd
         env:
           REDIS_URL: redis://127.0.0.1:6379
         run: bun test
+
+  workers:
+    name: cap-workers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install (core)
+        working-directory: core
+        run: bun install --frozen-lockfile
+      - name: Install (capd)
+        working-directory: capd
+        run: bun install --frozen-lockfile
+      - name: Use the local core
+        working-directory: capd
+        run: rm -rf node_modules/capjs-core && ln -s ../../core node_modules/capjs-core
+      - name: Install (workers)
+        working-directory: workers
+        run: bun install --frozen-lockfile
+      - name: Build the dashboard
+        working-directory: workers
+        run: npm run build
+      - name: Bundle
+        working-directory: workers
+        run: npx wrangler deploy --dry-run --outdir dist

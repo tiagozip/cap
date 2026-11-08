@@ -9,7 +9,7 @@ faq:
   - q: Cap est-il gratuit ?
     a: "Entièrement. Apache 2.0, sans quotas, sans offre payante, quel que soit le volume."
   - q: Cap est-il meilleur qu'ALTCHA ?
-    a: "Cap fournit davantage (couche d'instrumentation, serveur standalone, tableau de bord, retour de progression, widget plus léger) ; ALTCHA en fournit moins, volontairement. Choisissez selon ce que vous voulez construire vous-même."
+    a: "Cap fournit davantage (couche d'instrumentation, serveur auto-hébergé, tableau de bord, retour de progression, widget plus léger) ; ALTCHA en fournit moins, volontairement. Choisissez selon ce que vous voulez construire vous-même."
   - q: Un CAPTCHA open source protège-t-il la vie privée ?
     a: "Il rend la confidentialité vérifiable au lieu d'être promise. La preuve de travail auto-hébergée n'a besoin ni de fingerprinting, ni de profilage comportemental, ni d'appels tiers, et vous pouvez lire le code pour le confirmer."
 ---
@@ -40,7 +40,7 @@ Plusieurs CAPTCHA commerciaux ouvrent le code de leurs intégrations client tout
 
 ### Cap
 
-Cap est une pile CAPTCHA open source complète sous Apache 2.0 : un widget en composant web d'environ 20 Ko, plus [Cap Standalone](./standalone/index.md), un petit déploiement Docker (un conteneur plus Valkey) exposant une API REST, un tableau de bord avec gestion multi-clés, et un point d'accès `/siteverify` compatible avec la forme de l'API reCAPTCHA.
+Cap est une pile CAPTCHA open source complète sous Apache 2.0 : un widget en composant web d'environ 20 Ko, plus [capd](./capd/index.md), un petit déploiement Docker (un conteneur plus Valkey) exposant une API REST, un tableau de bord avec gestion multi-clés, et un point d'accès `/siteverify` compatible avec la forme de l'API reCAPTCHA.
 
 La protection repose sur deux couches indépendantes : la [preuve de travail HashWX](./hashwx.md), résistante aux GPU, et des [défis d'instrumentation](./instrumentation.md) dynamiques qui vérifient que l'environnement est un véritable navigateur. Vaincre une couche ne vainc pas l'autre.
 
@@ -79,7 +79,7 @@ Anubis est un *mur anti-scrapers* open source fondé sur la preuve de travail : 
 | Activement maintenu | ✅ | ✅ | 🟨 pré-1.0, publications lentes | ✅ |
 | Mécanisme | PoW et instrumentation | PoW | PoW | PoW |
 | Portée | Par action (formulaires, API) | Par action | Par action | Site entier |
-| Serveur standalone et tableau de bord | ✅ | ❌ | ✅ | ❌ |
+| Serveur auto-hébergé et tableau de bord | ✅ | ❌ | ✅ | ❌ |
 | siteverify compatible reCAPTCHA | ✅ | ❌ | ❌ | ❌ |
 | Taille du widget | ~20 Ko | ~34 Ko | plus lourd | sans objet (transparent) |
 | Option de PoW résistante aux GPU | ✅ [HashWX](./hashwx.md) | ❌ | ❌ | ❌ |
@@ -107,7 +107,7 @@ Entièrement. Apache 2.0, sans quotas, sans offre payante, quel que soit le volu
 
 ### Cap est-il meilleur qu'ALTCHA ?
 
-Cap fournit davantage (couche d'instrumentation, serveur standalone, tableau de bord, retour de progression, widget plus léger) ; ALTCHA en fournit moins, volontairement. Choisissez selon ce que vous voulez construire vous-même.
+Cap fournit davantage (couche d'instrumentation, serveur auto-hébergé, tableau de bord, retour de progression, widget plus léger) ; ALTCHA en fournit moins, volontairement. Choisissez selon ce que vous voulez construire vous-même.
 
 ### Un CAPTCHA open source protège-t-il la vie privée ?
 

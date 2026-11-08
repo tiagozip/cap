@@ -1,181 +1,137 @@
 ---
-outline: [2, 3, 4]
-description: "capjs-core คือไลบรารีฝั่งเซิร์ฟเวอร์แบบไร้สถานะของ Cap สำหรับสร้างและตรวจสอบ challenge แบบ proof-of-work ที่ใช้ JWT โฮสต์ CAPTCHA โอเพนซอร์สนี้เองบน Workers หรือที่ edge ได้"
+outline: [2, 3]
+description: "capjs-core คือไลบรารีฝั่งเซิร์ฟเวอร์แบบไร้สถานะของ Cap สำหรับสร้างและตรวจสอบ challenge แบบ proof-of-work ด้วย JWT ที่ลงลายเซ็น รัน CAPTCHA โอเพนซอร์สบน Workers, Lambda หรือแบ็กเอนด์ของคุณเอง"
 ---
 
-# ไลบรารีหลัก
+# ไลบรารีหลัก {#core-library}
 
-Cap มีไลบรารีฝั่งเซิร์ฟเวอร์แบบไร้สถานะสำหรับสร้างและตรวจสอบ challenge ที่อิงกับ JWT ซึ่ง Standalone ก็ใช้ไลบรารีนี้ภายใน
+`capjs-core` สร้างและตรวจสอบ challenge ภายในเซิร์ฟเวอร์ของคุณเอง มันไร้สถานะ โดย challenge เป็น JWT ที่ลงลายเซ็น จึงไม่ต้องใช้ฐานข้อมูล ระบบไฟล์ หรือสถานะในหน่วยความจำ และรันบน Cloudflare Workers, Lambda และ edge runtime อื่น ๆ ได้ capd สร้างขึ้นบนไลบรารีนี้
 
-สำหรับผู้ใช้ส่วนใหญ่ เราแนะนำ [Cap Standalone](./standalone/index.md) ที่รันบน Docker และมีทุกอย่างครบ เราแนะนำให้ใช้ไลบรารีหลักโดยตรงเฉพาะเมื่อคุณรัน Docker ไม่ได้ ต้องการฝังการสร้าง challenge เข้าไปในบริการที่มีอยู่ หรือต้องดีพลอยไปยังสภาพแวดล้อมที่ไม่มีที่เก็บข้อมูลถาวร (Cloudflare Workers, Lambda, edge function)
-
-## การติดตั้ง
+ผู้ใช้ส่วนใหญ่ควรรัน [capd](./capd/index.md) ซึ่งเป็นเซิร์ฟเวอร์ของ Cap แทน โดย capd เพิ่มแดชบอร์ด สถิติ การจำกัดอัตราคำขอ และที่เก็บ token ใช้ไลบรารีนี้เมื่อคุณรันคอนเทนเนอร์ไม่ได้ หรือต้องการสร้าง challenge ภายในบริการที่มีอยู่
 
 ::: code-group
-
-```sh [bun]
-bun add capjs-core
-```
 
 ```sh [npm]
 npm i capjs-core
 ```
 
 ```sh [pnpm]
-pnpm i capjs-core
+pnpm add capjs-core
+```
+
+```sh [bun]
+bun add capjs-core
 ```
 
 :::
 
-## เริ่มต้นใช้งาน
+## เริ่มต้นใช้งาน {#getting-started}
+
+คุณต้องมีสองเส้นทาง เส้นทางหนึ่งสร้าง challenge และอีกเส้นทางตรวจสอบคำตอบ ตั้ง `data-cap-api-endpoint` ของวิดเจ็ตให้ชี้ไปยัง prefix ร่วมของทั้งสองเส้นทาง แล้ววิดเจ็ตจะเรียก `<prefix>challenge` และ `<prefix>redeem`
 
 ```js
 import { generateChallenge, validateChallenge } from "capjs-core";
 
-// ยาว สุ่ม และมีเอนโทรปีสูง ต้องใช้ค่าเดียวกันทุกโพรเซส
 const SECRET = process.env.CAP_SECRET;
 
-// 1) เส้นทางฝั่งเซิร์ฟเวอร์: สร้าง challenge
-const ch = await generateChallenge(SECRET, {
-  scope: "signup", // ไม่บังคับ
-  instrumentation: true, // ไม่บังคับ ดูด้านล่าง
+app.post("/cap/challenge", async () => {
+  return await generateChallenge(SECRET, { instrumentation: true });
 });
-// → { challenge: { c, s, d }, token, expires, instrumentation? }
 
-// 2) เส้นทางฝั่งเซิร์ฟเวอร์: ตรวจสอบ challenge ที่ถูกใช้
-const result = await validateChallenge(
-  SECRET,
-  {
-    token: req.body.token,
-    solutions: req.body.solutions,
-    instr: req.body.instr,
-  },
-  {
-    scope: "signup",
-    consumeNonce: async (sigHex, ttlMs) => myStore.setIfNotExists(`cap:${sigHex}`, 1, ttlMs),
-  },
-);
-
-if (result.success) {
-  // result.token, result.tokenKey, result.expires, result.scope
-}
+app.post("/cap/redeem", async (req) => {
+  return await validateChallenge(SECRET, req.body, { consumeNonce });
+});
 ```
 
-วิดเจ็ตเรียก `generateChallenge` เพื่อรับ `{ challenge, token, expires, instrumentation }` แก้ proof-of-work ฝั่งไคลเอนต์ แล้ว POST `{ token, solutions, instr }` กลับมา จากนั้นคุณเรียก `validateChallenge` เพื่อตรวจสอบ
+`SECRET` ใช้ลงลายเซ็นทุก challenge ตั้งให้ยาวและสุ่ม อย่างน้อย 16 ไบต์ และใช้ค่าเดียวกันทุกโพรเซส
 
-## ต่างจาก `@cap.js/server` อย่างไร {#how-it-differs-from-cap-js-server}
+`consumeNonce` ป้องกันไม่ให้นำ challenge ที่แก้แล้วมาแลก token สองครั้ง โดยคุณต้องจัดเตรียมมันจากที่เก็บข้อมูลของคุณเอง ดู[การป้องกัน replay](#replay-prevention)
 
-| ประเด็น             | `@cap.js/server`                           | `capjs-core`                                  |
-| ------------------- | ------------------------------------------ | --------------------------------------------- |
-| สถานะ               | เก็บ token ในหน่วยความจำและระบบไฟล์          | ไร้สถานะ challenge token เป็น JWT ที่ลงลายเซ็น |
-| ตัวสร้าง            | `new Cap({ ... })`                          | ไม่มี — ส่ง `secret` ทุกครั้งที่เรียก          |
-| ป้องกัน replay      | มีรายการ token ในตัวพร้อมรอบทำความสะอาด     | เลือกเปิดผ่าน callback `consumeNonce`          |
-| hook ทำความสะอาด    | flush ตอน `SIGINT`/`beforeExit`             | ไม่มี — TTL ฝังอยู่ใน `exp` ของ JWT            |
-| ระบบไฟล์            | จำเป็นสำหรับการเก็บถาวร                      | ไม่แตะเลย                                      |
-| ใช้กับ Worker ได้   | ไม่ได้ (เพราะใช้ระบบไฟล์)                   | ได้                                            |
+## การตรวจสอบ token {#verifying-tokens}
 
-ต่างจากไลบรารีเดิม `capjs-core` ไม่ตรวจสอบ redeem token ให้คุณ มันคืน `tokenKey` ที่คุณต้องเก็บเอง และ `token` ที่คุณส่งให้ผู้ใช้ เวลาจะตรวจสอบภายหลัง ให้คำนวณคีย์ใหม่จาก token ที่ผู้ใช้ส่งมาแล้วค้นหา:
+เมื่อ `validateChallenge` สำเร็จ มันจะคืน `token` สำหรับผู้เข้าชมและ `tokenKey` สำหรับคุณ ไลบรารีไม่เก็บทั้งสองค่าไว้ จึงต้องบันทึก `tokenKey` พร้อม `expires`:
+
+```js
+const result = await validateChallenge(SECRET, req.body, { consumeNonce });
+if (result.success) {
+  await store.set(`cap-token:${result.tokenKey}`, result.expires);
+}
+return result;
+```
+
+วิดเจ็ตส่ง `token` ให้ฟอร์มของคุณ เมื่อได้รับฟอร์ม ให้คำนวณคีย์จาก token ที่ส่งมาแล้วค้นหา:
 
 ```js
 import { createHash } from "node:crypto";
 
-// เส้นทางสำหรับตรวจสอบ
-const [id, verToken] = req.body.token.split(":");
-const tokenKey = `${id}:${createHash("sha256").update(verToken).digest("hex")}`;
-const expires = await myStore.get(`cap-token:${tokenKey}`);
+const [id, secret] = req.body["cap-token"].split(":");
+const tokenKey = `${id}:${createHash("sha256").update(secret).digest("hex")}`;
+const expires = await store.get(`cap-token:${tokenKey}`);
+
 if (!expires || Number(expires) < Date.now()) {
-  return res.status(401).end();
+  return new Response("invalid captcha", { status: 403 });
 }
+await store.delete(`cap-token:${tokenKey}`);
 ```
 
-## API
+การลบคีย์ทำให้แต่ละ token ใช้ได้เพียงครั้งเดียว
 
-### `generateChallenge(secret, opts?)`
+## HashWX {#format-2-hashwx}
 
-คืนค่า `Promise<{ challenge, token, expires, instrumentation? }>`
+หากไม่ระบุตัวเลือก `generateChallenge` จะออก proof-of-work แบบ SHA-256 ส่วน [HashWX](./hashwx.md) ต้านทาน GPU ได้ดีกว่ามาก และ capd ใช้มันสำหรับคีย์ใหม่ เปิดใช้ผ่าน API รูปแบบ 2:
 
-- `secret` — สตริงหรือ Buffer ขนาด ≥16 ไบต์ เป็นคีย์ HMAC หลัก ต้องเหมือนกันทุกโพรเซส
-- `opts.challengeCount` — จำนวนปริศนา PoW ค่าเริ่มต้น `50`
-- `opts.challengeSize` — ความยาว salt เป็นอักขระฐานสิบหก ค่าเริ่มต้น `32`
-- `opts.challengeDifficulty` — ความยาวคำนำหน้าเป้าหมายเป็นอักขระฐานสิบหก ค่าเริ่มต้น `4`
-- `opts.expiresMs` — TTL ของ challenge ค่าเริ่มต้น `600_000` (10 นาที)
-- `opts.scope` — สตริงเสริมที่ผูกกับ challenge การตรวจสอบต้องส่ง `scope` เดียวกัน
-- `opts.extra` — อ็อบเจกต์เสริมที่ฝังไว้ใน payload ของ JWT (ใครที่ถือ token ก็เห็นได้)
-- `opts.instrumentation` — `true` เพื่อใช้ค่าเริ่มต้น หรือเป็นอ็อบเจกต์: `{ blockAutomatedBrowsers, obfuscationLevel }`
-- `opts.instrumentationGenerator` — ทางออกสำหรับย้ายการสร้างสคริปต์ไปไว้ที่ worker pool
+```js
+return await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+});
+```
 
-`token` คือ JWT ที่ลงลายเซ็นและบรรจุการตั้งค่าของ challenge ส่วน `expires` คือเวลาหมดอายุของ JWT เป็นมิลลิวินาที และ `instrumentation` (ถ้าร้องขอ) คือสคริปต์ฝั่งไคลเอนต์แบบ deflate+base64 ที่วิดเจ็ตจะนำไปรัน
+วิดเจ็ตตรวจจับรูปแบบเอง และ `validateChallenge` รองรับทั้งสองรูปแบบ ให้ส่ง `protocols` เสมอเมื่อใช้รูปแบบ 2 หากไม่ส่ง challenge จะใช้โปรโตคอล RSW ที่เลิกใช้แล้ว ซึ่งต้องมีคู่คีย์ RSA ใน `keypair` หรือตัวสร้าง challenge ใน `rsw`
 
-### `validateChallenge(secret, body, opts?)`
+| ตัวเลือก | ค่าเริ่มต้น | หน้าที่ |
+| --- | --- | --- |
+| `hashwxDifficulty` | `1_000_000` | จำนวนแฮชที่คาดหวังต่อการแก้หนึ่งครั้ง รวมทุก challenge ย่อย |
+| `hashwxChallengeCount` | `4` | จำนวน challenge ย่อยที่แบ่งความยากออกไป ยิ่งมีมาก เวลาแก้ยิ่งแปรปรวนน้อยลง ดู[ต้นทุนฝั่งไคลเอนต์](./hashwx.md#cost) |
+| `hashwxNoncesPerHash` | `65_536` | จำนวน nonce ที่ฟังก์ชันแฮชแต่ละตัวที่สร้างขึ้นครอบคลุม |
 
-คืนค่า `Promise<{ success: true, token, tokenKey, expires, scope, iat } | { success: false, reason, instr_error? }>`
+HashWX ไม่ต้องใช้คีย์หรือตั้งค่า การตรวจสอบครั้งแรกจะคอมไพล์มอดูล WebAssembly ขนาดเล็ก และคุณเรียก `await hashwxReady()` ตอนเริ่มระบบเพื่อทำขั้นตอนนี้ล่วงหน้าได้
 
-`body`:
+บาง runtime ไม่อนุญาตให้คอมไพล์ WebAssembly ระหว่างรัน Cloudflare Workers จะได้รับมอดูลที่คอมไพล์ไว้แล้วโดยอัตโนมัติ สำหรับที่อื่น ให้นำเข้าตามวิธีที่แพลตฟอร์มรองรับและส่งเข้ามาก่อนการตรวจสอบครั้งแรก:
 
-- `token` — challenge token จาก `generateChallenge`
-- `solutions` — อาร์เรย์ของตัวเลข ความยาวต้องเท่ากับ `challenge.c`
-- `instr` — ผลลัพธ์ instrumentation (ถ้าคุณเปิดใช้)
-- `instr_blocked`, `instr_timeout` — แฟล็กจากวิดเจ็ตเมื่อ instrumentation ปฏิเสธหน้านั้น
+```js
+import { setHashwxModule } from "capjs-core";
+import hashwxModule from "capjs-core/hashwx.wasm";
 
-`opts`:
+setHashwxModule(hashwxModule);
+```
 
-- `scope` — ต้องตรงกับ scope ของ challenge เดิม
-- `tokenTtlMs` — TTL ของ redeem token ค่าเริ่มต้น `1_200_000` (20 นาที)
-- `consumeNonce(sigHex, ttlMs)` — ป้องกัน replay ผ่านที่เก็บข้อมูลของคุณ ดูด้านล่าง
-- `signToken(data)` — ฟังก์ชัน async ที่คืนรูปแบบ redeem token ของคุณเอง ค่าเริ่มต้นคืน `id:secret`
+## การป้องกัน replay {#replay-prevention}
 
-#### สาเหตุที่ล้มเหลว
-
-| `reason`            | ความหมาย                                                    |
-| ------------------- | ------------------------------------------------------------ |
-| `invalid_body`      | body ไม่ใช่อ็อบเจกต์                                        |
-| `missing_token`     | ไม่ได้ส่ง token มา                                          |
-| `missing_solutions` | ไม่มี solutions หรือไม่ใช่อาร์เรย์                          |
-| `invalid_token`     | ลายเซ็น JWT ไม่ตรง / รูปแบบผิด / พารามิเตอร์เกินขอบเขต       |
-| `scope_mismatch`    | scope ของ token ไม่ตรงกับ `opts.scope`                      |
-| `expired`           | JWT ของ challenge หมดอายุ                                   |
-| `invalid_solutions` | ความยาวไม่ตรงหรือมีค่าที่ไม่ใช่ตัวเลข                        |
-| `nonce_store_error` | callback `consumeNonce` โยนข้อผิดพลาด                        |
-| `already_redeemed`  | `consumeNonce` คืนค่า `false`                                |
-| `invalid_solution`  | solutions ไม่ผ่านเงื่อนไข PoW                                |
-| `instr_*`           | instrumentation ล้มเหลว (พร้อม `instr_error: true`)          |
-
-## การป้องกัน replay
-
-ไลบรารีนี้ออกแบบมาให้ไร้สถานะ เพื่อกันไม่ให้ข้อมูลที่ถูกดักจับถูกนำไปใช้ซ้ำ ให้ส่ง callback `consumeNonce` เข้าไป `capjs-core` จะเรียกมันพร้อมค่าฐานสิบหกของลายเซ็น JWT และ TTL ที่เหลือ คุณเก็บค่าฐานสิบหกนั้นไว้ใน KV ของคุณด้วยความหมายแบบ `SET NX EX` แล้วคืน `false` เมื่อเจอซ้ำ
+`validateChallenge` เรียก `consumeNonce(signature, ttlMs)` เมื่อ proof-of-work ผ่าน และก่อนตรวจสอบ instrumentation เก็บลายเซ็นหากยังไม่เคยมีและคืน `true` คืน `false` หากใช้แล้ว คำขอที่มี proof-of-work ผิดจะไม่มาถึงขั้นตอนนี้ จึงใช้ challenge ของผู้เข้าชมตัวจริงทิ้งไม่ได้ คำขอที่มี proof-of-work ถูกต้องแต่ instrumentation ไม่ผ่านจะใช้ challenge นั้นทิ้ง ทำให้บอตลองตรวจ instrumentation ซ้ำด้วย proof-of-work เดิมไม่ได้
 
 ::: code-group
 
-```js [redis]
-import { Redis } from "ioredis";
-const redis = new Redis(process.env.REDIS_URL);
-
-const consumeNonce = async (sigHex, ttlMs) => {
-  const ttlSec = Math.ceil(ttlMs / 1000);
-  const ok = await redis.set(`cap:${sigHex}`, "1", "NX", "EX", ttlSec);
-  return ok === "OK";
-};
+```js [Redis]
+const consumeNonce = async (sig, ttlMs) =>
+  (await redis.set(`cap:${sig}`, "1", "NX", "PX", ttlMs)) === "OK";
 ```
 
-```js [cloudflare-kv]
-const consumeNonce = async (sigHex, ttlMs) => {
-  const key = `cap:${sigHex}`;
-  if (await env.NONCES.get(key)) return false;
-  await env.NONCES.put(key, "1", {
-    expirationTtl: Math.ceil(ttlMs / 1000),
-  });
+```js [Workers KV]
+const consumeNonce = async (sig, ttlMs) => {
+  if (await env.NONCES.get(`cap:${sig}`)) return false;
+  await env.NONCES.put(`cap:${sig}`, "1", { expirationTtl: Math.max(60, Math.ceil(ttlMs / 1000)) });
   return true;
 };
 ```
 
-```js [postgres]
-const consumeNonce = async (sigHex, ttlMs) => {
-  const expiresAt = new Date(Date.now() + ttlMs).toISOString();
+```js [Postgres]
+const consumeNonce = async (sig, ttlMs) => {
   try {
-    await db`INSERT INTO cap_nonces (sig, expires_at) VALUES (${sigHex}, ${expiresAt})`;
+    await sql`INSERT INTO cap_nonces (sig, expires_at) VALUES (${sig}, ${new Date(Date.now() + ttlMs)})`;
     return true;
   } catch (e) {
-    if (e.code === "23505") return false; // unique violation
+    if (e.code === "23505") return false;
     throw e;
   }
 };
@@ -183,110 +139,145 @@ const consumeNonce = async (sigHex, ttlMs) => {
 
 :::
 
-การตรวจนี้ทำงาน _หลัง_ การตรวจสอบ PoW และ instrumentation ดังนั้นผู้โจมตีที่เล่นซ้ำข้อมูลที่ดักมาพร้อมคำตอบมั่ว ๆ จะเผา nonce ของผู้ใช้ตัวจริงไม่ได้
+Workers KV ไม่เป็น atomic ดังนั้นคำขอสองรายการที่มาถึงพร้อมกันอาจผ่านทั้งคู่ ใช้ Durable Object หากเรื่องนี้มีผลกับคุณ
 
 ## Instrumentation
 
-ส่ง `instrumentation: true` (หรืออ็อบเจกต์ตัวเลือก) ให้ `generateChallenge` เพื่อรับสคริปต์ฝั่งไคลเอนต์แบบ deflate+base64 วิดเจ็ตจะรันมัน ส่งลายนิ้วมือกลับมา แล้ว `validateChallenge` จะตรวจสอบ
+`instrumentation: true` เพิ่ม [challenge แบบ instrumentation](./instrumentation.md) ให้ challenge รูปแบบ 1 สำหรับรูปแบบ 2 ให้เพิ่ม `"instrumentation"` ใน `protocols` ทั้งสองกรณีส่งอ็อบเจกต์แทน `true` ได้:
 
 ```js
-const ch = await generateChallenge(SECRET, {
-  instrumentation: {
-    blockAutomatedBrowsers: true, // ปฏิเสธ playwright/puppeteer/selenium
-    obfuscationLevel: 3, // 1-10 ค่าเริ่มต้น 3
-  },
+instrumentation: {
+  blockAutomatedBrowsers: true,
+  obfuscationLevel: 3,
+}
+```
+
+| ตัวเลือก | ค่าเริ่มต้น | หน้าที่ |
+| --- | --- | --- |
+| `blockAutomatedBrowsers` | `false` | ปฏิเสธการแก้จาก[เบราว์เซอร์อัตโนมัติ](./instrumentation.md#automated-browser-detection) ด้วย `instr_automated_browser` |
+| `detectAutomatedInteractions` | `false` | เพิ่ม `interaction_synthetic_clicks` และ `interaction_synthetic_keydowns` ใน `riskFlags` ดู[การตรวจจับปฏิสัมพันธ์](./instrumentation.md#interaction-detection) |
+| `blockAutomatedInteractions` | `false` | ปฏิเสธการแก้เหล่านั้นด้วย `instr_automated_interaction` และเปิดการตรวจจับด้วย |
+| `obfuscationLevel` | `5` | ตั้งแต่ 1 ถึง 10 ระดับ 1 ถึง 3 ลบช่องว่าง ระดับ 4 ถึง 7 เข้ารหัสสตริงและย่อสคริปต์เพิ่มด้วย และระดับ 8 ถึง 10 รัน `javascript-obfuscator` เมื่อติดตั้งไว้ ระดับที่สูงขึ้นใช้เวลาสร้างนานขึ้น |
+
+ระดับ 8 ถึง 10 ต้องใช้แพ็กเกจเสริม `javascript-obfuscator` และบล็อก event loop หลายสิบมิลลิวินาทีต่อ challenge จึงควรใช้เฉพาะเส้นทางที่มีปริมาณคำขอน้อย หรือสร้างสคริปต์ใน worker pool ด้วย `instrumentationGenerator` ซึ่งรับตัวเลือก instrumentation และต้อง resolve เป็นค่าที่ `generateInstrumentation` คืน
+
+## พฤติกรรมและเอเจนต์ {#behavior-and-agents}
+
+`behavior` เปิด[การให้คะแนนพฤติกรรม](./instrumentation.md#behavior-scoring)และ[การบล็อกเอเจนต์](./instrumentation.md#ai-agent-detection) มันเพิ่ม challenge แบบ instrumentation หากยังไม่มี และนโยบายจะถูกลงลายเซ็นไว้ใน challenge token ไคลเอนต์จึงปิดมันไม่ได้
+
+```js
+await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+  behavior: { block: true, blockAgents: "identified" },
 });
 ```
 
-เมื่อเปิด `blockAutomatedBrowsers` สคริปต์จะรันการตรวจแบบ realm-escape และการตรวจเชิงพฤติกรรม ซึ่งตรวจจับ Chromium แบบ headless, ร่องรอยของเฟรมเวิร์กอัตโนมัติ และการปลอมตัวเป็น JS sandbox ดูรายละเอียดที่ [Instrumentation](./instrumentation.md)
+`behavior: true` ให้คะแนนโดยไม่บล็อก อ็อบเจกต์รับตัวเลือกดังนี้:
 
-ระดับการทำให้อ่านยากที่สูงขึ้นจะสร้างช้าลง ระดับ 4–7 เพิ่มการอ้อมผ่านตารางสตริงแบบกำหนดเอง พร้อมการย่อโค้ดด้วย esbuild ส่วนระดับ 8–10 เพิ่ม `javascript-obfuscator` เข้าไปอีกชั้น (string-array, control-flow flattening, การแทรกโค้ดตาย) ซึ่งจะบล็อก event loop หลายสิบมิลลิวินาทีต่อ challenge จึงควรใช้เฉพาะกับเส้นทางที่มีปริมาณน้อย หรือใส่ `instrumentationGenerator` ของคุณเองที่รันอยู่ใน worker pool
+| ตัวเลือก | ค่าเริ่มต้น | หน้าที่ |
+| --- | --- | --- |
+| `block` | `false` | ปฏิเสธผล `automated` ด้วย `behavior_automated` และผล `no_interaction` ด้วย `behavior_no_interaction` |
+| `threshold` | `0.75` | คะแนนตั้งแต่ 0.1 ถึง 1 ที่จะเปลี่ยนผลเป็น `automated` |
+| `strict` | `false` | ยกเลิกเพดาน 0.6 ของคะแนนที่มาจากแฟล็กอ่อนเท่านั้น |
+| `requireInteraction` | `true` | ตั้งเป็น `false` เพื่อให้ `no_interaction` ผ่านเมื่อเปิด `block` สำหรับโหมดล่องหนและโหมดลอย |
+| `blockAgents` | `false` | `"identified"` ปฏิเสธเอเจนต์ที่ตรวจพบด้วยความเชื่อมั่นสูง และ `"all"` ปฏิเสธทุกเอเจนต์ที่ตรวจพบ ด้วย `behavior_agent` |
+| `allowVerifiedAgents` | `false` | อนุญาตให้เอเจนต์ที่มีลายเซ็น Web Bot Auth ที่ตรวจสอบแล้วผ่าน `blockAgents` |
 
-## รูปแบบการดีพลอยแบบไร้สถานะ
+การแก้ที่ไม่มีข้อมูลพฤติกรรมจะล้มเหลวด้วย `behavior_missing` เสมอ ไม่ว่านโยบายจะเป็นอย่างไร
 
-**คำเตือน:** สคริปต์เหล่านี้ไม่มีการป้องกัน replay ในตัว อย่าลืมเพิ่มเอง
-
-### Cloudflare Workers
-
-```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = (env) => env.CAP_SECRET;
-
-export default {
-  async fetch(req, env) {
-    const url = new URL(req.url);
-
-    if (url.pathname === "/challenge" && req.method === "POST") {
-      const ch = await generateChallenge(SECRET(env), { instrumentation: true });
-      return Response.json(ch);
-    }
-
-    if (url.pathname === "/redeem" && req.method === "POST") {
-      const body = await req.json();
-      const result = await validateChallenge(SECRET(env), body, {
-        consumeNonce: async (sigHex, ttlMs) => {
-          if (await env.NONCES.get(`cap:${sigHex}`)) return false;
-          await env.NONCES.put(`cap:${sigHex}`, "1", {
-            expirationTtl: Math.ceil(ttlMs / 1000),
-          });
-          return true;
-        },
-      });
-      return Response.json(result);
-    }
-
-    return new Response("not found", { status: 404 });
-  },
-};
-```
-
-### Bun
+หากต้องการใช้ส่วนหัวคำขอเป็นหลักฐานของเอเจนต์ ให้ส่งคำขอ `/redeem` ให้ `validateChallenge`:
 
 ```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-const SECRET = process.env.CAP_SECRET;
-
-Bun.serve({
-  port: 3000,
-  routes: {
-    "/challenge": {
-      POST: () => Response.json(generateChallenge(SECRET, { instrumentation: true })),
-    },
-    "/redeem": {
-      POST: async (req) => {
-        const body = await req.json();
-        return Response.json(await validateChallenge(SECRET, body));
-      },
-    },
-  },
+const result = await validateChallenge(SECRET, body, {
+  consumeNonce,
+  request: { method: req.method, url: fullUrl, headers: req.headers },
+  verifyWebBotAuth: true,
 });
 ```
 
-## challenge แบบ HashWX {#format-2-hashwx}
+`url` ต้องเป็น URL เต็ม เพราะ Web Bot Auth ลงลายเซ็นครอบคลุมมัน เมื่อใช้ `verifyWebBotAuth: true` คำขอที่มีส่วนหัว `Signature-Agent` จะถูกตรวจสอบกับไดเรกทอรีคีย์ของเอเจนต์ ซึ่ง `validateChallenge` ดึงผ่าน HTTPS และแคชไว้หนึ่งชั่วโมง มันเชื่อถือเฉพาะผู้ลงลายเซ็นที่ Cap รู้จักและ origin ใน `trustedSignatureAgents` ส่ง `webBotAuthNonceCheck(nonce, ttlMs)` เพื่อปฏิเสธลายเซ็นที่นำมาใช้ซ้ำ มันทำงานเหมือน `consumeNonce`
 
-ตั้งแต่ v0.1.1 และวิดเจ็ต v0.1.51 ทั้งสองฝั่งเข้าใจรูปแบบข้อมูลที่ยืดหยุ่นขึ้น ซึ่งรองรับโปรโตคอล challenge หลายแบบในคำตอบเดียว ได้แก่ PoW แบบ SHA-256 (ค่าเริ่มต้น), [HashWX](./hashwx.md), ปริศนา time-lock แบบ RSW ที่เลิกใช้แล้ว และ instrumentation
+`behaviorReplayCheck(digest, ttlMs)` ทำงานในลักษณะเดียวกันกับข้อมูลพฤติกรรม คืน `true` หากเคยพบ digest นี้แล้ว และข้อมูลพฤติกรรมจะได้รับ `bh_replayed` เฉพาะข้อมูลที่มีการเคลื่อนตัวชี้และการกดแป้นรวมกันตั้งแต่ 8 ครั้งขึ้นไปเท่านั้นที่มี digest
 
-### การเปิดใช้ขั้นต่ำ
+เมื่อเปิด behavior ผลสำเร็จจะมี `behavior: { score, verdict, flags, signals, agent }` เมื่อปิด `agent` จะคืนในระดับบนสุดทุกครั้งที่มีหลักฐาน โดยสร้างจากร่องรอยในหน้าและส่วนหัวเท่านั้น และจะไม่บล็อก ไม่ว่ากรณีใด เอเจนต์ที่ตรวจพบจะเพิ่ม `agent:<name>` ใน `riskFlags` โดย `agent` มีหน้าตาดังนี้:
 
 ```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = process.env.CAP_SECRET;
-
-app.post("/api/challenge", async () => {
-  return await generateChallenge(SECRET, {
-    format: 2,
-    protocols: ["hashwx", "instrumentation"],
-    hashwxDifficulty: 1_000_000, // ไม่บังคับ นี่คือค่าเริ่มต้น
-  });
-});
-
-app.post("/api/redeem", async (req) => {
-  return await validateChallenge(SECRET, req.body, { consumeNonce });
-});
+{
+  detected: true,
+  name: "claude-in-chrome",
+  confidence: "high",
+  verified: false,
+  evidence: ["artifact:cic_active"],
+}
 ```
 
-HashWX ไม่ต้องใช้สาระกุญแจและไม่ต้องตั้งค่าอะไรตอนบูต การตรวจสอบครั้งแรกจะคอมไพล์มอดูล WebAssembly ที่ฝังมาด้วย ซึ่งใช้เวลาไม่กี่มิลลิวินาที ให้เรียก `hashwxReady()` ตอนเริ่มระบบเพื่อย้ายงานส่วนนั้นออกจากคำขอแรก
+## API
 
-`hashwxDifficulty` คือจำนวนครั้งที่คาดว่าไคลเอนต์ต้องแฮช โดยแบ่งออกเป็น `hashwxChallengeCount` challenge ย่อยที่เป็นอิสระต่อกัน (ค่าเริ่มต้น `4`) challenge เดียวมีเวลาแก้ที่กระจายแบบเอกซ์โพเนนเชียล ผู้เยี่ยมชมคนหนึ่งจึงอาจรอ 30 มิลลิวินาที ขณะที่คนถัดไปรอถึงสามวินาที ที่ความยากรวมเท่ากัน การแบ่งเป็นสี่ challenge ย่อยจะลด p90 ลงราวหนึ่งในสี่ และทำให้ค่ามัธยฐานช้าลงราวหนึ่งในสาม เพราะงานที่คาดหวังของผู้โจมตียังคงเป็น `d` แฮชไม่ว่าจะแบ่งอย่างไร ดู[ต้นทุนฝั่งไคลเอนต์](./hashwx.md#cost) challenge ย่อยแต่ละอันที่เพิ่มขึ้นทำให้การตรวจสอบช้าลงราว 20 µs นอกจากนี้ยังรับ `hashwxNoncesPerHash` (ค่าเริ่มต้น `65_536`) ด้วย
+### `generateChallenge(secret, options?)`
+
+| ตัวเลือก | ค่าเริ่มต้น | หน้าที่ |
+| --- | --- | --- |
+| `challengeCount` | `50` | จำนวนปริศนา SHA-256 ต่อ challenge |
+| `challengeSize` | `32` | ความยาว salt เป็นอักขระฐานสิบหก |
+| `challengeDifficulty` | `4` | ความยาว prefix ของแฮชที่ต้องการ เป็นอักขระฐานสิบหก |
+| `expiresMs` | `600_000` | เวลาที่ผู้เข้าชมมีสำหรับแก้ |
+| `scope` | ไม่มี | สตริงที่ผูกกับ challenge การตรวจสอบต้องส่งค่าเดียวกัน |
+| `extra` | ไม่มี | ข้อมูลที่ฝังใน JWT ใครที่มี token ก็อ่านได้ |
+| `instrumentation` | `false` | ดู [instrumentation](#instrumentation) |
+| `instrumentationGenerator` | `generateInstrumentation` | ฟังก์ชัน async ที่สร้างสคริปต์ instrumentation |
+| `behavior` | `false` | ดู[พฤติกรรมและเอเจนต์](#behavior-and-agents) |
+| `format`, `protocols` | รูปแบบ 1 | ดู [HashWX](#format-2-hashwx) |
+| `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | ดู [HashWX](#format-2-hashwx) | การตั้งค่า HashWX สำหรับรูปแบบ 2 |
+| `keypair`, `t`, `rsw` | ไม่มี | การตั้งค่าสำหรับโปรโตคอล RSW ที่เลิกใช้แล้ว |
+
+รูปแบบ 1 คืน `{ challenge, token, expires, instrumentation? }` และรูปแบบ 2 คืน `{ token, format: 2, challenges, expires }` ทั้งคู่เพิ่ม `behavior: true` เมื่อเปิดการให้คะแนนพฤติกรรม ส่งอ็อบเจกต์ทั้งหมดให้วิดเจ็ต
+
+### `validateChallenge(secret, body, options?)`
+
+`body` คือข้อมูลที่วิดเจ็ตโพสต์ไปยัง `/redeem` ตัวเลือกมีดังนี้:
+
+| ตัวเลือก | ค่าเริ่มต้น | หน้าที่ |
+| --- | --- | --- |
+| `consumeNonce` | ไม่มี | ดู[การป้องกัน replay](#replay-prevention) |
+| `scope` | ไม่มี | ต้องตรงกับ scope ของ challenge |
+| `tokenTtlMs` | `1_200_000` | ระยะเวลาที่ token ของผู้เข้าชมยังใช้ได้ |
+| `signToken` | `id:secret` | ฟังก์ชันที่รับ `{ scope, expires, iat }` และคืน token ของคุณเอง โดยจะไม่มี `tokenKey` |
+| `request` | ไม่มี | คำขอ `/redeem` ในรูป `{ method, url, headers }` ดู[พฤติกรรมและเอเจนต์](#behavior-and-agents) |
+| `verifyWebBotAuth` | `false` | ตรวจสอบลายเซ็น Web Bot Auth บน `request` |
+| `fetch` | `fetch` ส่วนกลาง | ใช้ดาวน์โหลดไดเรกทอรีคีย์ Web Bot Auth |
+| `trustedSignatureAgents` | ไม่มี | origin ของผู้ลงลายเซ็นเพิ่มเติมที่เชื่อถือ เช่น `"https://agent.example.com"` |
+| `webBotAuthNonceCheck` | ไม่มี | ปฏิเสธลายเซ็น Web Bot Auth ที่นำมาใช้ซ้ำ |
+| `behaviorReplayCheck` | ไม่มี | ตั้งแฟล็กข้อมูลพฤติกรรมที่นำมาใช้ซ้ำ |
+
+เมื่อสำเร็จ จะคืน `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }` พร้อม `behavior` หรือ `agent` ตามที่อธิบายใน[พฤติกรรมและเอเจนต์](#behavior-and-agents) โดย `riskFlags` แสดงสัญญาณที่ไม่บล็อกด้วยตัวมันเอง เช่น `native_tamper` หรือ `legacy_widget` เพื่อให้คุณเพิ่มความยากสำหรับผู้เข้าชมคนนั้นได้ หน้า instrumentation แสดง[แฟล็กการตรวจสอบเบราว์เซอร์](./instrumentation.md#automated-browser-detection)และ[แฟล็กพฤติกรรม](./instrumentation.md#behavior-scoring)
+
+เมื่อล้มเหลว จะคืน `{ success: false, reason }` ความล้มเหลวของ instrumentation มี `instr_error: true` ด้วย ส่วน `instr_automated_browser` และ `instr_automated_interaction` มีรายการ `blockedBy` และความล้มเหลวของพฤติกรรมมี `behavior` ทุก `reason` อยู่ใน[ตารางรหัสข้อผิดพลาด](./troubleshooting/instrumentation.md#error-codes)
+
+### export ระดับล่าง {#lower-level-exports}
+
+capd และการทดสอบใช้สิ่งเหล่านี้ คุณต้องใช้เฉพาะเมื่อสร้างกระบวนการทำงานของคุณเอง
+
+| Export | หน้าที่ |
+| --- | --- |
+| `generateInstrumentation(opts?)` | สร้างสคริปต์ instrumentation และข้อมูลกำกับสำหรับตรวจสอบ |
+| `verifyInstrumentationResult(meta, payload, now?)` | ตรวจสอบผลลัพธ์กับข้อมูลกำกับนั้น คืน `{ valid, reason?, riskFlags?, blockedBy?, checks?, agent?, trace? }` |
+| `serializeBound(data)`, `canonicalize(value)` | serialize ข้อมูลที่เก็บมาตามวิธีเดียวกับสคริปต์ |
+| `boundValues(binding, serialized)` | ตัวเลขที่ผลลัพธ์ต้องมีสำหรับข้อมูลนั้น |
+| `MAX_BOUND_DATA` | ความยาวสูงสุดของข้อมูลที่ serialize แล้วที่ยอมรับ คือ 65,536 อักขระ |
+| `detectAutomation(vector)` | รันการตรวจสอบเบราว์เซอร์อัตโนมัติกับข้อมูลเบราว์เซอร์ที่คุณเก็บเอง คืน `{ pass, checks, blockedBy, riskFlags }` |
+| `analyzeBehavior(trace, ctx?)` | ให้คะแนนข้อมูลพฤติกรรม โดย `ctx` รับ `{ replayed, strict, threshold }` คืน `{ score, verdict, flags, signals, digest }` |
+| `BEHAVIOR_WEIGHTS`, `DEFAULT_BEHAVIOR_THRESHOLD`, `WEAK_CAP` | น้ำหนักของแฟล็ก, `0.75` และ `0.6` |
+| `agentFromHeaders(headers)` | หลักฐานของเอเจนต์จาก `User-Agent`, `Signature-Agent` และ `Sec-CH-UA-Platform` |
+| `agentFromTrace(trace)` | หลักฐานของเอเจนต์จากจังหวะการคลิกและการพิมพ์ในข้อมูลพฤติกรรม ส่งเฉพาะข้อมูลที่ `analyzeBehavior` ไม่ได้ตั้งแฟล็ก `bh_malformed` |
+| `summarizeAgent(evidence, verification?)` | รวมหลักฐานและผล `verifyWebBotAuth` ที่ส่งเพิ่มได้เป็นอ็อบเจกต์ `agent` หรือ `null` หากไม่มีหลักฐาน |
+| `verifyWebBotAuth(req, opts?)` | ตรวจสอบลายเซ็น Web Bot Auth และ resolve เป็น `{ verified, agent?, origin?, keyid?, reason? }` |
+| `parseSignatureAgent(value)` | แยกส่วนหัว `Signature-Agent` เป็นรายการ `{ label, url }` |
+| `hashwxReady()`, `setHashwxModule(module)` | คอมไพล์มอดูล HashWX ล่วงหน้า หรือจัดเตรียมมอดูลมาเอง ดู [HashWX](#format-2-hashwx) |
+| `hashwxTarget(difficulty)`, `hashwxSeed(challenge, block)`, `hashwxHash(state, seed, nonce)` | ฟังก์ชันพื้นฐานของ HashWX โดย `state` มาจาก `hashwxReady()` |
+| `DEFAULT_HASHWX_DIFFICULTY`, `DEFAULT_HASHWX_CHALLENGE_COUNT`, `DEFAULT_HASHWX_NONCES_PER_HASH` | `1_000_000`, `4` และ `65_536` |
+| `generateRswKeypair(bits?)`, `serializeRswKeypair(kp)`, `deserializeRswKeypair(s)`, `buildRswMinter(args, opts?)` | คีย์และตัวสร้าง challenge สำหรับโปรโตคอล RSW ที่เลิกใช้แล้ว |
+
+## การย้ายจาก `@cap.js/server` {#how-it-differs-from-cap-js-server}
+
+`@cap.js/server` เป็นไลบรารีเดิมที่ไลบรารีนี้มาแทน มันเก็บ challenge และ token ในที่เก็บข้อมูลที่คุณกำหนด ส่วน `capjs-core` ไม่เก็บอะไรเลย challenge เป็น JWT ที่ลงลายเซ็น การป้องกัน replay ทำผ่าน `consumeNonce` และคุณเก็บ `tokenKey` เองตามที่แสดงใน[การตรวจสอบ token](#verifying-tokens) มันไม่แตะระบบไฟล์เลย จึงรันบน Workers และ Lambda ได้

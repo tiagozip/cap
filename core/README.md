@@ -54,6 +54,9 @@ if (result.success) {
 - `opts.extra` — optional object embedded in the JWT payload
 - `opts.instrumentation` — `true` or `{ blockAutomatedBrowsers, obfuscationLevel }`
 - `opts.instrumentationGenerator` — optional custom generator (escape hatch for offloading to a worker pool)
+- `opts.behavior` is `true` or a policy object. It turns instrumentation on even when `opts.instrumentation` is off, because the trace is collected and bound by the script.
+
+A custom generator should return what `generateInstrumentation(opts)` returns, including `binding`. A generator that returns `expectedVals` without a `binding` only has its state checked, so the server ignores any collected data and a challenge that asks for behavior fails with `behavior_missing`. If the result has neither, `generateChallenge` throws, so a generator written for 0.1.6 that copies `expectedVals` from `generateInstrumentation` fails when it issues a challenge instead of on every redeem. Return the whole result, or copy `binding` as well.
 
 The `token` is a signed JWT containing the challenge config; `expires` is when it expires; `instrumentation` is the deflate+base64 client-side script (if requested).
 
@@ -62,7 +65,7 @@ The `token` is a signed JWT containing the challenge config; `expires` is when i
 `body`:
 - `token` — challenge token from `generateChallenge`
 - `solutions` — number array (length = `challenge.c`)
-- `instr` — instrumentation result (if enabled)
+- `instr` — instrumentation result (if enabled), exactly `{ i, state, d }`. `d` is the canonical JSON of everything the script collected, and the script folds a seeded hash of `d` into `state`, so editing `d` breaks the state check. The server reads nothing about the browser from outside `d`.
 - `instr_blocked`, `instr_timeout` — flags from the widget
 
 `opts`:
@@ -123,7 +126,7 @@ Run `bun test/benchmark.js` to reproduce.
 
 ## Migrating from `@cap.js/server`
 
-Unlike Cap's old server library, `capjs-core` does not include a token store. For most users we recommend [Cap Standalone](https://trycap.dev/guide/standalone/) (Docker, batteries included), but if you can't run Docker:
+Unlike Cap's old server library, `capjs-core` does not include a token store. For most users we recommend running [capd](https://trycap.dev/guide/capd/) (Docker, batteries included), but if you can't run Docker:
 
 | `@cap.js/server` | `capjs-core` |
 | --- | --- |

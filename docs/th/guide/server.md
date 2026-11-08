@@ -8,8 +8,8 @@ head:
 
 # @cap.js/server
 
-::: warning ไลบรารีรุ่นเก่า — ถูกแทนที่ด้วย [`capjs-core`](./capjs-core.md)
-`@cap.js/server` ไม่ใช่ไลบรารีฝั่งเซิร์ฟเวอร์ที่เราแนะนำอีกต่อไป โปรเจกต์ใหม่ควรใช้ [`capjs-core`](./capjs-core.md) ซึ่งไร้สถานะ (ไม่ใช้ระบบไฟล์ ไม่มีรายการ token ในหน่วยความจำ ใช้ได้บน Cloudflare Workers / Lambda / edge) ใช้ JWT ที่ลงลายเซ็น และเป็นสิ่งที่ [Cap Standalone](./standalone/index.md) ใช้อยู่ภายใน ดู[ตารางเทียบสำหรับการย้าย](./capjs-core.md#how-it-differs-from-cap-js-server)
+::: warning ไลบรารีรุ่นเก่า
+[`capjs-core`](./capjs-core.md) มาแทนที่ `@cap.js/server` แล้ว โปรเจกต์ใหม่ควรใช้ `capjs-core` ซึ่งไม่เก็บสถานะของตัวเอง รันบน Cloudflare Workers และ Lambda ได้ และเป็นไลบรารีที่ [capd](./capd/index.md) ใช้ `@cap.js/server` ออกได้เฉพาะ challenge แบบ SHA-256 โดยไม่มี HashWX หรือ instrumentation ดู[การย้ายจาก `@cap.js/server`](./capjs-core.md#how-it-differs-from-cap-js-server)
 :::
 
 `@cap.js/server` คือไลบรารีฝั่งเซิร์ฟเวอร์ของ Cap สำหรับสร้างและตรวจสอบ challenge ติดตั้งด้วยตัวจัดการแพ็กเกจที่คุณถนัด:
@@ -30,7 +30,7 @@ pnpm i @cap.js/server
 
 :::
 
-## เริ่มต้นใช้งาน
+## เริ่มต้นใช้งาน {#getting-started}
 
 คุณต้องมีฐานข้อมูลไว้เก็บ challenge และ token นี่คือตัวอย่างที่ใช้โมดูล SQL ของ Bun กับฐานข้อมูล Postgres:
 
@@ -219,7 +219,7 @@ if (!success) throw new Error("invalid cap token");
 // ...your logic
 ```
 
-## เมธอดและอาร์กิวเมนต์
+## เมธอดและอาร์กิวเมนต์ {#methods-and-arguments}
 
 #### `new Cap({ ... })`
 
@@ -285,7 +285,7 @@ if (!success) throw new Error("invalid cap token");
 }
 ```
 
-**ผลลัพธ์:** `{ success, token }`
+**ผลลัพธ์:** `{ success, token, expires }` เมื่อสำเร็จ และ `{ success: false, message }` เมื่อล้มเหลว
 
 #### `await cap.validateToken("...", { ... })`
 

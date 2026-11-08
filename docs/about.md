@@ -13,7 +13,7 @@ sidebar: false
 Cap is bot protection you can read, audit, and self-host:
 
 - A **~20 KB widget** that renders a single checkbox instead of image puzzles.
-- A **standalone server** that ships as one Docker container with a dashboard and multi-site-key support.
+- **capd**, a server that ships as one Docker container with a dashboard and multi-site-key support.
 - **A server library**, `capjs-core`, for running challenges inside your own backend, plus [community ports](./guide/community.md) to other languages.
 - A **siteverify API compatible with reCAPTCHA and hCaptcha**, so migrating is mostly a URL swap.
 

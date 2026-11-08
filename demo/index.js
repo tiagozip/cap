@@ -8,7 +8,7 @@ import {
   shipped as i18nShipped,
   shippedKeys as i18nShippedKeys,
   translations as i18nTranslations,
-} from "../widget/src/src/i18n/translations.js";
+} from "../widget/src/src/i18n/translations.mjs";
 
 const SECRET = process.env.CAP_SECRET || randomBytes(32).toString("hex");
 

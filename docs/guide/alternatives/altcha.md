@@ -22,7 +22,7 @@ If you want a minimal, library-style PoW CAPTCHA you can drop into a Node projec
 ## Where Cap is the better choice
 
 - **Two independent verification layers, free.** Cap runs proof-of-work *and* dynamic JavaScript [instrumentation challenges](../instrumentation.md) in parallel, both included. Defeating one doesn't defeat the other. The open-source Altcha is PoW only; the second layer (ML-based) requires paying for Sentinel.
-- **Standalone server with dashboard, free.** Cap ships a one-Docker-container deployment with a web dashboard, multi-site-key management, analytics, and a reCAPTCHA-compatible siteverify endpoint. Altcha's open-source side leaves you to wire those yourself; the all-in-one experience is Sentinel-only.
+- **Self-hosted server with dashboard, free.** Cap ships a one-Docker-container deployment with a web dashboard, multi-site-key management, analytics, and a reCAPTCHA-compatible siteverify endpoint. Altcha's open-source side leaves you to wire those yourself; the all-in-one experience is Sentinel-only.
 - **Smaller widget.** Cap is ~20 KB. Altcha is ~34 KB gzipped.
 - **Progress tracking.** Cap's widget reports solve progress to the user as a percentage, meaningful UX feedback during the small wait.
 - **Floating and invisible modes.** Cap can hide entirely or float over a button until form submit. Altcha's display modes are simpler.

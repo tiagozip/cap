@@ -9,7 +9,7 @@ faq:
   - q: Ist Cap kostenlos?
     a: "Vollständig. Apache 2.0, keine Quoten, kein bezahlter Tarif, bei jedem Volumen."
   - q: Ist Cap besser als ALTCHA?
-    a: "Cap bringt mehr mit (Instrumentation-Ebene, Standalone-Server, Dashboard, Fortschritts-UX, kleineres Widget); ALTCHA bringt absichtlich weniger mit. Entscheide danach, wie viel du selbst bauen willst."
+    a: "Cap bringt mehr mit (Instrumentation-Ebene, selbst gehosteter Server, Dashboard, Fortschritts-UX, kleineres Widget); ALTCHA bringt absichtlich weniger mit. Entscheide danach, wie viel du selbst bauen willst."
   - q: Schützt ein Open-Source-CAPTCHA die Privatsphäre?
     a: "Es macht Datenschutz überprüfbar statt versprochen. Selbst gehosteter Proof-of-Work braucht kein Fingerprinting, keine Verhaltensprofile und keine Drittanbieter-Aufrufe, und du kannst es im Code nachlesen."
 ---
@@ -40,7 +40,7 @@ Mehrere kommerzielle CAPTCHAs stellen ihre Client-Integrationen quelloffen und b
 
 ### Cap
 
-Cap ist ein vollständiger Open-Source-CAPTCHA-Stack unter Apache 2.0: ein Widget als Web Component mit etwa 20 KB plus [Cap Standalone](./standalone/index.md), ein kleines Docker-Deployment (ein Container plus Valkey) mit REST-API, einem Dashboard zur Verwaltung mehrerer Site-Keys und einem `/siteverify`-Endpunkt, der zur API-Form von reCAPTCHA kompatibel ist.
+Cap ist ein vollständiger Open-Source-CAPTCHA-Stack unter Apache 2.0: ein Widget als Web Component mit etwa 20 KB plus [capd](./capd/index.md), ein kleines Docker-Deployment (ein Container plus Valkey) mit REST-API, einem Dashboard zur Verwaltung mehrerer Site-Keys und einem `/siteverify`-Endpunkt, der zur API-Form von reCAPTCHA kompatibel ist.
 
 Der Schutz kommt aus zwei unabhängigen Ebenen: GPU-resistentem [HashWX-Proof-of-Work](./hashwx.md) und dynamischen [Instrumentation-Challenges](./instrumentation.md), die prüfen, dass die Umgebung ein echter Browser ist. Eine Ebene zu überwinden überwindet die andere nicht.
 
@@ -79,7 +79,7 @@ Anubis ist eine quelloffene Proof-of-Work-*Scraper-Mauer*: Sie riegelt eine ganz
 | Aktiv gepflegt | ✅ | ✅ | 🟨 vor 1.0, langsame Releases | ✅ |
 | Mechanismus | PoW plus Instrumentation | PoW | PoW | PoW |
 | Geltungsbereich | Pro Aktion (Formulare, APIs) | Pro Aktion | Pro Aktion | Ganze Website |
-| Standalone-Server plus Dashboard | ✅ | ❌ | ✅ | ❌ |
+| Selbst gehosteter Server plus Dashboard | ✅ | ❌ | ✅ | ❌ |
 | reCAPTCHA-kompatibles siteverify | ✅ | ❌ | ❌ | ❌ |
 | Widget-Größe | ~20 KB | ~34 KB | größer | entfällt (transparent) |
 | GPU-resistente PoW-Option | ✅ [HashWX](./hashwx.md) | ❌ | ❌ | ❌ |
@@ -107,7 +107,7 @@ Vollständig. Apache 2.0, keine Quoten, kein bezahlter Tarif, bei jedem Volumen.
 
 ### Ist Cap besser als ALTCHA?
 
-Cap bringt mehr mit (Instrumentation-Ebene, Standalone-Server, Dashboard, Fortschritts-UX, kleineres Widget); ALTCHA bringt absichtlich weniger mit. Entscheide danach, wie viel du selbst bauen willst.
+Cap bringt mehr mit (Instrumentation-Ebene, selbst gehosteter Server, Dashboard, Fortschritts-UX, kleineres Widget); ALTCHA bringt absichtlich weniger mit. Entscheide danach, wie viel du selbst bauen willst.
 
 ### Schützt ein Open-Source-CAPTCHA die Privatsphäre?
 

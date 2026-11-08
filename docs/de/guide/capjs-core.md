@@ -1,181 +1,137 @@
 ---
-outline: [2, 3, 4]
-description: "capjs-core ist Caps zustandslose Server-Bibliothek zum Erzeugen und Verifizieren von JWT-Proof-of-Work-Challenges. Hoste das quelloffene CAPTCHA selbst, auf Workers oder am Edge."
+outline: [2, 3]
+description: "capjs-core ist Caps zustandslose Server-Bibliothek zum Erzeugen und Verifizieren von Proof-of-Work-Challenges mit signierten JWTs. Betreibe das quelloffene CAPTCHA auf Workers, Lambda oder in deinem eigenen Backend."
 ---
 
-# Core
+# Core-Bibliothek
 
-Cap enthält eine zustandslose serverseitige Bibliothek zum Erzeugen und Verifizieren JWT-basierter Challenges, die intern auch von Standalone genutzt wird.
+`capjs-core` erzeugt und verifiziert Challenges in deinem eigenen Server. Die Bibliothek ist zustandslos. Eine Challenge ist ein signiertes JWT, braucht also keine Datenbank, kein Dateisystem und keinen Zustand im Arbeitsspeicher. Sie läuft auf Cloudflare Workers, Lambda und anderen Edge-Laufzeiten. capd baut darauf auf.
 
-Den meisten Nutzern empfehlen wir [Cap Standalone](./standalone/index.md), das auf Docker läuft und alles Nötige mitbringt. Die Core-Bibliothek direkt zu verwenden empfehlen wir nur, wenn du Docker nicht betreiben kannst, die Challenge-Erzeugung in einen bestehenden Dienst einbetten willst oder in eine Umgebung ohne persistenten Speicher deployen musst (Cloudflare Workers, Lambda, Edge Functions).
-
-## Installation
+Den meisten Nutzern empfehlen wir stattdessen [capd](./capd/index.md), Caps Server, der ein Dashboard, Statistiken, Rate Limiting und Token-Speicherung ergänzt. Nutze die Bibliothek, wenn du keinen Container betreiben kannst oder Challenges in einen bestehenden Dienst einbetten willst.
 
 ::: code-group
-
-```sh [bun]
-bun add capjs-core
-```
 
 ```sh [npm]
 npm i capjs-core
 ```
 
 ```sh [pnpm]
-pnpm i capjs-core
+pnpm add capjs-core
+```
+
+```sh [bun]
+bun add capjs-core
 ```
 
 :::
 
 ## Erste Schritte
 
+Du brauchst zwei Routen, eine zum Erzeugen einer Challenge und eine zum Prüfen der Lösung. Richte `data-cap-api-endpoint` des Widgets auf ihr gemeinsames Präfix. Das Widget ruft dann `<prefix>challenge` und `<prefix>redeem` auf.
+
 ```js
 import { generateChallenge, validateChallenge } from "capjs-core";
 
-// Lang, zufällig, hohe Entropie. Halte das über alle Prozesse hinweg konsistent.
 const SECRET = process.env.CAP_SECRET;
 
-// 1) Server-Route: eine Challenge erzeugen
-const ch = await generateChallenge(SECRET, {
-  scope: "signup", // optional
-  instrumentation: true, // optional, siehe unten
+app.post("/cap/challenge", async () => {
+  return await generateChallenge(SECRET, { instrumentation: true });
 });
-// → { challenge: { c, s, d }, token, expires, instrumentation? }
 
-// 2) Server-Route: die eingelöste Challenge validieren
-const result = await validateChallenge(
-  SECRET,
-  {
-    token: req.body.token,
-    solutions: req.body.solutions,
-    instr: req.body.instr,
-  },
-  {
-    scope: "signup",
-    consumeNonce: async (sigHex, ttlMs) => myStore.setIfNotExists(`cap:${sigHex}`, 1, ttlMs),
-  },
-);
-
-if (result.success) {
-  // result.token, result.tokenKey, result.expires, result.scope
-}
+app.post("/cap/redeem", async (req) => {
+  return await validateChallenge(SECRET, req.body, { consumeNonce });
+});
 ```
 
-Das Widget ruft `generateChallenge` auf, erhält `{ challenge, token, expires, instrumentation }`, löst den Proof-of-Work clientseitig und schickt `{ token, solutions, instr }` per POST zurück. Anschließend rufst du `validateChallenge` zur Prüfung auf.
+`SECRET` signiert jede Challenge. Mach es lang und zufällig, mindestens 16 Bytes, und nutze in jedem Prozess dasselbe.
 
-## Unterschiede zu `@cap.js/server` {#how-it-differs-from-cap-js-server}
+`consumeNonce` verhindert, dass eine gelöste Challenge zweimal eingelöst wird. Du stellst es über deinen eigenen Speicher bereit. Siehe [Replay-Schutz](#replay-prevention).
 
-| Aspekt              | `@cap.js/server`                             | `capjs-core`                                     |
-| ------------------- | -------------------------------------------- | ------------------------------------------------ |
-| State               | In-Memory- plus Dateisystem-Token-Store       | Zustandslos. Challenge-Tokens sind signierte JWTs |
-| Konstruktor         | `new Cap({ ... })`                            | Keiner — `secret` pro Aufruf übergeben           |
-| Replay-Schutz       | Eingebaute Token-Liste mit Aufräumintervall   | Opt-in über `consumeNonce`-Callback              |
-| Cleanup-Hooks       | Flush bei `SIGINT`/`beforeExit`               | Keine — TTL steckt im JWT-`exp`                  |
-| Dateisystem         | Für Persistenz erforderlich                   | Wird nie angefasst                               |
-| Worker-kompatibel   | Nein (Dateisystem)                            | Ja                                               |
+## Tokens verifizieren {#verifying-tokens}
 
-Anders als die alte Bibliothek validiert `capjs-core` Redeem-Tokens nicht für dich: Es liefert einen `tokenKey`, den du selbst speicherst, und ein `token`, das du dem Nutzer gibst. Zum späteren Validieren leitest du den Key aus dem eingereichten Token erneut ab und schlägst ihn nach:
+Ein erfolgreicher Aufruf von `validateChallenge` liefert ein `token` für den Besucher und einen `tokenKey` für dich. Die Bibliothek speichert keines davon. Speichere deshalb `tokenKey` mit seinem `expires`:
+
+```js
+const result = await validateChallenge(SECRET, req.body, { consumeNonce });
+if (result.success) {
+  await store.set(`cap-token:${result.tokenKey}`, result.expires);
+}
+return result;
+```
+
+Das Widget übergibt `token` an dein Formular. Wenn das Formular ankommt, leite den Key aus dem eingereichten Token ab und schlage ihn nach:
 
 ```js
 import { createHash } from "node:crypto";
 
-// Validierungs-Route
-const [id, verToken] = req.body.token.split(":");
-const tokenKey = `${id}:${createHash("sha256").update(verToken).digest("hex")}`;
-const expires = await myStore.get(`cap-token:${tokenKey}`);
+const [id, secret] = req.body["cap-token"].split(":");
+const tokenKey = `${id}:${createHash("sha256").update(secret).digest("hex")}`;
+const expires = await store.get(`cap-token:${tokenKey}`);
+
 if (!expires || Number(expires) < Date.now()) {
-  return res.status(401).end();
+  return new Response("invalid captcha", { status: 403 });
 }
+await store.delete(`cap-token:${tokenKey}`);
 ```
 
-## API
+Durch das Löschen des Keys ist jedes Token nur einmal nutzbar.
 
-### `generateChallenge(secret, opts?)`
+## HashWX {#format-2-hashwx}
 
-Liefert `Promise<{ challenge, token, expires, instrumentation? }>`.
+Ohne Optionen stellt `generateChallenge` SHA-256-Proof-of-Work aus. [HashWX](./hashwx.md) ist gegen GPUs weit resistenter, und capd nutzt es für neue Keys. Aktiviere es über die Format-2-API:
 
-- `secret` — String oder Buffer, ≥16 Bytes. Master-HMAC-Key, muss über alle Prozesse hinweg gleich sein.
-- `opts.challengeCount` — Anzahl der PoW-Puzzles. Standard `50`.
-- `opts.challengeSize` — Salt-Länge in Hex-Zeichen. Standard `32`.
-- `opts.challengeDifficulty` — Länge des Zielpräfixes in Hex-Zeichen. Standard `4`.
-- `opts.expiresMs` — TTL der Challenge. Standard `600_000` (10 Min.).
-- `opts.scope` — optionaler String, der an die Challenge gebunden wird. Die Validierung muss denselben `scope` übergeben.
-- `opts.extra` — optionales Objekt, das in die JWT-Payload eingebettet wird (für jeden mit dem Token sichtbar).
-- `opts.instrumentation` — `true` für Standardwerte, oder ein Objekt: `{ blockAutomatedBrowsers, obfuscationLevel }`.
-- `opts.instrumentationGenerator` — Notausgang, um die Skripterzeugung an einen Worker-Pool auszulagern.
+```js
+return await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+});
+```
 
-Das `token` ist ein signiertes JWT mit der Challenge-Konfiguration. `expires` ist der JWT-Ablauf in ms. `instrumentation` ist, falls angefordert, das mit deflate+base64 kodierte Client-Skript, das das Widget ausführt.
+Das Widget erkennt das Format automatisch, und `validateChallenge` verarbeitet beide. Übergib bei Format 2 immer `protocols`. Ohne diese Option nutzt die Challenge das abgekündigte RSW-Protokoll, das ein RSA-Keypair in `keypair` oder einen Minter in `rsw` benötigt.
 
-### `validateChallenge(secret, body, opts?)`
+| Option | Standard | Beschreibung |
+| --- | --- | --- |
+| `hashwxDifficulty` | `1_000_000` | Erwartete Hashes pro Lösung, über alle Teil-Challenges hinweg. |
+| `hashwxChallengeCount` | `4` | Teil-Challenges, auf die sich die Schwierigkeit verteilt. Mehr davon machen die Lösungszeiten weniger zufällig. Siehe [Kosten auf dem Client](./hashwx.md#cost). |
+| `hashwxNoncesPerHash` | `65_536` | Nonces, die jede erzeugte Hash-Funktion abdeckt. |
 
-Liefert `Promise<{ success: true, token, tokenKey, expires, scope, iat } | { success: false, reason, instr_error? }>`.
+HashWX braucht keine Keys und keine Vorbereitung. Die erste Verifizierung kompiliert ein kleines WebAssembly-Modul. Mit `await hashwxReady()` beim Start kannst du das vorziehen.
 
-`body`:
+Manche Laufzeiten erlauben es nicht, WebAssembly zur Laufzeit zu kompilieren. Cloudflare Workers erhalten automatisch ein vorkompiliertes Modul. Anderswo importierst du es auf die von deiner Plattform unterstützte Weise und übergibst es vor der ersten Verifizierung:
 
-- `token` — Challenge-Token aus `generateChallenge`
-- `solutions` — Zahlen-Array, Länge muss `challenge.c` entsprechen
-- `instr` — Instrumentation-Ergebnis (falls aktiviert)
-- `instr_blocked`, `instr_timeout` — Flags des Widgets, wenn die Instrumentation die Seite abgelehnt hat
+```js
+import { setHashwxModule } from "capjs-core";
+import hashwxModule from "capjs-core/hashwx.wasm";
 
-`opts`:
+setHashwxModule(hashwxModule);
+```
 
-- `scope` — muss zum Scope der ursprünglichen Challenge passen
-- `tokenTtlMs` — TTL des Redeem-Tokens. Standard `1_200_000` (20 Min.).
-- `consumeNonce(sigHex, ttlMs)` — Replay-Schutz über deinen Speicher. Siehe unten.
-- `signToken(data)` — asynchrone Funktion, die ein eigenes Redeem-Token-Format liefert. Standardmäßig `id:secret`.
+## Replay-Schutz {#replay-prevention}
 
-#### Fehlergründe
-
-| `reason`            | Bedeutung                                                       |
-| ------------------- | --------------------------------------------------------------- |
-| `invalid_body`      | Body ist kein Objekt                                            |
-| `missing_token`     | kein Token übergeben                                            |
-| `missing_solutions` | Solutions fehlen oder sind kein Array                           |
-| `invalid_token`     | JWT-Signatur passt nicht / fehlerhaft / Parameter außerhalb des Bereichs |
-| `scope_mismatch`    | Scope des Tokens passt nicht zu `opts.scope`                    |
-| `expired`           | Challenge-JWT abgelaufen                                        |
-| `invalid_solutions` | Längenkonflikt oder keine Zahlen                                |
-| `nonce_store_error` | `consumeNonce`-Callback hat geworfen                            |
-| `already_redeemed`  | `consumeNonce` hat `false` geliefert                            |
-| `invalid_solution`  | Solutions erfüllen den PoW nicht                                |
-| `instr_*`           | Instrumentation fehlgeschlagen (mit `instr_error: true`)        |
-
-## Replay-Schutz
-
-Die Bibliothek ist bewusst zustandslos. Damit eine abgefangene Übermittlung nicht zweimal eingelöst werden kann, übergib einen `consumeNonce`-Callback. `capjs-core` ruft ihn mit dem Signatur-Hex des JWT und der verbleibenden TTL auf; du speicherst dieses Hex in deinem KV mit `SET NX EX`-Semantik und gibst bei Wiederholungen `false` zurück.
+`validateChallenge` ruft `consumeNonce(signature, ttlMs)` auf, sobald der Proof-of-Work stimmt und bevor es die Instrumentation prüft. Speichere die Signatur, wenn sie neu ist, und gib `true` zurück. Gib `false` zurück, wenn sie schon verwendet wurde. Eine Anfrage mit falschem Proof-of-Work erreicht diesen Schritt nie und kann die Challenge eines echten Besuchers deshalb nicht verbrauchen. Eine Anfrage mit gültigem Proof-of-Work und fehlgeschlagenem Instrumentation-Ergebnis verbraucht sie dagegen. So kann ein Bot die Instrumentation-Prüfung nicht mit demselben Proof-of-Work wiederholen.
 
 ::: code-group
 
-```js [redis]
-import { Redis } from "ioredis";
-const redis = new Redis(process.env.REDIS_URL);
-
-const consumeNonce = async (sigHex, ttlMs) => {
-  const ttlSec = Math.ceil(ttlMs / 1000);
-  const ok = await redis.set(`cap:${sigHex}`, "1", "NX", "EX", ttlSec);
-  return ok === "OK";
-};
+```js [Redis]
+const consumeNonce = async (sig, ttlMs) =>
+  (await redis.set(`cap:${sig}`, "1", "NX", "PX", ttlMs)) === "OK";
 ```
 
-```js [cloudflare-kv]
-const consumeNonce = async (sigHex, ttlMs) => {
-  const key = `cap:${sigHex}`;
-  if (await env.NONCES.get(key)) return false;
-  await env.NONCES.put(key, "1", {
-    expirationTtl: Math.ceil(ttlMs / 1000),
-  });
+```js [Workers KV]
+const consumeNonce = async (sig, ttlMs) => {
+  if (await env.NONCES.get(`cap:${sig}`)) return false;
+  await env.NONCES.put(`cap:${sig}`, "1", { expirationTtl: Math.max(60, Math.ceil(ttlMs / 1000)) });
   return true;
 };
 ```
 
-```js [postgres]
-const consumeNonce = async (sigHex, ttlMs) => {
-  const expiresAt = new Date(Date.now() + ttlMs).toISOString();
+```js [Postgres]
+const consumeNonce = async (sig, ttlMs) => {
   try {
-    await db`INSERT INTO cap_nonces (sig, expires_at) VALUES (${sigHex}, ${expiresAt})`;
+    await sql`INSERT INTO cap_nonces (sig, expires_at) VALUES (${sig}, ${new Date(Date.now() + ttlMs)})`;
     return true;
   } catch (e) {
-    if (e.code === "23505") return false; // unique violation
+    if (e.code === "23505") return false;
     throw e;
   }
 };
@@ -183,110 +139,145 @@ const consumeNonce = async (sigHex, ttlMs) => {
 
 :::
 
-Die Prüfung läuft _nach_ der PoW- und Instrumentation-Verifizierung. Ein Angreifer, der eine abgefangene Übermittlung mit Unsinn-Solutions wiederholt, kann die Nonce des legitimen Nutzers also nicht verbrennen.
+Workers KV ist nicht atomar. Zwei gleichzeitig eintreffende Anfragen können deshalb beide durchkommen. Nutze ein Durable Object, wenn das relevant ist.
 
 ## Instrumentation
 
-Übergib `instrumentation: true` (oder ein Options-Objekt) an `generateChallenge`, um ein mit deflate+base64 kodiertes Client-Skript zu erhalten. Das Widget führt es aus, schickt einen Fingerprint zurück, und `validateChallenge` prüft ihn.
+`instrumentation: true` ergänzt Format-1-Challenges um eine [Instrumentation-Challenge](./instrumentation.md). Bei Format 2 fügst du `"instrumentation"` zu `protocols` hinzu. In beiden Fällen kannst du statt `true` ein Objekt übergeben:
 
 ```js
-const ch = await generateChallenge(SECRET, {
-  instrumentation: {
-    blockAutomatedBrowsers: true, // playwright/puppeteer/selenium ablehnen
-    obfuscationLevel: 3, // 1-10, Standard 3
-  },
+instrumentation: {
+  blockAutomatedBrowsers: true,
+  obfuscationLevel: 3,
+}
+```
+
+| Option | Standard | Beschreibung |
+| --- | --- | --- |
+| `blockAutomatedBrowsers` | `false` | Lehnt Lösungen aus [automatisierten Browsern](./instrumentation.md#automated-browser-detection) mit `instr_automated_browser` ab. |
+| `detectAutomatedInteractions` | `false` | Fügt `interaction_synthetic_clicks` und `interaction_synthetic_keydowns` zu `riskFlags` hinzu. Siehe [Interaktionserkennung](./instrumentation.md#interaction-detection). |
+| `blockAutomatedInteractions` | `false` | Lehnt diese Lösungen mit `instr_automated_interaction` ab. Aktiviert auch die Erkennung. |
+| `obfuscationLevel` | `5` | Von 1 bis 10. Die Stufen 1 bis 3 entfernen Whitespace, 4 bis 7 kodieren außerdem Strings und minifizieren, und 8 bis 10 nutzen `javascript-obfuscator`, wenn es installiert ist. Höhere Stufen brauchen länger zum Erzeugen. |
+
+Die Stufen 8 bis 10 benötigen das optionale Paket `javascript-obfuscator` und blockieren die Event-Loop pro Challenge um mehrere zehn Millisekunden. Nutze sie deshalb nur für Routen mit wenig Traffic oder erzeuge Skripte mit `instrumentationGenerator` in einem Worker-Pool. Die Funktion erhält die Instrumentation-Optionen und muss ein Promise mit dem Rückgabewert von `generateInstrumentation` liefern.
+
+## Verhalten und Agenten {#behavior-and-agents}
+
+`behavior` aktiviert [Verhaltensbewertung](./instrumentation.md#behavior-scoring) und [Agentenblockierung](./instrumentation.md#ai-agent-detection). Es ergänzt eine Instrumentation-Challenge, falls noch keine vorhanden ist. Die Richtlinie wird ins Challenge-Token signiert, damit der Client sie nicht deaktivieren kann.
+
+```js
+await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+  behavior: { block: true, blockAgents: "identified" },
 });
 ```
 
-Ist `blockAutomatedBrowsers` aktiv, führt das Skript Realm-Escape- und Verhaltensprüfungen aus, die Headless-Chromium, Marker von Automatisierungs-Frameworks und JS-Sandbox-Imitationen erkennen. Details siehe [Instrumentation](./instrumentation.md).
+`behavior: true` bewertet, ohne zu blockieren. Das Objekt akzeptiert:
 
-Höhere Obfuskationsstufen sind langsamer zu erzeugen. Die Stufen 4–7 ergänzen eine eigene String-Table-Indirektion plus esbuild-Minifizierung. Die Stufen 8–10 legen `javascript-obfuscator` obendrauf (String-Array, Control-Flow-Flattening, Dead-Code-Injection). Diese blockieren die Event-Loop pro Challenge um mehrere zehn Millisekunden, nutze sie also nur für Routen mit geringem Volumen oder liefere einen eigenen `instrumentationGenerator`, der in einem Worker-Pool läuft.
+| Option | Standard | Beschreibung |
+| --- | --- | --- |
+| `block` | `false` | Lehnt das Urteil `automated` mit `behavior_automated` und das Urteil `no_interaction` mit `behavior_no_interaction` ab. |
+| `threshold` | `0.75` | Score von 0,1 bis 1, ab dem das Urteil `automated` lautet. |
+| `strict` | `false` | Hebt die Grenze von 0,6 für Scores auf, die nur aus schwachen Flags bestehen. |
+| `requireInteraction` | `true` | Setze es für den unsichtbaren Modus und den Floating-Modus auf `false`, um `no_interaction` bei aktiviertem `block` durchzulassen. |
+| `blockAgents` | `false` | `"identified"` lehnt mit hoher Konfidenz erkannte Agenten ab, `"all"` jeden erkannten Agenten, jeweils mit `behavior_agent`. |
+| `allowVerifiedAgents` | `false` | Lässt Agenten mit verifizierter Web Bot Auth-Signatur durch `blockAgents`. |
 
-## Zustandslose Deployment-Muster
+Eine Lösung ohne Verhaltensaufzeichnung schlägt unabhängig von der Richtlinie immer mit `behavior_missing` fehl.
 
-**Warnung:** Diese Skripte enthalten keinen eingebauten Replay-Schutz. Ergänze ihn unbedingt selbst.
-
-### Cloudflare Workers
-
-```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = (env) => env.CAP_SECRET;
-
-export default {
-  async fetch(req, env) {
-    const url = new URL(req.url);
-
-    if (url.pathname === "/challenge" && req.method === "POST") {
-      const ch = await generateChallenge(SECRET(env), { instrumentation: true });
-      return Response.json(ch);
-    }
-
-    if (url.pathname === "/redeem" && req.method === "POST") {
-      const body = await req.json();
-      const result = await validateChallenge(SECRET(env), body, {
-        consumeNonce: async (sigHex, ttlMs) => {
-          if (await env.NONCES.get(`cap:${sigHex}`)) return false;
-          await env.NONCES.put(`cap:${sigHex}`, "1", {
-            expirationTtl: Math.ceil(ttlMs / 1000),
-          });
-          return true;
-        },
-      });
-      return Response.json(result);
-    }
-
-    return new Response("not found", { status: 404 });
-  },
-};
-```
-
-### Bun
+Um Anfrage-Header als Hinweise auf Agenten zu nutzen, übergib die `/redeem`-Anfrage an `validateChallenge`:
 
 ```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-const SECRET = process.env.CAP_SECRET;
-
-Bun.serve({
-  port: 3000,
-  routes: {
-    "/challenge": {
-      POST: () => Response.json(generateChallenge(SECRET, { instrumentation: true })),
-    },
-    "/redeem": {
-      POST: async (req) => {
-        const body = await req.json();
-        return Response.json(await validateChallenge(SECRET, body));
-      },
-    },
-  },
+const result = await validateChallenge(SECRET, body, {
+  consumeNonce,
+  request: { method: req.method, url: fullUrl, headers: req.headers },
+  verifyWebBotAuth: true,
 });
 ```
 
-## HashWX-Challenges {#format-2-hashwx}
+`url` muss die vollständige URL sein, da Web Bot Auth sie signiert. Mit `verifyWebBotAuth: true` wird eine Anfrage mit `Signature-Agent`-Header gegen das Schlüsselverzeichnis des Agenten geprüft. `validateChallenge` ruft es über HTTPS ab und hält es eine Stunde im Cache. Es vertraut nur den Cap bekannten Unterzeichnern und den Origins in `trustedSignatureAgents`. Übergib `webBotAuthNonceCheck(nonce, ttlMs)`, um wiederverwendete Signaturen abzulehnen. Es funktioniert wie `consumeNonce`.
 
-Seit v0.1.1 und Widget v0.1.51 verstehen beide Seiten ein reicheres Wire-Format, das mehrere Challenge-Protokolle in einer Antwort unterstützt: SHA-256-PoW (der Standard), [HashWX](./hashwx.md), das abgekündigte RSW-Time-Lock-Puzzle und Instrumentation.
+`behaviorReplayCheck(digest, ttlMs)` funktioniert genauso für Verhaltensaufzeichnungen. Gib `true` zurück, wenn der Digest schon gesehen wurde. Die Aufzeichnung erhält dann `bh_replayed`. Nur Aufzeichnungen mit mindestens 8 Zeigerbewegungen und Tastendrücken haben einen Digest.
 
-### Minimales Opt-in
+Bei aktivierter Verhaltensbewertung enthält ein erfolgreiches Ergebnis `behavior: { score, verdict, flags, signals, agent }`. Ist sie deaktiviert, wird `agent` bei vorhandenen Hinweisen auf oberster Ebene zurückgegeben, nur aus Seitenmarkierungen und Headern gebildet und nie blockiert. In beiden Fällen ergänzt ein erkannter Agent `riskFlags` um `agent:<name>`. `agent` sieht so aus:
 
 ```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = process.env.CAP_SECRET;
-
-app.post("/api/challenge", async () => {
-  return await generateChallenge(SECRET, {
-    format: 2,
-    protocols: ["hashwx", "instrumentation"],
-    hashwxDifficulty: 1_000_000, // optional, das ist der Standard
-  });
-});
-
-app.post("/api/redeem", async (req) => {
-  return await validateChallenge(SECRET, req.body, { consumeNonce });
-});
+{
+  detected: true,
+  name: "claude-in-chrome",
+  confidence: "high",
+  verified: false,
+  evidence: ["artifact:cic_active"],
+}
 ```
 
-HashWX braucht kein Schlüsselmaterial und kein Setup beim Start. Die erste Verifizierung kompiliert das eingebettete WebAssembly-Modul, was ein paar Millisekunden dauert; ruf beim Start `hashwxReady()` auf, dann trifft das nicht den ersten Request.
+## API
 
-`hashwxDifficulty` ist die erwartete Anzahl Hashes, die ein Client berechnen muss, verteilt auf `hashwxChallengeCount` unabhängige Teil-Challenges (Standard `4`). Eine einzelne Challenge hat eine exponentialverteilte Lösungszeit, ein Besucher wartet also 30 ms und der nächste drei Sekunden. Bei gleicher Gesamtschwierigkeit senken vier Teil-Challenges das p90 um etwa ein Viertel und machen den Median etwa ein Drittel langsamer, denn die erwartete Arbeit eines Angreifers bleibt in beiden Fällen `d` Hashes. Siehe [Kosten auf dem Client](./hashwx.md#cost). Jede weitere Teil-Challenge kostet bei der Verifikation etwa 20 µs. `hashwxNoncesPerHash` (Standard `65_536`) wird ebenfalls akzeptiert.
+### `generateChallenge(secret, options?)`
+
+| Option | Standard | Beschreibung |
+| --- | --- | --- |
+| `challengeCount` | `50` | SHA-256-Puzzles pro Challenge. |
+| `challengeSize` | `32` | Salt-Länge in Hex-Zeichen. |
+| `challengeDifficulty` | `4` | Erforderliche Länge des Hash-Präfixes in Hex-Zeichen. |
+| `expiresMs` | `600_000` | Zeit, die der Besucher zum Lösen hat. |
+| `scope` | keiner | Ein an die Challenge gebundener String. Die Validierung muss denselben übergeben. |
+| `extra` | keine | Im JWT eingebettete Daten. Jeder mit dem Token kann sie lesen. |
+| `instrumentation` | `false` | Siehe [Instrumentation](#instrumentation). |
+| `instrumentationGenerator` | `generateInstrumentation` | Asynchrone Funktion, die das Instrumentation-Skript erzeugt. |
+| `behavior` | `false` | Siehe [Verhalten und Agenten](#behavior-and-agents). |
+| `format`, `protocols` | Format 1 | Siehe [HashWX](#format-2-hashwx). |
+| `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | siehe [HashWX](#format-2-hashwx) | HashWX-Einstellungen für Format 2. |
+| `keypair`, `t`, `rsw` | keine | Einstellungen für das abgekündigte RSW-Protokoll. |
+
+Format 1 liefert `{ challenge, token, expires, instrumentation? }`, Format 2 liefert `{ token, format: 2, challenges, expires }`. Beide ergänzen `behavior: true`, wenn die Verhaltensbewertung aktiv ist. Schicke das gesamte Objekt an das Widget.
+
+### `validateChallenge(secret, body, options?)`
+
+`body` ist das, was das Widget an `/redeem` sendet. Die Optionen sind:
+
+| Option | Standard | Beschreibung |
+| --- | --- | --- |
+| `consumeNonce` | keiner | Siehe [Replay-Schutz](#replay-prevention). |
+| `scope` | keiner | Muss zum Scope der Challenge passen. |
+| `tokenTtlMs` | `1_200_000` | Gültigkeitsdauer des Besucher-Tokens. |
+| `signToken` | `id:secret` | Funktion, die `{ scope, expires, iat }` erhält und dein eigenes Token liefert. `tokenKey` entfällt. |
+| `request` | keine | Die `/redeem`-Anfrage als `{ method, url, headers }`. Siehe [Verhalten und Agenten](#behavior-and-agents). |
+| `verifyWebBotAuth` | `false` | Verifiziert Web Bot Auth-Signaturen auf `request`. |
+| `fetch` | globales `fetch` | Wird zum Herunterladen der Web Bot Auth-Schlüsselverzeichnisse verwendet. |
+| `trustedSignatureAgents` | keine | Weitere vertrauenswürdige Unterzeichner-Origins, etwa `"https://agent.example.com"`. |
+| `webBotAuthNonceCheck` | keiner | Lehnt wiederverwendete Web Bot Auth-Signaturen ab. |
+| `behaviorReplayCheck` | keiner | Markiert wiederverwendete Verhaltensaufzeichnungen. |
+
+Bei Erfolg liefert es `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }` sowie `behavior` oder `agent`, wie unter [Verhalten und Agenten](#behavior-and-agents) beschrieben. `riskFlags` enthält Signale, die allein nicht blockieren, etwa `native_tamper` oder `legacy_widget`. Damit kannst du die Schwierigkeit für diesen Besucher erhöhen. Die Instrumentation-Seite listet die [Flags der Browser-Prüfungen](./instrumentation.md#automated-browser-detection) und die [Verhaltens-Flags](./instrumentation.md#behavior-scoring) auf.
+
+Bei einem Fehler liefert es `{ success: false, reason }`. Instrumentation-Fehler enthalten außerdem `instr_error: true`. `instr_automated_browser` und `instr_automated_interaction` haben eine `blockedBy`-Liste, und Verhaltensfehler haben `behavior`. Jeder `reason` steht in der [Fehlercode-Tabelle](./troubleshooting/instrumentation.md#error-codes).
+
+### Exporte auf niedrigerer Ebene
+
+capd und die Tests nutzen diese Exporte. Du brauchst sie nur, wenn du deine eigene Pipeline baust.
+
+| Export | Beschreibung |
+| --- | --- |
+| `generateInstrumentation(opts?)` | Erzeugt ein Instrumentation-Skript und die Metadaten zu dessen Prüfung. |
+| `verifyInstrumentationResult(meta, payload, now?)` | Prüft ein Ergebnis gegen diese Metadaten. Liefert `{ valid, reason?, riskFlags?, blockedBy?, checks?, agent?, trace? }`. |
+| `serializeBound(data)`, `canonicalize(value)` | Serialisieren gesammelte Daten genauso wie das Skript. |
+| `boundValues(binding, serialized)` | Die Zahlen, die ein Ergebnis für diese Daten enthalten muss. |
+| `MAX_BOUND_DATA` | Maximale akzeptierte Länge serialisierter Daten, 65.536 Zeichen. |
+| `detectAutomation(vector)` | Führt die Prüfungen auf automatisierte Browser mit selbst gesammelten Browserdaten aus. Liefert `{ pass, checks, blockedBy, riskFlags }`. |
+| `analyzeBehavior(trace, ctx?)` | Bewertet eine Verhaltensaufzeichnung. `ctx` akzeptiert `{ replayed, strict, threshold }`. Liefert `{ score, verdict, flags, signals, digest }`. |
+| `BEHAVIOR_WEIGHTS`, `DEFAULT_BEHAVIOR_THRESHOLD`, `WEAK_CAP` | Die Flag-Gewichte, `0.75` und `0.6`. |
+| `agentFromHeaders(headers)` | Hinweise auf Agenten aus `User-Agent`, `Signature-Agent` und `Sec-CH-UA-Platform`. |
+| `agentFromTrace(trace)` | Hinweise auf Agenten aus dem Timing von Klicks und Tastatureingaben einer Verhaltensaufzeichnung. Übergib nur Aufzeichnungen, die `analyzeBehavior` nicht als `bh_malformed` markiert hat. |
+| `summarizeAgent(evidence, verification?)` | Fasst Hinweise und ein optionales `verifyWebBotAuth`-Ergebnis im `agent`-Objekt zusammen oder liefert `null`, wenn keine Hinweise vorliegen. |
+| `verifyWebBotAuth(req, opts?)` | Verifiziert eine Web Bot Auth-Signatur. Das Promise liefert `{ verified, agent?, origin?, keyid?, reason? }`. |
+| `parseSignatureAgent(value)` | Zerlegt einen `Signature-Agent`-Header in `{ label, url }`-Einträge. |
+| `hashwxReady()`, `setHashwxModule(module)` | Kompilieren das HashWX-Modul vorab oder stellen eines bereit. Siehe [HashWX](#format-2-hashwx). |
+| `hashwxTarget(difficulty)`, `hashwxSeed(challenge, block)`, `hashwxHash(state, seed, nonce)` | HashWX-Grundfunktionen. `state` stammt von `hashwxReady()`. |
+| `DEFAULT_HASHWX_DIFFICULTY`, `DEFAULT_HASHWX_CHALLENGE_COUNT`, `DEFAULT_HASHWX_NONCES_PER_HASH` | `1_000_000`, `4` und `65_536`. |
+| `generateRswKeypair(bits?)`, `serializeRswKeypair(kp)`, `deserializeRswKeypair(s)`, `buildRswMinter(args, opts?)` | Keys und Minter für das abgekündigte RSW-Protokoll. |
+
+## Migration von `@cap.js/server` {#how-it-differs-from-cap-js-server}
+
+`@cap.js/server` ist die ältere Bibliothek, die diese hier ablöst. Sie hielt Challenges und Tokens in einem von dir konfigurierten Speicher vor. `capjs-core` speichert nichts. Challenges sind signierte JWTs, der Replay-Schutz läuft über `consumeNonce`, und `tokenKey` speicherst du selbst, wie unter [Tokens verifizieren](#verifying-tokens) gezeigt. Die Bibliothek greift nie auf das Dateisystem zu und läuft deshalb auf Workers und Lambda.

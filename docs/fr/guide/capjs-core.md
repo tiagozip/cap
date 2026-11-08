@@ -1,181 +1,137 @@
 ---
-outline: [2, 3, 4]
-description: "capjs-core est la bibliothèque serveur sans état de Cap pour générer et vérifier des défis de preuve de travail JWT. Auto-hébergez le CAPTCHA open source sur Workers ou en edge."
+outline: [2, 3]
+description: "capjs-core est la bibliothèque serveur sans état de Cap pour générer et vérifier des défis de preuve de travail avec des JWT signés. Exécutez le CAPTCHA open source sur Workers, Lambda ou votre propre backend."
 ---
 
-# Core
+# Bibliothèque core
 
-Cap inclut une bibliothèque serveur sans état pour générer et vérifier des défis fondés sur des JWT, utilisée en interne par Standalone.
+`capjs-core` génère et vérifie les défis dans votre propre serveur. Elle est sans état. Un défi est un JWT signé, donc elle n'a besoin d'aucune base de données, d'aucun système de fichiers ni d'aucun état en mémoire, et fonctionne sur Cloudflare Workers, Lambda et d'autres runtimes edge. capd est bâti dessus.
 
-Pour la plupart des utilisateurs, nous recommandons [Cap Standalone](./standalone/index.md), qui tourne sur Docker et embarque tout le nécessaire. Nous ne conseillons d'utiliser directement la bibliothèque core que si vous ne pouvez pas faire tourner Docker, si vous voulez intégrer la génération de défis à un service existant, ou si vous devez déployer dans un environnement sans stockage persistant (Cloudflare Workers, Lambda, fonctions edge).
-
-## Installation
+La plupart des utilisateurs devraient plutôt utiliser [capd](./capd/index.md), le serveur de Cap, qui ajoute un tableau de bord, des statistiques, une limitation de débit et un stockage de jetons. Utilisez la bibliothèque si vous ne pouvez pas faire tourner un conteneur ou si vous voulez intégrer les défis dans un service existant.
 
 ::: code-group
-
-```sh [bun]
-bun add capjs-core
-```
 
 ```sh [npm]
 npm i capjs-core
 ```
 
 ```sh [pnpm]
-pnpm i capjs-core
+pnpm add capjs-core
+```
+
+```sh [bun]
+bun add capjs-core
 ```
 
 :::
 
-## Prise en main
+## Prise en main {#getting-started}
+
+Il vous faut deux routes, l'une pour créer un défi et l'autre pour vérifier la solution. Faites pointer le `data-cap-api-endpoint` du widget vers leur préfixe commun, et le widget appellera `<prefix>challenge` et `<prefix>redeem`.
 
 ```js
 import { generateChallenge, validateChallenge } from "capjs-core";
 
-// Long, aléatoire, à forte entropie. Gardez-le identique entre les processus.
 const SECRET = process.env.CAP_SECRET;
 
-// 1) Route serveur : créer un défi
-const ch = await generateChallenge(SECRET, {
-  scope: "signup", // facultatif
-  instrumentation: true, // facultatif, voir plus bas
+app.post("/cap/challenge", async () => {
+  return await generateChallenge(SECRET, { instrumentation: true });
 });
-// → { challenge: { c, s, d }, token, expires, instrumentation? }
 
-// 2) Route serveur : valider le défi utilisé
-const result = await validateChallenge(
-  SECRET,
-  {
-    token: req.body.token,
-    solutions: req.body.solutions,
-    instr: req.body.instr,
-  },
-  {
-    scope: "signup",
-    consumeNonce: async (sigHex, ttlMs) => myStore.setIfNotExists(`cap:${sigHex}`, 1, ttlMs),
-  },
-);
-
-if (result.success) {
-  // result.token, result.tokenKey, result.expires, result.scope
-}
+app.post("/cap/redeem", async (req) => {
+  return await validateChallenge(SECRET, req.body, { consumeNonce });
+});
 ```
 
-Le widget appelle `generateChallenge` pour recevoir `{ challenge, token, expires, instrumentation }`, résout la preuve de travail côté client, puis renvoie `{ token, solutions, instr }` en POST. Vous appelez ensuite `validateChallenge` pour vérifier.
+`SECRET` signe chaque défi. Choisissez-le long et aléatoire, avec au moins 16 octets, et utilisez le même dans tous les processus.
 
-## Différences avec `@cap.js/server` {#how-it-differs-from-cap-js-server}
+`consumeNonce` empêche qu'un défi résolu soit échangé deux fois. Vous le fournissez à partir de votre propre stockage. Voir la [prévention du rejeu](#replay-prevention).
 
-| Aspect               | `@cap.js/server`                              | `capjs-core`                                     |
-| -------------------- | --------------------------------------------- | ------------------------------------------------ |
-| État                 | Stockage de jetons en mémoire et sur disque    | Sans état. Les jetons de défi sont des JWT signés |
-| Constructeur         | `new Cap({ ... })`                             | Aucun — passez `secret` à chaque appel           |
-| Anti-rejeu           | Liste de jetons intégrée avec nettoyage périodique | Optionnel via le callback `consumeNonce`     |
-| Hooks de nettoyage   | Vidage sur `SIGINT`/`beforeExit`               | Aucun — la TTL est encodée dans le `exp` du JWT  |
-| Système de fichiers  | Requis pour la persistance                     | Jamais touché                                    |
-| Compatible Workers   | Non (système de fichiers)                      | Oui                                              |
+## Vérification des jetons {#verifying-tokens}
 
-Contrairement à l'ancienne bibliothèque, `capjs-core` ne valide pas les jetons d'échange à votre place : elle renvoie un `tokenKey` que vous stockez vous-même, et un `token` que vous donnez à l'utilisateur. Pour valider plus tard, re-dérivez la clé depuis le jeton soumis et cherchez-la :
+Un appel réussi à `validateChallenge` renvoie un `token` pour le visiteur et un `tokenKey` pour vous. La bibliothèque ne stocke ni l'un ni l'autre, donc enregistrez `tokenKey` avec son `expires` :
+
+```js
+const result = await validateChallenge(SECRET, req.body, { consumeNonce });
+if (result.success) {
+  await store.set(`cap-token:${result.tokenKey}`, result.expires);
+}
+return result;
+```
+
+Le widget transmet `token` à votre formulaire. À la réception du formulaire, dérivez la clé à partir du jeton soumis et cherchez-la :
 
 ```js
 import { createHash } from "node:crypto";
 
-// Route de validation
-const [id, verToken] = req.body.token.split(":");
-const tokenKey = `${id}:${createHash("sha256").update(verToken).digest("hex")}`;
-const expires = await myStore.get(`cap-token:${tokenKey}`);
+const [id, secret] = req.body["cap-token"].split(":");
+const tokenKey = `${id}:${createHash("sha256").update(secret).digest("hex")}`;
+const expires = await store.get(`cap-token:${tokenKey}`);
+
 if (!expires || Number(expires) < Date.now()) {
-  return res.status(401).end();
+  return new Response("invalid captcha", { status: 403 });
 }
+await store.delete(`cap-token:${tokenKey}`);
 ```
 
-## API
+Supprimer la clé rend chaque jeton à usage unique.
 
-### `generateChallenge(secret, opts?)`
+## HashWX {#format-2-hashwx}
 
-Renvoie `Promise<{ challenge, token, expires, instrumentation? }>`.
+Sans options, `generateChallenge` émet une preuve de travail SHA-256. [HashWX](./hashwx.md) résiste bien mieux aux GPU, et capd l'utilise pour les nouvelles clés. Activez-le avec l'API au format 2 :
 
-- `secret` — chaîne ou Buffer, ≥16 octets. Clé HMAC maîtresse, doit être identique entre les processus.
-- `opts.challengeCount` — nombre de puzzles de preuve de travail. Par défaut `50`.
-- `opts.challengeSize` — longueur du sel en caractères hexadécimaux. Par défaut `32`.
-- `opts.challengeDifficulty` — longueur du préfixe cible en caractères hexadécimaux. Par défaut `4`.
-- `opts.expiresMs` — TTL du défi. Par défaut `600_000` (10 min).
-- `opts.scope` — chaîne facultative liée au défi. La validation doit passer le même `scope`.
-- `opts.extra` — objet facultatif intégré à la charge utile du JWT (visible par quiconque détient le jeton).
-- `opts.instrumentation` — `true` pour les valeurs par défaut, ou un objet : `{ blockAutomatedBrowsers, obfuscationLevel }`.
-- `opts.instrumentationGenerator` — porte de sortie pour déléguer la génération du script à un pool de workers.
+```js
+return await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+});
+```
 
-Le `token` est un JWT signé contenant la configuration du défi. `expires` est l'expiration du JWT en ms. `instrumentation`, s'il est demandé, est le script client encodé en deflate+base64 que le widget doit exécuter.
+Le widget détecte le format automatiquement, et `validateChallenge` gère les deux. Passez toujours `protocols` avec le format 2. Sans cette option, le défi utilise le protocole RSW déprécié, qui nécessite une paire de clés RSA dans `keypair` ou un générateur dans `rsw`.
 
-### `validateChallenge(secret, body, opts?)`
+| Option | Valeur par défaut | Description |
+| --- | --- | --- |
+| `hashwxDifficulty` | `1_000_000` | Nombre de hachages attendu par résolution, tous sous-défis confondus. |
+| `hashwxChallengeCount` | `4` | Nombre de sous-défis entre lesquels la difficulté est répartie. En augmenter le nombre rend les temps de résolution moins aléatoires. Voir le [coût côté client](./hashwx.md#cost). |
+| `hashwxNoncesPerHash` | `65_536` | Nonces couverts par chaque fonction de hachage générée. |
 
-Renvoie `Promise<{ success: true, token, tokenKey, expires, scope, iat } | { success: false, reason, instr_error? }>`.
+HashWX ne nécessite aucune clé ni préparation. La première vérification compile un petit module WebAssembly. Vous pouvez appeler `await hashwxReady()` au démarrage pour le faire à l'avance.
 
-`body` :
+Certains runtimes n'autorisent pas la compilation de WebAssembly à l'exécution. Cloudflare Workers reçoit automatiquement un module précompilé. Ailleurs, importez-le de la manière prise en charge par votre plateforme et fournissez-le avant la première vérification :
 
-- `token` — jeton de défi issu de `generateChallenge`
-- `solutions` — tableau de nombres, sa longueur doit être égale à `challenge.c`
-- `instr` — résultat d'instrumentation (si vous l'avez activée)
-- `instr_blocked`, `instr_timeout` — drapeaux envoyés par le widget quand l'instrumentation a rejeté la page
+```js
+import { setHashwxModule } from "capjs-core";
+import hashwxModule from "capjs-core/hashwx.wasm";
 
-`opts` :
+setHashwxModule(hashwxModule);
+```
 
-- `scope` — doit correspondre au scope du défi d'origine
-- `tokenTtlMs` — TTL du jeton d'échange. Par défaut `1_200_000` (20 min).
-- `consumeNonce(sigHex, ttlMs)` — anti-rejeu via votre stockage. Voir plus bas.
-- `signToken(data)` — fonction asynchrone renvoyant un format de jeton d'échange personnalisé. Par défaut `id:secret`.
+## Prévention du rejeu {#replay-prevention}
 
-#### Motifs d'échec
-
-| `reason`            | signification                                                  |
-| ------------------- | -------------------------------------------------------------- |
-| `invalid_body`      | le corps n'est pas un objet                                    |
-| `missing_token`     | aucun jeton fourni                                             |
-| `missing_solutions` | solutions absentes ou pas sous forme de tableau                |
-| `invalid_token`     | signature JWT invalide / mal formé / paramètres hors bornes    |
-| `scope_mismatch`    | le scope du jeton ne correspond pas à `opts.scope`             |
-| `expired`           | JWT de défi expiré                                             |
-| `invalid_solutions` | longueur incorrecte ou valeurs non numériques                  |
-| `nonce_store_error` | le callback `consumeNonce` a levé une erreur                   |
-| `already_redeemed`  | `consumeNonce` a renvoyé `false`                               |
-| `invalid_solution`  | les solutions ne satisfont pas la preuve de travail            |
-| `instr_*`           | échec de l'instrumentation (avec `instr_error: true`)          |
-
-## Anti-rejeu
-
-La bibliothèque est sans état par conception. Pour empêcher qu'une soumission interceptée soit utilisée deux fois, passez un callback `consumeNonce`. `capjs-core` l'appelle avec la signature hexadécimale du JWT et la TTL restante ; vous stockez cet hexadécimal dans votre KV avec une sémantique `SET NX EX` et renvoyez `false` en cas de répétition.
+`validateChallenge` appelle `consumeNonce(signature, ttlMs)` une fois la preuve de travail vérifiée, et avant de vérifier l'instrumentation. Stockez la signature si elle est nouvelle et renvoyez `true`. Renvoyez `false` si elle a déjà été utilisée. Une requête avec une preuve de travail incorrecte n'atteint jamais cet appel, elle ne peut donc pas consommer le défi d'un vrai visiteur. Une requête avec une preuve de travail valide mais un résultat d'instrumentation invalide le consomme. Un bot ne peut donc pas retenter la vérification d'instrumentation avec la même preuve de travail.
 
 ::: code-group
 
-```js [redis]
-import { Redis } from "ioredis";
-const redis = new Redis(process.env.REDIS_URL);
-
-const consumeNonce = async (sigHex, ttlMs) => {
-  const ttlSec = Math.ceil(ttlMs / 1000);
-  const ok = await redis.set(`cap:${sigHex}`, "1", "NX", "EX", ttlSec);
-  return ok === "OK";
-};
+```js [Redis]
+const consumeNonce = async (sig, ttlMs) =>
+  (await redis.set(`cap:${sig}`, "1", "NX", "PX", ttlMs)) === "OK";
 ```
 
-```js [cloudflare-kv]
-const consumeNonce = async (sigHex, ttlMs) => {
-  const key = `cap:${sigHex}`;
-  if (await env.NONCES.get(key)) return false;
-  await env.NONCES.put(key, "1", {
-    expirationTtl: Math.ceil(ttlMs / 1000),
-  });
+```js [Workers KV]
+const consumeNonce = async (sig, ttlMs) => {
+  if (await env.NONCES.get(`cap:${sig}`)) return false;
+  await env.NONCES.put(`cap:${sig}`, "1", { expirationTtl: Math.max(60, Math.ceil(ttlMs / 1000)) });
   return true;
 };
 ```
 
-```js [postgres]
-const consumeNonce = async (sigHex, ttlMs) => {
-  const expiresAt = new Date(Date.now() + ttlMs).toISOString();
+```js [Postgres]
+const consumeNonce = async (sig, ttlMs) => {
   try {
-    await db`INSERT INTO cap_nonces (sig, expires_at) VALUES (${sigHex}, ${expiresAt})`;
+    await sql`INSERT INTO cap_nonces (sig, expires_at) VALUES (${sig}, ${new Date(Date.now() + ttlMs)})`;
     return true;
   } catch (e) {
-    if (e.code === "23505") return false; // unique violation
+    if (e.code === "23505") return false;
     throw e;
   }
 };
@@ -183,110 +139,145 @@ const consumeNonce = async (sigHex, ttlMs) => {
 
 :::
 
-La vérification a lieu _après_ celle de la preuve de travail et de l'instrumentation : un attaquant qui rejoue une soumission interceptée avec des solutions bidon ne peut donc pas brûler le nonce de l'utilisateur légitime.
+Workers KV n'est pas atomique, donc deux requêtes simultanées peuvent toutes deux passer. Utilisez un Durable Object si cela compte pour vous.
 
 ## Instrumentation
 
-Passez `instrumentation: true` (ou un objet d'options) à `generateChallenge` pour recevoir un script client encodé en deflate+base64. Le widget l'exécute, renvoie une empreinte, et `validateChallenge` la vérifie.
+`instrumentation: true` ajoute un [défi d'instrumentation](./instrumentation.md) aux défis au format 1. Avec le format 2, ajoutez `"instrumentation"` à `protocols`. Dans les deux cas, vous pouvez passer un objet à la place de `true` :
 
 ```js
-const ch = await generateChallenge(SECRET, {
-  instrumentation: {
-    blockAutomatedBrowsers: true, // rejeter playwright/puppeteer/selenium
-    obfuscationLevel: 3, // 1-10, par défaut 3
-  },
+instrumentation: {
+  blockAutomatedBrowsers: true,
+  obfuscationLevel: 3,
+}
+```
+
+| Option | Valeur par défaut | Description |
+| --- | --- | --- |
+| `blockAutomatedBrowsers` | `false` | Fait échouer les résolutions de [navigateurs automatisés](./instrumentation.md#automated-browser-detection) avec `instr_automated_browser`. |
+| `detectAutomatedInteractions` | `false` | Ajoute `interaction_synthetic_clicks` et `interaction_synthetic_keydowns` à `riskFlags`. Voir la [détection des interactions](./instrumentation.md#interaction-detection). |
+| `blockAutomatedInteractions` | `false` | Fait échouer ces résolutions avec `instr_automated_interaction`. Active aussi la détection. |
+| `obfuscationLevel` | `5` | De 1 à 10. Les niveaux 1 à 3 suppriment les espaces, les niveaux 4 à 7 encodent aussi les chaînes et minifient le script, et les niveaux 8 à 10 le font passer par `javascript-obfuscator` lorsque ce paquet est installé. Les niveaux élevés sont plus lents à générer. |
+
+Les niveaux 8 à 10 nécessitent le paquet facultatif `javascript-obfuscator` et bloquent la boucle d'événements pendant des dizaines de millisecondes par défi. Réservez-les donc aux routes à faible trafic, ou générez les scripts dans un pool de workers avec `instrumentationGenerator`. Cette fonction reçoit les options d'instrumentation et doit renvoyer une promesse résolue avec le résultat de `generateInstrumentation`.
+
+## Comportement et agents {#behavior-and-agents}
+
+`behavior` active l'[évaluation du comportement](./instrumentation.md#behavior-scoring) et le [blocage des agents](./instrumentation.md#ai-agent-detection). Il ajoute un défi d'instrumentation si le défi n'en a pas, et la politique est signée dans le jeton du défi, donc le client ne peut pas la désactiver.
+
+```js
+await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+  behavior: { block: true, blockAgents: "identified" },
 });
 ```
 
-Quand `blockAutomatedBrowsers` est activé, le script exécute des contrôles d'évasion de realm et des contrôles comportementaux qui détectent Chromium headless, les marqueurs de frameworks d'automatisation et l'usurpation de bac à sable JS. Voir [Instrumentation](./instrumentation.md) pour les détails.
+`behavior: true` évalue sans bloquer. L'objet accepte :
 
-Les niveaux d'obfuscation élevés sont plus lents à générer. Les niveaux 4 à 7 ajoutent une indirection par table de chaînes maison ainsi qu'une minification esbuild. Les niveaux 8 à 10 superposent `javascript-obfuscator` (tableau de chaînes, aplatissement du flux de contrôle, injection de code mort) : ils bloquent la boucle d'événements pendant des dizaines de millisecondes par défi, réservez-les donc aux routes à faible volume ou fournissez votre propre `instrumentationGenerator` s'exécutant dans un pool de workers.
+| Option | Valeur par défaut | Description |
+| --- | --- | --- |
+| `block` | `false` | Fait échouer les verdicts `automated` avec `behavior_automated`, et les verdicts `no_interaction` avec `behavior_no_interaction`. |
+| `threshold` | `0.75` | Score de 0,1 à 1 à partir duquel le verdict devient `automated`. |
+| `strict` | `false` | Lève le plafond de 0,6 pour les scores composés uniquement d'indicateurs faibles. |
+| `requireInteraction` | `true` | Définissez-le sur `false` pour laisser passer `no_interaction` lorsque `block` est activé, pour les modes invisible et flottant. |
+| `blockAgents` | `false` | `"identified"` fait échouer les agents détectés avec une confiance élevée, et `"all"` tous les agents détectés, avec `behavior_agent`. |
+| `allowVerifiedAgents` | `false` | Laisse passer les agents ayant une signature Web Bot Auth vérifiée malgré `blockAgents`. |
 
-## Modèles de déploiement sans état
+Une résolution sans trace de comportement échoue toujours avec `behavior_missing`, quelle que soit la politique.
 
-**Avertissement :** ces scripts n'incluent pas de protection anti-rejeu. Pensez à l'ajouter vous-même.
-
-### Cloudflare Workers
-
-```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = (env) => env.CAP_SECRET;
-
-export default {
-  async fetch(req, env) {
-    const url = new URL(req.url);
-
-    if (url.pathname === "/challenge" && req.method === "POST") {
-      const ch = await generateChallenge(SECRET(env), { instrumentation: true });
-      return Response.json(ch);
-    }
-
-    if (url.pathname === "/redeem" && req.method === "POST") {
-      const body = await req.json();
-      const result = await validateChallenge(SECRET(env), body, {
-        consumeNonce: async (sigHex, ttlMs) => {
-          if (await env.NONCES.get(`cap:${sigHex}`)) return false;
-          await env.NONCES.put(`cap:${sigHex}`, "1", {
-            expirationTtl: Math.ceil(ttlMs / 1000),
-          });
-          return true;
-        },
-      });
-      return Response.json(result);
-    }
-
-    return new Response("not found", { status: 404 });
-  },
-};
-```
-
-### Bun
+Pour utiliser les en-têtes de requête comme indices d'agent, passez la requête `/redeem` à `validateChallenge` :
 
 ```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-const SECRET = process.env.CAP_SECRET;
-
-Bun.serve({
-  port: 3000,
-  routes: {
-    "/challenge": {
-      POST: () => Response.json(generateChallenge(SECRET, { instrumentation: true })),
-    },
-    "/redeem": {
-      POST: async (req) => {
-        const body = await req.json();
-        return Response.json(await validateChallenge(SECRET, body));
-      },
-    },
-  },
+const result = await validateChallenge(SECRET, body, {
+  consumeNonce,
+  request: { method: req.method, url: fullUrl, headers: req.headers },
+  verifyWebBotAuth: true,
 });
 ```
 
-## Défis HashWX {#format-2-hashwx}
+`url` doit être l'URL complète, puisque Web Bot Auth la signe. Avec `verifyWebBotAuth: true`, une requête contenant un en-tête `Signature-Agent` est vérifiée auprès du répertoire de clés de l'agent, que `validateChallenge` récupère en HTTPS et met en cache pendant une heure. Il ne fait confiance qu'aux signataires connus de Cap et aux origines de `trustedSignatureAgents`. Passez `webBotAuthNonceCheck(nonce, ttlMs)` pour rejeter les signatures rejouées. Il fonctionne comme `consumeNonce`.
 
-Depuis la v0.1.1 et le widget v0.1.51, les deux parties comprennent un format d'échange plus riche, capable de gérer plusieurs protocoles de défi dans une seule réponse : la preuve de travail SHA-256 (par défaut), [HashWX](./hashwx.md), le verrou temporel RSW désormais déprécié et l'instrumentation.
+`behaviorReplayCheck(digest, ttlMs)` fonctionne de la même façon pour les traces de comportement. Renvoyez `true` si l'empreinte a déjà été vue, et la trace recevra `bh_replayed`. Seules les traces comptant au moins 8 mouvements du pointeur et pressions de touches ont une empreinte.
 
-### Activation minimale
+Avec le comportement activé, un résultat réussi contient `behavior: { score, verdict, flags, signals, agent }`. Sinon, `agent` est renvoyé au premier niveau dès qu'il existe des indices, à partir des marques dans la page et des en-têtes uniquement, et n'est jamais bloqué. Dans les deux cas, un agent détecté ajoute `agent:<name>` à `riskFlags`. `agent` ressemble à ceci :
 
 ```js
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = process.env.CAP_SECRET;
-
-app.post("/api/challenge", async () => {
-  return await generateChallenge(SECRET, {
-    format: 2,
-    protocols: ["hashwx", "instrumentation"],
-    hashwxDifficulty: 1_000_000, // facultatif, c'est la valeur par défaut
-  });
-});
-
-app.post("/api/redeem", async (req) => {
-  return await validateChallenge(SECRET, req.body, { consumeNonce });
-});
+{
+  detected: true,
+  name: "claude-in-chrome",
+  confidence: "high",
+  verified: false,
+  evidence: ["artifact:cic_active"],
+}
 ```
 
-HashWX ne demande aucun matériel de clé ni aucune préparation au démarrage. La première vérification compile le module WebAssembly embarqué, ce qui prend quelques millisecondes ; appelez `hashwxReady()` au démarrage pour sortir ce coût de la première requête.
+## API
 
-`hashwxDifficulty` est le nombre de hachages qu'un client doit calculer en moyenne, réparti sur `hashwxChallengeCount` sous-défis indépendants (par défaut `4`). Un défi unique a un temps de résolution qui suit une loi exponentielle : un visiteur attend 30 ms et le suivant trois secondes. À difficulté totale égale, quatre sous-défis réduisent le p90 d'environ un quart et rendent la médiane environ un tiers plus lente, puisque le travail attendu d'un attaquant reste de `d` hachages dans les deux cas. Voir [le coût côté client](./hashwx.md#cost). Chaque sous-défi supplémentaire ajoute environ 20 µs à la vérification. `hashwxNoncesPerHash` (par défaut `65_536`) est également accepté.
+### `generateChallenge(secret, options?)`
+
+| Option | Valeur par défaut | Description |
+| --- | --- | --- |
+| `challengeCount` | `50` | Puzzles SHA-256 par défi. |
+| `challengeSize` | `32` | Longueur du sel en caractères hexadécimaux. |
+| `challengeDifficulty` | `4` | Longueur requise du préfixe de hachage en caractères hexadécimaux. |
+| `expiresMs` | `600_000` | Temps accordé au visiteur pour résoudre le défi. |
+| `scope` | aucune | Chaîne liée au défi. La validation doit fournir la même. |
+| `extra` | aucune | Données intégrées au JWT. Toute personne disposant du jeton peut les lire. |
+| `instrumentation` | `false` | Voir l'[instrumentation](#instrumentation). |
+| `instrumentationGenerator` | `generateInstrumentation` | Fonction asynchrone qui génère le script d'instrumentation. |
+| `behavior` | `false` | Voir [Comportement et agents](#behavior-and-agents). |
+| `format`, `protocols` | format 1 | Voir [HashWX](#format-2-hashwx). |
+| `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | voir [HashWX](#format-2-hashwx) | Réglages HashWX pour le format 2. |
+| `keypair`, `t`, `rsw` | aucune | Réglages du protocole RSW déprécié. |
+
+Le format 1 renvoie `{ challenge, token, expires, instrumentation? }`, et le format 2 renvoie `{ token, format: 2, challenges, expires }`. Les deux ajoutent `behavior: true` lorsque l'évaluation du comportement est activée. Envoyez l'objet entier au widget.
+
+### `validateChallenge(secret, body, options?)`
+
+`body` est ce que le widget envoie à `/redeem`. Les options sont :
+
+| Option | Valeur par défaut | Description |
+| --- | --- | --- |
+| `consumeNonce` | aucune | Voir la [prévention du rejeu](#replay-prevention). |
+| `scope` | aucune | Doit correspondre à la portée du défi. |
+| `tokenTtlMs` | `1_200_000` | Durée de validité du jeton du visiteur. |
+| `signToken` | `id:secret` | Fonction qui reçoit `{ scope, expires, iat }` et renvoie votre propre jeton. `tokenKey` est omis. |
+| `request` | aucune | La requête `/redeem` sous la forme `{ method, url, headers }`. Voir [Comportement et agents](#behavior-and-agents). |
+| `verifyWebBotAuth` | `false` | Vérifie les signatures Web Bot Auth sur `request`. |
+| `fetch` | `fetch` global | Sert à télécharger les répertoires de clés Web Bot Auth. |
+| `trustedSignatureAgents` | aucune | Origines de signataires supplémentaires auxquelles faire confiance, comme `"https://agent.example.com"`. |
+| `webBotAuthNonceCheck` | aucune | Rejette les signatures Web Bot Auth rejouées. |
+| `behaviorReplayCheck` | aucune | Signale les traces de comportement rejouées. |
+
+En cas de succès, elle renvoie `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }`, ainsi que `behavior` ou `agent` comme décrit dans [Comportement et agents](#behavior-and-agents). `riskFlags` liste les signaux qui ne bloquent pas à eux seuls, comme `native_tamper` ou `legacy_widget`, afin que vous puissiez augmenter la difficulté pour ce visiteur. La page sur l'instrumentation liste les [indicateurs de vérification du navigateur](./instrumentation.md#automated-browser-detection) et les [indicateurs de comportement](./instrumentation.md#behavior-scoring).
+
+En cas d'échec, elle renvoie `{ success: false, reason }`. Les échecs d'instrumentation contiennent aussi `instr_error: true`, `instr_automated_browser` et `instr_automated_interaction` contiennent une liste `blockedBy`, et les échecs de comportement contiennent `behavior`. Chaque `reason` figure dans le [tableau des codes d'erreur](./troubleshooting/instrumentation.md#error-codes).
+
+### Exports de bas niveau {#lower-level-exports}
+
+capd et les tests les utilisent. Vous n'en avez besoin que pour construire votre propre chaîne de traitement.
+
+| Export | Description |
+| --- | --- |
+| `generateInstrumentation(opts?)` | Génère un script d'instrumentation et les métadonnées pour le vérifier. |
+| `verifyInstrumentationResult(meta, payload, now?)` | Vérifie un résultat à partir de ces métadonnées. Renvoie `{ valid, reason?, riskFlags?, blockedBy?, checks?, agent?, trace? }`. |
+| `serializeBound(data)`, `canonicalize(value)` | Sérialisent les données collectées de la même façon que le script. |
+| `boundValues(binding, serialized)` | Les nombres qu'un résultat doit contenir pour ces données. |
+| `MAX_BOUND_DATA` | Longueur maximale acceptée des données sérialisées, 65 536 caractères. |
+| `detectAutomation(vector)` | Exécute les vérifications de navigateur automatisé sur des données de navigateur que vous avez collectées vous-même. Renvoie `{ pass, checks, blockedBy, riskFlags }`. |
+| `analyzeBehavior(trace, ctx?)` | Évalue une trace de comportement. `ctx` accepte `{ replayed, strict, threshold }`. Renvoie `{ score, verdict, flags, signals, digest }`. |
+| `BEHAVIOR_WEIGHTS`, `DEFAULT_BEHAVIOR_THRESHOLD`, `WEAK_CAP` | Les poids des indicateurs, `0.75` et `0.6`. |
+| `agentFromHeaders(headers)` | Indices d'agent tirés de `User-Agent`, `Signature-Agent` et `Sec-CH-UA-Platform`. |
+| `agentFromTrace(trace)` | Indices d'agent tirés des temps de clic et de frappe d'une trace de comportement. Ne passez que des traces que `analyzeBehavior` n'a pas marquées `bh_malformed`. |
+| `summarizeAgent(evidence, verification?)` | Combine les indices et un éventuel résultat de `verifyWebBotAuth` dans l'objet `agent`, ou renvoie `null` s'il n'y a aucun indice. |
+| `verifyWebBotAuth(req, opts?)` | Vérifie une signature Web Bot Auth. Renvoie une promesse résolue avec `{ verified, agent?, origin?, keyid?, reason? }`. |
+| `parseSignatureAgent(value)` | Analyse un en-tête `Signature-Agent` en entrées `{ label, url }`. |
+| `hashwxReady()`, `setHashwxModule(module)` | Compilent le module HashWX à l'avance ou en fournissent un. Voir [HashWX](#format-2-hashwx). |
+| `hashwxTarget(difficulty)`, `hashwxSeed(challenge, block)`, `hashwxHash(state, seed, nonce)` | Fonctions de base de HashWX. `state` provient de `hashwxReady()`. |
+| `DEFAULT_HASHWX_DIFFICULTY`, `DEFAULT_HASHWX_CHALLENGE_COUNT`, `DEFAULT_HASHWX_NONCES_PER_HASH` | `1_000_000`, `4` et `65_536`. |
+| `generateRswKeypair(bits?)`, `serializeRswKeypair(kp)`, `deserializeRswKeypair(s)`, `buildRswMinter(args, opts?)` | Clés et générateurs du protocole RSW déprécié. |
+
+## Migration depuis `@cap.js/server` {#how-it-differs-from-cap-js-server}
+
+`@cap.js/server` est l'ancienne bibliothèque, remplacée par celle-ci. Elle conservait les défis et les jetons dans un stockage que vous configuriez. `capjs-core` ne conserve rien. Les défis sont des JWT signés, la prévention du rejeu passe par `consumeNonce`, et vous stockez vous-même `tokenKey` comme décrit dans [Vérification des jetons](#verifying-tokens). Elle ne touche jamais au système de fichiers, donc elle fonctionne sur Workers et Lambda.

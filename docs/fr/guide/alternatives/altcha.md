@@ -22,7 +22,7 @@ Si vous voulez un CAPTCHA à preuve de travail minimal, façon bibliothèque, à
 ## Quand Cap est le meilleur choix
 
 - **Deux couches de vérification indépendantes, gratuitement.** Cap exécute en parallèle la preuve de travail *et* des [défis d'instrumentation](../instrumentation.md) JavaScript dynamiques, les deux inclus. Vaincre l'une ne vainc pas l'autre. L'Altcha open source se limite à la preuve de travail ; la seconde couche (par machine learning) exige de payer Sentinel.
-- **Serveur standalone avec tableau de bord, gratuitement.** Cap livre un déploiement en un seul conteneur Docker, avec tableau de bord web, gestion multi-clés, statistiques et un point d'accès siteverify compatible reCAPTCHA. Côté open source, Altcha vous laisse tout câbler vous-même ; l'expérience tout-en-un est réservée à Sentinel.
+- **Serveur auto-hébergé avec tableau de bord, gratuitement.** Cap livre un déploiement en un seul conteneur Docker, avec tableau de bord web, gestion multi-clés, statistiques et un point d'accès siteverify compatible reCAPTCHA. Côté open source, Altcha vous laisse tout câbler vous-même ; l'expérience tout-en-un est réservée à Sentinel.
 - **Widget plus léger.** Cap fait environ 20 Ko. Altcha environ 34 Ko compressé en gzip.
 - **Suivi de progression.** Le widget de Cap indique à l'utilisateur la progression de la résolution en pourcentage : un retour d'interface utile pendant la courte attente.
 - **Modes flottant et invisible.** Cap peut se masquer entièrement ou flotter au-dessus d'un bouton jusqu'à l'envoi du formulaire. Les modes d'affichage d'Altcha sont plus simples.

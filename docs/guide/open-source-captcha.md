@@ -9,7 +9,7 @@ faq:
   - q: Is Cap free?
     a: "Completely. Apache 2.0, no quotas, no paid tier, at any volume."
   - q: Is Cap better than ALTCHA?
-    a: "Cap ships more (instrumentation layer, standalone server, dashboard, progress UX, smaller widget); ALTCHA ships less on purpose. Pick by how much you want to build yourself."
+    a: "Cap ships more (instrumentation layer, self-hosted server, dashboard, progress UX, smaller widget); ALTCHA ships less on purpose. Pick by how much you want to build yourself."
   - q: Does open-source CAPTCHA protect privacy?
     a: "It makes privacy auditable instead of promised. Self-hosted proof-of-work needs no fingerprinting, no behavioral profiling, and no third-party calls, and you can read the code to confirm it."
 ---
@@ -40,7 +40,7 @@ Several commercial CAPTCHAs open-source their client integrations while keeping 
 
 ### Cap
 
-Cap is a full open-source CAPTCHA stack under Apache 2.0: a ~20 KB web-component widget plus [Cap Standalone](./standalone/index.md), a small Docker deployment (one container plus Valkey) exposing a REST API, a dashboard with multi-site-key management, and a `/siteverify` endpoint compatible with reCAPTCHA's API shape.
+Cap is a full open-source CAPTCHA stack under Apache 2.0: a ~20 KB web-component widget plus [capd](./capd/index.md), a small Docker deployment (one container plus Valkey) exposing a REST API, a dashboard with multi-site-key management, and a `/siteverify` endpoint compatible with reCAPTCHA's API shape.
 
 Protection comes from two independent layers: GPU-resistant [HashWX proof of work](./hashwx.md) and dynamic [instrumentation challenges](./instrumentation.md) that verify the environment is a real browser. Defeating one layer doesn't defeat the other.
 
@@ -79,7 +79,7 @@ Anubis is an open-source proof-of-work *scraper wall*: it gates an entire site o
 | Actively maintained | ✅ | ✅ | 🟨 pre-1.0, slow releases | ✅ |
 | Mechanism | PoW + instrumentation | PoW | PoW | PoW |
 | Scope | Per-action (forms, APIs) | Per-action | Per-action | Whole-site gate |
-| Standalone server + dashboard | ✅ | ❌ | ✅ | ❌ |
+| Self-hosted server + dashboard | ✅ | ❌ | ✅ | ❌ |
 | reCAPTCHA-compatible siteverify | ✅ | ❌ | ❌ | ❌ |
 | Widget size | ~20 KB | ~34 KB | larger | n/a (transparent) |
 | GPU-resistant PoW option | ✅ [HashWX](./hashwx.md) | ❌ | ❌ | ❌ |
@@ -107,7 +107,7 @@ Completely. Apache 2.0, no quotas, no paid tier, at any volume.
 
 ### Is Cap better than ALTCHA?
 
-Cap ships more (instrumentation layer, standalone server, dashboard, progress UX, smaller widget); ALTCHA ships less on purpose. Pick by how much you want to build yourself.
+Cap ships more (instrumentation layer, self-hosted server, dashboard, progress UX, smaller widget); ALTCHA ships less on purpose. Pick by how much you want to build yourself.
 
 ### Does open-source CAPTCHA protect privacy?
 

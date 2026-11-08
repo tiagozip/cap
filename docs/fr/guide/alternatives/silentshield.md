@@ -5,7 +5,7 @@ faq:
   - q: Cap est-il meilleur que SilentShield ?
     a: "Pour les équipes qui veulent un CAPTCHA open source et auto-hébergé, sans frais par requête et avec un contrôle complet sur la difficulté et les données, Cap est le choix le plus solide. SilentShield convient aux équipes qui veulent un service géré, invisible et fondé sur l'analyse comportementale, et qui acceptent un quota de requêtes et une dépendance à un tiers."
   - q: Cap est-il open source ?
-    a: "Oui. Cap est entièrement open source sous licence Apache 2.0, y compris le widget, le serveur et le déploiement Docker standalone."
+    a: "Oui. Cap est entièrement open source sous licence Apache 2.0, y compris le widget, le serveur et capd, le déploiement Docker."
   - q: SilentShield est-il open source ?
     a: "Non. SilentShield est un service hébergé propriétaire. Sa logique de détection s'exécute sur les serveurs de SilentShield et ne peut être ni auditée ni auto-hébergée."
   - q: Lequel est le meilleur pour l'auto-hébergement ?
@@ -78,7 +78,7 @@ Pour les équipes qui veulent un CAPTCHA open source et auto-hébergé, sans fra
 
 ### Cap est-il open source ?
 
-Oui. Cap est entièrement open source sous licence Apache 2.0, y compris le widget, le serveur et le déploiement Docker standalone.
+Oui. Cap est entièrement open source sous licence Apache 2.0, y compris le widget, le serveur et capd, le déploiement Docker.
 
 ### SilentShield est-il open source ?
 

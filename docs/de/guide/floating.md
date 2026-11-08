@@ -4,37 +4,32 @@ description: "Der Floating-Modus von Caps Widget blendet das quelloffene CAPTCHA
 
 # Floating-Modus
 
-Cap kann das CAPTCHA automatisch ausblenden, bis ein Button gedrückt wird. Füge dafür das Attribut `data-cap-floating` zu deinem Trigger hinzu, mit dem Query-Selektor des `cap-widget`-Elements, das du verwenden möchtest.
+Im Floating-Modus bleibt das Widget verborgen, bis jemand einen Button drückt. Dann erscheint es neben dem Button, löst die Challenge, blendet sich wieder aus und klickt den Button ein zweites Mal. Ein Submit-Button schickt dadurch das Formular samt Token ab.
+
+Lade das Floating-Skript nach dem Widget:
 
 ```html
-<cap-widget
-  id="floating"
-  onsolve="console.log(`token: ${event.detail.token}`)"
-  data-cap-api-endpoint="<api endpoint>"
-></cap-widget>
-
-<button data-cap-floating="#floating" data-cap-floating-position="bottom">
-  Floating-Modus auslösen
-</button>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>/cap-floating.min.js"></script>
 ```
 
-Außerdem musst du sowohl die Cap-Bibliothek als auch das Floating-Mode-Skript von JSDelivr einbinden:
+Beim [Asset-Server](./capd/options.md#asset-server) von capd liegt das Floating-Skript unter `/assets/floating.js`.
 
-```html{2}
-<script src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
-<script src="https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js"></script> <!-- [!code ++] -->
-```
-
-Oder vom Standalone-Server:
+Verknüpfe dann einen Button über einen CSS-Selektor mit einem Widget:
 
 ```html
-<script src="https://<server url>/assets/widget.js"></script>
-<script src="https://<server url>/assets/floating.js"></script>
-<!-- [!code ++] -->
+<form action="/submit" method="POST">
+  <cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit" data-cap-floating="#cap">Submit</button>
+</form>
 ```
 
-Die folgenden Attribute werden unterstützt:
+| Attribut | Beschreibung |
+| --- | --- |
+| `data-cap-floating` | Selektor des Widgets, das angezeigt werden soll. |
+| `data-cap-floating-position` | `top` oder `bottom` des Buttons. Standard ist `top`. |
+| `data-cap-floating-offset` | Abstand zwischen Button und Widget in Pixeln. Standard ist `8`. |
 
-- `data-cap-floating`: Der CSS-Selektor des `cap-widget`-Elements, das du verwenden möchtest.
-- `data-cap-floating-position`: Die Position des Floating-Widgets. Möglich sind `top` oder `bottom`.
-- `data-cap-floating-offset`: Der Abstand des Floating-Widgets zum Trigger-Element.
+Nach dem Lösen trägt der Button das Token auch in `data-cap-token`.
+
+Das Widget beginnt mit dem Lösen, sobald es erscheint, ohne einen Klick darauf. Bei Keys, die [Verhalten bewerten](./instrumentation.md#behavior-scoring) und eine Interaktion verlangen, schlagen Lösungen im Floating-Modus mit `behavior_no_interaction` fehl, genau wie im [unsichtbaren Modus](./invisible.md#keys-with-behavior-scoring).

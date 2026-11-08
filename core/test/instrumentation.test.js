@@ -4,6 +4,7 @@ import {
   generateInstrumentation,
   verifyInstrumentationResult,
 } from "../src/instrumentation.js";
+import { boundPayload } from "./helpers.js";
 
 describe("generateInstrumentation", () => {
   test("returns expected shape", async () => {
@@ -12,9 +13,9 @@ describe("generateInstrumentation", () => {
     expect(r.id).toHaveLength(32);
     expect(typeof r.expires).toBe("number");
     expect(r.expires).toBeGreaterThan(Date.now());
-    expect(Array.isArray(r.expectedVals)).toBe(true);
-    expect(r.expectedVals).toHaveLength(4);
-    expect(r.expectedVals.every((v) => Number.isInteger(v))).toBe(true);
+    expect(r.binding.pv).toHaveLength(4);
+    expect(r.binding.pv.every((v) => Number.isInteger(v))).toBe(true);
+    expect(r.binding.j[0]).not.toBe(r.binding.j[1]);
     expect(Array.isArray(r.vars)).toBe(true);
     expect(r.vars).toHaveLength(4);
     expect(typeof r.blockAutomatedBrowsers).toBe("boolean");
@@ -28,9 +29,9 @@ describe("generateInstrumentation", () => {
     }
   });
 
-  test("expectedVals are within the expected range", async () => {
+  test("bound values are within the expected range", async () => {
     const r = await generateInstrumentation();
-    for (const v of r.expectedVals) {
+    for (const v of Object.values(boundPayload(r).state)) {
       expect(v).toBeGreaterThanOrEqual(100_000);
       expect(v).toBeLessThan(1_000_000);
     }
@@ -100,19 +101,16 @@ describe("generateInstrumentation", () => {
 describe("verifyInstrumentationResult", () => {
   test("returns valid for matching state", async () => {
     const r = await generateInstrumentation();
-    const state = {};
-    for (let i = 0; i < r.vars.length; i++)
-      state[r.vars[i]] = r.expectedVals[i];
-    const result = verifyInstrumentationResult(r, { i: r.id, state });
+    const result = verifyInstrumentationResult(r, boundPayload(r));
     expect(result.valid).toBe(true);
   });
 
   test("rejects wrong id", async () => {
     const r = await generateInstrumentation();
-    const state = {};
-    for (let i = 0; i < r.vars.length; i++)
-      state[r.vars[i]] = r.expectedVals[i];
-    const result = verifyInstrumentationResult(r, { i: "wrong-id", state });
+    const result = verifyInstrumentationResult(r, {
+      ...boundPayload(r),
+      i: "wrong-id",
+    });
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("id_mismatch");
   });
@@ -126,21 +124,18 @@ describe("verifyInstrumentationResult", () => {
 
   test("rejects state with mismatched values", async () => {
     const r = await generateInstrumentation();
-    const state = {};
-    for (let i = 0; i < r.vars.length; i++)
-      state[r.vars[i]] = r.expectedVals[i];
-    state[r.vars[0]] = 0;
-    const result = verifyInstrumentationResult(r, { i: r.id, state });
+    const payload = boundPayload(r);
+    payload.state[r.vars[0]] = 0;
+    const result = verifyInstrumentationResult(r, payload);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("failed_challenge");
   });
 
   test("rejects state missing a variable", async () => {
     const r = await generateInstrumentation();
-    const state = {};
-    for (let i = 0; i < r.vars.length - 1; i++)
-      state[r.vars[i]] = r.expectedVals[i];
-    const result = verifyInstrumentationResult(r, { i: r.id, state });
+    const payload = boundPayload(r);
+    delete payload.state[r.vars[3]];
+    const result = verifyInstrumentationResult(r, payload);
     expect(result.valid).toBe(false);
     expect(result.reason).toBe("failed_challenge");
   });
@@ -183,5 +178,46 @@ describe("verifyInstrumentationResult", () => {
         "Object.getOwnPropertyNames(navigator).length !== 0",
       );
     }
+  });
+
+  test("window marker check covers the automation globals from Castle", async () => {
+    const globals = [
+      "__playwright__binding__controller__",
+      "__playwright_builtins__",
+      "__pwWebSocketDispatch",
+      "__playwright_mark_target__",
+      "callPuppeteer",
+      "callSelenium",
+      "__phantomas",
+      "__stagehandV3__",
+      "__stagehandV3Injected",
+    ];
+    for (let i = 0; i < 200; i++) {
+      const r = await generateInstrumentation({
+        blockAutomatedBrowsers: true,
+        obfuscationLevel: 1,
+      });
+      const src = inflateRawSync(
+        Buffer.from(r.instrumentation, "base64"),
+      ).toString("utf8");
+      const list =
+        /var \w+ = (\[[\d,]+\]); for \(const k of Object\.getOwnPropertyNames\(window\)\) \{ if/.exec(
+          src,
+        );
+      if (!list) continue;
+      const seed = Number(/\(s\)\{return \w+\(s,(\d+)\)\}/.exec(src)[1]);
+      const hash = (s) => {
+        let h = seed >>> 0;
+        for (let j = 0; j < s.length; j++) {
+          h ^= s.charCodeAt(j);
+          h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
+        }
+        return h >>> 0;
+      };
+      const hashes = JSON.parse(list[1]);
+      for (const g of globals) expect(hashes).toContain(hash(g));
+      return;
+    }
+    throw new Error("window marker check was never sampled");
   });
 });

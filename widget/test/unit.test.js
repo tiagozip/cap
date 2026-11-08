@@ -16,14 +16,19 @@ describe("widget source structure", () => {
     expect(widgetSource).toMatch(/function prng\(seed, length\)/);
   });
 
-  test("has runInstrumentationChallenge function", () => {
-    expect(widgetSource).toMatch(/runInstrumentationChallenge/);
+  test("has startInstrumentation function", () => {
+    expect(widgetSource).toMatch(/function startInstrumentation\(/);
+  });
+
+  test("keeps no detection logic of its own", () => {
+    expect(widgetSource).not.toMatch(
+      /cap:observe|data-ag|bhState|\bbh\.(bind|report)/,
+    );
+    expect(widgetSource).toContain("cap:finalize");
   });
 
   test("instrumentation message handler validates ev.source against iframe.contentWindow", () => {
-    expect(widgetSource).toMatch(
-      /ev\.source !== iframe\.contentWindow/,
-    );
+    expect(widgetSource).toMatch(/ev\.source !== iframe\.contentWindow/);
   });
 
   test("speculative-solve trigger threshold matches expected value", () => {

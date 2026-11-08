@@ -1,0 +1,46 @@
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: var(--ease-exit);
+}
+
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: var(--ease-exit);
+}
+
+:disabled,
+[data-disabled]:not([data-disabled="false"]),
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+:disabled,
+[data-disabled]:not([data-disabled="false"]) {
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dark [data-slot="tooltip-content"],
+  [data-slot="chart-tooltip-content"],
+  .toast-pill,
+  .attachment-glass {
+    background: var(--popover);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .carousel-glass,
+  .video-player.video-blur > div > button {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: #262626eb;
+  }
+  [data-slot="message-scroller-button"] {
+    background: var(--background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

@@ -1,22 +1,22 @@
 ---
-outline: [2, 3, 4]
-description: "Caps Client-Widget fordert Proof-of-Work-Challenges an, löst sie und stellt sie dar, mit einer nativen Web Component und WASM. Client-Doku für das quelloffene CAPTCHA."
+outline: [2, 3]
+description: "Caps Client-Widget fordert Proof-of-Work-Challenges an, löst sie und stellt sie dar, mit einer nativen Web Component und WASM. Installiere es, nutze es in jedem Framework und passe es an."
 ---
 
 # Widget
 
-Caps clientseitiges Widget übernimmt das Anfordern, Lösen und Darstellen von Challenges mithilfe einer nativen Web Component und Rust-basiertem WASM. Es enthält außerdem den [unsichtbaren Modus](./invisible).
+Das Widget ist eine `<cap-widget>`-Web-Component. Es fordert eine Challenge von deinem Server an, löst sie in Web Workern mit WebAssembly und gibt dir ein Token zum Verifizieren.
 
 ## Installation
 
 ::: code-group
 
-```sh [pnpm]
-pnpm add cap-widget
-```
-
 ```sh [npm]
 npm i cap-widget
+```
+
+```sh [pnpm]
+pnpm add cap-widget
 ```
 
 ```sh [bun]
@@ -24,297 +24,177 @@ bun add cap-widget
 ```
 
 ```html [cdn]
-<!--
-
-* In der Produktion solltest du eine bestimmte Version pinnen, um Breaking Changes zu vermeiden. Alternativ kannst du auch den Asset-Server der Standalone-Instanz nutzen.
-* `cdn.jsdelivr.net` ist in manchen Rechtsräumen blockiert, etwa in Teilen Chinas. Wenn deine Website von dort erreichbar sein muss, empfehlen wir npm.
-
--->
-
-<script type="module" src="https://cdn.jsdelivr.net/npm/cap-widget"></script>
+<script src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
 ```
 
 :::
 
+Pinne bei Nutzung des CDN eine Version von der [Releases-Seite](https://github.com/tiagozip/cap/releases). jsDelivr ist in Teilen Chinas blockiert. Wenn deine Besucher dort sind, installiere über npm oder [hoste das Widget selbst](#self-hosting-the-widget).
+
 ## Verwendung {#usage}
 
-Das Widget benötigt ein `data-cap-api-endpoint`, das auf dein Cap-Deployment zeigt. Bei Standalone-Instanzen ist das:
+Richte `data-cap-api-endpoint` auf deinen Server. Bei capd ist das `https://<instance>/<site-key>/`.
 
-```
-https://<your-instance>/<site-key>/
-```
+::: code-group
 
-### Vanilla
+```html [HTML]
+<cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
 
-```html
-<form>
-  <cap-widget id="cap" required data-cap-api-endpoint="https://<your-instance>/<site-key>/"></cap-widget>
-  <button type="submit">Absenden</button>
-</form>
-
-<script type="module">
-  import "https://cdn.jsdelivr.net/npm/cap-widget";
-
+<script>
   document.getElementById("cap").addEventListener("solve", (e) => {
-    console.log("token:", e.detail.token);
+    console.log(e.detail.token);
   });
 </script>
 ```
 
-::: tip
-
-Liegt das Widget in einem `<form>`, fügt es automatisch ein verstecktes `cap-token`-Input ein, und das Token wird ohne zusätzliches JavaScript zusammen mit deinen anderen Feldern übermittelt.
-
-:::
-
-### React
-
-```jsx
+```jsx [React]
 import "cap-widget";
 
-export default function ContactForm() {
+export default function Form() {
   return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        onsolve={(e) => console.log("token:", e.detail.token)}
-        onprogress={(e) => console.log(e.detail.progress)}
-        onerror={(e) => console.error(e.detail.message)}
-      />
-      <button type="submit">Absenden</button>
-    </form>
+    <cap-widget
+      data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+      onsolve={(e) => console.log(e.detail.token)}
+    />
   );
 }
 ```
 
-::: tip
-
-Wir empfehlen React 19 oder neuer, da dort die Event-Behandlung für Custom Elements verbessert wurde.
-
-:::
-
-### Vue
-
-```vue
+```vue [Vue]
 <script setup>
 import "cap-widget";
 </script>
 
 <template>
-  <form>
-    <cap-widget
-      data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-      @solve="(e) => console.log('token:', e.detail.token)"
-      @progress="(e) => console.log(e.detail.progress)"
-      @error="(e) => console.error(e.detail.message)"
-    />
-    <button type="submit">Absenden</button>
-  </form>
+  <cap-widget
+    data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+    @solve="(e) => console.log(e.detail.token)"
+  />
 </template>
 ```
 
-Wenn du eine Warnung wegen einer unbekannten Komponente bekommst, ergänze das in deiner `vite.config.js`:
-
-```js
-export default defineConfig({
-  plugins: [
-    vue({
-      template: {
-        compilerOptions: { isCustomElement: (tag) => tag.startsWith("cap-") },
-      },
-    }),
-  ],
-});
-```
-
-### Svelte 5
-
-```svelte
+```svelte [Svelte]
 <script>
   import "cap-widget";
 </script>
 
-<form>
-  <cap-widget
-    data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-    on:solve={(e) => console.log("token:", e.detail.token)}
-    on:progress={(e) => console.log(e.detail.progress)}
-    on:error={(e) => console.error(e.detail.message)}
-  />
-  <button type="submit">Absenden</button>
-</form>
+<cap-widget
+  data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+  onsolve={(e) => console.log(e.detail.token)}
+></cap-widget>
 ```
 
-### SolidJS
-
-```jsx
+```jsx [Solid]
 import "cap-widget";
 
-export default function ContactForm() {
+export default function Form() {
   return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        on:solve={(e) => console.log("token:", e.detail.token)}
-        on:progress={(e) => console.log(e.detail.progress)}
-        on:error={(e) => console.error(e.detail.message)}
-      />
-      <button type="submit">Absenden</button>
-    </form>
+    <cap-widget
+      data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+      on:solve={(e) => console.log(e.detail.token)}
+    />
   );
 }
 ```
 
-### Astro
+```tsx [Qwik]
+import { component$ } from "@builder.io/qwik";
+import "cap-widget";
 
-```astro
----
-// ContactForm.astro
----
+export default component$(() => (
+  <cap-widget
+    data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+    on:solve$={(e: CustomEvent) => console.log(e.detail.token)}
+  />
+));
+```
 
-<form>
-  <cap-widget id="cap" data-cap-api-endpoint="https://<your-instance>/<site-key>/" />
-  <button type="submit">Absenden</button>
-</form>
+```astro [Astro]
+<cap-widget id="cap" data-cap-api-endpoint="https://cap.example.com/<site-key>/" />
 
 <script>
   import "cap-widget";
 
   document.getElementById("cap").addEventListener("solve", (e) => {
-    console.log("token:", e.detail.token);
+    console.log(e.detail.token);
   });
 </script>
 ```
 
-Wenn du eine React-/Vue-/Svelte-Komponente in Astro renderst, folge dem jeweiligen Framework-Abschnitt oben und ergänze `client:load` an der Komponente.
+:::
 
-### Preact
+Ein paar Hinweise zu den Frameworks:
 
-```jsx
-import "cap-widget";
+- React verarbeitet Custom-Element-Events ab Version 19 korrekt. Preact nutzt dieselbe Syntax.
+- Vue warnt möglicherweise wegen einer unbekannten Komponente. Sag dem Compiler, dass `cap-`-Tags Custom Elements sind:
 
-export default function ContactForm() {
-  return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        onsolve={(e) => console.log("token:", e.detail.token)}
-        onprogress={(e) => console.log(e.detail.progress)}
-        onerror={(e) => console.error(e.detail.message)}
-      />
-      <button type="submit">Absenden</button>
-    </form>
-  );
-}
-```
+  ```js
+  vue({ template: { compilerOptions: { isCustomElement: (tag) => tag.startsWith("cap-") } } })
+  ```
 
-### Qwik
+- Das Svelte-Beispiel nutzt Svelte 5. Unter Svelte 4 verwendest du `on:solve`.
 
-```tsx
-import { component$ } from "@builder.io/qwik";
-import "cap-widget";
+### In einem Formular
 
-export default component$(() => {
-  return (
-    <form>
-      <cap-widget
-        data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-        on:solve$={(e: CustomEvent) => console.log("token:", e.detail.token)}
-        on:progress$={(e: CustomEvent) => console.log(e.detail.progress)}
-        on:error$={(e: CustomEvent) => console.error(e.detail.message)}
-      />
-      <button type="submit">Absenden</button>
-    </form>
-  );
-});
-```
-
-## Unsichtbarer Modus
-
-Wenn du kein sichtbares Widget möchtest, etwa beim Absichern einer Hintergrundaktion wie dem Absenden eines Beitrags, nutze den [unsichtbaren Modus](./invisible):
-
-```js
-import Cap from "cap-widget";
-
-const cap = new Cap({
-  apiEndpoint: "https://<your-instance>/<site-key>/",
-});
-
-const { token } = await cap.solve();
-```
-
-## Unterstützte Events {#supported-events}
-
-Alle Events werden als CustomEvent ausgelöst.
-
-| Event      | Wann es ausgelöst wird              | Detail                 |
-| ---------- | ----------------------------------- | ---------------------- |
-| `solve`    | Challenge erfolgreich gelöst        | `{ token: string }`    |
-| `progress` | Fortschrittsmeldung während des Lösens | `{ progress: number }` |
-| `error`    | Ein Fehler ist aufgetreten          | `{ message: string }`  |
-| `reset`    | Widget auf den Ausgangszustand zurückgesetzt | `{}`          |
-
-## Optionen {#options}
-
-Mit `window.CAP_CUSTOM_FETCH` kannst du eine eigene Fetch-Funktion angeben:
-
-```js
-window.CAP_CUSTOM_FETCH = (url, params) => fetch(url, params);
-```
-
-Wenn du das Widget unter einer strikten Content-Security-Policy auslieferst, kannst du Nonces bereitstellen, damit die vom Widget eingefügten `<style>`- und `<script>`-Elemente nicht blockiert werden:
-
-- `window.CAP_CSS_NONCE` — wird auf den `<style>`-Tag des Widgets angewendet. Dient außerdem als Fallback-Nonce für eingefügte Skripte, falls `CAP_SCRIPT_NONCE` nicht gesetzt ist.
-- `window.CAP_SCRIPT_NONCE` — wird auf die Skripte angewendet, die das Widget einfügt: den pako-Dekomprimierungs-Fallback und das Iframe für die Instrumentation-Challenge.
-
-Mit `window.CAP_CUSTOM_WASM_URL` kannst du außerdem eine eigene WASM-URL setzen (etwa die des Standalone-Asset-Servers), und mit `window.CAP_CUSTOM_HASHWX_URL` die für HashWX.
-
-Um haptisches Feedback (Vibration auf Mobilgeräten) abzuschalten, setze global `window.CAP_DISABLE_HAPTICS = true` oder ergänze das Attribut `data-cap-disable-haptics` an einzelnen Widgets:
-
-```js
-window.CAP_DISABLE_HAPTICS = true;
-```
+Innerhalb eines `<form>` fügt das Widget nach dem Lösen ein verstecktes `cap-token`-Input hinzu. Das Token wird dadurch mit den anderen Feldern übermittelt. Ergänze `required`, um das Absenden des Formulars vorher zu verhindern.
 
 ```html
-<cap-widget data-cap-disable-haptics data-cap-api-endpoint="..."></cap-widget>
+<form action="/submit" method="POST">
+  <cap-widget required data-cap-api-endpoint="https://cap.example.com/<site-key>/"></cap-widget>
+  <button type="submit">Submit</button>
+</form>
 ```
 
-Im [unsichtbaren Modus](./invisible) ist haptisches Feedback automatisch deaktiviert, da es kein sichtbares Widget gibt, mit dem der Nutzer interagieren könnte.
+Nutze den [unsichtbaren Modus](./invisible.md), um ohne sichtbares Widget zu lösen. Nutze den [Floating-Modus](./floating.md), um es erst nach einem Button-Klick anzuzeigen.
 
-### Attribute
+## Wann es anfordert und löst
 
-| Attribut                       | Beschreibung                                                                  |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| `data-cap-api-endpoint`        | **Erforderlich.** Dein Cap-Endpunkt: `https://<instance>/<site-key>/`         |
-| `data-cap-worker-count`        | Anzahl der Solver-Worker (Standard: `navigator.hardwareConcurrency \|\| 8`)   |
-| `data-cap-hidden-field-name`   | Name des versteckten Token-Inputs in einem `<form>` (Standard: `cap-token`)   |
-| `data-cap-troubleshooting-url` | Eigene URL für den Link "Fehlerbehebung", der blockierten Nutzern gezeigt wird |
-| `data-cap-disable-haptics`     | Haptisches Feedback (Vibration) für dieses Widget deaktivieren                 |
+Das Widget wartet nicht auf einen Klick, bevor es mit der Arbeit beginnt. Sobald es auf der Seite sichtbar ist, fordert es eine Challenge an und startet den [Instrumentation](./instrumentation.md)-Frame, der die Seite bis zum Ende des Lösungsvorgangs beobachtet. Einige Zeit vor Ablauf fordert es erneut eine Challenge an. Dafür nutzt es die Lebensdauer aus dem Challenge-Token. Bei einer Challenge mit 10 Minuten Gültigkeit passiert das bei SHA-256 90 Sekunden und bei HashWX 3 Minuten vor Ablauf.
 
-#### i18n
+Die erste Mausbewegung, Berührung oder Tastatureingabe auf der Seite startet einen spekulativen Lösungsvorgang. Bei einer Challenge im [Format 2](./capjs-core.md#format-2-hashwx), das HashWX nutzt, lädt das Widget nur das HashWX-Modul vorab herunter. Bei einer SHA-256-Challenge im Format 1 wartet es 2,5 Sekunden und löst dann in einem einzelnen Worker. Ein Klick auf das Widget verteilt den Rest der Arbeit auf alle Worker. Braucht der Key keine Interaktionsdaten, löst das Widget die Lösung auch im Hintergrund ein und hält das Token bereit, sodass der Klick auf das Widget sofort ein Ergebnis liefert. Prüft der Key Interaktionen oder bewertet Verhalten, wartet das Widget mit dem Einlösen auf den Klick, da dieser Teil der Serverprüfung ist. Hat der Server ein Einlösen im Hintergrund abgelehnt, zeigt der Klick diesen Fehler.
 
-Alle Widget-Beschriftungen lassen sich mit `data-cap-i18n-*`-Attributen überschreiben. Standard ist Englisch.
+## Events {#events}
+
+Jedes Event ist ein `CustomEvent`.
+
+| Event | Ausgelöst, wenn | `detail` |
+| --- | --- | --- |
+| `solve` | Die Challenge gelöst ist | `{ token }` |
+| `progress` | Das Lösen voranschreitet | `{ progress }`, von 0 bis 100 |
+| `error` | Etwas fehlschlägt | `{ isCap, code, message }`. Die Codes stehen unter [Fehlerbehebung](./troubleshooting/instrumentation.md#error-codes). |
+| `reset` | Das Widget zurückgesetzt wird | `{}` |
+
+## Attribute {#attributes}
+
+| Attribut | Beschreibung |
+| --- | --- |
+| `data-cap-api-endpoint` | Der Endpunkt deines Servers. Erforderlich. |
+| `data-cap-worker-count` | Anzahl der Solver-Worker. Standard ist die Anzahl der CPU-Kerne oder 8. |
+| `data-cap-hidden-field-name` | Name des versteckten Formular-Inputs. Standard ist `cap-token`. |
+| `data-cap-lang` | Erzwingt eine [Sprache](#languages). |
+| `data-cap-troubleshooting-url` | Ziel des Fehlerbehebungslinks, wenn ein Besucher blockiert wird. |
+| `data-cap-disable-haptics` | Deaktiviert Vibration auf Smartphones. |
+| `required` | Verhindert das Absenden des Formulars, bis das Widget gelöst ist. |
+
+## Sprachen {#languages}
+
+Das Widget folgt der Browsersprache für Arabisch, vereinfachtes Chinesisch, Französisch, Deutsch, Hindi, Japanisch, Portugiesisch, Russisch und Spanisch. Sonst nutzt es Englisch. Setze `data-cap-lang="de"` am Widget oder `window.CAP_LANG = "de"` für die gesamte Seite, um selbst eine Sprache zu wählen.
+
+Um eine Beschriftung zu ändern, setze ihr `data-cap-i18n-*`-Attribut:
 
 ```html
 <cap-widget
-  data-cap-api-endpoint="https://<your-instance>/<site-key>/"
-  data-cap-i18n-initial-state="Bestätige, dass du ein Mensch bist"
-  data-cap-i18n-verifying-label="Wird geprüft..."
-  data-cap-i18n-solved-label="Du bist ein Mensch"
-  data-cap-i18n-error-label="Fehler"
-  data-cap-i18n-troubleshooting-label="Fehlerbehebung"
-  data-cap-i18n-wasm-disabled="Aktiviere WASM für deutlich schnelleres Lösen"
-  data-cap-i18n-verify-aria-label="Klicken, um zu bestätigen, dass du ein Mensch bist"
-  data-cap-i18n-verifying-aria-label="Wird geprüft, bitte warten"
-  data-cap-i18n-verified-aria-label="Bestätigt"
-  data-cap-i18n-required-label="Bitte bestätige, dass du ein Mensch bist"
-  data-cap-i18n-error-aria-label="Ein Fehler ist aufgetreten, bitte versuche es erneut"
+  data-cap-api-endpoint="https://cap.example.com/<site-key>/"
+  data-cap-i18n-initial-state="I'm not a robot"
+  data-cap-i18n-solved-label="Done"
 ></cap-widget>
 ```
 
-### Styling
+Die Keys sind `initial-state`, `verifying-label`, `solved-label`, `error-label`, `csp-error-label`, `required-label`, `troubleshooting-label`, `wasm-disabled` sowie die Screenreader-Beschriftungen `group-aria-label`, `verify-aria-label`, `verifying-aria-label`, `verified-aria-label` und `error-aria-label`.
 
-Überschreibe beliebige dieser CSS-Variablen am `cap-widget`-Element:
+## Styling
+
+Überschreibe diese CSS-Variablen an `cap-widget`. Die gezeigten Werte sind die Standardwerte.
 
 ```css
 cap-widget {
@@ -337,3 +217,90 @@ cap-widget {
   --cap-spinner-thickness: 5px;
 }
 ```
+
+## Seitenweite Optionen {#options}
+
+Setze diese auf `window`, bevor das Widget lädt.
+
+| Option | Beschreibung |
+| --- | --- |
+| `CAP_CUSTOM_FETCH` | Ersetzt `fetch` für die Anfragen des Widgets. |
+| `CAP_CSS_NONCE` | Nonce für den eingefügten `<style>`-Tag bei strikter Content Security Policy. Wird auch für Skripte genutzt, wenn `CAP_SCRIPT_NONCE` nicht gesetzt ist. |
+| `CAP_SCRIPT_NONCE` | Nonce für eingefügte Skripte, den Dekomprimierungs-Fallback und das Instrumentation-Iframe. |
+| `CAP_ISOLATE` | Führt den Instrumentation-Frame ohne die Origin deiner Seite aus. Siehe [Seiten mit einer HTML-Injection-Lücke](#pages-with-an-html-injection-bug). |
+| `CAP_PAKO_URL` | URL von `pako_inflate.min.js`, das das Widget nur in Browsern ohne `DecompressionStream` lädt. |
+| `CAP_CUSTOM_WASM_URL` | URL von `cap_wasm_bg.wasm`. |
+| `CAP_CUSTOM_HASHWX_URL` | URL von `hashwx.wasm`. |
+| `CAP_LANG` | Erzwingt eine [Sprache](#languages) für jedes Widget. |
+| `CAP_DISABLE_HAPTICS` | Deaktiviert Vibration für jedes Widget. |
+| `CAP_DISABLE_WIDGET_REF` | Lässt die Adresse deiner Seite aus dem Link hinter dem Cap-Hinweis des Widgets weg. |
+| `CAP_DEBUG` | Loggt jeden Schritt des Anforderns und Lösens auf die Konsole. |
+| `CAP_SILENT` | Deaktiviert sämtliche Konsolenausgaben des Widgets. |
+
+## Content Security Policy
+
+Das Widget funktioniert unter einer strikten Content Security Policy. Es braucht diese Quellen:
+
+| Direktive | Quelle | Grund |
+| --- | --- | --- |
+| `script-src` | `'nonce-...'` oder der Host des Widgets | Lädt das Widget-Skript. |
+| `script-src` | `'wasm-unsafe-eval'` | Kompiliert den WebAssembly-Solver. |
+| `worker-src` | `blob:` | Führt den Solver in Web Workern aus, die aus einer Blob-URL erstellt werden. |
+| `connect-src` | dein Cap-Server und `cdn.jsdelivr.net`, sofern du nicht [selbst hostest](#self-hosting-the-widget) | Fordert Challenges an, löst sie ein und lädt die WASM-Dateien herunter. |
+| `style-src` | `'nonce-...'` | Erlaubt den eingefügten `<style>`-Tag des Widgets. Setze `CAP_CSS_NONCE`. |
+
+Das [Instrumentation](./instrumentation.md)-Skript läuft in einem `srcdoc`-Iframe, das die Richtlinie der Seite erbt. Das Widget ergänzt dieses Skript und das pako-Fallback-Skript in älteren Browsern nur dann um eine Nonce, wenn du `window.CAP_SCRIPT_NONCE` vor dem Laden des Widgets auf die Nonce aus deinem `script-src` setzt. Ohne sie blockiert der Browser das Skript, und die Lösung schlägt 250 ms nach dem Laden des Frames fehl. Das Widget zeigt "Blocked by this page", löst ein `error`-Event mit dem Code `instr_csp_blocked` aus und loggt einen Konsolenfehler, der hierher verweist. Der Server erfasst den Fehler unter demselben Code. Wenn du pako von einem anderen Host als jsDelivr lädst, setze `CAP_PAKO_URL` und erlaube diesen Host in `script-src`.
+
+```html
+<script nonce="r4nd0m">
+  window.CAP_SCRIPT_NONCE = "r4nd0m";
+  window.CAP_CSS_NONCE = "r4nd0m";
+</script>
+<script nonce="r4nd0m" src="https://cdn.jsdelivr.net/npm/cap-widget@<version>"></script>
+```
+
+```
+Content-Security-Policy: script-src 'nonce-r4nd0m' 'wasm-unsafe-eval'; worker-src blob:; style-src 'nonce-r4nd0m'; connect-src 'self' https://cdn.jsdelivr.net
+```
+
+Erzeuge für jede Antwort eine neue Nonce. Wenn du das Widget über `/assets` von capd auslieferst, erlaube deinen Cap-Server in `script-src` und `connect-src` und entferne jsDelivr.
+
+Du brauchst kein `'unsafe-eval'`. Einige Instrumentation-Prüfungen nutzen `eval` und `new Function`. Wenn beide einen `EvalError` werfen, überspringt das Skript diese Prüfungen, führt den Rest aus, und der Server ergänzt `riskFlags` um `csp_eval_blocked`. Wirft nur eine der beiden Funktionen einen Fehler, wertet das Skript das als Manipulation und schlägt mit `instr_natives_tampered` fehl. Das Skript hält auch fest, ob der Browser für das blockierte `eval` ein `securitypolicyviolation`-Event ausgelöst hat. Es ignoriert Events, deren `isTrusted` auf `false` steht, damit ein Seitenskript diese Bestätigung nicht fälschen kann. Das Flag dient nur der Information und zählt nie zugunsten des Besuchers.
+
+Widgets aus früheren Versionen funktionieren weiter gegen einen neuen Server, mit den unter [Widgets aus früheren Versionen](./instrumentation.md#widgets-from-earlier-releases) beschriebenen Einschränkungen.
+
+### Seiten mit einer HTML-Injection-Lücke {#pages-with-an-html-injection-bug}
+
+Der Instrumentation-Frame teilt die Origin deiner Seite. Sobald du `CAP_SCRIPT_NONCE` setzt, gibt das Widget deine Nonce an das Skript des Frames weiter. Das Widget führt jedes Skript aus, das der Server in `data-cap-api-endpoint` sendet. Kann ein Angreifer HTML in eine Seite einschleusen, die `CAP_SCRIPT_NONCE` setzt, kann er ein `<cap-widget>` hinzufügen, das auf seinen eigenen Server zeigt. Dessen Skript läuft dann unter der Origin deiner Seite und passiert deine Richtlinie. Auf dieser Seite wird eine Lücke, die deine Richtlinie sonst begrenzen würde, zu Cross-Site-Scripting.
+
+Das betrifft nur Seiten, die sich auf eine Nonce-basierte Richtlinie verlassen, um HTML-Injection einzugrenzen. Ohne eine solche Richtlinie kann eingeschleustes HTML ohnehin Skripte ausführen, und das Widget ändert daran nichts.
+
+Setze auf diesen Seiten `window.CAP_ISOLATE = true` in einem Skript, bevor das Widget lädt:
+
+```html
+<script nonce="r4nd0m">
+  window.CAP_SCRIPT_NONCE = "r4nd0m";
+  window.CAP_ISOLATE = true;
+</script>
+```
+
+Das Widget führt den Frame dann ohne `allow-same-origin` aus. Sein Skript erhält dadurch eine opake Origin und kann deine Seite, Cookies oder Speicher weder lesen noch verändern, unabhängig davon, welcher Server es gesendet hat. Die Option muss über JavaScript gesetzt werden, da eingeschleustes HTML kein JavaScript ausführen kann und ein Attribut am Widget in der Hand des Angreifers läge.
+
+Die Prüfung verzichtet damit auf die Daten, die sie aus der Seite liest. Sie führt weiterhin die [Prüfungen auf automatisierte Browser](./instrumentation.md#automated-browser-detection) in ihrem eigenen Frame aus, kann aber keine Interaktionen, Verhaltensaufzeichnungen oder Markierungen von KI-Agenten erfassen. Bei Keys, die diese Signale nur melden, akzeptiert der Server solche Lösungen mit dem Risiko-Flag `isolated_frame`. Bei Keys, die automatisierte Interaktionen blockieren, Verhalten im blockierenden Modus bewerten oder Agenten blockieren, lehnt er sie mit `instr_isolated` ab.
+
+## Das Widget selbst hosten {#self-hosting-the-widget}
+
+Das Widget lädt standardmäßig von jsDelivr, ebenso die beiden WASM-Dateien, die sein Solver abruft. So lieferst du alles von deiner eigenen Domain aus:
+
+1. Liefere das Skript selbst aus, entweder durch einen Import von `cap-widget` über deinen Bundler oder vom [Asset-Server](./capd/options.md#asset-server) von capd unter `/assets/widget.js`.
+2. Richte den Solver auf deine Kopien der WASM-Dateien, bevor das Widget etwas löst:
+
+```html
+<script>
+  window.CAP_CUSTOM_WASM_URL = "https://cap.example.com/assets/cap_wasm_bg.wasm";
+  window.CAP_CUSTOM_HASHWX_URL = "https://cap.example.com/assets/hashwx.wasm";
+</script>
+<script src="https://cap.example.com/assets/widget.js"></script>
+```
+
+Mit einem Bundler setzt du die beiden globalen Variablen, bevor `import "cap-widget"` ausgeführt wird. Die URLs können auf jeden Ort zeigen, an dem du die Dateien hostest.

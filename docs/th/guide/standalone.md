@@ -6,6 +6,6 @@ head:
       content: noindex, follow
 ---
 
-# เซิร์ฟเวอร์ standalone
+# capd
 
-[**หน้านี้ถูกย้ายแล้ว**](standalone/index.md)
+[**หน้านี้ถูกย้ายแล้ว**](capd/index.md)

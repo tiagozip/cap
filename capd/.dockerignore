@@ -1,0 +1,10 @@
+node_modules
+data
+.data
+test
+scripts
+public/dist
+.env
+.env.*
+.DS_Store
+docker-compose*

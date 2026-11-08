@@ -23,6 +23,9 @@ instead, the user's browser quietly solves a few small challenges in the backgro
 
 it has no dependencies by default, is 200x smaller than hCaptcha, and you can run it with docker, on workers or on railway. it's already used in production by large companies like [bunny.net](https://bunny.net) and [adguard](https://adguard.com).
 
+<img src="./assets/shots/overview-light.png" alt="Cap Standalone" width="100%" />
+
+
 ### license
 
 cap is licensed under [apache 2.0](LICENSE).

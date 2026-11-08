@@ -22,7 +22,7 @@ Willst du ein minimales, bibliotheksartiges PoW-CAPTCHA, das du in ein Node-Proj
 ## Wo Cap die bessere Wahl ist
 
 - **Zwei unabhängige Verifizierungsebenen, kostenlos.** Cap fährt Proof-of-Work *und* dynamische JavaScript-[Instrumentation-Challenges](../instrumentation.md) parallel, beides inklusive. Eine zu überwinden überwindet die andere nicht. Das quelloffene Altcha bietet nur PoW; die zweite (ML-basierte) Ebene erfordert das kostenpflichtige Sentinel.
-- **Standalone-Server mit Dashboard, kostenlos.** Cap liefert ein Deployment in einem Docker-Container mit Web-Dashboard, Verwaltung mehrerer Site-Keys, Analytics und einem reCAPTCHA-kompatiblen siteverify-Endpunkt. Auf der Open-Source-Seite von Altcha musst du das selbst zusammenbauen; das Rundum-Erlebnis gibt es nur mit Sentinel.
+- **Selbst gehosteter Server mit Dashboard, kostenlos.** Cap liefert ein Deployment in einem Docker-Container mit Web-Dashboard, Verwaltung mehrerer Site-Keys, Analytics und einem reCAPTCHA-kompatiblen siteverify-Endpunkt. Auf der Open-Source-Seite von Altcha musst du das selbst zusammenbauen; das Rundum-Erlebnis gibt es nur mit Sentinel.
 - **Kleineres Widget.** Cap liegt bei etwa 20 KB. Altcha bei etwa 34 KB gzipped.
 - **Fortschrittsanzeige.** Caps Widget meldet den Lösefortschritt als Prozentwert an den Nutzer, sinnvolles UX-Feedback während der kurzen Wartezeit.
 - **Floating- und unsichtbarer Modus.** Cap kann sich komplett verstecken oder bis zum Absenden über einem Button schweben. Altchas Anzeigemodi sind einfacher gehalten.

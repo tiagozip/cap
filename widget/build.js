@@ -7,7 +7,7 @@ import {
   shipped,
   shippedKeys,
   translations,
-} from "./src/src/i18n/translations.js";
+} from "./src/src/i18n/translations.mjs";
 
 const minifyCSS = (input) => {
   const { code } = transform({
@@ -65,7 +65,8 @@ for (const code of shipped) {
     throw new Error(`shipped lang '${code}' missing from translations`);
   const vals = keepIdx.map((i) => translations[code][i]);
   const bad = vals.find((v) => v.includes("/"));
-  if (bad) throw new Error(`'${code}' string contains the "/" delimiter: ${bad}`);
+  if (bad)
+    throw new Error(`'${code}' string contains the "/" delimiter: ${bad}`);
   i18nRows[code] = vals.join("/");
 }
 const i18nJSON = JSON.stringify(i18nRows);

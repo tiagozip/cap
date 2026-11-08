@@ -22,7 +22,7 @@ Nimm **Anubis**, wenn du eine ganze Website oder einen Pfad auf Reverse-Proxy-Eb
 - **Schutz pro Aktion, nicht pro Seitenaufruf.** Cap schützt Formulare, Anmeldungen, Kontaktseiten und API-Endpunkte, also genau dort, wo Missbrauch zu Kosten wird. Besucher surfen normal weiter.
 - **Schwierigkeit pro Aktion.** Anubis' Challenge muss klein genug bleiben, um nicht jeden Seitenaufruf auszubremsen, was die mögliche Härte begrenzt. Cap wird pro Aktion konfiguriert, die Schwierigkeit kann bei Anmelde- oder Login-Formularen also höher liegen, ohne das Surfen zu stören.
 - **Zwei Verifizierungsebenen.** Cap legt [Instrumentation-Challenges](../instrumentation.md) über den PoW, sodass selbst Bots, die den Proof-of-Work mit GPU beschleunigen, noch eine echte Browserumgebung vortäuschen müssen.
-- **Standalone-Server mit Dashboard.** Cap liefert Analytics, Verwaltung mehrerer Site-Keys und einen reCAPTCHA-kompatiblen siteverify-Endpunkt ab Werk.
+- **Selbst gehosteter Server mit Dashboard.** Cap liefert Analytics, Verwaltung mehrerer Site-Keys und einen reCAPTCHA-kompatiblen siteverify-Endpunkt ab Werk.
 - **Widget-UX.** Cap ist dafür gedacht, für Menschen an einem Formular sichtbar zu sein: mit Checkbox, Fortschrittsanzeige und Markenfläche. Anubis ist ein transparentes Tor.
 
 ## Sie können koexistieren

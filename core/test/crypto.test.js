@@ -21,7 +21,12 @@ describe("jwtSign / jwtVerify", () => {
 
   test("returns null for invalid signature", () => {
     const token = jwtSign({ a: 1 }, SECRET);
-    expect(jwtVerify(token, "woof-woof-woof-woof-dont-use-in-prod-woof-woof-woof-woof")).toBeNull();
+    expect(
+      jwtVerify(
+        token,
+        "woof-woof-woof-woof-dont-use-in-prod-woof-woof-woof-woof",
+      ),
+    ).toBeNull();
   });
 
   test("returns null for malformed token", () => {

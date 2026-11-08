@@ -5,9 +5,9 @@ description: "capjs-core is Cap's stateless server library for generating and ve
 
 # Core library
 
-`capjs-core` generates and verifies challenges inside your own server. It's stateless: a challenge is a signed JWT, so it needs no database, no filesystem and no in-memory state, and it runs on Cloudflare Workers, Lambda and other edge runtimes. Standalone is built on it.
+`capjs-core` generates and verifies challenges inside your own server. It's stateless: a challenge is a signed JWT, so it needs no database, no filesystem and no in-memory state, and it runs on Cloudflare Workers, Lambda and other edge runtimes. capd is built on it.
 
-Most people should run [Standalone](./standalone/index.md) instead, which adds a dashboard, stats, rate limiting and token storage. Use the library when you can't run a container, or want challenges inside an existing service.
+Most people should run [capd](./capd/index.md), Cap's server, instead, which adds a dashboard, stats, rate limiting and token storage. Use the library when you can't run a container, or want challenges inside an existing service.
 
 ::: code-group
 
@@ -78,7 +78,7 @@ Deleting the key makes each token single-use.
 
 ## HashWX {#format-2-hashwx}
 
-Without options, `generateChallenge` issues SHA-256 proof of work. [HashWX](./hashwx.md) resists GPUs far better, and Standalone uses it for new keys. Opt in with the format-2 API:
+Without options, `generateChallenge` issues SHA-256 proof of work. [HashWX](./hashwx.md) resists GPUs far better, and capd uses it for new keys. Opt in with the format-2 API:
 
 ```js
 return await generateChallenge(SECRET, {
@@ -87,7 +87,7 @@ return await generateChallenge(SECRET, {
 });
 ```
 
-The widget detects the format on its own, and `validateChallenge` handles both.
+The widget detects the format on its own, and `validateChallenge` handles both. Always pass `protocols` with format 2. Without it, the challenge uses the deprecated RSW protocol, which needs an RSA keypair in `keypair` or a minter in `rsw`.
 
 | Option | Default | What it does |
 | --- | --- | --- |
@@ -108,7 +108,7 @@ setHashwxModule(hashwxModule);
 
 ## Replay prevention
 
-`validateChallenge` calls `consumeNonce(signature, ttlMs)` after the proof of work and instrumentation pass. Store the signature if it's new and return `true`. Return `false` if it was already used. Since the check runs last, a replayed request with bad solutions can't use up a real visitor's challenge.
+`validateChallenge` calls `consumeNonce(signature, ttlMs)` once the proof of work checks out, and before it checks instrumentation. Store the signature if it's new and return `true`. Return `false` if it was already used. A request with a wrong proof of work never reaches it, so it can't use up a real visitor's challenge. A request with a valid proof of work and a failing instrumentation result does use it up, so a bot can't retry the instrumentation check against the same proof of work.
 
 ::: code-group
 
@@ -143,7 +143,7 @@ Workers KV isn't atomic, so two requests that arrive together can both pass. Use
 
 ## Instrumentation
 
-`instrumentation: true` adds an [instrumentation challenge](./instrumentation.md) to format-1 challenges. With format 2, add `"instrumentation"` to `protocols`. Both accept options in place of `true`:
+`instrumentation: true` adds an [instrumentation challenge](./instrumentation.md) to format-1 challenges. With format 2, add `"instrumentation"` to `protocols`. In both cases you can pass an object in place of `true`:
 
 ```js
 instrumentation: {
@@ -152,9 +152,65 @@ instrumentation: {
 }
 ```
 
-`obfuscationLevel` runs from 1 to 10 and defaults to 3. Levels 8 to 10 use `javascript-obfuscator` and block the event loop for tens of milliseconds per challenge, so keep them for low-traffic routes, or generate scripts in a worker pool with `instrumentationGenerator`.
+| Option | Default | What it does |
+| --- | --- | --- |
+| `blockAutomatedBrowsers` | `false` | Fails solves from [automated browsers](./instrumentation.md#automated-browser-detection) with `instr_automated_browser`. |
+| `detectAutomatedInteractions` | `false` | Adds `interaction_synthetic_clicks` and `interaction_synthetic_keydowns` to `riskFlags`. See [interaction detection](./instrumentation.md#interaction-detection). |
+| `blockAutomatedInteractions` | `false` | Fails those solves with `instr_automated_interaction`. Turns on detection too. |
+| `obfuscationLevel` | `5` | From 1 to 10. Levels 1 to 3 strip whitespace, 4 to 7 also encode strings and minify, and 8 to 10 run `javascript-obfuscator` when it is installed. Higher levels are slower to generate. |
 
-`detectAutomation(vector)` runs the automated browser checks over a probe vector you collected yourself.
+Levels 8 to 10 need the optional `javascript-obfuscator` package and block the event loop for tens of milliseconds per challenge, so keep them for low-traffic routes, or generate scripts in a worker pool with `instrumentationGenerator`. It receives the instrumentation options and has to resolve to what `generateInstrumentation` returns.
+
+## Behavior and agents
+
+`behavior` turns on [behavior scoring](./instrumentation.md#behavior-scoring) and [agent blocking](./instrumentation.md#ai-agent-detection). It adds an instrumentation challenge if the challenge has none, and the policy is signed into the challenge token, so the client can't turn it off.
+
+```js
+await generateChallenge(SECRET, {
+  format: 2,
+  protocols: ["hashwx", "instrumentation"],
+  behavior: { block: true, blockAgents: "identified" },
+});
+```
+
+`behavior: true` scores without blocking. The object takes:
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `block` | `false` | Fails `automated` verdicts with `behavior_automated`, and `no_interaction` verdicts with `behavior_no_interaction`. |
+| `threshold` | `0.75` | Score from 0.1 to 1 at which the verdict becomes `automated`. |
+| `strict` | `false` | Lifts the 0.6 cap on scores made only of weak flags. |
+| `requireInteraction` | `true` | Set it to `false` to let `no_interaction` through when `block` is on, for invisible and floating mode. |
+| `blockAgents` | `false` | `"identified"` fails agents detected with high confidence, and `"all"` fails every detected agent, with `behavior_agent`. |
+| `allowVerifiedAgents` | `false` | Lets agents with a verified Web Bot Auth signature through `blockAgents`. |
+
+A solve with no behavior trace always fails with `behavior_missing`, whatever the policy.
+
+To use request headers as agent evidence, pass the `/redeem` request to `validateChallenge`:
+
+```js
+const result = await validateChallenge(SECRET, body, {
+  consumeNonce,
+  request: { method: req.method, url: fullUrl, headers: req.headers },
+  verifyWebBotAuth: true,
+});
+```
+
+`url` has to be the full URL, since Web Bot Auth signs it. With `verifyWebBotAuth: true`, a request that carries a `Signature-Agent` header is checked against the agent's key directory, which `validateChallenge` fetches over HTTPS and caches for an hour. It only trusts the signers Cap knows and the origins in `trustedSignatureAgents`. Pass `webBotAuthNonceCheck(nonce, ttlMs)` to reject replayed signatures. It works like `consumeNonce`. The signed `@authority` has to match the host in `url`. If a proxy rewrites `url` to an internal address, pass your public host as `webBotAuthAuthority`.
+
+`behaviorReplayCheck(digest, ttlMs)` works the same way for behavior traces. Return `true` if the digest was seen before, and the trace gets `bh_replayed`. Only traces with 8 or more pointer moves and key presses have a digest.
+
+With behavior on, a successful result has `behavior: { score, verdict, flags, signals, agent }`. With it off, `agent` is returned at the top level whenever there's evidence, built from page marks and headers only, and it's never blocked. Either way, a detected agent adds `agent:<name>` to `riskFlags`. `agent` looks like this:
+
+```js
+{
+  detected: true,
+  name: "claude-in-chrome",
+  confidence: "high",
+  verified: false,
+  evidence: ["artifact:cic_active"],
+}
+```
 
 ## API
 
@@ -169,7 +225,13 @@ instrumentation: {
 | `scope` | none | A string bound to the challenge. Validation has to pass the same one. |
 | `extra` | none | Data embedded in the JWT. Anyone with the token can read it. |
 | `instrumentation` | `false` | See [instrumentation](#instrumentation). |
+| `instrumentationGenerator` | `generateInstrumentation` | Async function that generates the instrumentation script. |
+| `behavior` | `false` | See [behavior and agents](#behavior-and-agents). |
 | `format`, `protocols` | format 1 | See [HashWX](#format-2-hashwx). |
+| `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | see [HashWX](#format-2-hashwx) | HashWX settings for format 2. |
+| `keypair`, `t`, `rsw` | none | Settings for the deprecated RSW protocol. |
+
+Format 1 returns `{ challenge, token, expires, instrumentation? }`, and format 2 returns `{ token, format: 2, challenges, expires }`. Both add `behavior: true` when behavior scoring is on. Send the whole object to the widget.
 
 ### `validateChallenge(secret, body, options?)`
 
@@ -180,22 +242,42 @@ instrumentation: {
 | `consumeNonce` | none | See [replay prevention](#replay-prevention). |
 | `scope` | none | Must match the challenge's scope. |
 | `tokenTtlMs` | `1_200_000` | How long the visitor's token stays valid. |
-| `signToken` | `id:secret` | Async function that returns your own token format. |
+| `signToken` | `id:secret` | Function that receives `{ scope, expires, iat }` and returns your own token. `tokenKey` is left out. |
+| `request` | none | The `/redeem` request as `{ method, url, headers }`. See [behavior and agents](#behavior-and-agents). |
+| `verifyWebBotAuth` | `false` | Verifies Web Bot Auth signatures on `request`. |
+| `fetch` | global `fetch` | Used to download Web Bot Auth key directories. |
+| `trustedSignatureAgents` | none | Extra signer origins to trust, like `"https://agent.example.com"`. |
+| `webBotAuthNonceCheck` | none | Rejects replayed Web Bot Auth signatures. |
+| `webBotAuthAuthority` | host of `request.url` | Host that Web Bot Auth signatures have to cover. |
+| `behaviorReplayCheck` | none | Flags replayed behavior traces. |
 
-On success it returns `{ success: true, token, tokenKey, expires, scope, riskFlags }`. `riskFlags` lists automation signals that don't block on their own, like `native_tamper`, so you can raise the difficulty for that visitor.
+On success it returns `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }`, plus `behavior` or `agent` as described in [behavior and agents](#behavior-and-agents). `riskFlags` lists signals that don't block on their own, like `native_tamper` or `legacy_widget`, so you can raise the difficulty for that visitor. The instrumentation page lists the [browser check flags](./instrumentation.md#automated-browser-detection) and the [behavior flags](./instrumentation.md#behavior-scoring).
 
-On failure it returns `{ success: false, reason }`:
+On failure it returns `{ success: false, reason }`. Instrumentation failures also have `instr_error: true`, `instr_automated_browser` and `instr_automated_interaction` have a `blockedBy` list, and behavior failures have `behavior`. Every `reason` is listed in the [error codes table](./troubleshooting/instrumentation.md#error-codes).
 
-| `reason` | Meaning |
+### Lower-level exports
+
+capd and the tests use these. You only need them to build your own pipeline.
+
+| Export | What it does |
 | --- | --- |
-| `invalid_body`, `missing_token`, `missing_solutions` | The request is malformed. |
-| `invalid_token` | The JWT is forged, malformed or out of bounds. |
-| `scope_mismatch` | The scope differs from the challenge's. |
-| `expired` | The challenge expired before it was redeemed. |
-| `invalid_solutions`, `invalid_solution` | The proof of work is wrong. |
-| `already_redeemed` | `consumeNonce` returned `false`. |
-| `nonce_store_error` | `consumeNonce` threw. |
-| `instr_*` | Instrumentation failed. `instr_automated_browser` comes with a `blockedBy` list of the [checks](./instrumentation.md#automated-browser-detection) that failed. |
+| `generateInstrumentation(opts?)` | Generates an instrumentation script and the metadata to check it. |
+| `verifyInstrumentationResult(meta, payload, now?)` | Checks a result against that metadata. Returns `{ valid, reason?, riskFlags?, blockedBy?, checks?, agent?, trace? }`. |
+| `serializeBound(data)`, `canonicalize(value)` | Serialize collected data the way the script does. |
+| `boundValues(binding, serialized)` | The numbers a result has to contain for that data. |
+| `MAX_BOUND_DATA` | Longest serialized data accepted, 65,536 characters. |
+| `detectAutomation(vector)` | Runs the automated browser checks on browser facts you collected yourself. Returns `{ pass, checks, blockedBy, riskFlags }`. |
+| `analyzeBehavior(trace, ctx?)` | Scores a behavior trace. `ctx` takes `{ replayed, strict, threshold }`. Returns `{ score, verdict, flags, signals, digest }`. |
+| `BEHAVIOR_WEIGHTS`, `DEFAULT_BEHAVIOR_THRESHOLD`, `WEAK_CAP` | The flag weights, `0.75` and `0.6`. |
+| `agentFromHeaders(headers)` | Agent evidence from `User-Agent`, `Signature-Agent` and `Sec-CH-UA-Platform`. |
+| `agentFromTrace(trace)` | Agent evidence from a behavior trace's click and typing timing. Only pass traces that `analyzeBehavior` didn't flag as `bh_malformed`. |
+| `summarizeAgent(evidence, verification?)` | Combines evidence, and an optional `verifyWebBotAuth` result, into the `agent` object, or `null` if there's no evidence. |
+| `verifyWebBotAuth(req, opts?)` | Verifies a Web Bot Auth signature. Resolves to `{ verified, agent?, origin?, keyid?, reason? }`. |
+| `parseSignatureAgent(value)` | Parses a `Signature-Agent` header into `{ label, url }` entries. |
+| `hashwxReady()`, `setHashwxModule(module)` | Compile the HashWX module early, or supply one. See [HashWX](#format-2-hashwx). |
+| `hashwxTarget(difficulty)`, `hashwxSeed(challenge, block)`, `hashwxHash(state, seed, nonce)` | HashWX primitives. `state` comes from `hashwxReady()`. |
+| `DEFAULT_HASHWX_DIFFICULTY`, `DEFAULT_HASHWX_CHALLENGE_COUNT`, `DEFAULT_HASHWX_NONCES_PER_HASH` | `1_000_000`, `4` and `65_536`. |
+| `generateRswKeypair(bits?)`, `serializeRswKeypair(kp)`, `deserializeRswKeypair(s)`, `buildRswMinter(args, opts?)` | Keys and minters for the deprecated RSW protocol. |
 
 ## Migrating from `@cap.js/server` {#how-it-differs-from-cap-js-server}
 

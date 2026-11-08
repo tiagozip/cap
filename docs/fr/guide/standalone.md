@@ -6,6 +6,6 @@ head:
       content: noindex, follow
 ---
 
-# Serveur standalone
+# capd
 
-[**Cette page a été déplacée**](standalone/index.md)
+[**Cette page a été déplacée**](capd/index.md)

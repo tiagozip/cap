@@ -2,7 +2,7 @@
 
 ## development setup
 
-- you need to have the latest version of [Bun](https://bun.com/) installed for building the widget, server, standalone, solver and docs, and Rust for WASM
+- you need to have the latest version of [Bun](https://bun.com/) installed for building the widget, capd, the solver and the docs, and Rust for WASM
 
 - for writing docs, make sure to place them inside of `docs/guide` and make sure to update the sidebar in `docs/.vitepress/config.mjs`.
 

@@ -1,0 +1,53 @@
+# Cap with Valkey + DuckDB
+# Put ADMIN_KEY in .env next to this file
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  cap:
+    image: ${CAP_IMAGE:-tiago2/cap:4}
+    container_name: cap
+    ports:
+      - "${CAP_PORT:-3000}:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ADMIN_KEY: ${ADMIN_KEY:?Set ADMIN_KEY in .env, at least 12 characters}
+      VALKEY_URL: redis://valkey:6379
+    volumes:
+      - cap-data:/usr/src/app/data
+    depends_on:
+      valkey:
+        condition: service_healthy
+    stop_grace_period: 15s
+    logging: *logging
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: cap-valkey
+    command: >
+      valkey-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 60 1
+      --maxmemory-policy noeviction
+      --loglevel warning
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging: *logging
+    restart: unless-stopped
+
+volumes:
+  cap-data:
+  valkey-data:

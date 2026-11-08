@@ -8,8 +8,8 @@ head:
 
 # @cap.js/server
 
-::: warning 旧版库：已被 [`capjs-core`](./capjs-core.md) 取代
-`@cap.js/server` 已不再是推荐的 Cap 服务端库。新项目应使用 [`capjs-core`](./capjs-core.md)：它是无状态的（不依赖文件系统、没有内存令牌列表，可运行在 Cloudflare Workers / Lambda / 边缘环境），使用带签名的 JWT，也是 [Cap Standalone](./standalone/index.md) 内部使用的库。参见[迁移对照表](./capjs-core.md#how-it-differs-from-cap-js-server)。
+::: warning 旧版库
+`@cap.js/server` 已被 [`capjs-core`](./capjs-core.md) 取代。新项目应使用 `capjs-core`，它自身不保存状态，可运行在 Cloudflare Workers 和 Lambda 上，也是 [capd](./capd/index.md) 构建所基于的库。`@cap.js/server` 只能签发 SHA-256 质询，不支持 HashWX 或 instrumentation。参见[从 `@cap.js/server` 迁移](./capjs-core.md#how-it-differs-from-cap-js-server)。
 :::
 
 `@cap.js/server` 是 Cap 用于创建和校验质询的服务端库。用你常用的包管理器安装：
@@ -285,7 +285,7 @@ if (!success) throw new Error("invalid cap token");
 }
 ```
 
-**响应：**`{ success, token }`
+**响应：** 成功时返回 `{ success, token, expires }`，失败时返回 `{ success: false, message }`
 
 #### `await cap.validateToken("...", { ... })`
 

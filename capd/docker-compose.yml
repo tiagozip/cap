@@ -1,0 +1,170 @@
+# Cap with Valkey + ClickHouse
+# Put ADMIN_KEY in .env next to this file
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  cap:
+    image: ${CAP_IMAGE:-tiago2/cap:4}
+    container_name: cap
+    ports:
+      - "${CAP_PORT:-3000}:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      ADMIN_KEY: ${ADMIN_KEY:?Set ADMIN_KEY in .env, at least 12 characters}
+      VALKEY_URL: redis://valkey:6379
+      CLICKHOUSE_URL: http://cap:${ADMIN_KEY}@clickhouse:8123/cap
+    volumes:
+      - cap-data:/usr/src/app/data
+    depends_on:
+      valkey:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    stop_grace_period: 15s
+    logging: *logging
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: cap-valkey
+    command: >
+      valkey-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 60 1
+      --maxmemory-policy noeviction
+      --loglevel warning
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging: *logging
+    restart: unless-stopped
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8-alpine
+    container_name: cap-clickhouse
+    environment:
+      ADMIN_KEY: ${ADMIN_KEY:?Set ADMIN_KEY in .env, at least 12 characters}
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
+    configs:
+      - source: clickhouse-config
+        target: /etc/clickhouse-server/config.d/cap.xml
+      - source: clickhouse-users
+        target: /etc/clickhouse-server/users.d/cap.xml
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    logging: *logging
+    restart: unless-stopped
+
+volumes:
+  cap-data:
+  valkey-data:
+  clickhouse-data:
+
+configs:
+  clickhouse-config:
+    content: |
+      <clickhouse>
+        <logger>
+          <level>warning</level>
+          <size>10M</size>
+          <count>1</count>
+        </logger>
+        <asynchronous_insert_log remove="1"/>
+        <asynchronous_metric_log remove="1"/>
+        <backup_log remove="1"/>
+        <blob_storage_log remove="1"/>
+        <crash_log remove="1"/>
+        <error_log remove="1"/>
+        <iceberg_metadata_log remove="1"/>
+        <latency_log remove="1"/>
+        <metric_log remove="1"/>
+        <opentelemetry_span_log remove="1"/>
+        <part_log remove="1"/>
+        <processors_profile_log remove="1"/>
+        <query_log remove="1"/>
+        <query_metric_log remove="1"/>
+        <query_thread_log remove="1"/>
+        <query_views_log remove="1"/>
+        <s3queue_log remove="1"/>
+        <session_log remove="1"/>
+        <text_log remove="1"/>
+        <trace_log remove="1"/>
+        <transactions_info_log remove="1"/>
+        <zookeeper_log remove="1"/>
+        <max_server_memory_usage>1073741824</max_server_memory_usage>
+        <mark_cache_size>67108864</mark_cache_size>
+        <index_mark_cache_size>16777216</index_mark_cache_size>
+        <uncompressed_cache_size>16777216</uncompressed_cache_size>
+        <index_uncompressed_cache_size>16777216</index_uncompressed_cache_size>
+        <primary_index_cache_size>16777216</primary_index_cache_size>
+        <skipping_index_cache_size>16777216</skipping_index_cache_size>
+        <query_condition_cache_size>16777216</query_condition_cache_size>
+        <mmap_cache_size>64</mmap_cache_size>
+        <compiled_expression_cache_size>16777216</compiled_expression_cache_size>
+        <background_pool_size>2</background_pool_size>
+        <background_merges_mutations_concurrency_ratio>2</background_merges_mutations_concurrency_ratio>
+        <background_schedule_pool_size>8</background_schedule_pool_size>
+        <background_buffer_flush_schedule_pool_size>2</background_buffer_flush_schedule_pool_size>
+        <background_common_pool_size>4</background_common_pool_size>
+        <background_move_pool_size>1</background_move_pool_size>
+        <background_fetches_pool_size>1</background_fetches_pool_size>
+        <background_distributed_schedule_pool_size>1</background_distributed_schedule_pool_size>
+        <background_message_broker_schedule_pool_size>1</background_message_broker_schedule_pool_size>
+        <asynchronous_metrics_update_period_s>60</asynchronous_metrics_update_period_s>
+        <asynchronous_heavy_metrics_update_period_s>600</asynchronous_heavy_metrics_update_period_s>
+        <max_thread_pool_size>500</max_thread_pool_size>
+        <mlock_executable>false</mlock_executable>
+        <merge_tree>
+          <number_of_free_entries_in_pool_to_execute_mutation>2</number_of_free_entries_in_pool_to_execute_mutation>
+          <number_of_free_entries_in_pool_to_execute_optimize_entire_partition>2</number_of_free_entries_in_pool_to_execute_optimize_entire_partition>
+          <number_of_free_entries_in_pool_to_lower_max_size_of_merge>2</number_of_free_entries_in_pool_to_lower_max_size_of_merge>
+          <merge_max_block_size>1024</merge_max_block_size>
+        </merge_tree>
+      </clickhouse>
+
+  clickhouse-users:
+    content: |
+      <clickhouse>
+        <profiles>
+          <default>
+            <max_threads>2</max_threads>
+            <max_memory_usage>536870912</max_memory_usage>
+            <log_queries>0</log_queries>
+          </default>
+        </profiles>
+        <users>
+          <default remove="remove"/>
+          <cap>
+            <password from_env="ADMIN_KEY"/>
+            <networks><ip>::/0</ip></networks>
+            <profile>default</profile>
+            <quota>default</quota>
+            <grants>
+              <query>GRANT ALL ON cap.*</query>
+              <query>GRANT SELECT ON system.parts</query>
+            </grants>
+          </cap>
+        </users>
+      </clickhouse>

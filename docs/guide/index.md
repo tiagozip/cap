@@ -5,108 +5,35 @@ description: "Set up Cap, the open-source self-hosted CAPTCHA, in about five min
 
 # Quickstart
 
-Cap has two parts: a widget, which runs and solves challenges in the visitor's browser and gives you a token; and the server, which issues challenges and verifies those tokens.
+Cap has two parts: a widget, which runs and solves challenges in the visitor's browser and gives you a token; and the server (capd), which issues challenges and verifies those tokens.
 
-## Pick a server
+## 1. Set up capd
 
-- **[Standalone](./standalone/index.md)** is a Docker container with a dashboard, analytics and rate limiting. Pick it if you can run a container. If you're moving from reCAPTCHA, Standalone's `/siteverify` supports the same request format, so your verification code only needs to use your server's hostname.
+First, you'll need to set up capd. It runs as a self-hosted server with a dashboard, analytics, rules, and an API. Keys and settings are stored in Valkey. Before you start, you'll need to make two choices:
 
-- **The [core library](./capjs-core.md)** is a minimal npm package which handles Cap's basics. It runs wherever your code does, including serverless platforms like Workers, and you store tokens in your own database, but doesn't support built-in analytics.
+**1. Where to run capd:** You can run it on your own server with Docker, use [Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic), or use a serverless platform like [Workers](./capd/workers.md). For this guide, we'll guide you through using Docker.
 
-## 1. Run the server
-
-### Standalone
-
-Save this as `docker-compose.yml`, or [deploy with Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic):
-
-```yaml
-services:
-  cap:
-    image: tiago2/cap:latest
-    ports:
-      - "3000:3000"
-    environment:
-      ADMIN_KEY: change_me_to_something_long
-      REDIS_URL: redis://valkey:6379
-    depends_on:
-      valkey:
-        condition: service_healthy
-    restart: unless-stopped
-
-  valkey:
-    image: valkey/valkey:9-alpine
-    volumes:
-      - valkey-data:/data
-    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-
-volumes:
-  valkey-data:
-```
-
-Make sure to change your admin key. Then start it:
-
-```bash
-docker compose up -d
-```
-
-Open `http://localhost:3000` and log in with your `ADMIN_KEY`, which is the dashboard password. Create a site key and copy both the site key and its secret.
-
-The widget talks to this server from your visitors' browsers, so in production it needs a public URL. We recommend using something like [Tunnels](https://developers.cloudflare.com/tunnel/), but [the Standalone docs](./standalone/index.md) cover most other cases, including reverse proxies.
-
-### Core library
-
-Install it:
+**2. Where to store analytics:** You can use DuckDB (lightweight, best for small websites) or ClickHouse (more scalable). Both are easy to set up and built-in.
 
 ::: code-group
 
-```sh [npm]
-npm i capjs-core
+```bash [DuckDB]
+curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/tiagozip/cap/main/capd/docker-compose.duckdb.yml
+echo "ADMIN_KEY=$(openssl rand -hex 24)" > .env
+docker compose up -d
 ```
 
-```sh [pnpm]
-pnpm add capjs-core
-```
-
-```sh [bun]
-bun add capjs-core
+```bash [ClickHouse]
+curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/tiagozip/cap/main/capd/docker-compose.yml
+echo "ADMIN_KEY=$(openssl rand -hex 24)" > .env
+docker compose up -d
 ```
 
 :::
 
-Add two routes under a common prefix. This example uses Hono and Redis, but any framework and any store with an atomic "set if missing" work:
+Open `http://localhost:3000` and log in with the `ADMIN_KEY` from `.env`, which is the dashboard password. Create a site key and copy both the site key and its secret.
 
-```js
-import { Hono } from "hono";
-import { Redis } from "ioredis";
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = process.env.CAP_SECRET;
-const redis = new Redis(process.env.REDIS_URL);
-const app = new Hono();
-
-app.post("/cap/challenge", async (c) =>
-  c.json(await generateChallenge(SECRET, { format: 2, protocols: ["hashwx", "instrumentation"] })),
-);
-
-app.post("/cap/redeem", async (c) => {
-  const result = await validateChallenge(SECRET, await c.req.json(), {
-    consumeNonce: async (sig, ttlMs) =>
-      (await redis.set(`cap:nonce:${sig}`, "1", "NX", "PX", ttlMs)) === "OK",
-  });
-  if (result.success) {
-    await redis.set(`cap:token:${result.tokenKey}`, "1", "PX", result.expires - Date.now());
-  }
-  return c.json(result);
-});
-```
-
-`CAP_SECRET` signs every challenge. Make it long and random, and use the same one in every process.
+The widget talks to this server from your visitors' browsers, so in production it needs a public URL. We recommend using something like [Tunnels](https://developers.cloudflare.com/tunnel/), but [the capd docs](./capd/index.md) cover most other cases, including reverse proxies.
 
 ## 2. Add the widget
 
@@ -125,7 +52,7 @@ Put the widget inside your form:
 </form>
 ```
 
-With Standalone, the endpoint is `https://<your-instance>/<site-key>/`. With the core library, it's your route prefix, like `/cap/`.
+The endpoint is `https://<your-instance>/<site-key>/`.
 
 When the visitor solves it, the widget adds a hidden `cap-token` field to the form. Outside a form, listen for the `solve` event instead:
 
@@ -139,11 +66,7 @@ The [widget page](./widget.md) has snippets for React, Vue, Svelte and other fra
 
 ## 3. Verify the token
 
-Before you trust a submission, check its token on your server.
-
-### Standalone
-
-Send the token to `/siteverify`:
+Before you trust a submission, send its token to `/siteverify` from your server:
 
 ::: code-group
 
@@ -186,30 +109,17 @@ curl -X POST "https://cap.example.com/<site-key>/siteverify" \
 
 `<secret>` is the site key's secret, not your `ADMIN_KEY`. Mixing the two up is the most common setup mistake.
 
+If you're moving from reCAPTCHA, `/siteverify` takes the same request format, so your verification code only needs your server's hostname.
+
 A valid token returns `{ "success": true }`. Each token works once, so a second verification of the same token fails. Sending it twice is a quick way to check the setup end to end.
 
-### Core library
+## Using the core library instead
 
-Look the token up in the store your redeem route wrote to, then delete it so it can't be used twice:
-
-```js
-import { createHash } from "node:crypto";
-
-app.post("/submit", async (c) => {
-  const [id, secret] = String((await c.req.parseBody())["cap-token"] ?? "").split(":");
-  const key = `cap:token:${id}:${createHash("sha256")
-    .update(secret ?? "")
-    .digest("hex")}`;
-
-  if ((await redis.del(key)) !== 1) {
-    return c.text("invalid captcha", 403);
-  }
-});
-```
+If you'd rather issue and check challenges inside your own backend, the [core library](./capjs-core.md) is a minimal npm package that does only that. You store tokens in your own database, and you don't get the dashboard, analytics or rate limiting.
 
 ## Next steps
 
 - [Customize the widget](./widget.md#attributes): its labels, language and styling
-- [Configure Standalone](./standalone/options.md): CORS, rate limits and the asset server
+- [Configure capd](./capd/options.md): proxies, widget files and the API
 - Read the [core library reference](./capjs-core.md)
 - Read [how Cap works](./workings.md)

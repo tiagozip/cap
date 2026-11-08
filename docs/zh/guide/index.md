@@ -5,108 +5,35 @@ description: "约五分钟即可搭建好 Cap 这款开源自托管 CAPTCHA。�
 
 # 快速开始
 
-Cap 由两部分组成：验证组件在访客的浏览器中运行并完成质询，然后交给你一个令牌；服务端负责签发质询并验证这些令牌。
+Cap 由两部分组成：验证组件在访客的浏览器中运行并完成质询，然后交给你一个令牌；服务端（capd）负责签发质询并验证这些令牌。
 
-## 选择服务端 {#pick-a-server}
+## 1. 搭建 capd {#_1-set-up-capd}
 
-- **[Standalone](./standalone/index.md)** 是一个 Docker 容器，自带控制台、数据分析和速率限制。如果你能运行容器，就选它。如果你正在从 reCAPTCHA 迁移，Standalone 的 `/siteverify` 支持相同的请求格式，你的验证代码只需改用你服务器的主机名即可。
+首先需要搭建 capd。它是一个自托管的服务端，自带控制台、数据分析、规则和 API。密钥和设置保存在 Valkey 中。开始之前，你需要做两个选择：
 
-- **[核心库](./capjs-core.md)** 是一个精简的 npm 包，负责 Cap 的基础功能。你的代码能在哪里运行，它就能在哪里运行，包括 Workers 这类无服务器平台。令牌存放在你自己的数据库中，但它不提供内置的数据分析。
+**1. 在哪里运行 capd：** 你可以用 Docker 在自己的服务器上运行，也可以使用 [Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)，或者使用 [Workers](./capd/workers.md) 这样的无服务器平台。本指南以 Docker 为例。
 
-## 1. 运行服务端 {#_1-run-the-server}
-
-### Standalone {#standalone}
-
-把下面的内容保存为 `docker-compose.yml`，或者[用 Railway 部署](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic)：
-
-```yaml
-services:
-  cap:
-    image: tiago2/cap:latest
-    ports:
-      - "3000:3000"
-    environment:
-      ADMIN_KEY: change_me_to_something_long
-      REDIS_URL: redis://valkey:6379
-    depends_on:
-      valkey:
-        condition: service_healthy
-    restart: unless-stopped
-
-  valkey:
-    image: valkey/valkey:9-alpine
-    volumes:
-      - valkey-data:/data
-    command: valkey-server --save 60 1 --loglevel warning --maxmemory-policy noeviction
-    healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-
-volumes:
-  valkey-data:
-```
-
-记得修改管理员密钥，然后启动：
-
-```bash
-docker compose up -d
-```
-
-打开 `http://localhost:3000`，用 `ADMIN_KEY` 登录，它就是控制台密码。创建一个站点密钥（site key），然后把站点密钥和对应的秘密密钥都复制下来。
-
-验证组件会从访客的浏览器直接访问这个服务端，所以在生产环境中它需要一个公开的 URL。我们推荐使用 [Cloudflare Tunnels](https://developers.cloudflare.com/tunnel/) 这类方案，[Standalone 文档](./standalone/index.md)也介绍了其他大多数情况，包括反向代理。
-
-### 核心库 {#core-library}
-
-安装：
+**2. 把数据分析存在哪里：** 你可以使用 DuckDB（轻量，适合小型网站）或 ClickHouse（扩展性更好）。两者都已内置，配置起来也都很简单。
 
 ::: code-group
 
-```sh [npm]
-npm i capjs-core
+```bash [DuckDB]
+curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/tiagozip/cap/main/capd/docker-compose.duckdb.yml
+echo "ADMIN_KEY=$(openssl rand -hex 24)" > .env
+docker compose up -d
 ```
 
-```sh [pnpm]
-pnpm add capjs-core
-```
-
-```sh [bun]
-bun add capjs-core
+```bash [ClickHouse]
+curl -fsSLo docker-compose.yml https://raw.githubusercontent.com/tiagozip/cap/main/capd/docker-compose.yml
+echo "ADMIN_KEY=$(openssl rand -hex 24)" > .env
+docker compose up -d
 ```
 
 :::
 
-在同一个前缀下添加两个路由。这个例子用的是 Hono 和 Redis，不过任何框架都可以，存储只要支持原子性的"不存在时才写入"操作就行：
+打开 `http://localhost:3000`，用 `.env` 中的 `ADMIN_KEY` 登录，它就是控制台密码。创建一个站点密钥，然后把站点密钥和对应的秘密密钥都复制下来。
 
-```js
-import { Hono } from "hono";
-import { Redis } from "ioredis";
-import { generateChallenge, validateChallenge } from "capjs-core";
-
-const SECRET = process.env.CAP_SECRET;
-const redis = new Redis(process.env.REDIS_URL);
-const app = new Hono();
-
-app.post("/cap/challenge", async (c) =>
-  c.json(await generateChallenge(SECRET, { format: 2, protocols: ["hashwx", "instrumentation"] })),
-);
-
-app.post("/cap/redeem", async (c) => {
-  const result = await validateChallenge(SECRET, await c.req.json(), {
-    consumeNonce: async (sig, ttlMs) =>
-      (await redis.set(`cap:nonce:${sig}`, "1", "NX", "PX", ttlMs)) === "OK",
-  });
-  if (result.success) {
-    await redis.set(`cap:token:${result.tokenKey}`, "1", "PX", result.expires - Date.now());
-  }
-  return c.json(result);
-});
-```
-
-`CAP_SECRET` 用于给每个质询签名。它应该足够长且随机，并且所有进程都要使用同一个值。
+验证组件会从访客的浏览器直接访问这个服务端，所以在生产环境中它需要一个公开的 URL。我们推荐使用 [Tunnels](https://developers.cloudflare.com/tunnel/) 这类方案，[capd 文档](./capd/index.md)也介绍了其他大多数情况，包括反向代理。
 
 ## 2. 添加验证组件 {#_2-add-the-widget}
 
@@ -125,7 +52,7 @@ app.post("/cap/redeem", async (c) => {
 </form>
 ```
 
-使用 Standalone 时，端点是 `https://<your-instance>/<site-key>/`。使用核心库时，端点就是你的路由前缀，比如 `/cap/`。
+端点是 `https://<your-instance>/<site-key>/`。
 
 访客完成验证后，验证组件会往表单里加一个隐藏的 `cap-token` 字段。如果不在表单里，就改为监听 `solve` 事件：
 
@@ -139,11 +66,7 @@ document.querySelector("cap-widget").addEventListener("solve", (e) => {
 
 ## 3. 验证令牌 {#_3-verify-the-token}
 
-在信任一次提交之前，先在你的服务端检查它的令牌。
-
-### Standalone {#standalone-1}
-
-把令牌发送到 `/siteverify`：
+在信任一次提交之前，先从你的服务端把它的令牌发送到 `/siteverify`：
 
 ::: code-group
 
@@ -186,30 +109,17 @@ curl -X POST "https://cap.example.com/<site-key>/siteverify" \
 
 `<secret>` 是站点密钥对应的秘密密钥，不是你的 `ADMIN_KEY`。把这两者搞混是最常见的配置错误。
 
+如果你正在从 reCAPTCHA 迁移，`/siteverify` 接受相同的请求格式，你的验证代码只需改用你服务器的主机名即可。
+
 有效的令牌会返回 `{ "success": true }`。每个令牌只能使用一次，所以对同一个令牌进行第二次验证会失败。把同一个令牌发送两次，就能快速地端到端检查整个配置。
 
-### 核心库 {#core-library-1}
+## 改用核心库 {#using-the-core-library-instead}
 
-在兑换路由写入的存储中查找这个令牌，然后删除它，这样它就不能被重复使用：
-
-```js
-import { createHash } from "node:crypto";
-
-app.post("/submit", async (c) => {
-  const [id, secret] = String((await c.req.parseBody())["cap-token"] ?? "").split(":");
-  const key = `cap:token:${id}:${createHash("sha256")
-    .update(secret ?? "")
-    .digest("hex")}`;
-
-  if ((await redis.del(key)) !== 1) {
-    return c.text("invalid captcha", 403);
-  }
-});
-```
+如果你更想在自己的后端里签发和检查质询，[核心库](./capjs-core.md)是一个只做这件事的精简 npm 包。令牌存放在你自己的数据库中，也没有控制台、数据分析和速率限制。
 
 ## 下一步 {#next-steps}
 
-- [自定义验证组件](./widget.md#attributes)的文字、语言和样式
-- [配置 Standalone](./standalone/options.md) 的 CORS、速率限制和资源服务器
+- [自定义验证组件](./widget.md#属性)：文字、语言和样式
+- [配置 capd](./capd/options.md)：代理、验证组件文件和 API
 - 阅读[核心库参考](./capjs-core.md)
 - 了解 [Cap 的工作原理](./workings.md)

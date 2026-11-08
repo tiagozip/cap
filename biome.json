@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
   "files": {
     "includes": [
       "core/src/**",
@@ -9,8 +9,12 @@
       "widget/test/**",
       "wasm/build.js",
       "wasm/test/**",
-      "standalone/src/**",
-      "standalone/test/**",
+      "capd/src/**",
+      "capd/test/**",
+      "capd/dashboard/src/**",
+      "capd/vite.config.mjs",
+      "demo-dashboard/src/**",
+      "demo-dashboard/vite.config.mjs",
       "!**/node_modules",
       "!**/cap_wasm.js",
       "!**/cap_wasm_bg.wasm.d.ts",
@@ -18,11 +22,12 @@
       "!**/data",
       "!**/dist",
       "!widget/test/fixtures",
+      "!widget/test/legacy",
       "!widget/src/cap.min.js",
       "!widget/src/cap-floating.min.js",
-      "!widget/src/cap.compat.min.js",
       "!widget/src/wasm-hashes.min.js",
-      "!widget/src/src/cap.js"
+      "!widget/src/src/cap.js",
+      "!capd/dashboard/src/styles/capui/utilities.css"
     ]
   },
   "formatter": {
@@ -53,6 +58,48 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/*.svelte"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useConst": "off"
+          },
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["capd/dashboard/src/**/*.css"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          },
+          "suspicious": {
+            "noDuplicateProperties": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["capd/dashboard/src/lib/api.js"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noDocumentCookie": "off"
+          }
+        }
+      }
     }
-  ]
+  ],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  }
 }

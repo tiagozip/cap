@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "cap-workers",
+  "main": "../capd/src/workers/index.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "alias": {
+    "esbuild": "../capd/src/workers/unavailable.js",
+    "javascript-obfuscator": "../capd/src/workers/unavailable.js"
+  },
+  "assets": {
+    "directory": "./dashboard",
+    "binding": "ASSETS",
+    "not_found_handling": "none"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cap-workers",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": { "crons": ["*/30 * * * *"] },
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "observability": { "enabled": true }
+}

@@ -51,7 +51,7 @@ describe("regression: nonce 0 is a valid solution (server@3.0.1)", () => {
   });
 });
 
-describe("regression: stateless — no fs, no signal handlers", () => {
+describe("regression: stateless, no fs, no signal handlers", () => {
   test("module load does not register signal handlers", async () => {
     const beforeSig = process.listenerCount("SIGINT");
     const beforeBefore = process.listenerCount("beforeExit");

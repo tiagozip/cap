@@ -5,7 +5,7 @@ faq:
   - q: Cap 比 SilentShield 更好吗？
     a: "想要开源、自托管、不按请求收费、难度和数据都由自己掌控的团队，选 Cap 更合适。SilentShield 适合想用托管式、隐形、基于行为分析的服务，也能接受请求配额和第三方依赖的团队。"
   - q: Cap 是开源的吗？
-    a: "是的。Cap 在 Apache 2.0 许可证下完全开源，包括验证组件、服务端和 Standalone Docker 部署。"
+    a: "是的。Cap 在 Apache 2.0 许可证下完全开源，包括验证组件、服务端，以及 Docker 部署 capd。"
   - q: SilentShield 是开源的吗？
     a: "不是。SilentShield 是闭源的托管服务。它的检测逻辑运行在 SilentShield 的服务器上，无法审计，也无法自托管。"
   - q: 哪个更适合自托管？
@@ -78,7 +78,7 @@ SilentShield 宣传的隐私立场比 reCAPTCHA 更强：按 Forge12 自己的�
 
 ### Cap 是开源的吗？
 
-是的。Cap 在 Apache 2.0 许可证下完全开源，包括验证组件、服务端和 Standalone Docker 部署。
+是的。Cap 在 Apache 2.0 许可证下完全开源，包括验证组件、服务端，以及 Docker 部署 capd。
 
 ### SilentShield 是开源的吗？
 

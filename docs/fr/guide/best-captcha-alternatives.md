@@ -5,7 +5,7 @@ faq:
   - q: Quelle est la meilleure alternative aux CAPTCHA ?
     a: "Cela dépend de vos priorités. Cap convient le mieux pour une protection open source, auto-hébergée et respectueuse de la vie privée, sans frais. Turnstile convient aux stacks Cloudflare, FriendlyCaptcha aux équipes qui veulent un fournisseur européen géré fondé sur la preuve de travail, et ALTCHA aux minimalistes."
   - q: Quelle est la meilleure alternative open source aux CAPTCHA ?
-    a: "Cap et ALTCHA. Cap ajoute à la preuve de travail un serveur standalone, un tableau de bord, des défis d'instrumentation et une API compatible reCAPTCHA ; ALTCHA reste une bibliothèque légère."
+    a: "Cap et ALTCHA. Cap ajoute à la preuve de travail un serveur auto-hébergé, un tableau de bord, des défis d'instrumentation et une API compatible reCAPTCHA ; ALTCHA reste une bibliothèque légère."
   - q: Quel est le meilleur CAPTCHA auto-hébergé ?
     a: "Cap. Un petit déploiement Docker, un tableau de bord web, la gestion de plusieurs clés de site et aucun aller-retour vers un tiers. Rien concernant vos visiteurs ne quitte vos serveurs."
   - q: Quelle alternative aux CAPTCHA est la meilleure pour la vie privée ?
@@ -126,7 +126,7 @@ D'autres options (MTCaptcha, GeeTest, Arkose Labs) sont traitées sur la page [c
 ## Comment choisir une alternative aux CAPTCHA ?
 
 1. **Vous refusez d'héberger quoi que ce soit ?** Turnstile (gratuit, verdicts Cloudflare) ou FriendlyCaptcha (payant, Europe, preuve de travail).
-2. **Vous voulez de l'open source et du contrôle ?** Cap, soit en serveur standalone complet avec tableau de bord, soit en [bibliothèque serveur minimale](./capjs-core.md) ; ALTCHA est une autre option solide de type bibliothèque.
+2. **Vous voulez de l'open source et du contrôle ?** Cap, soit en serveur auto-hébergé avec tableau de bord, soit en [bibliothèque serveur minimale](./capjs-core.md) ; ALTCHA est une autre option solide de type bibliothèque.
 3. **La conversion est votre métrique principale ?** Évitez tout ce qui comporte des puzzles d'images. Voir [CAPTCHA et taux de conversion](./captcha-conversion-rate.md).
 4. **Trafic majoritairement mobile ?** Voir [protection anti-bot des formulaires mobiles](./mobile-form-bot-protection.md).
 5. **WordPress avec peu de trafic ?** L'extension SilentShield est pratique ; Cap fonctionne aussi via des intégrations communautaires, sans le quota.
@@ -139,7 +139,7 @@ Cela dépend de vos priorités. Cap convient le mieux pour une protection open s
 
 ### Quelle est la meilleure alternative open source aux CAPTCHA ?
 
-Cap et ALTCHA. Cap ajoute à la preuve de travail un serveur standalone, un tableau de bord, des défis d'instrumentation et une API compatible reCAPTCHA ; ALTCHA reste une bibliothèque légère. Voir [les options de CAPTCHA open source](./open-source-captcha.md).
+Cap et ALTCHA. Cap ajoute à la preuve de travail un serveur auto-hébergé, un tableau de bord, des défis d'instrumentation et une API compatible reCAPTCHA ; ALTCHA reste une bibliothèque légère. Voir [les options de CAPTCHA open source](./open-source-captcha.md).
 
 ### Quel est le meilleur CAPTCHA auto-hébergé ?
 

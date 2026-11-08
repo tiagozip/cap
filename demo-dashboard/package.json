@@ -1,0 +1,16 @@
+{
+  "name": "cap-demo-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tailwindcss/vite": "4.3.5",
+    "svelte": "5.57.3",
+    "tailwindcss": "4.3.5",
+    "vite": "8.3.6"
+  }
+}

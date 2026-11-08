@@ -4,64 +4,66 @@ description: "Unsichtbarer Modus für Cap: new Cap() und solve() aufrufen, um da
 
 # Unsichtbarer Modus
 
-Du kannst `new Cap({ ... })` in deinem clientseitigen JavaScript verwenden, um eine neue Cap-Instanz zu erzeugen, und die Methode `solve()` aufrufen, um die Challenge zu lösen.
+Der unsichtbare Modus löst eine Challenge aus deinem eigenen Code heraus, ohne etwas auf der Seite anzuzeigen. Er eignet sich für Aktionen ohne Formular, etwa einen Like-Button oder eine Hintergrundanfrage.
+
+```js
+import Cap from "cap-widget";
+
+const cap = new Cap({ apiEndpoint: "https://cap.example.com/<site-key>/" });
+const { token } = await cap.solve();
+```
+
+Mit dem CDN-Skript ist `Cap` global verfügbar und braucht keinen Import.
+
+## API
+
+### `new Cap(config, element?)`
+
+`config.apiEndpoint` ist erforderlich, sofern du nicht [`CAP_CUSTOM_FETCH`](./widget.md#options) setzt. Jeder andere Key wird als Attribut am Widget gesetzt, die [Widget-Attribute](./widget.md#attributes) funktionieren also auch hier:
 
 ```js
 const cap = new Cap({
-  apiEndpoint: "https://<your-instance>/<site-key>/",
-  // oder: apiEndpoint: "/api/",
+  apiEndpoint: "https://cap.example.com/<site-key>/",
+  "data-cap-worker-count": "4",
 });
-const solution = await cap.solve();
-
-console.log(solution.token);
 ```
 
-Du kannst auch [Event-Listener](widget.md#unterstutzte-events) einrichten:
+Ohne `element` erzeugt Cap ein verstecktes `<cap-widget>` mit deaktivierter Vibration. Ein verstecktes Widget fordert nichts vorab an und löst auch nichts vorab. Die gesamte Arbeit beginnt erst mit deinem Aufruf von `solve()`. Übergib ein bestehendes Widget, um dieses zu steuern.
+
+### `cap.solve()`
+
+Fordert eine Challenge an und löst sie. Das Promise liefert `{ success, token }`.
+
+Ein Fehler löst ein `error`-Event aus und lehnt das Promise mit einem `Error` ab, dessen `code` einer der [Fehlercodes](./troubleshooting/instrumentation.md#error-codes) ist, etwa `instr_csp_blocked` für einen [blockierten Frame](./widget.md#content-security-policy):
 
 ```js
-const cap = new Cap({
-  apiEndpoint: "https://<your-instance>/<site-key>/",
-  // oder: apiEndpoint: "/api/",
-});
-
-cap.addEventListener("progress", (event) => {
-  console.log(`Wird gelöst... ${event.detail.progress}% fertig`);
-});
-```
-
-Im Hintergrund erzeugt Cap ein verstecktes `cap-widget`-Element und löst die Challenge damit.
-
-## Unterstützte Methoden und Argumente
-
-Die folgenden Methoden werden unterstützt:
-
-#### `new Cap({ ... })`
-
-Erzeugt eine neue Cap-Instanz. Wird ein zweites Argument übergeben, verwendet Cap dieses Element, statt ein neues im Speicher anzulegen.
-
-**Argumente**
-
-```json
-{
-  apiEndpoint: ..., // API-Endpunkt, analog zum Widget-Attribut `data-cap-api-endpoint`
-  workers: navigator.hardwareConcurrency || 8 // Anzahl der zu nutzenden Worker-Threads
+try {
+  const { token } = await cap.solve();
+} catch (err) {
+  console.error(err.code, err.message);
 }
 ```
 
-#### `cap.solve()`
+Ein Aufruf während eines laufenden Lösungsvorgangs liefert `undefined`.
 
-Fordert eine Challenge an und löst sie.
+### `cap.token`
 
-**Ausgabe:** `{ token }`
+Das Token des letzten Lösungsvorgangs oder `null`.
 
-#### `cap.token`
+### `cap.reset()`
 
-Gibt das Token des letzten Lösungsvorgangs zurück.
+Löscht das Token.
 
-#### `cap.reset()`
+### `cap.addEventListener(type, listener)`
 
-Setzt `cap.token` zurück.
+Lauscht auf die [Events](./widget.md#events) des Widgets:
 
-#### `cap.addEventListener(..., function () { ... })`
+```js
+cap.addEventListener("progress", (e) => {
+  console.log(`${e.detail.progress}%`);
+});
+```
 
-Lauscht auf ein Event des Cap-Widgets. Siehe [unterstützte Events](widget.md#unterstutzte-events).
+## Keys mit Verhaltensbewertung {#keys-with-behavior-scoring}
+
+Beim unsichtbaren Lösen gibt es keinen Klick auf ein Widget. Bei Keys, die [Verhalten bewerten](./instrumentation.md#behavior-scoring), lautet das Urteil `no_interaction`. Die Lösung schlägt also bei Keys fehl, die blockieren und eine Interaktion verlangen. Setze in der Core-Bibliothek für solche Routen `requireInteraction: false` in der `behavior`-Richtlinie.

@@ -1,35 +1,36 @@
 ---
-description: "Comment Cap fonctionne en interne : le CAPTCHA auto-hébergé génère des défis de preuve de travail avec graine, les résout en WASM, puis échange un jeton signé sur le serveur."
+description: "Comment fonctionne Cap : le CAPTCHA auto-hébergé fait résoudre un défi de preuve de travail au navigateur de chaque visiteur et lui fait exécuter un script d'instrumentation, puis échange le résultat contre un jeton à usage unique."
 ---
 
 # Comment fonctionne Cap ?
 
-Ceci est une explication plutôt technique du fonctionnement des défis SHA-256 et d'instrumentation de Cap. Elle ne couvre pas [HashWX](./hashwx.md). Si vous cherchez une vue d'ensemble plus générale, consultez la page [Efficacité](./effectiveness.md).
+Cap ne cherche pas à décider si un visiteur est humain. Il impose un coût de calcul à chaque requête, faible pour un visiteur et élevé pour quelqu'un qui en envoie des milliers, et vérifie que le calcul a eu lieu dans un vrai navigateur.
 
----
+## Déroulement d'une requête {#what-happens-on-a-request}
 
-1. À son initialisation, Cap enregistre automatiquement un élément personnalisé pour le widget dans le navigateur.
-2. Le widget crée un shadow DOM et y ajoute tous les éléments nécessaires.
+1. Dès que le widget est visible, il demande un défi à votre serveur. Le serveur répond avec un jeton signé qui décrit le défi, et généralement un script d'instrumentation. Le widget lance immédiatement le script dans une iframe isolée.
+2. Le navigateur résout la preuve de travail dans des Web Workers avec WebAssembly. Selon le défi, il commence à la première interaction du visiteur avec la page ou quand celui-ci clique sur le widget.
+3. Le widget récupère le résultat de l'instrumentation et envoie les deux résultats au serveur. Le serveur vérifie la signature du jeton et la preuve de travail, marque le défi comme utilisé, puis vérifie le résultat de l'instrumentation.
+4. Si toutes les vérifications passent, le serveur émet un jeton à usage unique. Le widget l'insère dans votre formulaire, et votre backend le vérifie avec `/siteverify` avant de faire confiance à la soumission.
 
-#### Demander le défi
+Le serveur ne conserve aucun état pour un défi en cours, puisque tout ce dont il a besoin se trouve dans le jeton signé. Il ne stocke que les défis utilisés et les jetons qu'il a émis.
 
-3. Lorsqu'une résolution est demandée, le widget envoie une requête au serveur. Celui-ci renvoie un jeton, la configuration des défis à résoudre et, éventuellement, des données d'instrumentation compressées.
+## Pourquoi la preuve de travail {#why-proof-of-work}
 
-4. Le widget génère ensuite plusieurs défis à partir d'une graine fixée (le jeton de défi) et de la configuration fournie par le serveur. Si des données d'instrumentation sont présentes, elles sont décompressées et résolues dans une iframe isolée.
+Tout CAPTCHA finit par être résolu, par des modèles de reconnaissance d'images, par rétro-ingénierie ou par des personnes payées à la résolution. Un CAPTCHA peut contrôler le coût de chaque résolution.
 
-#### Calculer la solution
+Supposons qu'un spammeur paie 1 $ pour envoyer 10 000 messages et en tire 10 $. Si Cap porte le coût de ces messages à 100 $, la campagne perd de l'argent. Un visiteur qui remplit un seul formulaire paie environ une demi-seconde de CPU et ne voit jamais de puzzle.
 
-5. Le widget s'appuie sur du WASM écrit en Rust et sur des Web Workers pour résoudre les défis en parallèle :
-   - Chaque worker tente de trouver un nonce valide en répétant les étapes suivantes :
-     - combiner le sel avec différentes valeurs de nonce,
-     - calculer le hachage SHA-256 de cette combinaison,
-     - vérifier si le hachage obtenu commence par le préfixe cible.
-   - Le WASM incrémente le nonce jusqu'à trouver un hachage correspondant.
+L'idée vient de [Hashcash](https://www.researchgate.net/publication/2482110_Hashcash_-_A_Denial_of_Service_Counter-Measure).
 
-6. Les défis d'instrumentation sont décompressés et exécutés, s'il y en a.
+## Les deux couches {#the-two-layers}
 
-#### Échanger la solution contre un jeton
+La **preuve de travail** montre que le client a effectué le calcul. Avec SHA-256, un GPU résout environ 150 fois plus de défis par seconde qu'un CPU, ce qui permet à un attaquant de s'en tirer à faible coût. [HashWX](./hashwx.md), le protocole par défaut, ramène ce rapport à environ 2.
 
-7. Une fois une solution valide trouvée, le widget renvoie le résultat au serveur pour validation.
-8. Le serveur génère alors lui-même les mêmes défis à partir du jeton et de la configuration fournis, et vérifie les solutions soumises par le widget.
-9. Après vérification réussie, le serveur consomme la solution et émet un jeton permettant d'authentifier la requête.
+L'**[instrumentation](./instrumentation.md)** montre que le calcul s'est produit dans un navigateur. Chaque défi contient un script nouvellement généré qui effectue des calculs via le DOM, et le serveur connaît la réponse attendue. L'exécuter hors d'un vrai moteur de navigateur est difficile. Il peut aussi détecter les outils d'automatisation courants et les agents IA, et évaluer comment les mouvements du pointeur et les saisies au clavier du visiteur ont atteint le widget.
+
+Chaque couche compense les limites de l'autre. La preuve de travail seule peut être résolue par un script sans navigateur, et l'instrumentation seule peut être résolue à faible coût par de nombreux vrais navigateurs. Aucune n'arrête une ferme de personnes qui résolvent les défis à la main, mais la preuve de travail impose toujours un coût à chacune de leurs résolutions.
+
+## Confidentialité {#privacy}
+
+Cap ne dépose aucun cookie et ne collecte aucune télémétrie. Les défis, les jetons et les statistiques restent sur votre serveur. Avec l'évaluation du comportement activée, le widget envoie à votre serveur les mouvements du pointeur et les temps de frappe du visiteur, mais jamais les touches pressées ni le texte saisi. Le widget appelle le point d'accès que vous lui donnez, ainsi que jsDelivr pour ses fichiers WASM, sauf si vous [les auto-hébergez](./widget.md#self-hosting-the-widget). Consultez la page [Conformité](./compliance.md) pour le RGPD, le CCPA et l'accessibilité.

@@ -37,7 +37,7 @@ Cap's `/siteverify` endpoint mirrors reCAPTCHA's request shape on purpose, so th
 
 ### 1. Stand up a Cap instance
 
-Follow the [quickstart](../index.md) to run Cap Standalone with Docker. Create a site key in the dashboard and note both the **site key** and its **secret key**. Keep [instrumentation challenges](../instrumentation.md) on (the default) for the strongest bot protection.
+Follow the [quickstart](../index.md) to run capd with Docker. Create a site key in the dashboard and note both the **site key** and its **secret key**. Keep [instrumentation challenges](../instrumentation.md) on (the default) for the strongest bot protection.
 
 ### 2. Swap the client widget
 
@@ -119,7 +119,7 @@ You never have to flip a switch and pray. Mount Cap on a separate element and ha
 
 ## See also
 
-- [Live demo](../demo.md) — solve a Cap challenge yourself, then time it against reCAPTCHA
-- [Cap vs reCAPTCHA](./recaptcha.md) — the full comparison
-- [How Cap detects bots](../effectiveness.md) — the proof-of-work + instrumentation model
-- [Quickstart](../index.md) — stand up Cap from scratch in five minutes
+- [Live demo](../demo.md): solve a Cap challenge yourself, then time it against reCAPTCHA
+- [Cap vs reCAPTCHA](./recaptcha.md): the full comparison
+- [How Cap detects bots](../effectiveness.md): the proof-of-work + instrumentation model
+- [Quickstart](../index.md): stand up Cap from scratch in five minutes

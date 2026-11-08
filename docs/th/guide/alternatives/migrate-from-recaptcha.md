@@ -37,7 +37,7 @@ endpoint `/siteverify` ของ Cap ตั้งใจสะท้อนรู�
 
 ### 1. ตั้งอินสแตนซ์ Cap ขึ้นมา
 
-ทำตาม[คู่มือเริ่มต้นใช้งาน](../index.md) เพื่อรัน Cap Standalone ด้วย Docker สร้าง site key ในแดชบอร์ด แล้วจดทั้ง **site key** และ **secret key** ของมันไว้ ให้เปิด [challenge แบบ instrumentation](../instrumentation.md) ไว้ (เป็นค่าเริ่มต้น) เพื่อการป้องกันบอทที่แข็งแรงที่สุด
+ทำตาม[คู่มือเริ่มต้นใช้งาน](../index.md) เพื่อรัน capd ด้วย Docker สร้าง site key ในแดชบอร์ด แล้วจดทั้ง **site key** และ **secret key** ของมันไว้ ให้เปิด [challenge แบบ instrumentation](../instrumentation.md) ไว้ (เป็นค่าเริ่มต้น) เพื่อการป้องกันบอทที่แข็งแรงที่สุด
 
 ### 2. เปลี่ยนวิดเจ็ตฝั่งไคลเอนต์
 
@@ -119,7 +119,7 @@ const { success } = await (
 
 ## ดูเพิ่มเติม
 
-- [เดโมสด](../demo.md) — ลองแก้ challenge ของ Cap ด้วยตัวเอง แล้วจับเวลาเทียบกับ reCAPTCHA
-- [Cap กับ reCAPTCHA](./recaptcha.md) — การเปรียบเทียบฉบับเต็ม
-- [Cap ตรวจจับบอทอย่างไร](../effectiveness.md) — โมเดล proof-of-work บวก instrumentation
-- [เริ่มต้นใช้งาน](../index.md) — ตั้ง Cap จากศูนย์ภายในห้านาที
+- [เดโมสด](../demo.md): ลองแก้ challenge ของ Cap ด้วยตัวเอง แล้วจับเวลาเทียบกับ reCAPTCHA
+- [Cap กับ reCAPTCHA](./recaptcha.md): การเปรียบเทียบฉบับเต็ม
+- [Cap ตรวจจับบอทอย่างไร](../effectiveness.md): โมเดล proof-of-work บวก instrumentation
+- [เริ่มต้นใช้งาน](../index.md): ตั้ง Cap จากศูนย์ภายในห้านาที

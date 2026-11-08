@@ -5,7 +5,7 @@ faq:
   - q: 最好的 CAPTCHA 替代方案是什么？
     a: "取决于你的优先级。如果你想要开源、自托管、隐私优先且零费用的防护，Cap 是最佳选择。Turnstile 适合 Cloudflare 原生技术栈，FriendlyCaptcha 适合想要托管式欧盟 PoW 服务商的团队，ALTCHA 适合极简主义者。"
   - q: 最好的开源 CAPTCHA 替代方案是什么？
-    a: "Cap 和 ALTCHA。Cap 在工作量证明之上还提供独立服务端、仪表盘、instrumentation 质询以及兼容 reCAPTCHA 的 API；ALTCHA 则保持为一个精简的库。"
+    a: "Cap 和 ALTCHA。Cap 在工作量证明之上还提供自托管服务端、仪表盘、instrumentation 质询以及兼容 reCAPTCHA 的 API；ALTCHA 则保持为一个精简的库。"
   - q: 最好的自托管 CAPTCHA 是什么？
     a: "Cap。小巧的 Docker 部署、Web 仪表盘、多站点密钥支持，且无需与第三方往返通信。访客的任何信息都不会离开你的服务器。"
   - q: 哪个 CAPTCHA 替代方案在隐私方面最好？
@@ -126,7 +126,7 @@ Google 的老牌产品，分为 v2（"我不是机器人"）和 v3（隐形、�
 ## 如何选择 CAPTCHA 替代方案？
 
 1. **完全不想托管任何东西？** Turnstile（免费，但裁决权在 Cloudflare）或 FriendlyCaptcha（付费、欧盟、PoW）。
-2. **想要开源和掌控权？** 选 Cap：既可以用带仪表盘的完整 Standalone 服务端，也可以用[极简服务端库](./capjs-core.md)；ALTCHA 是另一个不错的纯库选择。
+2. **想要开源和掌控权？** 选 Cap：既可以用带仪表盘的自托管服务端，也可以用[极简服务端库](./capjs-core.md)；ALTCHA 是另一个不错的纯库选择。
 3. **转化率是你的核心指标？** 避开一切带图片谜题的方案。见 [CAPTCHA 与转化率](./captcha-conversion-rate.md)。
 4. **流量以移动端为主？** 见[移动端表单的机器人防护](./mobile-form-bot-protection.md)。
 5. **低流量的 WordPress 网站？** SilentShield 的插件很方便；Cap 通过社区集成也能用，而且没有配额限制。
@@ -139,7 +139,7 @@ Google 的老牌产品，分为 v2（"我不是机器人"）和 v3（隐形、�
 
 ### 最好的开源 CAPTCHA 替代方案是什么？
 
-Cap 和 ALTCHA。Cap 在工作量证明之上还提供独立服务端、仪表盘、instrumentation 质询以及兼容 reCAPTCHA 的 API；ALTCHA 则保持为一个精简的库。见[开源 CAPTCHA 选项](./open-source-captcha.md)。
+Cap 和 ALTCHA。Cap 在工作量证明之上还提供自托管服务端、仪表盘、instrumentation 质询以及兼容 reCAPTCHA 的 API；ALTCHA 则保持为一个精简的库。见[开源 CAPTCHA 选项](./open-source-captcha.md)。
 
 ### 最好的自托管 CAPTCHA 是什么？
 

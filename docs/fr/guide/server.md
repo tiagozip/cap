@@ -8,8 +8,8 @@ head:
 
 # @cap.js/server
 
-::: warning Bibliothèque historique — remplacée par [`capjs-core`](./capjs-core.md)
-`@cap.js/server` n'est plus la bibliothèque serveur recommandée pour Cap. Les nouveaux projets devraient utiliser [`capjs-core`](./capjs-core.md), qui est sans état (pas de système de fichiers, pas de liste de jetons en mémoire, fonctionne sur Cloudflare Workers / Lambda / edge), utilise des JWT signés, et sur laquelle [Cap Standalone](./standalone/index.md) est bâti en interne. Voir le [tableau de migration](./capjs-core.md#how-it-differs-from-cap-js-server).
+::: warning Bibliothèque historique
+`@cap.js/server` est remplacée par [`capjs-core`](./capjs-core.md). Les nouveaux projets devraient utiliser `capjs-core`, qui ne conserve aucun état, fonctionne sur Cloudflare Workers et Lambda, et sur laquelle [capd](./capd/index.md) est bâti. `@cap.js/server` émet uniquement des défis SHA-256, sans HashWX ni instrumentation. Voir la [migration depuis `@cap.js/server`](./capjs-core.md#how-it-differs-from-cap-js-server).
 :::
 
 `@cap.js/server` est la bibliothèque serveur de Cap pour créer et valider des défis. Installez-la avec votre gestionnaire de paquets préféré :
@@ -207,7 +207,7 @@ fastify.listen({ port: 3000 });
 
 :::
 
-Dans cet exemple, l'API Cap se trouve sur `/cap/` — indiquez-le dans votre widget via `data-cap-api-endpoint` ([voir la doc du widget](./widget.md)).
+Dans cet exemple, l'API Cap se trouve sur `/cap/`. Définissez cette valeur comme `data-cap-api-endpoint` du widget, comme décrit dans la [documentation du widget](./widget.md).
 
 Quand quelqu'un termine le CAPTCHA et renvoie le jeton à votre backend, vous pouvez le valider puis poursuivre votre logique.
 
@@ -249,12 +249,12 @@ if (!success) throw new Error("invalid cap token");
     "tokensList": {}
   }
 
-  // obsolète :
+  // deprecated:
 
-  // utilisé pour le stockage clé-valeur en JSON
+  // used for json keyval storage
   // "tokens_store_path": ".data/tokensList.json",
 
-  // désactive toutes les opérations sur le système de fichiers, généralement utilisé avec la modification de l'état
+  // disables all filesystem operations, usually used alongside editing the state
   // "noFSState": false,
 }
 ```
@@ -285,7 +285,7 @@ Vous pouvez à tout moment lire ou modifier les options de la classe `Cap` via l
 }
 ```
 
-**Réponse :** `{ success, token }`
+**Réponse :** `{ success, token, expires }` en cas de succès, `{ success: false, message }` en cas d'échec
 
 #### `await cap.validateToken("...", { ... })`
 

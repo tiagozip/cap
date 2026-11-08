@@ -13,7 +13,7 @@ sidebar: false
 Cap ist Bot-Schutz, den du lesen, prüfen und selbst hosten kannst:
 
 - Ein **~20 KB großes Widget**, das statt Bilderrätseln eine einzelne Checkbox rendert.
-- Ein **Standalone-Server**, der als ein einziger Docker-Container mit Dashboard und Unterstützung für mehrere Site-Keys ausgeliefert wird.
+- **capd**, ein Server, der als ein einziger Docker-Container mit Dashboard und Unterstützung für mehrere Site-Keys ausgeliefert wird.
 - **Server-Bibliotheken** (`@cap.js/server` und Community-Portierungen), um Challenges im eigenen Backend zu verifizieren.
 - Eine **zu reCAPTCHA und hCaptcha kompatible siteverify-API**, sodass die Migration größtenteils ein URL-Tausch ist.
 

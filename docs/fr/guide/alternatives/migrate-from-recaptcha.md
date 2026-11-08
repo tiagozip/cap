@@ -37,7 +37,7 @@ Le point d'accès `/siteverify` de Cap reproduit volontairement la forme de requ
 
 ### 1. Mettre en place une instance Cap
 
-Suivez le [démarrage rapide](../index.md) pour faire tourner Cap Standalone avec Docker. Créez une clé de site dans le tableau de bord et notez la **clé de site** et sa **clé secrète**. Laissez les [défis d'instrumentation](../instrumentation.md) activés (c'est le défaut) pour la protection anti-bot la plus solide.
+Suivez le [démarrage rapide](../index.md) pour faire tourner capd avec Docker. Créez une clé de site dans le tableau de bord et notez la **clé de site** et sa **clé secrète**. Laissez les [défis d'instrumentation](../instrumentation.md) activés (c'est le défaut) pour la protection anti-bot la plus solide.
 
 ### 2. Remplacer le widget côté client
 
@@ -119,7 +119,7 @@ Vous n'avez jamais à basculer d'un coup en croisant les doigts. Montez Cap sur 
 
 ## Voir aussi
 
-- [Démo en direct](../demo.md) — résolvez vous-même un défi Cap, puis chronométrez-le face à reCAPTCHA
-- [Cap vs reCAPTCHA](./recaptcha.md) — le comparatif complet
-- [Comment Cap détecte les bots](../effectiveness.md) — le modèle preuve de travail et instrumentation
-- [Démarrage rapide](../index.md) — mettre Cap en place de zéro en cinq minutes
+- [Démo en direct](../demo.md): résolvez vous-même un défi Cap, puis chronométrez-le face à reCAPTCHA
+- [Cap vs reCAPTCHA](./recaptcha.md): le comparatif complet
+- [Comment Cap détecte les bots](../effectiveness.md): le modèle preuve de travail et instrumentation
+- [Démarrage rapide](../index.md): mettre Cap en place de zéro en cinq minutes

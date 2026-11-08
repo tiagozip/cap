@@ -1,0 +1,13 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
+  "root": false,
+  "extends": "//",
+  "files": {
+    "includes": ["scripts/**", "!**/node_modules", "!dashboard"]
+  },
+  "linter": {
+    "rules": {
+      "correctness": { "noUnusedVariables": "error" }
+    }
+  }
+}

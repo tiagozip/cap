@@ -22,7 +22,7 @@ Altcha 还有一个名为 **Altcha Sentinel** 的商业产品，在开源验证�
 ## Cap 更胜一筹的场景
 
 - **两层独立验证，免费。** Cap 同时运行工作量证明*和*动态 JavaScript [instrumentation 质询](../instrumentation.md)，两者都包含在内。攻破其中一层并不等于攻破另一层。开源版 Altcha 只有 PoW；第二层（基于机器学习）需要为 Sentinel 付费。
-- **带控制台的 Standalone 服务端，免费。** Cap 一个 Docker 容器就能部署，自带 Web 控制台、多站点密钥管理、数据分析，以及兼容 reCAPTCHA 的 siteverify 端点。Altcha 的开源部分需要你自己拼装这些；一体化的体验只有 Sentinel 才有。
+- **带控制台的自托管服务端，免费。** Cap 一个 Docker 容器就能部署，自带 Web 控制台、多站点密钥管理、数据分析，以及兼容 reCAPTCHA 的 siteverify 端点。Altcha 的开源部分需要你自己拼装这些；一体化的体验只有 Sentinel 才有。
 - **验证组件更小。** Cap 约 20 KB，Altcha gzip 后约 34 KB。
 - **进度显示。** Cap 的验证组件会以百分比向用户展示求解进度，短暂的等待中也有明确的反馈。
 - **浮动模式和隐形模式。** Cap 可以完全隐藏，或悬浮在按钮上直到表单提交。Altcha 的展示模式更简单。

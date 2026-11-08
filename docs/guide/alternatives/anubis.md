@@ -22,7 +22,7 @@ Use **Anubis** when you want to gate an entire site or path against bots and scr
 - **Per-action protection, not per-pageview.** Cap protects forms, signups, contact pages, and API endpoints, exactly where abuse converts to cost. Visitors browse normally.
 - **Difficulty is per-action.** Anubis's challenge has to be small enough not to hurt every page load, which limits how high you can crank it. Cap is configured per-action, so difficulty can be set higher on signup or login forms without hurting browsing.
 - **Two verification layers.** Cap layers [instrumentation challenges](../instrumentation.md) on top of PoW, so even bots that bring GPU-acceleration to the proof-of-work step still have to fake a real browser environment.
-- **Standalone server with a dashboard.** Cap ships analytics, multi-site-key management, and a reCAPTCHA-compatible siteverify endpoint out of the box.
+- **Self-hosted server with a dashboard.** Cap ships analytics, multi-site-key management, and a reCAPTCHA-compatible siteverify endpoint out of the box.
 - **Widget UX.** Cap is meant to be visible to humans on a form: there is a checkbox, progress indicator, and brand surface. Anubis is a transparent gate.
 
 ## They can coexist

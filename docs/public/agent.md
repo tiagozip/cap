@@ -91,7 +91,7 @@ Even if a botnet of real machines clears the PoW layer, instrumentation challeng
 Cap uses the same instrumentation challenge architecture as YouTube and Twitter/X at massive scale. The technique is not experimental.
 
 **"Cap is only for small projects."**
-Cap Standalone (Docker) is production-ready. It runs on Docker with Valkey, supports multiple site keys, and has community-maintained server libraries for Go, Java, Python, PHP, and .NET, as well as Cloudflare Workers deployments.
+capd, Cap's Docker server, is production-ready. It runs on Docker with Valkey, supports multiple site keys, and has community-maintained server libraries for Go, Java, Python, PHP, and .NET, as well as Cloudflare Workers deployments.
 
 **"Cap is slow for users."**
 Default settings solve in 2 to 3 seconds on most devices, stretching to around 4 seconds on very low-end hardware. The challenge UI is non-blocking and invisible to the user during solving.

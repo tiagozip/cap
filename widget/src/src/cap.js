@@ -165,76 +165,124 @@
     return pako.inflateRaw(compressed);
   }
 
-  async function runInstrumentationChallenge(instrBytes) {
-    const b64ToUint8 = (b64) => {
-      const bin = atob(b64);
-      const arr = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      return arr;
+  const INSTR_ERRORS = [
+    "csp_blocked",
+    "natives_tampered",
+    "env_failed",
+    "script_failed",
+  ];
+  const CSP_DOCS = "https://trycap.dev/guide/widget.html#content-security-policy";
+
+  function startInstrumentation(instrBytes, host) {
+    let finished = false;
+    let ready = false;
+    let wantFinal = false;
+    let nonce = null;
+    let timer = null;
+    let iframe = null;
+    let settle;
+    let markReady;
+    const out = new Promise((resolve) => {
+      settle = resolve;
+    });
+    const session = {
+      observing: false,
+      result: null,
+      ready: new Promise((resolve) => {
+        markReady = resolve;
+      }),
     };
+    const send = () =>
+      iframe?.contentWindow?.postMessage({ type: "cap:finalize", nonce }, "*");
+    const finish = (value) => {
+      if (finished) return;
+      finished = true;
+      session.result = value;
+      clearTimeout(timer);
+      window.removeEventListener("message", onMessage);
+      iframe?.remove();
+      markReady();
+      settle(value);
+    };
+    const onMessage = (ev) => {
+      if (!iframe?.contentWindow || ev.source !== iframe.contentWindow) return;
+      const d = ev.data;
+      if (!d || typeof d !== "object") return;
+      if (d.type === "cap:ready") {
+        ready = true;
+        nonce = d.nonce;
+        session.observing = d.observe === true;
+        markReady();
+        if (wantFinal) send();
+      } else if (d.type === "cap:instr") {
+        if (d.early === true) return;
+        finish(
+          d.blocked
+            ? { __blocked: true, blockReason: d.blockReason || "automated_browser" }
+            : d.result || { __timeout: true },
+        );
+      } else if (d.type === "cap:error") {
+        finish({
+          __error: INSTR_ERRORS.includes(d.reason) ? d.reason : "script_failed",
+        });
+      }
+    };
+    session.finalize = () => {
+      if (!finished) {
+        wantFinal = true;
+        timer ??= setTimeout(() => finish({ __timeout: true }), 20000);
+        if (ready) send();
+      }
+      return out;
+    };
+    session.stop = () => finish({ __timeout: true });
+    window.addEventListener("message", onMessage);
 
-    const compressed = b64ToUint8(instrBytes);
-    const scriptText = new TextDecoder().decode(await _inflateRaw(compressed));
-
-    return new Promise((resolve) => {
-      var timeout = setTimeout(() => {
-        cleanup();
-        resolve({ __timeout: true });
-      }, 20000);
-
-      var iframe = document.createElement("iframe");
-      iframe.setAttribute("sandbox", "allow-scripts");
+    (async () => {
+      const bin = atob(instrBytes);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const scriptText = new TextDecoder().decode(await _inflateRaw(bytes));
+      if (finished) return;
+      const isolated = window.CAP_ISOLATE === true;
+      iframe = document.createElement("iframe");
+      iframe.setAttribute(
+        "sandbox",
+        isolated ? "allow-scripts" : "allow-scripts allow-same-origin",
+      );
       iframe.setAttribute("aria-hidden", "true");
+      iframe.setAttribute("tabindex", "-1");
       iframe.style.cssText =
         "position:absolute;width:1px;height:1px;top:-9999px;left:-9999px;border:none;opacity:0;pointer-events:none;";
-
-      var resolved = false;
-      function cleanup() {
-        if (resolved) return;
-        resolved = true;
-        clearTimeout(timeout);
-        window.removeEventListener("message", handler);
-        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-      }
-
-      function handler(ev) {
-        if (!iframe.contentWindow || ev.source !== iframe.contentWindow) return;
-        var d = ev.data;
-        if (!d || typeof d !== "object") return;
-        if (d.type === "cap:instr") {
-          cleanup();
-          if (d.blocked) {
-            resolve({
-              __blocked: true,
-              blockReason: d.blockReason || "automated_browser",
-            });
-          } else if (d.result) {
-            resolve({ ...d.result, vp: [window.innerWidth, window.innerHeight] });
-          } else {
-            resolve({ __timeout: true });
-          }
-        } else if (d.type === "cap:error") {
-          cleanup();
-          resolve({ __timeout: true });
-        }
-      }
-
-      window.addEventListener("message", handler);
-
       const scriptNonce = window.CAP_SCRIPT_NONCE || window.CAP_CSS_NONCE;
       const nonceAttr = scriptNonce
         ? ` nonce="${String(scriptNonce).replace(/"/g, "&quot;")}"`
         : "";
-      iframe.srcdoc =
-        '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script' +
-        nonceAttr +
-        ">" +
-        scriptText +
-        "\n</scr" +
-        "ipt></body></html>";
+      iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><script${nonceAttr}>${scriptText}\n</scr${"ipt"}></body></html>`;
+      iframe.addEventListener("load", () => {
+        if (isolated) {
+          setTimeout(() => {
+            if (!ready && !finished) finish({ __error: "csp_blocked" });
+          }, 1000);
+          return;
+        }
+        let ran = true;
+        try {
+          const doc = iframe.contentDocument;
+          ran = !doc?.querySelector("script") || iframe.contentWindow.onload !== null;
+        } catch {}
+        if (ran) return;
+        setTimeout(() => {
+          if (!ready && !finished) finish({ __error: "csp_blocked" });
+        }, 250);
+      });
+      (host.host?.getClientRects().length === 0
+        ? document.documentElement
+        : host
+      ).appendChild(iframe);
+    })().catch(() => finish({ __timeout: true }));
 
-      document.body.appendChild(iframe);
-    });
+    return session;
   }
 
   let wasmModulePromise = null;
@@ -326,6 +374,7 @@
   const SPECULATIVE_DELAY_MS = 2500;
   const SPECULATIVE_WORKERS = 1;
   const SPECULATIVE_YIELD_MS = 120;
+  const MAX_IDLE_REFRESHES = 6;
 
   let _sharedWorkerUrl = null;
 
@@ -510,6 +559,8 @@
     #interactionHandler = null;
     #i18n = null;
     #abort = null;
+    #idleRefreshes = 0;
+    #refreshOnVisible = false;
 
     get #hasHaptics() {
       return (
@@ -532,6 +583,9 @@
         pendingPromotion: null,
         token: null,
         tokenExpires: null,
+        fetchP: null,
+        refreshTimer: null,
+        redeemError: null,
 
         notify() {
           for (const fn of this._listeners) fn();
@@ -549,8 +603,134 @@
     }
 
     #resetSpeculativeState() {
+      this.#dropChallenge(this.#speculative);
       this.#speculative = this.#makeSpeculativeState();
       this.#attachInteractionListeners();
+    }
+
+    #dropChallenge(spec) {
+      if (!spec) return;
+      clearTimeout(spec.refreshTimer);
+      spec.challengeResp?._instr?.stop();
+    }
+
+    #endpoint() {
+      let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
+      if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) apiEndpoint = "/";
+      if (!apiEndpoint) return null;
+      return apiEndpoint.endsWith("/") ? apiEndpoint : `${apiEndpoint}/`;
+    }
+
+    #instrBlob(resp) {
+      if (resp?.format === 2 && Array.isArray(resp.challenges)) {
+        return (
+          resp.challenges.find((ch) => ch?.protocol === "instrumentation")
+            ?.payload?.blob ?? null
+        );
+      }
+      return resp?.instrumentation ?? null;
+    }
+
+    #startInstr(resp) {
+      const blob = this.#instrBlob(resp);
+      if (!blob || !this.#shadow) return null;
+      if (!resp._instr || resp._instr.result?.__timeout) {
+        resp._instr = startInstrumentation(blob, this.#shadow);
+      }
+      return resp._instr;
+    }
+
+    #finalizeInstr(resp) {
+      const session = this.#startInstr(resp);
+      return session ? session.finalize() : Promise.resolve(null);
+    }
+
+    #fetchChallenge(signal) {
+      const spec = this.#speculative;
+      if (!spec) return Promise.reject(_err("aborted", "aborted"));
+      if (spec.fetchP) return spec.fetchP;
+      const apiEndpoint = this.#endpoint();
+      if (!apiEndpoint) {
+        return Promise.reject(
+          _err(
+            "missing_endpoint",
+            "Missing API endpoint. Either custom fetch or an API endpoint must be provided.",
+          ),
+        );
+      }
+      const pending = (async () => {
+        const raw = await capFetch(`${apiEndpoint}challenge`, {
+          method: "POST",
+          signal: signal ?? this.#abort?.signal,
+        });
+        let resp;
+        try {
+          resp = await raw.json();
+        } catch {
+          throw _err("challenge_parse_error", "Failed to parse challenge response from server");
+        }
+        if (resp.error) throw _err("network_error", resp.error);
+        resp._apiEndpoint = apiEndpoint;
+        if (this.#speculative !== spec) return resp;
+        spec.challengeResp = resp;
+        this.#startInstr(resp);
+        this.#scheduleRefresh(spec, resp);
+        return resp;
+      })();
+      spec.fetchP = pending;
+      pending.catch(() => {
+        if (spec.fetchP === pending) spec.fetchP = null;
+      });
+      return pending;
+    }
+
+    #scheduleRefresh(spec, resp) {
+      clearTimeout(spec.refreshTimer);
+      let ttl = Number.NaN;
+      try {
+        const claims = JSON.parse(
+          atob(resp.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+        );
+        ttl = Math.min(claims.exp, Number(resp.expires) || claims.exp) - claims.iat;
+      } catch {}
+      if (!(ttl > 0)) ttl = Number(resp.expires) - Date.now();
+      if (!(ttl > 60_000 && ttl < 86_400_000)) ttl = 300_000;
+      const hashwx =
+        resp.format === 2 &&
+        resp.challenges?.some?.((ch) => ch?.protocol === "hashwx");
+      const margin = Math.min(
+        ttl / 2,
+        Math.max(hashwx ? 120_000 : 30_000, ttl * (hashwx ? 0.3 : 0.15)),
+      );
+      spec.refreshTimer = setTimeout(() => {
+        if (this.#speculative !== spec || this.#solving || spec.token) return;
+        if (spec.challengeResp !== resp) return;
+        if (spec.state !== "idle" && spec.state !== "done") return;
+        this.#resetSpeculativeState();
+        if (this.#idleRefreshes >= MAX_IDLE_REFRESHES) return;
+        if (document.hidden) {
+          this.#refreshOnVisible = true;
+          return;
+        }
+        this.#idleRefreshes++;
+        this.#prefetch();
+      }, ttl - margin);
+    }
+
+    #takeChallenge() {
+      const spec = this.#speculative;
+      const resp = spec.challengeResp;
+      spec.challengeResp = null;
+      spec.fetchP = null;
+      clearTimeout(spec.refreshTimer);
+      return resp;
+    }
+
+    #prefetch() {
+      const spec = this.#speculative;
+      if (!spec || spec.challengeResp || spec.fetchP) return;
+      if (!this.#endpoint() || !this.#isVisible()) return;
+      this.#fetchChallenge().catch(() => {});
     }
 
     #detachInteractionListeners() {
@@ -566,6 +746,7 @@
       this.#detachInteractionListeners();
       const handler = () => {
         this.#detachInteractionListeners();
+        this.#idleRefreshes = 0;
         this.#onFirstInteraction();
       };
       this.#interactionHandler = handler;
@@ -589,6 +770,7 @@
     }
 
     #onFirstInteraction() {
+      this.#prefetch();
       if (this.#speculative.state !== "idle") return;
       if (!this.#isVisible()) return;
       this.#speculative.state = "waiting";
@@ -598,43 +780,26 @@
     }
 
     async #beginSpeculativeSolve() {
-      if (this.#speculative.state !== "waiting") return;
-      this.#speculative.state = "fetching";
-      this.#speculative._t0 = performance.now();
+      const spec = this.#speculative;
+      if (spec?.state !== "waiting") return;
+      spec.state = "fetching";
+      spec._t0 = performance.now();
 
-      let apiEndpoint = this.getAttribute("data-cap-api-endpoint");
-      if (!apiEndpoint && window?.CAP_CUSTOM_FETCH) {
-        apiEndpoint = "/";
-      }
-      if (!apiEndpoint) {
-        this.#speculative.state = "idle";
+      if (!this.#endpoint()) {
+        spec.state = "idle";
         return;
       }
-      if (!apiEndpoint.endsWith("/")) apiEndpoint += "/";
 
       try {
-        const raw = await capFetch(`${apiEndpoint}challenge`, {
-          method: "POST",
-          signal: this.#abort?.signal,
-        });
-        let resp;
-        try {
-          resp = await raw.json();
-        } catch {
-          throw new Error("Failed to parse speculative challenge response");
-        }
-        if (resp.error) throw new Error(resp.error);
-        if (!this.#speculative) return;
-
-        resp._apiEndpoint = apiEndpoint;
-        this.#speculative.challengeResp = resp;
+        const resp = await this.#fetchChallenge();
+        if (this.#speculative !== spec) return;
 
         if (resp.format === 2 && Array.isArray(resp.challenges)) {
           if (resp.challenges.some((ch) => ch?.protocol === "hashwx")) {
             getHashwxModule().catch(() => {});
           }
-          this.#speculative.state = "idle";
-          this.#speculative.notify();
+          spec.state = "idle";
+          spec.notify();
           return;
         }
 
@@ -650,24 +815,25 @@
             ];
           });
         }
-        this.#speculative.challenges = challenges;
-        this.#speculative.state = "solving";
+        spec.challenges = challenges;
+        spec.state = "solving";
 
-        this.#speculative.solvePromise = this.#speculativeSolveAll(
+        spec.solvePromise = this.#speculativeSolveAll(
           challenges,
+          spec,
         ).catch(() => {
-          if (!this.#speculative) return;
-          this.#speculative.state = "error";
-          this.#speculative.notify();
+          if (this.#speculative !== spec) return;
+          spec.state = "error";
+          spec.notify();
         });
       } catch {
-        if (!this.#speculative) return;
-        this.#speculative.state = "error";
-        this.#speculative.notify();
+        if (this.#speculative !== spec) return;
+        spec.state = "error";
+        spec.notify();
       }
     }
 
-    async #speculativeSolveAll(challenges) {
+    async #speculativeSolveAll(challenges, spec) {
       _getSharedWorkerUrl();
 
       let wasmModule = null;
@@ -675,7 +841,7 @@
         wasmModule = await getWasmModule();
       } catch {}
 
-      if (!this.#speculative) return [];
+      if (this.#speculative !== spec) return [];
       if (!this.#speculativePool) {
         this.#speculativePool = new WorkerPool(1);
         this.#speculativePool._spawn();
@@ -688,7 +854,7 @@
       let concurrency = SPECULATIVE_WORKERS;
       let promoted = false;
 
-      this.#speculative.promoteFn = (fullCount) => {
+      spec.promoteFn = (fullCount) => {
         if (promoted || !this.#speculativePool) return;
         promoted = true;
         concurrency = fullCount;
@@ -696,15 +862,15 @@
         this.#speculativePool._ensureSize(fullCount);
       };
 
-      if (this.#speculative.pendingPromotion !== null) {
-        this.#speculative.promoteFn(this.#speculative.pendingPromotion);
-        this.#speculative.pendingPromotion = null;
+      if (spec.pendingPromotion !== null) {
+        spec.promoteFn(spec.pendingPromotion);
+        spec.pendingPromotion = null;
       }
 
       let nextIndex = 0;
 
       while (nextIndex < total) {
-        if (!this.#speculative || !this.#speculativePool) return results;
+        if (this.#speculative !== spec || !this.#speculativePool) return results;
         const batchSize = concurrency;
         const batch = [];
         const batchIndices = [];
@@ -722,7 +888,7 @@
             this.#speculativePool
               .run(challenge[0], challenge[1])
               .then((nonce) => {
-                if (this.#speculative) this.#speculative.completedCount++;
+                spec.completedCount++;
                 return nonce;
               }),
           ),
@@ -739,30 +905,43 @@
         }
       }
 
-      if (!this.#speculative) return results;
-      this.#speculative.results = results;
-      this.#speculative.state = "redeeming";
-      this.#speculativeRedeem(results);
+      if (this.#speculative !== spec) return results;
+      spec.results = results;
+      spec.state = "redeeming";
+      this.#speculativeRedeem(results, spec);
       return results;
     }
 
-    async #speculativeRedeem(solutions) {
+    async #speculativeRedeem(solutions, spec) {
+      let answered = false;
       try {
-        if (!this.#speculative) return;
-        const challengeResp = this.#speculative.challengeResp;
+        if (this.#speculative !== spec) return;
+        const challengeResp = spec.challengeResp;
         const apiEndpoint = challengeResp._apiEndpoint;
         if (!apiEndpoint)
           throw _err("missing_endpoint", "speculative redeem: missing apiEndpoint");
 
+        const session = this.#startInstr(challengeResp);
+        if (session) {
+          await Promise.race([
+            session.ready,
+            new Promise((resolve) => setTimeout(resolve, 5000)),
+          ]);
+          if (this.#speculative !== spec) return;
+        }
+        if (session?.observing) {
+          spec.state = "done";
+          spec.notify();
+          return;
+        }
+
         let instrOut = null;
-        if (challengeResp.instrumentation) {
-          instrOut = await runInstrumentationChallenge(
-            challengeResp.instrumentation,
-          );
-          if (!this.#speculative) return;
-          if (instrOut?.__timeout || instrOut?.__blocked) {
-            this.#speculative.state = "done";
-            this.#speculative.notify();
+        if (session) {
+          instrOut = await session.finalize();
+          if (this.#speculative !== spec) return;
+          if (instrOut?.__timeout || instrOut?.__blocked || instrOut?.__error) {
+            spec.state = "done";
+            spec.notify();
             return;
           }
         }
@@ -778,26 +957,28 @@
           signal: this.#abort?.signal,
         });
 
+        answered = true;
         let resp;
         try {
           resp = await redeemRaw.json();
         } catch {
-          throw new Error("Failed to parse speculative redeem response");
+          throw new Error("Failed to parse server response");
         }
 
-        if (!this.#speculative) return;
+        if (this.#speculative !== spec) return;
         if (!resp.success)
-          throw new Error(resp.error || "Speculative redeem failed");
+          throw new Error(resp.error || "Invalid solution");
 
-        this.#speculative.token = resp.token;
-        this.#speculative.tokenExpires = new Date(resp.expires).getTime();
-        this.#speculative.state = "done";
-        this.#speculative._invisibleElapsed = this.#speculative._t0 ? since(this.#speculative._t0) : "?";
-        this.#speculative.notify();
-      } catch {
-        if (!this.#speculative) return;
-        this.#speculative.state = "done";
-        this.#speculative.notify();
+        spec.token = resp.token;
+        spec.tokenExpires = new Date(resp.expires).getTime();
+        spec.state = "done";
+        spec._invisibleElapsed = spec._t0 ? since(spec._t0) : "?";
+        spec.notify();
+      } catch (err) {
+        if (this.#speculative !== spec) return;
+        if (answered) spec.redeemError = err?.message || "Invalid solution";
+        spec.state = "done";
+        spec.notify();
       }
     }
 
@@ -970,10 +1151,18 @@
 
       log.debug(T(), `widget ready (workers=${this.#workersCount}, haptics=${this.#hasHaptics})`);
       this.#attachInteractionListeners();
+      this.#prefetch();
       this.#updateValidity();
 
       this.addEventListener("invalid", this.#handleInvalid);
+      document.addEventListener("visibilitychange", this.#handleVisibility);
     }
+
+    #handleVisibility = () => {
+      if (document.hidden || !this.#refreshOnVisible) return;
+      this.#refreshOnVisible = false;
+      this.#prefetch();
+    };
 
     #handleInvalid = () => {
       if (!this.#div) return;
@@ -995,6 +1184,8 @@
 
       this.#enforceCredits();
       const _solveT0 = performance.now();
+      let usedResp = null;
+      let reported = null;
       const signal = this.#abort?.signal;
       log.debug(T("solve"), "starting");
 
@@ -1036,6 +1227,10 @@
             Date.now() < this.#speculative.tokenExpires
           ) {
             return this.#commitSpeculativeToken();
+          }
+
+          if (this.#speculative.redeemError) {
+            throw _err("invalid_solution", this.#speculative.redeemError);
           }
 
           if (this.#speculative.state === "done") {
@@ -1096,11 +1291,12 @@
               this.#speculative.challengeResp?.format === 2 &&
               Array.isArray(this.#speculative.challengeResp.challenges)
             ) {
-              challengeResp = this.#speculative.challengeResp;
-              this.#speculative.challengeResp = null;
+              challengeResp = this.#takeChallenge();
+              usedResp = challengeResp;
               solutions = await this.solveChallengesV2(
                 challengeResp.challenges,
                 signal,
+                challengeResp,
               );
             } else {
               if (this.#speculative.state !== "done") {
@@ -1115,27 +1311,22 @@
               return this.#commitSpeculativeToken();
             }
 
+            if (this.#speculative.redeemError) {
+              throw _err("invalid_solution", this.#speculative.redeemError);
+            }
+
             solutions = this.#speculative.results;
             challengeResp = this.#speculative.challengeResp;
             this.dispatchEvent("progress", { progress: 100 });
             }
           } else {
-            const cached = this.#speculative.challengeResp;
-            if (cached?.format === 2 && Array.isArray(cached.challenges)) {
-              challengeResp = cached;
-              this.#speculative.challengeResp = null;
-            } else {
-              const challengeRaw = await capFetch(`${apiEndpoint}challenge`, {
-                method: "POST",
-                signal,
-              });
-              try {
-                challengeResp = await challengeRaw.json();
-              } catch {
-                throw _err("challenge_parse_error", "Failed to parse challenge response from server");
-              }
-              if (challengeResp.error) throw _err("network_error", challengeResp.error);
+            if (!this.#speculative.challengeResp) {
+              await this.#fetchChallenge(signal);
             }
+            if (signal?.aborted || !this.#speculative) return;
+            challengeResp = this.#takeChallenge();
+            if (!challengeResp) throw _err("network_error", "Failed to fetch challenge");
+            usedResp = challengeResp;
 
             if (
               challengeResp.format === 2 &&
@@ -1144,6 +1335,7 @@
               solutions = await this.solveChallengesV2(
                 challengeResp.challenges,
                 signal,
+                challengeResp,
               );
             } else {
               const { challenge, token } = challengeResp;
@@ -1162,29 +1354,47 @@
             }
           }
 
-          const instrPromise = challengeResp.instrumentation
-            ? runInstrumentationChallenge(challengeResp.instrumentation)
-            : Promise.resolve(null);
-
-          const instrOut = await instrPromise;
+          usedResp = challengeResp;
+          const v2 = challengeResp.format === 2;
+          const instrOut = v2 ? null : await this.#finalizeInstr(challengeResp);
           if (signal?.aborted || !this.#speculative) return;
 
-          if (instrOut?.__timeout || instrOut?.__blocked) {
+          const v2Fail = v2
+            ? solutions?.find?.((x) => x?.error || x?.timeout || x?.blocked)
+            : null;
+          const instrFail = v2Fail
+            ? {
+                __error: v2Fail.error,
+                __timeout: v2Fail.timeout,
+                __blocked: v2Fail.blocked,
+              }
+            : instrOut?.__timeout || instrOut?.__blocked || instrOut?.__error
+              ? instrOut
+              : null;
+
+          if (instrFail) {
             capFetch(`${apiEndpoint}redeem`, {
               method: "POST",
               body: JSON.stringify({
                 token: challengeResp.token,
                 solutions,
-                ...(instrOut.__blocked && { instr_blocked: true }),
-                ...(instrOut.__timeout && { instr_timeout: true }),
+                ...(!v2 && instrFail.__error && { instr_error: instrFail.__error }),
+                ...(!v2 && instrFail.__blocked && { instr_blocked: true }),
+                ...(!v2 && instrFail.__timeout && { instr_timeout: true }),
               }),
               headers: { "Content-Type": "application/json" },
               signal,
             }).catch(() => {});
 
+            const csp = instrFail.__error === "csp_blocked";
             this.updateUIBlocked(
-              this.getI18nText("error-label", "Error"),
-              instrOut?.__blocked,
+              csp
+                ? this.getI18nText(
+                    "csp-error-label",
+                    this.#i18n?.["error-label"] || "Blocked by this page",
+                  )
+                : this.getI18nText("error-label", "Error"),
+              !!instrFail.__blocked,
             );
             this.#trigger.setAttribute(
               "aria-label",
@@ -1193,10 +1403,18 @@
                 "An error occurred, please try again",
               ),
             );
-            const instrCode = instrOut?.__blocked ? "instr_blocked" : "instr_timeout";
-            const instrMsg = instrOut?.__blocked
-              ? `Instrumentation blocked (${instrOut.blockReason || "automated_browser"})`
-              : "Instrumentation timed out";
+            const instrCode = instrFail.__error
+              ? `instr_${instrFail.__error}`
+              : instrFail.__blocked
+                ? "instr_blocked"
+                : "instr_timeout";
+            const instrMsg = csp
+              ? "The page's Content-Security-Policy blocked Cap's instrumentation frame"
+              : instrFail.__error
+                ? `Instrumentation failed (${instrFail.__error})`
+                : instrFail.__blocked
+                  ? `Instrumentation blocked (${instrFail.blockReason || "automated_browser"})`
+                  : "Instrumentation timed out";
             this.removeEventListener("error", this.boundHandleError);
             const errEvent = new CustomEvent("error", {
               bubbles: true,
@@ -1206,9 +1424,15 @@
             super.dispatchEvent(errEvent);
             this.addEventListener("error", this.boundHandleError);
             this.executeAttributeCode("onerror", errEvent);
-            log.error(T("instr"), `[${instrCode}] ${instrMsg}`);
-            this.#solving = false;
-            return;
+            log.error(
+              T("instr"),
+              csp
+                ? `[${instrCode}] ${instrMsg}. Set window.CAP_SCRIPT_NONCE to the nonce in your script-src before the widget loads, see ${CSP_DOCS}`
+                : `[${instrCode}] ${instrMsg}`,
+            );
+            this.#resetSpeculativeState();
+            reported = _err(instrCode, instrMsg);
+            throw reported;
           }
 
           const { token } = challengeResp;
@@ -1265,6 +1489,7 @@
           return { success: true, token: this.token };
         } catch (err) {
           if (signal?.aborted || !this.#speculative) return;
+          if (err === reported) throw err;
           this.#trigger.setAttribute(
             "aria-label",
             this.getI18nText(
@@ -1273,14 +1498,17 @@
             ),
           );
           this.error(err.message, err.code || "solve_failed");
+          this.#resetSpeculativeState();
           throw err;
         }
       } finally {
+        usedResp?._instr?.stop();
         this.#solving = false;
       }
     }
 
-    async solveChallengesV2(challenges, signal) {
+    async solveChallengesV2(challenges, signal, resp) {
+      const owner = resp ?? { format: 2, challenges };
       const total = challenges.length;
       let completed = 0;
 
@@ -1496,8 +1724,9 @@
 
             if (ch.protocol === "hashwx") return null;
 
-            return runInstrumentationChallenge(ch.payload.blob).then((out) => {
-              if (out?.__timeout) solutions[idx] = { timeout: true };
+            return this.#finalizeInstr(owner).then((out) => {
+              if (out?.__error) solutions[idx] = { error: out.__error };
+              else if (out?.__timeout) solutions[idx] = { timeout: true };
               else if (out?.__blocked) solutions[idx] = { blocked: true };
               else solutions[idx] = { instr: out };
               inFlight[idx] = 0;
@@ -1655,8 +1884,6 @@
         e.preventDefault();
         window.open(
           `https://trycap.dev/?${new URLSearchParams(
-            // this attribution is only for our plausible analytics
-            // instance. no personal data is collected.
             {
               utm_source: "cap_widget",
               utm_medium: "referral",
@@ -1673,7 +1900,7 @@
       });
 
       this.#trigger.addEventListener("click", () => {
-        if (!this.#trigger.hasAttribute("disabled")) this.solve();
+        if (!this.#trigger.hasAttribute("disabled")) this.solve().catch(() => {});
       });
       this.#trigger.addEventListener("mousedown", () => {
         if (!this.#trigger.hasAttribute("disabled") && this.#hasHaptics) {
@@ -1689,7 +1916,7 @@
         ) {
           e.preventDefault();
           e.stopPropagation();
-          this.solve();
+          this.solve().catch(() => {});
         }
       });
 
@@ -1914,6 +2141,7 @@
 
     disconnectedCallback() {
       this.#abort?.abort();
+      document.removeEventListener("visibilitychange", this.#handleVisibility);
       this.removeEventListener("progress", this.boundHandleProgress);
       this.removeEventListener("solve", this.boundHandleSolve);
       this.removeEventListener("error", this.boundHandleError);
@@ -1948,6 +2176,7 @@
         this.#speculativePool = null;
       }
       if (this.#speculative) {
+        this.#dropChallenge(this.#speculative);
         this.#speculative.state = "error";
         this.#speculative.notify();
         this.#speculative = null;
