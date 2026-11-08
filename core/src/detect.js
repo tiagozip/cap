@@ -406,15 +406,24 @@ export function detectAutomation(S, opts = {}) {
 
   const arch = typeof hev?.ar === "string" ? hev.ar.toLowerCase() : "";
   const nanArch = S.na === 255 ? "x86" : S.na === 127 ? "arm" : null;
+  const desktopMode =
+    arch === "x86" &&
+    nanArch === "arm" &&
+    /^Linux (armv|aarch64)/.test(S.mainNav?.platform ?? "");
   const archLie =
-    nanArch !== null && (arch === "x86" || arch === "arm") && arch !== nanArch;
+    nanArch !== null &&
+    (arch === "x86" || arch === "arm") &&
+    arch !== nanArch &&
+    !desktopMode;
   add(
     "arch_mismatch",
     !archLie,
     nanArch && arch
       ? archLie
         ? `client hints say ${arch}, the CPU behaves like ${nanArch}`
-        : "consistent"
+        : desktopMode
+          ? "Android in desktop mode"
+          : "consistent"
       : "not measured",
   );
 

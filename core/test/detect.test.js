@@ -832,6 +832,20 @@ describe("fingerprint consistency checks", () => {
     expect(detectAutomation(S).blockedBy).toContain("arch_mismatch");
   });
 
+  test("Android in desktop mode passes with x86 client hints", () => {
+    const S = real();
+    S.hev = { ...S.hev, ar: "x86" };
+    S.mainNav = { ...S.mainNav, platform: "Linux armv81" };
+    expect(failed(S)).not.toContain("arch_mismatch");
+  });
+
+  test("x86 client hints on ARM still block on a desktop platform", () => {
+    const S = real();
+    S.hev = { ...S.hev, ar: "x86" };
+    S.mainNav = { ...S.mainNav, platform: "Win32" };
+    expect(detectAutomation(S).blockedBy).toContain("arch_mismatch");
+  });
+
   test("x86 client hints on an x86 CPU pass", () => {
     const S = { ...real(), na: 255 };
     S.hev = { ...S.hev, ar: "x86" };

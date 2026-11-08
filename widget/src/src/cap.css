@@ -288,21 +288,19 @@
 
 .credits {
   position: absolute;
-  inset-block-end: 4px;
-  inset-inline-end: 4px;
+  inset-block-end: 5px;
+  inset-inline-end: 6px;
   font-size: 12px !important;
+  line-height: 1;
   color: var(--cap-color, #212121);
   opacity: 0.8 !important;
   text-decoration: underline;
   text-underline-offset: 0.18em;
   text-decoration-thickness: 0.08em;
   z-index: 2;
-  min-width: 24px;
-  min-height: 24px;
-  padding: 4px 6px;
+  padding: 3px 4px;
   display: inline-flex !important;
   align-items: center;
-  justify-content: flex-end;
   border-radius: 4px;
 }
 

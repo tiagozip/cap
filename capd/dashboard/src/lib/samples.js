@@ -253,9 +253,9 @@ export const samples = {
   },
   widgetFiles: {
     enabled: false,
-    widget: "0.1.60",
+    widget: "0.1.61",
     wasm: "0.0.8",
-    builtWith: { widget: "0.1.60", wasm: "0.0.8" },
+    builtWith: { widget: "0.1.61", wasm: "0.0.8" },
     source: "https://cdn.jsdelivr.net",
     cached: null,
     updating: false,

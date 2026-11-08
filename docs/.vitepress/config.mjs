@@ -943,7 +943,7 @@ export default withMermaid({
     [
       "script",
       {
-        src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.60",
+        src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.61",
         async: true,
       },
     ],
