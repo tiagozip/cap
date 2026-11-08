@@ -4,7 +4,7 @@ description: "การตั้งค่า capd ซึ่งเป็น CAPTC
 
 # การตั้งค่า {#configuration}
 
-การตั้งค่าส่วนใหญ่อยู่ในแดชบอร์ด ทั้งการตั้งค่าทั้งเซิร์ฟเวอร์ที่ **Instance settings** และการตั้งค่าในหน้า **Settings** ของแต่ละ site key หน้านี้อธิบายสิ่งที่ตั้งจากแดชบอร์ดไม่ได้
+การตั้งค่าส่วนใหญ่อยู่ในแดชบอร์ด ทั้งการตั้งค่าทั้งเซิร์ฟเวอร์ที่ **Instance settings** และการตั้งค่าในหน้า **Settings** ของแต่ละ site key
 
 ## ตัวแปรสภาพแวดล้อม {#environment-variables}
 
@@ -16,8 +16,6 @@ description: "การตั้งค่า capd ซึ่งเป็น CAPTC
 | `CLICKHOUSE_URL` | เก็บเหตุการณ์ใน ClickHouse แทน DuckDB เช่น `http://cap:password@clickhouse:8123/cap` เขียนรหัสผ่านตามจริงโดยไม่ต้องเข้ารหัส URL |
 | `WEBHOOK_ALLOW_PRIVATE` | ตั้งเป็น `true` เพื่อให้ webhook ส่งคำขอไปยังที่อยู่ส่วนตัวและ loopback ได้ เช่น n8n ที่อยู่บน LAN ของคุณ |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | ขีดจำกัดของ DuckDB ค่าเริ่มต้นคือ `256MB` และ `2` |
-
-`CORS_ORIGIN`, `RATELIMIT_IP_HEADER`, `ENABLE_ASSETS_SERVER`, `WIDGET_VERSION` และ `WASM_VERSION` จากรีลีสเก่า ตอนนี้เป็นการตั้งค่าในแดชบอร์ดแล้ว ถ้ายังตั้งตัวแปรใดไว้อยู่ Cap จะคัดลอกค่านั้นเข้าแดชบอร์ดตอนเริ่มทำงาน
 
 ## IP ของไคลเอนต์เมื่ออยู่หลังพร็อกซี {#client-ips-behind-a-proxy}
 

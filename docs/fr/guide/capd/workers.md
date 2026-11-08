@@ -4,9 +4,7 @@ description: "Faites tourner capd sur Cloudflare Workers avec D1 : le même code
 
 # Cloudflare Workers
 
-Le dossier `workers/` du dépôt Cap déploie capd dans un seul Worker Cloudflare. Il exécute le même code que l'image Docker, donc il sert les routes du widget, `/siteverify`, l'API et le tableau de bord, mais il garde ses données et ses événements dans D1 au lieu de Valkey et DuckDB.
-
-Une résolution avec son appel siteverify écrit environ 15 lignes D1, donc les 100 000 lignes par jour de l'offre gratuite couvrent environ 6 500 résolutions par jour, et les 50 millions de lignes par mois de l'offre payante environ 3 millions.
+La prise en charge de Workers est **expérimentale**. Si vous trouvez un bug, [signalez-le](https://github.com/tiagozip/cap/issues).
 
 ## Déploiement
 

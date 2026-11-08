@@ -4,7 +4,7 @@ description: "Konfiguration für capd, das selbst gehostete quelloffene CAPTCHA:
 
 # Konfiguration
 
-Die meisten Einstellungen liegen im Dashboard, entweder für den gesamten Server unter **Instance settings** oder pro Site-Key auf dessen **Settings**-Seite. Diese Seite behandelt, was sich im Dashboard nicht einstellen lässt.
+Die meisten Einstellungen liegen im Dashboard, entweder für den gesamten Server unter **Instance settings** oder pro Site-Key auf dessen **Settings**-Seite.
 
 ## Umgebungsvariablen
 
@@ -16,8 +16,6 @@ Die meisten Einstellungen liegen im Dashboard, entweder für den gesamten Server
 | `CLICKHOUSE_URL` | Speichert Ereignisse in ClickHouse statt DuckDB, zum Beispiel `http://cap:password@clickhouse:8123/cap`. Schreibe das Passwort ohne URL-Kodierung. |
 | `WEBHOOK_ALLOW_PRIVATE` | Setze den Wert auf `true`, damit Webhooks an private und Loopback-Adressen senden dürfen, etwa an ein n8n in deinem LAN. |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Limits für DuckDB, standardmäßig `256MB` und `2`. |
-
-`CORS_ORIGIN`, `RATELIMIT_IP_HEADER`, `ENABLE_ASSETS_SERVER`, `WIDGET_VERSION` und `WASM_VERSION` aus älteren Versionen sind jetzt Dashboard-Einstellungen. Ist einer dieser Werte noch gesetzt, kopiert Cap ihn beim Start ins Dashboard.
 
 ## Client-IPs hinter einem Proxy {#client-ips-behind-a-proxy}
 

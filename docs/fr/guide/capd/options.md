@@ -4,7 +4,7 @@ description: "Configuration de capd, le CAPTCHA open source auto-hébergé : var
 
 # Configuration
 
-La plupart des réglages se trouvent dans le tableau de bord, soit pour tout le serveur sous **Instance settings**, soit par clé de site sur sa page **Settings**. Cette page couvre ce que le tableau de bord ne permet pas de régler.
+La plupart des réglages se trouvent dans le tableau de bord, soit pour tout le serveur sous **Instance settings**, soit par clé de site sur sa page **Settings**.
 
 ## Variables d'environnement {#environment-variables}
 
@@ -16,8 +16,6 @@ La plupart des réglages se trouvent dans le tableau de bord, soit pour tout le 
 | `CLICKHOUSE_URL` | Stocke les événements dans ClickHouse plutôt que DuckDB, par exemple `http://cap:password@clickhouse:8123/cap`. Écrivez le mot de passe sans encodage URL. |
 | `WEBHOOK_ALLOW_PRIVATE` | Définissez-la à `true` pour autoriser les webhooks à envoyer des requêtes vers des adresses privées et de bouclage, comme un n8n sur votre réseau local. |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Limites de DuckDB, `256MB` et `2` par défaut. |
-
-`CORS_ORIGIN`, `RATELIMIT_IP_HEADER`, `ENABLE_ASSETS_SERVER`, `WIDGET_VERSION` et `WASM_VERSION`, issues des versions antérieures, sont désormais des réglages du tableau de bord. Si l'une d'elles est encore définie, Cap copie sa valeur dans le tableau de bord au démarrage.
 
 ## IP client derrière un proxy {#client-ips-behind-a-proxy}
 

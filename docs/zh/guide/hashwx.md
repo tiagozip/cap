@@ -74,8 +74,6 @@ WebAssembly 构建的速度大约是原生的 60%。在同一台 M3 上测得：
 | iPhone 13 | iOS 15 | 678 KH/s | 2.2 s | 4.1 s |
 | iPhone SE 2022 | iOS 15 | 588 KH/s | 2.4 s | 4.0 s |
 | Redmi Note 11 | Android 11 | 456 KH/s | 2.4 s | 4.8 s |
-| Galaxy M32 | Android 11 | 444 KH/s | 2.8 s | 6.1 s |
-| Vivo Y21 | Android 11 | 316 KH/s | 5.9 s | 11.0 s |
 
 每次求解都包含两次到测试服务器的往返，每次 80 到 190 ms。页面已经运行 HashWX 一分钟后，求解速度快了 24% 到 29%，所以先预热再测的基准测试会比访客的实际体验好。
 

@@ -4,9 +4,7 @@ description: "Run capd on Cloudflare Workers with D1: the same code, dashboard, 
 
 # Cloudflare Workers
 
-The `workers/` folder in the Cap repository deploys capd to a single Cloudflare Worker. It runs the same code as the Docker image, so it serves the widget routes, `/siteverify`, the API and the dashboard, but it keeps its data and its events in D1 instead of Valkey and DuckDB.
-
-A solve with its siteverify call writes about 15 D1 rows, so the free plan's 100,000 rows a day covers about 6,500 solves a day, and the paid plan's 50 million rows a month covers about 3 million.
+Workers support is **experimental**. If you find a bug, please [report it](https://github.com/tiagozip/cap/issues).
 
 ## Deploying
 

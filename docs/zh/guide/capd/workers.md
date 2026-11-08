@@ -4,9 +4,7 @@ description: "在 Cloudflare Workers 上用 D1 运行 capd：同样的代码、�
 
 # Cloudflare Workers
 
-Cap 仓库中的 `workers/` 文件夹会把 capd 部署为单个 Cloudflare Worker。它运行与 Docker 镜像相同的代码，因此提供验证组件路由、`/siteverify`、API 和仪表板，但它把数据和事件存放在 D1 中，而不是 Valkey 和 DuckDB。
-
-一次求解加上对应的 siteverify 调用大约写入 15 行 D1 数据，所以免费套餐每天 100,000 行大约够 6,500 次求解，付费套餐每月 5,000 万行大约够 300 万次。
+Workers 支持目前是**实验性**的。如果你发现了 bug，请[提交报告](https://github.com/tiagozip/cap/issues)。
 
 ## 部署
 

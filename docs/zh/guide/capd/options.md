@@ -4,7 +4,7 @@ description: "capd 这款自托管开源 CAPTCHA 的配置：环境变量、代�
 
 # 配置
 
-大多数设置都在控制台中，整个服务端的设置位于 **Instance settings** 下，单个站点密钥的设置位于该密钥的 **Settings** 页面。本页介绍控制台无法设置的内容。
+大多数设置都在控制台中，整个服务端的设置位于 **Instance settings** 下，单个站点密钥的设置位于该密钥的 **Settings** 页面。
 
 ## 环境变量 {#environment-variables}
 
@@ -16,8 +16,6 @@ description: "capd 这款自托管开源 CAPTCHA 的配置：环境变量、代�
 | `CLICKHOUSE_URL` | 将事件存入 ClickHouse 而不是 DuckDB，例如 `http://cap:password@clickhouse:8123/cap`。密码按原样填写，不要进行 URL 编码。 |
 | `WEBHOOK_ALLOW_PRIVATE` | 设为 `true` 后，Webhook 可以向私有地址和回环地址发送请求，例如局域网内的 n8n。 |
 | `DUCKDB_MEMORY_LIMIT`、`DUCKDB_THREADS` | DuckDB 的资源限制，默认值分别为 `256MB` 和 `2`。 |
-
-旧版本中的 `CORS_ORIGIN`、`RATELIMIT_IP_HEADER`、`ENABLE_ASSETS_SERVER`、`WIDGET_VERSION` 和 `WASM_VERSION` 现在都是控制台设置。如果启动时仍设置了其中某个变量，Cap 会把它的值复制到控制台。
 
 ## 代理后的客户端 IP {#client-ips-behind-a-proxy}
 

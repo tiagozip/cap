@@ -74,8 +74,6 @@ Die Standardschwierigkeit auf echten Smartphones über BrowserStack, je 15 Lösu
 | iPhone 13 | iOS 15 | 678 KH/s | 2,2 s | 4,1 s |
 | iPhone SE 2022 | iOS 15 | 588 KH/s | 2,4 s | 4,0 s |
 | Redmi Note 11 | Android 11 | 456 KH/s | 2,4 s | 4,8 s |
-| Galaxy M32 | Android 11 | 444 KH/s | 2,8 s | 6,1 s |
-| Vivo Y21 | Android 11 | 316 KH/s | 5,9 s | 11,0 s |
 
 Jede Lösung enthält zwei Roundtrips zum Testserver von je 80 bis 190 ms. Eine Seite, auf der HashWX bereits eine Minute lief, löste 24% bis 29% schneller. Benchmarks mit Aufwärmphase sehen also besser aus als das, was Besucher erleben.
 
