@@ -571,3 +571,55 @@ describe("agent policy through validateChallenge", () => {
     expect(r.behavior.agent.verified).toBe(false);
   });
 });
+
+describe("agentFromHeaders (assistant fetchers)", () => {
+  const ua = (s) => agentFromHeaders({ "User-Agent": s })[0]?.agent;
+  test("Claude desktop app browser pane", () => {
+    expect(
+      agentFromHeaders({
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/4.23118.0 Chrome/152.0.7977.167 Safari/537.36",
+      })[0],
+    ).toEqual({
+      agent: "claude-desktop",
+      confidence: "medium",
+      evidence: "ua:claude-desktop",
+    });
+    expect(
+      ua(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      ),
+    ).toBeUndefined();
+  });
+
+  test("declared user agents", () => {
+    expect(
+      ua(
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Claude-User/1.0; +Claude-User@anthropic.com)",
+      ),
+    ).toBe("claude-user");
+    expect(ua("claude-code/2.0.14 (external, cli)")).toBe("claude-code");
+    expect(
+      ua(
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)",
+      ),
+    ).toBe("perplexity-user");
+    expect(
+      ua(
+        "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; MistralAI-User/1.0; +https://docs.mistral.ai/robots)",
+      ),
+    ).toBe("mistral-user");
+    expect(
+      ua(
+        "meta-externalfetcher/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)",
+      ),
+    ).toBe("meta-externalfetcher");
+  });
+
+  test("Hark signs as harkbot", () => {
+    const [e] = agentFromHeaders({
+      "Signature-Agent": 'sig1="https://hark.com"',
+    });
+    expect(e.agent).toBe("harkbot");
+  });
+});

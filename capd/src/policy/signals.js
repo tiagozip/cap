@@ -38,6 +38,43 @@ export const SIGNAL_GROUPS = [
         "The page was served by an automation tool, as patchright does",
       ],
       ["attach_shadow_patched", "attachShadow was replaced by a script"],
+      [
+        "software_renderer",
+        "WebGL renders in software, as on a VM or a server with no GPU",
+        "weak",
+      ],
+      [
+        "canvas_noise",
+        "Canvas reads back differently each time, as with noise extensions",
+      ],
+      [
+        "arch_mismatch",
+        "Client hints claim a different CPU than the one running the page",
+      ],
+      [
+        "injected_globals",
+        "A script added variables to every frame, as init scripts do",
+      ],
+      [
+        "devtools_globals",
+        "DevTools variables or forged event trust found in the page",
+      ],
+      [
+        "stealth_descriptors",
+        "Browser properties were redefined, as stealth plugins do",
+      ],
+      ["navigator_order", "Navigator properties were deleted and added back"],
+      [
+        "shader_mismatch",
+        "The claimed GPU backend doesn't match how shaders compile",
+      ],
+      ["webgpu_mismatch", "WebGL and WebGPU report different GPU vendors"],
+      ["voices_missing", "Google Chrome without its built-in Google voices"],
+      ["os_fonts_mismatch", "The system fonts don't match the claimed OS"],
+      [
+        "html_automation_attr",
+        "An automation tool's attribute is on the page's root element",
+      ],
       ["automation_globals", "Automation tool variables found in the page"],
       [
         "juggler_package",
@@ -141,6 +178,7 @@ export const SIGNAL_GROUPS = [
 export const KNOWN_AGENTS = [
   ["claude-in-chrome", "Claude (Claude in Chrome)"],
   ["claude-agent", "Claude (hosted browser)"],
+  ["claude-desktop", "Claude (desktop app browser)"],
   ["chatgpt-agent", "ChatGPT (agent)"],
   ["codex", "ChatGPT (Codex)"],
   ["chatgpt-user", "ChatGPT (browser fetch)"],
@@ -184,6 +222,12 @@ export const KNOWN_AGENTS = [
   ["browserflow", "Browserflow (extension)"],
   ["thunderbit", "Thunderbit (extension)"],
   ["2captcha-solver", "2Captcha (solver extension)"],
+  ["claude-user", "Claude (browser fetch)"],
+  ["claude-code", "Claude Code (fetch)"],
+  ["perplexity-user", "Perplexity (browser fetch)"],
+  ["mistral-user", "Mistral (browser fetch)"],
+  ["meta-externalfetcher", "Meta (fetcher)"],
+  ["harkbot", "Hark (agent)"],
   [
     "cdp-automation",
     "Playwright or Puppeteer",
@@ -217,6 +261,7 @@ export function cleanAgentActions(input) {
 
 export const SIGNED_AGENTS = new Set([
   "chatgpt-agent",
+  "harkbot",
   "google-agent",
   "manus",
   "grok-bot",

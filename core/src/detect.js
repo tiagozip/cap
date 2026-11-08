@@ -370,6 +370,207 @@ export function detectAutomation(S, opts = {}) {
     false,
   );
 
+  const gl = typeof S.mainNav?.gl === "string" ? S.mainNav.gl : "";
+  const fallbackGpu = !mobile && S.gpu?.f === true;
+  const softGl =
+    fallbackGpu ||
+    (!mobile &&
+      /SwiftShader|llvmpipe|softpipe|Mesa OffScreen|Microsoft Basic Render/i.test(
+        gl,
+      ));
+  add(
+    "software_renderer",
+    !softGl,
+    gl || fallbackGpu
+      ? softGl
+        ? fallbackGpu
+          ? "WebGPU gave a fallback adapter"
+          : gl.slice(0, 80)
+        : "hardware"
+      : "not measured",
+    false,
+  );
+
+  const cv = Array.isArray(S.cv) ? S.cv : null;
+  const noisy = cv?.[0] === 0 && isNum(cv[1]) && cv[1] > 64;
+  add(
+    "canvas_noise",
+    !noisy,
+    cv
+      ? noisy
+        ? "two identical drawings read back differently"
+        : "stable"
+      : "not measured",
+    false,
+  );
+
+  const arch = typeof hev?.ar === "string" ? hev.ar.toLowerCase() : "";
+  const nanArch = S.na === 255 ? "x86" : S.na === 127 ? "arm" : null;
+  const archLie =
+    nanArch !== null && (arch === "x86" || arch === "arm") && arch !== nanArch;
+  add(
+    "arch_mismatch",
+    !archLie,
+    nanArch && arch
+      ? archLie
+        ? `client hints say ${arch}, the CPU behaves like ${nanArch}`
+        : "consistent"
+      : "not measured",
+  );
+
+  const ig = Array.isArray(S.ig)
+    ? S.ig.filter((k) => typeof k === "string").slice(0, 12)
+    : null;
+  add(
+    "injected_globals",
+    !ig?.length,
+    ig
+      ? ig.length
+        ? `added to every frame: ${ig
+            .slice(0, MAX_TAMPER_KEYS)
+            .map((k) => k.slice(0, MAX_TAMPER_KEY_LENGTH))
+            .join(", ")}`
+        : "none"
+      : "not measured",
+    false,
+  );
+
+  const sd = Array.isArray(S.sd)
+    ? S.sd.filter((k) => typeof k === "string")
+    : [];
+  const forged = sd.filter((k) => k === "isTrusted" || k === "objectToInspect");
+  add(
+    "devtools_globals",
+    forged.length === 0,
+    forged.length ? `found: ${forged.join(", ")}` : "ok",
+  );
+  const patchedDesc = sd
+    .filter((k) => !forged.includes(k))
+    .slice(0, MAX_TAMPER_KEYS);
+  add(
+    "stealth_descriptors",
+    patchedDesc.length === 0,
+    patchedDesc.length ? `redefined: ${patchedDesc.join(", ")}` : "ok",
+    false,
+  );
+
+  const blink = chromium || S.evalLen === 33;
+  const no =
+    blink && Array.isArray(S.no)
+      ? S.no.filter((k) => typeof k === "string")
+      : [];
+  add(
+    "navigator_order",
+    no.length === 0,
+    blink
+      ? no.length
+        ? `re-added after the fact: ${no.slice(0, MAX_TAMPER_KEYS).join(", ")}`
+        : "ok"
+      : "not a chromium engine",
+    false,
+  );
+
+  const glsh = isPlainObject(S.glsh) ? S.glsh : null;
+  const glRenderer = typeof glsh?.r === "string" ? glsh.r : gl;
+  const claimed = /Direct3D|D3D1[01]/i.test(glRenderer)
+    ? "hlsl"
+    : /Metal/i.test(glRenderer)
+      ? "metal"
+      : /ANGLE \(.*(OpenGL|Vulkan|SwiftShader)/i.test(glRenderer)
+        ? "glsl"
+        : null;
+  const translated = ["hlsl", "metal", "glsl"].includes(glsh?.t)
+    ? glsh.t
+    : null;
+  const shaderLie = !!claimed && !!translated && claimed !== translated;
+  add(
+    "shader_mismatch",
+    !shaderLie,
+    claimed && translated
+      ? shaderLie
+        ? `renderer claims ${claimed}, shaders compile to ${translated}`
+        : "consistent"
+      : "not measured",
+  );
+
+  const family = (str) => {
+    const x = String(str ?? "");
+    if (/nvidia|geforce|quadro|rtx/i.test(x)) return "nvidia";
+    if (/\bamd\b|radeon|\bati\b/i.test(x)) return "amd";
+    if (/intel/i.test(x)) return "intel";
+    if (/apple/i.test(x)) return "apple";
+    if (/qualcomm|adreno/i.test(x)) return "qualcomm";
+    if (/\bmali\b|\barm\b/i.test(x)) return "arm";
+    if (/swiftshader|google/i.test(x)) return "google";
+    return null;
+  };
+  const gpu = isPlainObject(S.gpu) ? S.gpu : null;
+  const gpuFam = gpu && !gpu.n ? family(gpu.v) : null;
+  const glFam = family(glRenderer);
+  const gpuLie = !!gpuFam && !!glFam && gpuFam !== glFam && !mobile;
+  add(
+    "webgpu_mismatch",
+    !gpuLie,
+    gpuFam && glFam
+      ? gpuLie
+        ? `WebGL says ${glFam}, WebGPU says ${gpuFam}`
+        : "consistent"
+      : "not measured",
+    false,
+  );
+
+  const vc = Array.isArray(S.voices) ? S.voices : null;
+  const branded = /(^|\s)Google Chrome\//.test(brands) && !mobile;
+  const noGoogleVoices = branded && isNum(vc?.[0]) && vc[0] > 0 && vc[1] === 0;
+  add(
+    "voices_missing",
+    !noGoogleVoices,
+    branded
+      ? vc
+        ? noGoogleVoices
+          ? "Google Chrome without its Google voices"
+          : "ok"
+        : "not measured"
+      : "not Google Chrome",
+    false,
+  );
+
+  const fw = Array.isArray(S.fontWidths) ? S.fontWidths : [];
+  const has = (i) =>
+    isNum(fw[i]) && isNum(S.fm) && Math.abs(fw[i] - S.fm) > 0.5;
+  const fontsKnown = isNum(S.fm) && fw.length >= 13;
+  const winNoFonts = fontsKnown && /Windows NT/.test(ua) && !mobile && !has(6);
+  const macNoFonts = fontsKnown && /Macintosh/.test(ua) && !has(8);
+  add(
+    "os_fonts_mismatch",
+    !winNoFonts && !macNoFonts,
+    fontsKnown
+      ? winNoFonts
+        ? "claims Windows without Segoe UI"
+        : macNoFonts
+          ? "claims macOS without Helvetica Neue"
+          : "consistent"
+      : "not measured",
+    false,
+  );
+
+  const ha = Array.isArray(host?.ha)
+    ? host.ha.filter((k) => typeof k === "string")
+    : [];
+  const autoAttrs = ha.filter((k) =>
+    /playwright|puppeteer|selenium|webdriver|cdp|automation|crawl|scrap/i.test(
+      k,
+    ),
+  );
+  add(
+    "html_automation_attr",
+    autoAttrs.length === 0,
+    autoAttrs.length
+      ? `on <html>: ${autoAttrs.slice(0, MAX_TAMPER_KEYS).join(", ")}`
+      : "ok",
+    false,
+  );
+
   const failed = checks.filter((c) => c.gating && !c.passed);
   return {
     pass: failed.length === 0,

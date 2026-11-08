@@ -212,6 +212,13 @@ const UA_TOKENS = [
   [/\bAgent-NovaAct\/\d/, "nova-act", "high"],
   [/\bTwinAgent\/\d/, "twin", "high"],
   [/\bCloudflareBrowserRenderingCrawler\/\d/, "cloudflare-browser-run", "high"],
+  [/\bClaude-User\b/, "claude-user", "high"],
+  [/\bclaude-code\/\d/, "claude-code", "high"],
+  [/\bPerplexity-User\/\d/, "perplexity-user", "high"],
+  [/\bMistralAI-User\/\d/, "mistral-user", "high"],
+  [/\bmeta-externalfetcher\//i, "meta-externalfetcher", "high"],
+  [/\bHarkBot\/\d/, "harkbot", "high"],
+  [/\) Claude\/\d+\.\d+[\d.]* Chrome\/\d/, "claude-desktop", "medium"],
 ];
 
 const SIGNATURE_AGENTS = {
@@ -221,6 +228,8 @@ const SIGNATURE_AGENTS = {
   "cursorusercontent.com": "grok-bot",
   "www.browserbase.com": "browserbase",
   "www.kernel.sh": "kernel",
+  "search.bot.kernel.sh": "kernel",
+  "hark.com": "harkbot",
   "www.hyperbrowser.ai": "hyperbrowser",
   "api.hyperbrowser.ai": "hyperbrowser",
   "api.anchorbrowser.io": "anchor-browser",
