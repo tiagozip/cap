@@ -11,7 +11,7 @@ Cap has two parts: a widget, which runs and solves challenges in the visitor's b
 
 First, you'll need to set up capd. It runs as a self-hosted server with a dashboard, analytics, rules, and an API. Keys and settings are stored in Valkey. Before you start, you'll need to make two choices:
 
-**1. Where to run capd:** You can run it on your own server with Docker, use [Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic), or use a serverless platform like [Workers](./capd/workers.md). For this guide, we'll guide you through using Docker.
+**1. Where to run capd:** You can run it on your own server with Docker, use [Railway](https://railway.com/deploy/cap-1?referralCode=93HYBZ&utm_medium=integration&utm_source=template&utm_campaign=generic), or use a serverless platform like [Workers](./capd/workers.md). This guide uses Docker.
 
 **2. Where to store analytics:** You can use DuckDB (lightweight, best for small websites) or ClickHouse (more scalable). Both are easy to set up and built-in.
 
