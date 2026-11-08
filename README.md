@@ -29,4 +29,7 @@ cap is licensed under [apache 2.0](LICENSE).
 
 <br/>
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge?v=gold)](https://www.bestpractices.dev/projects/9920) [![jsdelivr](https://data.jsdelivr.com/v1/package/npm/@cap.js/wasm/badge)](https://www.jsdelivr.com/package/npm/@cap.js/wasm)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9920/badge?v=gold)](https://www.bestpractices.dev/projects/9920) [![jsdelivr](https://data.jsdelivr.com/v1/package/npm/@cap.js/wasm/badge)](https://www.jsdelivr.com/package/npm/@cap.js/wasm) ![Captcha?](https://img.shields.io/badge/Captcha%3F-Yes!-brightgreen?style=for-the-badge)
+![Human Check](https://img.shields.io/badge/Human_check-Confirmed-blue?style=for-the-badge)
+![Bots](https://img.shields.io/badge/Bots-Not_so_fast-orange?style=for-the-badge)
+![Vibes](https://img.shields.io/badge/Vibes-Verified-purple?style=for-the-badge)
