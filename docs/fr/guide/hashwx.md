@@ -62,7 +62,7 @@ Si vous faites vos propres mesures, utilisez des versions stables avec l'onglet 
 
 ### Téléphones {#phones}
 
-La difficulté par défaut sur de vrais téléphones via BrowserStack, 15 résolutions chacun et 30 sur le Vivo, chaque résolution démarrant sur une page tout juste chargée :
+La difficulté par défaut sur de vrais téléphones via BrowserStack, 15 résolutions chacun, chaque résolution démarrant sur une page tout juste chargée :
 
 | Appareil | Système | Tous les cœurs | Médiane | Plus lent |
 |---|---|---:|---:|---:|

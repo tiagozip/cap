@@ -62,7 +62,7 @@ If you measure this yourself, use release builds with the tab in front. Playwrig
 
 ### Phones
 
-The default difficulty on real phones through BrowserStack, 15 solves each and 30 on the Vivo, each starting from a freshly loaded page:
+The default difficulty on real phones through BrowserStack, 15 solves each, each starting from a freshly loaded page:
 
 | Device | OS | All cores | Median | Slowest |
 |---|---|---:|---:|---:|

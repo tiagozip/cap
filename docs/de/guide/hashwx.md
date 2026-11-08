@@ -62,7 +62,7 @@ Wenn du selbst misst, nutze Release-Builds und lass den Tab im Vordergrund. Play
 
 ### Smartphones {#phones}
 
-Die Standardschwierigkeit auf echten Smartphones über BrowserStack, je 15 Lösungen und 30 auf dem Vivo, jeweils mit einer frisch geladenen Seite:
+Die Standardschwierigkeit auf echten Smartphones über BrowserStack, je 15 Lösungen, jeweils mit einer frisch geladenen Seite:
 
 | Gerät | System | Alle Kerne | Median | Langsamste |
 |---|---|---:|---:|---:|
