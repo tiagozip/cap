@@ -161,7 +161,7 @@ export default component$(() => (
 | --- | --- | --- |
 | `solve` | 质询求解成功 | `{ token }` |
 | `progress` | 求解进度更新 | `{ progress }`，范围为 0 到 100 |
-| `error` | 发生错误 | `{ isCap, code, message }`。错误码见[故障排查](./troubleshooting/instrumentation.md#错误码)。 |
+| `error` | 发生错误 | `{ isCap, code, message }`。错误码见[故障排查](./error-codes.md)。 |
 | `reset` | 验证组件重置 | `{}` |
 
 ## 属性

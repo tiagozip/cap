@@ -34,7 +34,7 @@ const cap = new Cap({
 
 ขอและแก้ challenge โดย resolve เป็น `{ success, token }`
 
-เมื่อล้มเหลว จะส่งเหตุการณ์ `error` และ reject promise ด้วย `Error` ที่มี `code` เป็นหนึ่งใน[รหัสข้อผิดพลาด](./troubleshooting/instrumentation.md#error-codes) เช่น `instr_csp_blocked` สำหรับ[เฟรมที่ถูกบล็อก](./widget.md#content-security-policy):
+เมื่อล้มเหลว จะส่งเหตุการณ์ `error` และ reject promise ด้วย `Error` ที่มี `code` เป็นหนึ่งใน[รหัสข้อผิดพลาด](./error-codes.md) เช่น `instr_csp_blocked` สำหรับ[เฟรมที่ถูกบล็อก](./widget.md#content-security-policy):
 
 ```js
 try {

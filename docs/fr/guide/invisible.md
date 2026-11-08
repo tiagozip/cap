@@ -34,7 +34,7 @@ Sans `element`, Cap crée un `<cap-widget>` masqué avec le retour haptique dés
 
 Demande un défi et le résout. La promesse renvoie `{ success, token }`.
 
-Un échec émet un événement `error` et rejette la promesse avec une `Error` dont le `code` est l'un des [codes d'erreur](./troubleshooting/instrumentation.md#error-codes), par exemple `instr_csp_blocked` pour une [iframe bloquée](./widget.md#content-security-policy) :
+Un échec émet un événement `error` et rejette la promesse avec une `Error` dont le `code` est l'un des [codes d'erreur](./error-codes.md), par exemple `instr_csp_blocked` pour une [iframe bloquée](./widget.md#content-security-policy) :
 
 ```js
 try {

@@ -393,9 +393,14 @@ onBeforeUnmount(() => {
   gap: 4px;
 }
 #homev2 .demo-bar .icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
+  color: var(--text-faint);
+}
+#homev2 .demo-bar .icon-btn svg {
+  width: 13px;
+  height: 13px;
 }
 #homev2 .hero-tabs {
   position: relative;
@@ -406,8 +411,7 @@ onBeforeUnmount(() => {
 #homev2 .hero-tab-thumb {
   grid-area: 1 / 1;
   border-radius: 999px;
-  background: var(--raised);
-  box-shadow: 0 0 0 1px var(--edge-strong);
+  background: #ffffff0f;
   transition: transform 260ms var(--ease-out);
 }
 #homev2 #hero-tab-you {
@@ -422,8 +426,8 @@ onBeforeUnmount(() => {
 #homev2 .hero-tab {
   position: relative;
   grid-row: 1;
-  height: 32px;
-  padding-inline: 16px;
+  height: 28px;
+  padding-inline: 12px;
   border: 0;
   border-radius: 999px;
   background: transparent;

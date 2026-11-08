@@ -252,7 +252,7 @@ Format 1 liefert `{ challenge, token, expires, instrumentation? }`, Format 2 lie
 
 Bei Erfolg liefert es `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }` sowie `behavior` oder `agent`, wie unter [Verhalten und Agenten](#behavior-and-agents) beschrieben. `riskFlags` enthält Signale, die allein nicht blockieren, etwa `native_tamper` oder `legacy_widget`. Damit kannst du die Schwierigkeit für diesen Besucher erhöhen. Die Instrumentation-Seite listet die [Flags der Browser-Prüfungen](./instrumentation.md#automated-browser-detection) und die [Verhaltens-Flags](./instrumentation.md#behavior-scoring) auf.
 
-Bei einem Fehler liefert es `{ success: false, reason }`. Instrumentation-Fehler enthalten außerdem `instr_error: true`. `instr_automated_browser` und `instr_automated_interaction` haben eine `blockedBy`-Liste, und Verhaltensfehler haben `behavior`. Jeder `reason` steht in der [Fehlercode-Tabelle](./troubleshooting/instrumentation.md#error-codes).
+Bei einem Fehler liefert es `{ success: false, reason }`. Instrumentation-Fehler enthalten außerdem `instr_error: true`. `instr_automated_browser` und `instr_automated_interaction` haben eine `blockedBy`-Liste, und Verhaltensfehler haben `behavior`. Jeder `reason` steht in der [Fehlercode-Tabelle](./error-codes.md).
 
 ### Exporte auf niedrigerer Ebene
 

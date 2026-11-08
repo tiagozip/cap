@@ -97,5 +97,3 @@ description: "在线体验 Cap：实时演示这个开源、自托管的 CAPTCHA
 </div>
 
 <DemoReply />
-
-<p style="font-size: 10px;line-height: 1.3;color: var(--vp-c-text-3);max-width: 300px;user-select: none;">本演示使用的占位服务端不会执行 instrumentation（浏览器环境检测）。</p>

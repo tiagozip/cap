@@ -252,7 +252,7 @@ Le format 1 renvoie `{ challenge, token, expires, instrumentation? }`, et le for
 
 En cas de succès, elle renvoie `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }`, ainsi que `behavior` ou `agent` comme décrit dans [Comportement et agents](#behavior-and-agents). `riskFlags` liste les signaux qui ne bloquent pas à eux seuls, comme `native_tamper` ou `legacy_widget`, afin que vous puissiez augmenter la difficulté pour ce visiteur. La page sur l'instrumentation liste les [indicateurs de vérification du navigateur](./instrumentation.md#automated-browser-detection) et les [indicateurs de comportement](./instrumentation.md#behavior-scoring).
 
-En cas d'échec, elle renvoie `{ success: false, reason }`. Les échecs d'instrumentation contiennent aussi `instr_error: true`, `instr_automated_browser` et `instr_automated_interaction` contiennent une liste `blockedBy`, et les échecs de comportement contiennent `behavior`. Chaque `reason` figure dans le [tableau des codes d'erreur](./troubleshooting/instrumentation.md#error-codes).
+En cas d'échec, elle renvoie `{ success: false, reason }`. Les échecs d'instrumentation contiennent aussi `instr_error: true`, `instr_automated_browser` et `instr_automated_interaction` contiennent une liste `blockedBy`, et les échecs de comportement contiennent `behavior`. Chaque `reason` figure dans le [tableau des codes d'erreur](./error-codes.md).
 
 ### Exports de bas niveau {#lower-level-exports}
 

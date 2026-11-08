@@ -252,7 +252,7 @@ const result = await validateChallenge(SECRET, body, {
 
 เมื่อสำเร็จ จะคืน `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }` พร้อม `behavior` หรือ `agent` ตามที่อธิบายใน[พฤติกรรมและเอเจนต์](#behavior-and-agents) โดย `riskFlags` แสดงสัญญาณที่ไม่บล็อกด้วยตัวมันเอง เช่น `native_tamper` หรือ `legacy_widget` เพื่อให้คุณเพิ่มความยากสำหรับผู้เข้าชมคนนั้นได้ หน้า instrumentation แสดง[แฟล็กการตรวจสอบเบราว์เซอร์](./instrumentation.md#automated-browser-detection)และ[แฟล็กพฤติกรรม](./instrumentation.md#behavior-scoring)
 
-เมื่อล้มเหลว จะคืน `{ success: false, reason }` ความล้มเหลวของ instrumentation มี `instr_error: true` ด้วย ส่วน `instr_automated_browser` และ `instr_automated_interaction` มีรายการ `blockedBy` และความล้มเหลวของพฤติกรรมมี `behavior` ทุก `reason` อยู่ใน[ตารางรหัสข้อผิดพลาด](./troubleshooting/instrumentation.md#error-codes)
+เมื่อล้มเหลว จะคืน `{ success: false, reason }` ความล้มเหลวของ instrumentation มี `instr_error: true` ด้วย ส่วน `instr_automated_browser` และ `instr_automated_interaction` มีรายการ `blockedBy` และความล้มเหลวของพฤติกรรมมี `behavior` ทุก `reason` อยู่ใน[ตารางรหัสข้อผิดพลาด](./error-codes.md)
 
 ### export ระดับล่าง {#lower-level-exports}
 

@@ -7,6 +7,7 @@ import DashboardDemo from "./DashboardDemo.vue";
 import HomeDemo from "./HomeDemo.vue";
 import HomeOdometer from "./HomeOdometer.vue";
 import HomeToolbox from "./HomeToolbox.vue";
+import { demoInstrumentation, judgeDemo, onDemoError } from "../demoCheck.js";
 import { homeV2Strings } from "./homeV2.strings.js";
 
 const { localeIndex, lang } = useData();
@@ -39,74 +40,162 @@ const faq = computed(() => {
   ];
 });
 
-const checkIds = [
-  "webdriver_true",
-  "webdriver_stripped",
-  "headless_token",
-  "chrome_object_missing",
-  "geometry_quantized",
-  "juggler_package",
-  "gecko_contradiction",
-  "window_exceeds_screen",
-  "viewport_override",
-  "worker_mismatch",
+const checkList = [
+  { id: "webdriver_true", name: "WebDriver flag is set", icon: ["M12 8V4H8", "M6 8h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z", "M2 14h2", "M20 14h2", "M15 13v2", "M9 13v2"], hl: ['"webdriver_true"'] },
+  { id: "headless_token", name: "Headless Chrome", icon: ["M9 10h.01", "M15 10h.01", "M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"], hl: ['"headless_token"'] },
+  { id: "interaction_synthetic_clicks", name: "Clicks sent by a script", icon: ["M14 4.1 12 6", "m5.1 8-2.9-.8", "m6 12-1.9 2", "M7.2 2.2 8 5.1", "M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"], hl: ['"interaction_synthetic_clicks"', '"instr_automated_interaction"'] },
+  { id: "behavior", name: "Robotic mouse and typing", icon: ["M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"], hl: ['"automated"', '"behavior_automated"', '"bh_straight_path"'] },
+  { id: "agent", name: "AI agent", icon: ["M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z", "M20 3v4", "M22 5h-4", "M4 17v2", "M5 18H3"], hl: ['"agent:claude-in-chrome"', '"agent:chatgpt-agent"', '"claude-in-chrome"', '"chatgpt-agent"', '"behavior_agent"'] },
+  { id: "signed", name: "Web Bot Auth signature", icon: ["M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z", "m9 12 2 2 4-4"], hl: ['"verified"'] },
+  { id: "webdriver_stripped", name: "WebDriver flag was deleted", icon: ["m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21", "M22 21H7", "m5 11 9 9"] },
+  { id: "chrome_object_missing", name: "window.chrome is missing", icon: ["M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z"] },
+  { id: "geometry_quantized", name: "Text measures in whole pixels", icon: ["M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z", "m14.5 12.5 2-2", "m11.5 9.5 2-2", "m8.5 6.5 2-2", "m17.5 15.5 2-2"] },
+  { id: "juggler_package", name: "Playwright's Firefox build", icon: ["M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z", "M12 22V12", "m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7", "m7.5 4.27 9 5.15"] },
+  { id: "gecko_contradiction", name: "Firefox with Chrome-only APIs", icon: ["M16 3h5v5", "M8 3H3v5", "M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3", "m15 9 6-6"] },
+  { id: "window_exceeds_screen", name: "Window taller than the screen", icon: ["M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z", "M10 4v4", "M2 8h20", "M6 4v4"] },
+  { id: "viewport_override", name: "Viewport matches the screen", icon: ["M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z", "M12 18h.01"] },
+  { id: "worker_mismatch", name: "Worker sees a different browser", icon: ["M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z", "M10 9h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z", "M15 2v2", "M15 20v2", "M2 15h2", "M2 9h2", "M20 15h2", "M20 9h2", "M9 2v2", "M9 20v2"] },
 ];
+
+const sigCheck = "M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm2.97 4.47a.75.75 0 0 1 0 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-1.5-1.5a.75.75 0 1 1 1.06-1.06l.97.97 2.97-2.97a.75.75 0 0 1 1.06 0Z";
+const sigIcons = {
+  passed: sigCheck,
+  verified: sigCheck,
+  flagged: "M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Zm0 3a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 4.5Zm0 7.25a.9.9 0 1 1 0-1.8.9.9 0 0 1 0 1.8Z",
+  blocked: "M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM5.97 5.97a.75.75 0 0 1 1.06 0L8 6.94l.97-.97a.75.75 0 1 1 1.06 1.06L9.06 8l.97.97a.75.75 0 1 1-1.06 1.06L8 9.06l-.97.97a.75.75 0 0 1-1.06-1.06L6.94 8l-.97-.97a.75.75 0 0 1 0-1.06Z",
+};
 
 const ghPath = "M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.69-3.87-1.54-3.87-1.54-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.34.95.1-.74.4-1.24.72-1.53-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18.91-.25 1.89-.38 2.86-.38.97 0 1.95.13 2.86.38 2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.73.8 1.18 1.83 1.18 3.08 0 4.41-2.69 5.38-5.25 5.67.41.35.78 1.05.78 2.11 0 1.52-.01 2.75-.01 3.12 0 .31.21.67.8.56C20.71 21.38 24 17.08 24 12c0-6.27-5.23-11.5-11.5-11.5z";
 
-const browserChecks = ref([
-  { label: "Verify the browser", hint: "Check the browser environment.", on: true },
-  { label: "Block detected browser automation", hint: "Reject detected automation tools.", on: true },
-  { label: "Block automated clicks and typing", hint: "Experimental. Blocks repeated synthetic clicks or key presses.", on: false },
-]);
+const protRows = [
+  { id: "automation", label: "Automation tools", hint: "Puppeteer, Playwright, Selenium and other headless browsers.", options: [["report", "Flag"], ["block", "Block"]] },
+  { id: "scripted", label: "Scripted clicks", hint: "Clicks and key presses that a script sent instead of a person.", options: [["off", "Allow"], ["report", "Flag"], ["block", "Block"]] },
+  { id: "behavior", label: "Robotic movement", hint: "Mouse paths and typing rhythm that don't look like a person.", options: [["off", "Allow"], ["report", "Flag"], ["block", "Block"]] },
+  { id: "agents", label: "AI agents", hint: "Browsers that Claude, ChatGPT, Comet and 30 other tools drive for someone.", options: [["off", "Flag"], ["identified", "Block known"], ["all", "Block all"]] },
+];
+const dangerValues = ["block", "identified", "all"];
+const prot = ref({ automation: "block", scripted: "report", behavior: "off", agents: "identified", signed: false });
+
+const agentList = [
+  { id: "claude-in-chrome", name: "Claude in Chrome", icon: "/agents/claude.svg" },
+  { id: "chatgpt-agent", name: "ChatGPT agent", icon: "/agents/openai.svg", mono: true, signed: true },
+  { id: "perplexity-comet", name: "Comet", icon: "/agents/perplexity.svg" },
+  { id: "gemini-in-chrome", name: "Gemini in Chrome", icon: "/agents/gemini.svg" },
+  { id: "manus", name: "Manus", icon: "/agents/manus.svg", mono: true, signed: true },
+  { id: "codex", name: "Codex", icon: "/agents/codex.svg", mono: true },
+  { id: "browser-use", name: "Browser Use", icon: "/agents/browser-use.png" },
+  { id: "genspark", name: "Genspark", icon: "/agents/genspark.png" },
+];
+const agentActions = ref({});
+const agentActionOptions = [["default", "Default"], ["allow", "Allow"], ["report", "Flag"], ["block", "Block"]];
+
 const difficulty = ref(1000000);
-const difficultyLabel = computed(() => difficulty.value.toLocaleString("en-US"));
-
-const toggleCheck = (i) => {
-  if (i > 0 && !browserChecks.value[0].on) return;
-  browserChecks.value[i].on = !browserChecks.value[i].on;
-};
-
-const agentResult = computed(() => {
-  const c = browserChecks.value;
-  if (!c[0].on) return { success: true, reason: null, blockedBy: [], riskFlags: [] };
-  const blockedBy = [];
-  const riskFlags = [];
-  (c[1].on ? blockedBy : riskFlags).push("webdriver_true", "headless_token");
-  (c[2].on ? blockedBy : riskFlags).push("interaction_synthetic_clicks");
-  const reason = blockedBy.includes("webdriver_true")
-    ? "instr_automated_browser"
-    : blockedBy.length
-      ? "instr_automated_interaction"
-      : null;
-  return { success: blockedBy.length === 0, reason, blockedBy, riskFlags };
+const difficultyPct = computed(() => `${((difficulty.value - 50000) / (5000000 - 50000)) * 100}%`);
+const difficultyDigits = computed(() => {
+  const chars = [...difficulty.value.toLocaleString("en-US")];
+  let place = chars.filter((ch) => /\d/.test(ch)).length;
+  return chars.map((ch, i) => (/\d/.test(ch) ? { d: +ch, key: `d${--place}` } : { s: ch, key: `s${chars.length - i}` }));
 });
 
-const activeChecks = computed(() => [...agentResult.value.blockedBy, ...agentResult.value.riskFlags]);
+const bots = [
+  { id: "headless", name: "Headless Chrome" },
+  { id: "claude-in-chrome", name: "Claude in Chrome" },
+  { id: "chatgpt-agent", name: "ChatGPT agent" },
+];
+const botIndex = ref(0);
+
+const agentResult = computed(() => {
+  const o = prot.value;
+  const bot = bots[botIndex.value].id;
+  const states = {};
+  const done = (json) => ({ json, states });
+  if (bot === "headless") {
+    const riskFlags = [];
+    states.webdriver_true = "flagged";
+    states.headless_token = "flagged";
+    if (o.automation === "block") {
+      states.webdriver_true = "blocked";
+      states.headless_token = "blocked";
+      return done({ success: false, reason: "instr_automated_browser", blockedBy: ["webdriver_true", "headless_token"] });
+    }
+    riskFlags.push("webdriver_true", "headless_token");
+    if (o.scripted !== "off") states.interaction_synthetic_clicks = "flagged";
+    if (o.scripted === "block") {
+      states.interaction_synthetic_clicks = "blocked";
+      return done({ success: false, reason: "instr_automated_interaction", blockedBy: ["interaction_synthetic_clicks"] });
+    }
+    if (o.scripted === "report") riskFlags.push("interaction_synthetic_clicks");
+    if (o.behavior !== "off") states.behavior = "flagged";
+    if (o.behavior === "block") {
+      states.behavior = "blocked";
+      return done({ success: false, reason: "behavior_automated", behavior: { score: 0.96, verdict: "automated" } });
+    }
+    if (o.behavior === "report") riskFlags.push("bh_straight_path");
+    return done({ success: true, riskFlags });
+  }
+  const verified = bot === "chatgpt-agent";
+  if (verified) states.signed = "verified";
+  states.agent = "flagged";
+  const set = agentActions.value[bot] ?? "default";
+  const action = set === "default" ? (o.agents === "off" ? "report" : "block") : set;
+  if (action === "block" && (set !== "default" || !(o.signed && verified))) {
+    states.agent = "blocked";
+    return done({ success: false, reason: "behavior_agent", behavior: { verdict: "agent", agent: { name: bot, confidence: "high", verified } } });
+  }
+  return done({ success: true, riskFlags: action === "allow" ? [] : [`agent:${bot}`] });
+});
+
+const checkState = (id) => agentResult.value.states[id] ?? "passed";
+const stateLabels = computed(() => ({
+  blocked: t.value.checkBlocked,
+  flagged: t.value.checkDetected,
+  passed: t.value.checkNotDetected,
+  verified: t.value.checkVerified,
+}));
+
+const sigIndex = ref(0);
+const sigMoved = ref(false);
+const sigCurrent = computed(() => checkList[sigIndex.value]);
+const pickSig = (i) => {
+  sigMoved.value = true;
+  sigIndex.value = (i + checkList.length) % checkList.length;
+};
+const pickBot = (i) => {
+  botIndex.value = i;
+  sigMoved.value = true;
+  sigIndex.value = Math.max(
+    checkList.findIndex((c) => checkState(c.id) !== "passed"),
+    0,
+  );
+};
 
 const resultLines = computed(() => {
-  const r = agentResult.value;
-  const ind = (n) => ({ t: " ".repeat(n), c: "j-p" });
-  const key = (k) => ({ t: `"${k}"`, c: "j-k" });
-  const str = (s) => ({ t: `"${s}"`, c: "j-s" });
-  const colon = { t: ": ", c: "j-p" };
-  const comma = { t: ",", c: "j-p" };
-
-  const entries = [[[ind(2), key("success"), colon, { t: String(r.success), c: r.success ? "j-true" : "j-b" }]]];
-  if (r.reason) entries.push([[ind(2), key("reason"), colon, str(r.reason)]]);
-  const list = r.blockedBy.length ? r.blockedBy : r.riskFlags;
-  const listKey = r.blockedBy.length ? "blockedBy" : "riskFlags";
-  if (list.length) {
-    const group = [[ind(2), key(listKey), { t: ": [", c: "j-p" }]];
-    list.forEach((f, i) => group.push([ind(4), str(f), ...(i < list.length - 1 ? [comma] : [])]));
-    group.push([{ t: "  ]", c: "j-p" }]);
-    entries.push(group);
-  }
-  entries.forEach((g, gi) => {
-    if (gi < entries.length - 1) g[g.length - 1] = [...g[g.length - 1], comma];
-  });
-
-  return [[{ t: "{", c: "j-p" }], ...entries.flat(), [{ t: "}", c: "j-p" }]];
+  const hl = new Set(sigCurrent.value.hl ?? []);
+  const tok = (t, c) => ({ t, c, sel: hl.has(t) });
+  const out = [];
+  const walk = (value, depth, head, last) => {
+    const pad = tok(" ".repeat(depth * 2), "j-p");
+    const tail = last ? [] : [tok(",", "j-p")];
+    if (value && typeof value === "object") {
+      const list = Array.isArray(value);
+      const entries = list ? value.map((v) => [null, v]) : Object.entries(value);
+      const [open, close] = list ? ["[", "]"] : ["{", "}"];
+      if (!entries.length) {
+        out.push([pad, ...head, tok(`${open}${close}`, "j-p"), ...tail]);
+        return;
+      }
+      out.push([pad, ...head, tok(open, "j-p")]);
+      entries.forEach(([k, v], i) =>
+        walk(v, depth + 1, k === null ? [] : [tok(`"${k}"`, "j-k"), tok(": ", "j-p")], i === entries.length - 1),
+      );
+      out.push([pad, tok(close, "j-p"), ...tail]);
+      return;
+    }
+    const c = typeof value === "string" ? "j-s" : typeof value === "number" ? "j-n" : value ? "j-true" : "j-b";
+    out.push([pad, ...head, tok(typeof value === "string" ? `"${value}"` : String(value), c), ...tail]);
+  };
+  walk(agentResult.value.json, 0, [], true);
+  return out;
 });
 
 const fromWidget = ref(false);
@@ -186,6 +275,9 @@ onMounted(() => {
     }
   } catch {}
 
+  document.addEventListener("error", onDemoError);
+  cleanups.push(() => document.removeEventListener("error", onDemoError));
+
   window.CAP_CUSTOM_FETCH = async (url, options) => {
     if (url === "/api/challenge") {
       const hex = (n) =>
@@ -196,11 +288,13 @@ onMounted(() => {
           challenge: Array.from({ length: 50 }, () => [hex(16), hex(2)]),
           token: "",
           expires: Date.now() + 600000,
+          ...(await demoInstrumentation()),
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
     }
     if (url === "/api/redeem") {
+      judgeDemo(options);
       track("demo-solved");
       return new Response(JSON.stringify({ success: true, token: "", expires: Date.now() + 3600000 }), {
         status: 200,
@@ -402,47 +496,126 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="agents">
-              <div class="ui-window settings">
-                <div class="settings-row">
-                  <label class="settings-label" for="agents-difficulty">HashWX difficulty</label>
-                  <span class="settings-value">{{ difficultyLabel }}</span>
+              <div class="layer settings">
+                <div class="layer-head">Protection</div>
+                <div class="layer-body">
+                  <div class="settings-scroll">
+                    <div class="prot-row">
+                      <div class="settings-row">
+                        <label class="settings-label" for="agents-difficulty">HashWX difficulty</label>
+                        <span class="settings-value">
+                          <span class="sr-only">{{ difficulty.toLocaleString("en-US") }}</span>
+                          <span class="odo" aria-hidden="true"><span v-for="c in difficultyDigits" :key="c.key" :class="'d' in c ? 'odo-d' : 'odo-s'"><span v-if="'d' in c" class="odo-strip" :style="{ '--d': c.d }"><span v-for="n in 10" :key="n">{{ n - 1 }}</span></span><template v-else>{{ c.s }}</template></span></span>
+                        </span>
+                      </div>
+                      <input
+                        id="agents-difficulty"
+                        class="slider"
+                        type="range"
+                        min="50000"
+                        max="5000000"
+                        step="50000"
+                        :style="{ '--p': difficultyPct }"
+                        v-model.number="difficulty"
+                      />
+                    </div>
+                    <div v-for="row in protRows" :key="row.id" class="prot-row">
+                      <div class="prot-top">
+                        <span class="prot-label" :id="`prot-${row.id}`">{{ row.label }}</span>
+                        <div
+                          class="seg"
+                          role="radiogroup"
+                          :aria-labelledby="`prot-${row.id}`"
+                          :style="{ '--n': row.options.length, '--i': row.options.findIndex(([v]) => v === prot[row.id]) }"
+                        >
+                          <span class="seg-pill" aria-hidden="true"></span>
+                          <button
+                            v-for="[v, l] in row.options"
+                            :key="v"
+                            type="button"
+                            role="radio"
+                            class="seg-opt"
+                            :class="{ danger: prot[row.id] === v && dangerValues.includes(v) }"
+                            :aria-checked="prot[row.id] === v"
+                            @click="prot[row.id] = v"
+                          >{{ l }}</button>
+                        </div>
+                      </div>
+                      <p class="prot-hint">{{ row.hint }}</p>
+                      <label v-if="row.id === 'agents' && prot.agents !== 'off'" class="prot-check">
+                        <input v-model="prot.signed" type="checkbox" />
+                        <span class="check-box" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m4 8.5 2.5 2.5L12 5.5" /></svg></span>
+                        Always let in agents that sign their requests
+                      </label>
+                    </div>
+                    <div class="agent-list">
+                      <div v-for="a in agentList" :key="a.id" class="agent-row">
+                        <img :src="a.icon" alt="" width="16" height="16" :class="{ mono: a.mono }" loading="lazy" />
+                        <span class="agent-name">{{ a.name }}</span>
+                        <svg v-if="a.signed" class="agent-signed" viewBox="0 0 24 24" role="img" aria-label="Signs requests"><path class="b" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path class="c" d="m9 12 2 2 4-4" /></svg>
+                        <span class="agent-select">
+                          <select v-model="agentActions[a.id]" :aria-label="`What to do with ${a.name}`" :class="{ danger: agentActions[a.id] === 'block' }">
+                            <option v-for="[v, l] in agentActionOptions" :key="v" :value="v === 'default' ? undefined : v">{{ l }}</option>
+                          </select>
+                          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 6.5 3.5 3.5 3.5-3.5" /></svg>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  id="agents-difficulty"
-                  class="slider"
-                  type="range"
-                  min="50000"
-                  max="5000000"
-                  step="50000"
-                  v-model.number="difficulty"
-                />
-                <div class="settings-group">Browser checks</div>
-                <button
-                  v-for="(opt, i) in browserChecks"
-                  :key="opt.label"
-                  type="button"
-                  class="toggle-row"
-                  role="switch"
-                  :aria-checked="opt.on"
-                  :disabled="i > 0 && !browserChecks[0].on"
-                  @click="toggleCheck(i)"
-                >
-                  <span class="toggle" :class="{ on: opt.on }"><span></span></span>
-                  <span>
-                    <span class="toggle-label">{{ opt.label }}</span>
-                    <span class="toggle-hint">{{ opt.hint }}</span>
-                  </span>
-                </button>
               </div>
 
-              <div class="agents-result">
-                <div class="ui-window">
-                  <div class="ui-title">{{ t.agentsResultLabel }}</div>
-                  <pre class="json" aria-live="polite"><code><span v-for="(line, li) in resultLines" :key="li" class="j-line"><span v-for="(tok, ti) in line" :key="ti" :class="tok.c">{{ tok.t }}</span></span></code></pre>
+              <div class="layer result">
+                <div class="layer-head">{{ t.agentsResultLabel }}</div>
+                <div class="layer-body">
+                  <div class="result-tabs">
+                    <div class="seg seg-wide" role="tablist" :style="{ '--n': bots.length, '--i': botIndex }">
+                      <span class="seg-pill" aria-hidden="true"></span>
+                      <button
+                        v-for="(b, i) in bots"
+                        :key="b.id"
+                        type="button"
+                        role="tab"
+                        class="seg-opt"
+                        :aria-selected="i === botIndex"
+                        @click="pickBot(i)"
+                      >{{ b.name }}</button>
+                    </div>
+                  </div>
+                  <pre class="json" aria-live="polite"><code><span v-for="(line, li) in resultLines" :key="li" class="j-line"><span v-for="(tk, ti) in line" :key="ti" :class="[tk.c, { 'j-sel': tk.sel }]">{{ tk.t }}</span></span></code></pre>
+                  <div class="sig-head">
+                    <div :key="sigCurrent.id" class="sig-detail" :class="{ moved: sigMoved }">
+                      <span class="sig-name">{{ sigCurrent.name }}</span>
+                      <span class="sig-state" :class="checkState(sigCurrent.id)">
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path :d="sigIcons[checkState(sigCurrent.id)]" /></svg>
+                        {{ stateLabels[checkState(sigCurrent.id)] }}
+                      </span>
+                    </div>
+                    <div class="sig-nav">
+                      <button type="button" class="sig-arrow" aria-label="Previous check" @click="pickSig(sigIndex - 1)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+                      </button>
+                      <button type="button" class="sig-arrow" aria-label="Next check" @click="pickSig(sigIndex + 1)">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="sig-tiles">
+                    <button
+                      v-for="(c, i) in checkList"
+                      :key="c.id"
+                      type="button"
+                      class="sig-tile"
+                      :class="[checkState(c.id), { current: i === sigIndex }]"
+                      :aria-pressed="i === sigIndex"
+                      :aria-label="`${c.name}, ${stateLabels[checkState(c.id)]}`"
+                      :title="c.name"
+                      @click="pickSig(i)"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path v-for="d in c.icon" :key="d" :d="d" /></svg>
+                    </button>
+                  </div>
                 </div>
-                <ul class="checks">
-                  <li v-for="id in checkIds" :key="id" :class="{ active: activeChecks.includes(id) }"><code>{{ id }}</code></li>
-                </ul>
               </div>
             </div>
           </div>
@@ -472,7 +645,7 @@ onBeforeUnmount(() => {
                 <p>{{ quoteText }}</p>
               </blockquote>
               <figcaption>
-                <img src="/logos/adguard.svg" alt="AdGuard" width="104" height="24" loading="lazy" />
+                <img src="/logos/adguard-duo.svg" alt="AdGuard" width="104" height="24" loading="lazy" />
                 <span>{{ t.quoteRole }}</span>
               </figcaption>
             </figure>
@@ -1251,9 +1424,6 @@ html.home-v2-active main.main {
   height: 24px;
   width: auto;
 }
-#homev2 .quote figcaption img {
-  filter: grayscale(1) brightness(0) invert(0.82);
-}
 #homev2 .logos img[alt="bunny.net"],
 #homev2 .logos img[alt="Fraunhofer"] {
   height: 28px;
@@ -1293,7 +1463,8 @@ html.home-v2-active main.main {
 #homev2 .ui-title {
   padding: 12px 16px;
   font-size: 0.8125rem;
-  color: var(--text-faint);
+  font-weight: 400;
+  color: var(--text-secondary);
   box-shadow: inset 0 -1px 0 var(--edge);
 }
 #homev2 .agents {
@@ -1301,155 +1472,590 @@ html.home-v2-active main.main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
-  align-items: start;
+  align-items: stretch;
+}
+#homev2 .layer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 4px 4px;
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+#homev2 .layer-head {
+  padding: 11px 12px 10px;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+#homev2 .layer-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--raised);
+  box-shadow:
+    0 0 0 1px var(--edge),
+    0 1px 2px #00000033,
+    0 6px 16px #00000026;
 }
 #homev2 .settings {
-  padding: 22px 22px 12px;
+  contain: size;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   font-size: 0.875rem;
 }
+#homev2 .settings-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff1f transparent;
+}
+#homev2 .prot-row {
+  padding: 14px 16px;
+  box-shadow: inset 0 -1px 0 var(--edge);
+}
 #homev2 .settings-row {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
   color: var(--text);
 }
 #homev2 .settings-value {
-  color: var(--text-faint);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
+#homev2 .odo {
+  display: inline-flex;
+}
+#homev2 .odo-d {
+  display: inline-block;
+  height: 1lh;
+  overflow: hidden;
+}
+#homev2 .odo-strip {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(var(--d) * -10%));
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+#homev2 .odo-strip span {
+  height: 1lh;
+}
 #homev2 .slider {
-  appearance: auto;
+  --p: 50%;
+  appearance: none;
+  display: block;
   width: 100%;
-  height: 18px;
-  margin: 10px 0 18px;
+  height: 24px;
+  margin-top: 8px;
   background: transparent;
-  accent-color: var(--accent);
   cursor: pointer;
+}
+#homev2 .slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) var(--p), #ffffff14 var(--p));
+}
+#homev2 .slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) var(--p), #ffffff14 var(--p));
+}
+#homev2 .slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 0;
+  border-radius: 50%;
+  background: #f5f7ff;
+  box-shadow:
+    0 0 0 1px #00000026,
+    0 1px 2px #0000004d,
+    0 3px 8px #00000040;
+  transition: scale 160ms var(--ease-out);
+}
+#homev2 .slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: #f5f7ff;
+  box-shadow:
+    0 0 0 1px #00000026,
+    0 1px 2px #0000004d,
+    0 3px 8px #00000040;
+  transition: scale 160ms var(--ease-out);
+}
+#homev2 .slider:active::-webkit-slider-thumb {
+  scale: 1.12;
+}
+#homev2 .slider:active::-moz-range-thumb {
+  scale: 1.12;
 }
 #homev2 .slider:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-  border-radius: 3px;
+  outline: none;
 }
-#homev2 .settings-group {
-  padding-top: 18px;
-  margin-bottom: 4px;
-  color: var(--text-secondary);
-  box-shadow: inset 0 1px 0 var(--edge);
+#homev2 .slider:focus-visible::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 55%, transparent),
+    0 1px 2px #0000004d;
 }
-#homev2 .toggle-row {
+#homev2 .slider:focus-visible::-moz-range-thumb {
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--accent) 55%, transparent),
+    0 1px 2px #0000004d;
+}
+#homev2 .prot-top {
   display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  padding-block: 10px;
-  width: 100%;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  color: inherit;
-  cursor: pointer;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
-#homev2 .toggle-row:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-#homev2 .toggle-row:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-#homev2 .toggle {
-  transition: background 160ms ease;
-}
-#homev2 .toggle span {
-  transition: left 160ms ease;
-}
-#homev2 .toggle {
-  flex-shrink: 0;
-  position: relative;
-  width: 36px;
-  height: 20px;
-  margin-top: 1px;
-  border-radius: 10px;
-  background: #313244;
-}
-#homev2 .toggle span {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #6c7086;
-}
-#homev2 .toggle.on {
-  background: var(--accent);
-}
-#homev2 .toggle.on span {
-  left: 19px;
-  background: var(--ground);
-}
-#homev2 .toggle-label {
-  display: block;
+#homev2 .prot-label {
   color: var(--text);
 }
-#homev2 .toggle-hint {
-  display: block;
-  margin-top: 2px;
-  color: var(--text-faint);
+#homev2 .prot-hint {
+  margin-top: 4px;
+  max-width: 34em;
   font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-faint);
+  text-wrap: pretty;
 }
-#homev2 .agents-result {
+#homev2 .seg {
+  position: relative;
   display: grid;
-  gap: 14px;
+  flex: none;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  padding: 2px;
+  border-radius: 8px;
+  background: #cdd6f40f;
+}
+#homev2 .seg-pill {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--n));
+  border-radius: 6px;
+  background: #ffffff14;
+  box-shadow:
+    inset 0 0 0 1px #ffffff0d,
+    0 1px 2px #00000059;
+  translate: calc(var(--i) * 100%) 0;
+  transition: translate 260ms var(--ease-out);
+}
+#homev2 .seg-opt {
+  position: relative;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-faint);
+  white-space: nowrap;
+  transition: scale 160ms var(--ease-out);
+}
+#homev2 .seg-opt[aria-checked="true"],
+#homev2 .seg-opt[aria-selected="true"] {
+  color: var(--text);
+}
+#homev2 .seg-opt.danger {
+  color: var(--danger);
+}
+#homev2 .seg-opt:active {
+  scale: 0.96;
+}
+#homev2 .seg-opt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+#homev2 .prot-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+#homev2 .prot-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+#homev2 .check-box {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #ffffff0d;
+  box-shadow: inset 0 0 0 1px var(--edge-strong);
+  transition: background-color 160ms var(--ease-out);
+}
+#homev2 .check-box svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  scale: 0.5;
+  transition:
+    opacity 160ms var(--ease-out),
+    scale 160ms var(--ease-out);
+}
+#homev2 .prot-check input:checked + .check-box {
+  background: var(--accent);
+  box-shadow: none;
+}
+#homev2 .prot-check input:checked + .check-box svg {
+  opacity: 1;
+  scale: 1;
+}
+#homev2 .prot-check input:focus-visible + .check-box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+#homev2 .agent-list {
+  padding: 4px 0;
+}
+#homev2 .agent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 16px;
+}
+#homev2 .agent-row img {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+#homev2 .agent-row img.mono {
+  filter: invert(1) brightness(0.9);
+}
+#homev2 .agent-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#homev2 .agent-signed {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-left: -4px;
+}
+#homev2 .agent-signed .b {
+  fill: var(--accent);
+}
+#homev2 .agent-signed .c {
+  fill: none;
+  stroke: var(--accent-ink);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#homev2 .agent-select {
+  position: relative;
+  margin-left: auto;
+  flex: none;
+}
+#homev2 .agent-select select {
+  appearance: none;
+  width: 96px;
+  height: 28px;
+  padding: 0 26px 0 10px;
+  border-radius: 7px;
+  background: #ffffff0a;
+  box-shadow: inset 0 0 0 1px var(--edge);
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+#homev2 .agent-select select.danger {
+  color: var(--danger);
+}
+#homev2 .agent-select select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+#homev2 .agent-select option {
+  background: var(--raised);
+  color: var(--text);
+}
+#homev2 .agent-select svg {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  translate: 0 -50%;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+#homev2 .result-tabs {
+  padding: 10px 10px 0;
+}
+#homev2 .seg-wide {
+  width: 100%;
+}
+#homev2 .seg-wide .seg-opt {
+  height: 28px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 #homev2 .json {
-  padding: 16px;
+  flex: 1;
+  min-height: calc(12 * 20px + 28px);
+  padding: 14px 16px 14px 0;
   overflow-x: auto;
-  font: 0.8125rem/1.7 var(--font-code);
+  font: 13px/20px "Departure Mono", var(--font-code);
   white-space: pre;
   background: none;
+  counter-reset: ln;
+  -webkit-font-smoothing: none;
+}
+#homev2 .j-line {
+  display: block;
+  counter-increment: ln;
+}
+#homev2 .j-line::before {
+  content: counter(ln);
+  display: inline-block;
+  box-sizing: content-box;
+  width: 2ch;
+  margin-right: 16px;
+  padding-inline: 12px 10px;
+  text-align: right;
+  color: #ffffff33;
+  box-shadow: inset -1px 0 0 var(--edge);
 }
 #homev2 .j-k {
   color: var(--accent);
 }
-#homev2 .j-s {
+#homev2 .j-s,
+#homev2 .j-true {
   color: var(--success);
 }
 #homev2 .j-b {
   color: var(--danger);
 }
-#homev2 .j-true {
-  color: var(--success);
+#homev2 .j-n {
+  color: #fab387;
 }
 #homev2 .j-p {
   color: var(--text-faint);
 }
-#homev2 .j-line {
-  display: block;
+#homev2 .j-line span {
+  transition: background-color 160ms var(--ease-out);
 }
-#homev2 .checks {
-  list-style: none;
+#homev2 .j-line .j-sel {
+  background: color-mix(in oklab, currentColor 18%, transparent);
+}
+#homev2 .sig-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px 12px 16px;
+  box-shadow: inset 0 1px 0 var(--edge);
 }
-#homev2 .checks li {
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: var(--panel);
-  box-shadow: inset 0 0 0 1px var(--edge);
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  transition:
-    color 160ms ease,
-    box-shadow 160ms ease;
+#homev2 .sig-detail {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
 }
-#homev2 .checks li.active {
+#homev2 .sig-name {
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 400;
   color: var(--text);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 60%, transparent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#homev2 .sig-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+#homev2 .sig-state svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  fill-rule: evenodd;
+}
+#homev2 .sig-state.blocked {
+  color: var(--danger);
+}
+#homev2 .sig-state.flagged {
+  color: var(--caution);
+}
+#homev2 .sig-state.verified {
+  color: var(--success);
+}
+#homev2 .sig-nav {
+  display: flex;
+  flex: none;
+  gap: 2px;
+}
+#homev2 .sig-arrow {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--text-faint);
+  transition: scale 160ms var(--ease-out);
+}
+#homev2 .sig-arrow svg,
+#homev2 .sig-tile svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#homev2 .sig-arrow:active,
+#homev2 .sig-tile:active {
+  scale: 0.94;
+}
+#homev2 .sig-arrow:focus-visible,
+#homev2 .sig-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+#homev2 .sig-tiles {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  padding-top: 1px;
+  background: var(--edge);
+}
+#homev2 .sig-tile {
+  --state: var(--text);
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 46px;
+  color: #7f849ccc;
+  background: var(--raised);
+  transition:
+    color 200ms var(--ease-out),
+    background-color 200ms var(--ease-out),
+    scale 160ms var(--ease-out);
+}
+#homev2 .sig-tile.blocked {
+  --state: var(--danger);
+}
+#homev2 .sig-tile.flagged {
+  --state: var(--caution);
+}
+#homev2 .sig-tile.verified {
+  --state: var(--success);
+}
+#homev2 .sig-tile:not(.passed) {
+  color: var(--state);
+  background: color-mix(in oklab, var(--state) 6%, var(--raised));
+}
+#homev2 .sig-tile::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--state);
+  scale: 0 1;
+  transition: scale 240ms var(--ease-out);
+}
+#homev2 .sig-tile.current {
+  color: var(--text);
+  background: color-mix(in oklab, var(--text) 6%, var(--raised));
+}
+#homev2 .sig-tile.current:not(.passed) {
+  color: var(--state);
+  background: color-mix(in oklab, var(--state) 13%, var(--raised));
+}
+#homev2 .sig-tile.current::after {
+  scale: 1 1;
+}
+@media (hover: hover) {
+  #homev2 .sig-arrow:hover {
+    color: var(--text);
+    background: #ffffff0a;
+  }
+  #homev2 .seg-opt:not([aria-checked="true"]):not([aria-selected="true"]):hover {
+    color: var(--text-secondary);
+  }
+  #homev2 .agent-select select:hover {
+    background: #ffffff12;
+  }
+  #homev2 .sig-tile.passed:not(.current):hover {
+    color: var(--text-secondary);
+    background: color-mix(in oklab, var(--text) 3%, var(--raised));
+  }
+  #homev2 .sig-tile:not(.passed):not(.current):hover {
+    background: color-mix(in oklab, var(--state) 10%, var(--raised));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #homev2 .sig-detail.moved {
+    animation: sig-in 200ms var(--ease-out);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #homev2 .odo-strip,
+  #homev2 .seg-pill {
+    transition: none;
+  }
+}
+@media (max-width: 960px) {
+  #homev2 .settings {
+    contain: none;
+  }
+  #homev2 .settings-scroll {
+    height: auto;
+    overflow: visible;
+  }
+  #homev2 .json {
+    min-height: 0;
+  }
+}
+@media (max-width: 560px) {
+  #homev2 .prot-top {
+    flex-wrap: wrap;
+  }
+  #homev2 .seg-wide .seg-opt {
+    padding-inline: 2px;
+    font-size: 0.75rem;
+    text-overflow: clip;
+  }
+}
+@keyframes sig-in {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    translate: 0 3px;
+  }
 }
 #homev2 .shot {
   margin-top: 56px;

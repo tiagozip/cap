@@ -161,7 +161,7 @@ export default component$(() => (
 | --- | --- | --- |
 | `solve` | แก้ challenge สำเร็จ | `{ token }` |
 | `progress` | การแก้มีความคืบหน้า | `{ progress }` ตั้งแต่ 0 ถึง 100 |
-| `error` | เกิดข้อผิดพลาด | `{ isCap, code, message }` รหัสอยู่ใน[การแก้ปัญหา](./troubleshooting/instrumentation.md#error-codes) |
+| `error` | เกิดข้อผิดพลาด | `{ isCap, code, message }` รหัสอยู่ใน[การแก้ปัญหา](./error-codes.md) |
 | `reset` | วิดเจ็ตกลับสู่สถานะเริ่มต้น | `{}` |
 
 ## แอตทริบิวต์ {#attributes}

@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted } from "vue";
+import { onBeforeUnmount, onMounted } from "vue";
+import { demoInstrumentation, judgeDemo, onDemoError } from "../demoCheck.js";
 import { demoMode } from "./demoMode";
 
 onMounted(() => {
@@ -26,6 +27,7 @@ onMounted(() => {
           ]),
           token: "",
           expires: Date.now() + 6000 * 100,
+          ...(await demoInstrumentation()),
         }),
         {
           status: 200,
@@ -34,6 +36,7 @@ onMounted(() => {
       );
     }
     if (url === "/api/redeem") {
+      judgeDemo(options);
       if (document.querySelector(".signin-button")) {
         document.querySelector(".signin-button").classList.add("active");
       }
@@ -57,6 +60,8 @@ onMounted(() => {
     return await window.fetch(url, options);
   };
 
+  document.addEventListener("error", onDemoError);
+
   if (!document.querySelector("script[data-cap-floating-loaded]")) {
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/cap-widget/cap-floating.min.js";
@@ -65,6 +70,8 @@ onMounted(() => {
     document.head.appendChild(s);
   }
 });
+
+onBeforeUnmount(() => document.removeEventListener("error", onDemoError));
 </script>
 
 <template>

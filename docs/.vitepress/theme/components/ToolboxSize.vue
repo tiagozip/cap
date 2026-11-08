@@ -29,9 +29,12 @@ defineProps({ t: { type: Object, required: true }, lp: { type: String, default: 
 #homev2 .cell.tb-c-size .sz-art::before {
   content: "";
   position: absolute;
-  inset: -60px 10% auto;
-  height: 240px;
-  background: radial-gradient(ellipse 50% 60% at 50% 0%, #ffffff0b, transparent 70%);
+  inset: 0 0 auto;
+  height: 112px;
+  background:
+    radial-gradient(ellipse 40% 90% at 50% 0%, #ffffff0b, transparent 70%),
+    repeating-linear-gradient(-45deg, #ffffff0d 0 1px, transparent 1px 7px);
+  mask: linear-gradient(transparent, #000 70%);
   pointer-events: none;
 }
 #homev2 .cell.tb-c-size .sz-shelf {
@@ -39,10 +42,10 @@ defineProps({ t: { type: Object, required: true }, lp: { type: String, default: 
 }
 #homev2 .cell.tb-c-size .sz-plate {
   --c: 18px;
-  top: 30px;
+  top: 16px;
   left: calc(50% - 74px);
   width: 148px;
-  height: 83px;
+  height: 97px;
 }
 #homev2 .cell.tb-c-size .sz-key {
   position: absolute;

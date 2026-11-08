@@ -161,7 +161,7 @@ Each event is a `CustomEvent`.
 | --- | --- | --- |
 | `solve` | The challenge is solved | `{ token }` |
 | `progress` | Solving progresses | `{ progress }`, from 0 to 100 |
-| `error` | Something fails | `{ isCap, code, message }`. The codes are listed in [troubleshooting](./troubleshooting/instrumentation.md#error-codes). |
+| `error` | Something fails | `{ isCap, code, message }`. The codes are listed in [troubleshooting](./error-codes.md). |
 | `reset` | The widget resets | `{}` |
 
 ## Attributes

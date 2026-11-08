@@ -37,7 +37,7 @@ Cap identifie les agents IA à partir des marques que leurs outils laissent dans
 
 Le programme tourne dans le navigateur du visiteur. Les défenses rendent donc sa falsification plus coûteuse que son exécution : fonctions intégrées gelées, hachages sur chaque champ, résultats liés à un seul défi et marqueurs d'échec qui entraînent toujours un échec. Cap ne peut toujours pas distinguer une personne d'un vrai navigateur piloté par une personne. Il n'arrête donc pas les personnes payées pour résoudre les défis, les agents dont les interactions arrivent sous forme d'événements ordinaires du système d'exploitation, ni les navigateurs recompilés depuis les sources pour masquer l'automatisation. La preuve de travail continue d'imposer un coût à chacune de ces résolutions.
 
-Les codes d'échec sont listés dans le [dépannage](./troubleshooting/instrumentation.md#error-codes).
+Les codes d'échec sont listés dans le [dépannage](./error-codes.md).
 
 ## Widgets de versions antérieures {#widgets-from-earlier-releases}
 

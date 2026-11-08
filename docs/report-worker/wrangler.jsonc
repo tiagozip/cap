@@ -1,0 +1,22 @@
+{
+  "name": "cap-troubleshoot-reports",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "routes": [{ "pattern": "report.trycap.dev", "custom_domain": true }],
+  "workers_dev": false,
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cap-troubleshoot-reports",
+      "database_id": "fbbadb7a-f707-4260-b170-568de37f96fe"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "LIMIT",
+      "namespace_id": "4801",
+      "simple": { "limit": 4, "period": 60 }
+    }
+  ]
+}

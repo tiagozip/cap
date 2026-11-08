@@ -18,8 +18,8 @@ const make = (start) => {
   };
   const seed = Array.from({ length: 8 }, () => rnd(16));
   const reg = () => `r${rnd(8)}`;
-  const lines = Array.from({ length: 8 }, (_, i) => {
-    if (i === 7) return ["br", "start, 1/2"];
+  const lines = Array.from({ length: 7 }, (_, i) => {
+    if (i === 6) return ["br", "start, 1/2"];
     const k = rnd(10);
     if (k < 3) return [["mulor", "mulxor", "muladd"][k], `${reg()}, [${reg()}], ${[1, 9, 33][rnd(3)]}`];
     if (k < 7) return [["add", "sub", "xor", "or"][k - 3], `${reg()}, ${reg()}`];
@@ -193,9 +193,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 30px;
   min-height: 0;
-  padding: 30px 28px 8px;
+  padding: 30px 28px 0;
 }
 #homev2 .cell.tb-c-pow .pw-art::before {
   content: "";
@@ -210,10 +210,10 @@ onBeforeUnmount(() => {
 }
 #homev2 .cell.tb-c-pow .pw-plate {
   --c: 22px;
-  top: 8px;
-  left: calc(50% - 158px);
-  width: 316px;
-  height: 135px;
+  top: 18px;
+  left: calc(50% - 146px);
+  width: 292px;
+  height: 125px;
 }
 #homev2 .cell.tb-c-pow .pw-chip {
   position: relative;

@@ -161,8 +161,8 @@ onBeforeUnmount(() => {
 }
 #homev2 .cell.tb-c-modes .mo-plate {
   --c: 20px;
-  left: calc(50% - var(--mo-w) / 2 - 30px);
-  width: calc(var(--mo-w) + 60px);
+  left: calc(50% - var(--mo-w) / 2 - 20px);
+  width: calc(var(--mo-w) + 40px);
   top: 14px;
   height: 103px;
 }

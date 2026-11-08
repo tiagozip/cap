@@ -119,7 +119,7 @@ onBeforeUnmount(() => {
   <article class="cell tb-c-api" @pointerenter="onEnter" @pointerleave="onLeave">
     <div ref="art" class="tb-art tba-art" :data-lit="lit" aria-hidden="true">
       <div class="tb-shelf tba-shelf" :style="{ top: `${geo.cy}px` }"></div>
-      <div class="tb-plate tba-plate" :style="{ left: `${geo.cx - 82}px`, top: `${geo.cy - 66}px` }"></div>
+      <div class="tb-plate tba-plate" :style="{ left: `${geo.cx - 66}px`, top: `${geo.cy - 66}px` }"></div>
       <div class="tba-light" :style="{ left: `${geo.cx}px` }"></div>
       <svg class="tba-lines" :width="size.w" :height="size.h" :style="{ '--cx': `${geo.cx}px`, '--cy': `${geo.cy}px` }">
         <path v-for="(l, i) in geo.tiles" :key="l.id" :d="l.path" :class="{ 'tba-on': i === active }" />
@@ -179,7 +179,7 @@ onBeforeUnmount(() => {
 }
 #homev2 .cell.tb-c-api .tba-plate {
   --c: 22px;
-  width: 164px;
+  width: 132px;
   height: 67px;
 }
 #homev2 .tb-c-api .tba-tile,

@@ -162,7 +162,9 @@ export function createTorch({ field, canvas, lamp, avoid, lines, reduced }) {
       const y = r * cellH + cellH / 2;
       for (let c = 0; c < cols; c++) {
         const x = c * cellW + cellW / 2;
-        let m = 1;
+        const e = Math.hypot((x - width / 2) / (width / 2), ((y - height / 2) / (height / 2)) * 0.55);
+        const rim = smooth(0.72, 0.92, Math.abs(y - height / 2) / (height / 2));
+        let m = narrow ? 1 : Math.max(smooth(0.25, 0.72, e), rim);
         let s = 1;
         for (const z of zones) {
           const d = Math.hypot(Math.max(z.l - x, 0, x - z.r), Math.max(z.t - y, 0, y - z.b));

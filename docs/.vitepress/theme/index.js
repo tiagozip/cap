@@ -7,14 +7,20 @@ import InstrumentationFlow from "./components/InstrumentationFlow.vue";
 import Demo from "./components/Demo.vue";
 import DemoReply from "./components/DemoReply.vue";
 import DemoTabs from "./components/DemoTabs.vue";
+import DemoVerdict from "./components/DemoVerdict.vue";
 import GithubStars from "./components/GithubStars.vue";
 import HomeV2 from "./components/HomeV2.vue";
+import TroubleshootCheck from "./components/TroubleshootCheck.vue";
 import "./style.css";
 
 /** @type {import('vitepress').Theme} */
 export default {
   extends: DefaultTheme,
-  Layout: () => h(DefaultTheme.Layout, null, { "nav-bar-content-after": () => h(GithubStars) }),
+  Layout: () =>
+    h(DefaultTheme.Layout, null, {
+      "nav-bar-content-after": () => h(GithubStars),
+      "layout-bottom": () => h(DemoVerdict),
+    }),
   enhanceApp({ app, router, siteData }) {
     if (typeof window !== "undefined") {
       const known = Object.keys(siteData.value.locales).filter((k) => k !== "root");
@@ -36,5 +42,6 @@ export default {
     app.component("DemoReply", DemoReply);
     app.component("DemoTabs", DemoTabs);
     app.component("HomeV2", HomeV2);
+    app.component("TroubleshootCheck", TroubleshootCheck);
   },
 };

@@ -158,6 +158,7 @@ const UI = {
     core: "Core library",
     community: "Community libraries",
     instrumentation: "Instrumentation",
+    errorCodes: "Error codes",
     hashwx: "HashWX",
     benchmark: "Benchmark",
     compliance: "Compliance",
@@ -199,6 +200,7 @@ const UI = {
     core: "核心库",
     community: "社区库",
     instrumentation: "Instrumentation",
+    errorCodes: "错误码",
     hashwx: "HashWX 工作量证明",
     benchmark: "性能基准",
     compliance: "合规",
@@ -244,6 +246,7 @@ const UI = {
     core: "Core-Bibliothek",
     community: "Community-Bibliotheken",
     instrumentation: "Instrumentation",
+    errorCodes: "Fehlercodes",
     hashwx: "HashWX-Proof-of-Work",
     benchmark: "Benchmark",
     compliance: "Compliance",
@@ -289,6 +292,7 @@ const UI = {
     core: "Bibliothèque core",
     community: "Bibliothèques communautaires",
     instrumentation: "Instrumentation",
+    errorCodes: "Codes d'erreur",
     hashwx: "Preuve de travail HashWX",
     benchmark: "Benchmark",
     compliance: "Conformité",
@@ -334,6 +338,7 @@ const UI = {
     core: "ไลบรารีหลัก",
     community: "ไลบรารีจากชุมชน",
     instrumentation: "Instrumentation",
+    errorCodes: "รหัสข้อผิดพลาด",
     hashwx: "พิสูจน์การทำงาน HashWX",
     benchmark: "การวัดประสิทธิภาพ",
     compliance: "การปฏิบัติตามข้อกำหนด",
@@ -437,6 +442,7 @@ const mainSidebar = (loc) => {
         { text: t.overview, link: `${p}/guide/workings.md` },
         { text: t.hashwx, link: `${p}/guide/hashwx.md` },
         { text: t.instrumentation, link: `${p}/guide/instrumentation.md` },
+        { text: t.errorCodes, link: `${p}/guide/error-codes.md` },
       ],
     },
     {
@@ -663,6 +669,16 @@ export default withMermaid({
   vite: {
     define: { __CAP_STARS__: JSON.stringify(GITHUB_STARS_LABEL) },
     plugins: [
+      {
+        name: "cap-core-in-browser",
+        enforce: "pre",
+        resolveId(id, importer, opts) {
+          if (!importer?.includes("/core/src/")) return;
+          if (opts?.ssr) return ["javascript-obfuscator", "esbuild"].includes(id) ? { id, external: true } : undefined;
+          if (!["node:crypto", "node:zlib", "javascript-obfuscator", "esbuild"].includes(id)) return;
+          return fileURLToPath(new URL("./theme/nodeShim.js", import.meta.url));
+        },
+      },
       llmstxt({
         ignoreFiles: [
           ...LOCALES.map((l) => `${l}/**`),
@@ -927,7 +943,7 @@ export default withMermaid({
     [
       "script",
       {
-        src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.58",
+        src: "https://cdn.jsdelivr.net/npm/cap-widget@0.1.59",
         async: true,
       },
     ],

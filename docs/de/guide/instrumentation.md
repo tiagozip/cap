@@ -37,7 +37,7 @@ Cap benennt KI-Agenten anhand von Markierungen, die ihre Werkzeuge in der Seite 
 
 Das Programm läuft im Browser des Besuchers. Die Schutzmaßnahmen machen das Fälschen deshalb teurer als die Ausführung: eingefrorene eingebaute Funktionen, Hashes über jedes Feld, Ergebnisse, die an eine Challenge gebunden sind, und Fehlermarker, die immer zum Fehlschlagen führen. Cap kann trotzdem keinen Menschen von einem echten Browser unterscheiden, den ein Mensch steuert. Es hält also keine bezahlten menschlichen Löser auf, keine Agenten, deren Eingaben als gewöhnliche Betriebssystem-Events ankommen, und keine aus dem Quellcode neu gebauten Browser, die Automatisierung verstecken. Der Proof-of-Work lässt jede dieser Lösungen weiterhin etwas kosten.
 
-Die Fehlercodes stehen unter [Fehlerbehebung](./troubleshooting/instrumentation.md#error-codes).
+Die Fehlercodes stehen unter [Fehlerbehebung](./error-codes.md).
 
 ## Widgets aus früheren Versionen {#widgets-from-earlier-releases}
 

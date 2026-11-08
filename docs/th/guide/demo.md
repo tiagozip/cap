@@ -97,5 +97,3 @@ description: "ลอง Cap แบบสด: เดโมจริงของ�
 </div>
 
 <DemoReply />
-
-<p style="font-size: 10px;line-height: 1.3;color: var(--vp-c-text-3);max-width: 300px;user-select: none;">เซิร์ฟเวอร์ตัวอย่างของเดโมนี้ไม่ได้รัน instrumentation</p>

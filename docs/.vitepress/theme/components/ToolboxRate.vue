@@ -118,8 +118,8 @@ onBeforeUnmount(() => {
 #homev2 .cell.tb-c-rate .rt-plate {
   --c: 16px;
   top: 52px;
-  left: calc(50% - 80px);
-  width: 160px;
+  left: calc(50% - 75px);
+  width: 150px;
   height: calc(var(--rt-y) - 51px);
 }
 #homev2 .cell.tb-c-rate .rt-dot {

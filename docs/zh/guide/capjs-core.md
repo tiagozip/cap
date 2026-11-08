@@ -252,7 +252,7 @@ const result = await validateChallenge(SECRET, body, {
 
 成功时返回 `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }`，以及[行为与智能体](#行为与智能体)中描述的 `behavior` 或 `agent`。`riskFlags` 列出不会单独触发拦截的信号，例如 `native_tamper` 或 `legacy_widget`，你可以据此提高该访问者的难度。instrumentation 页面列出了[浏览器检查标志](./instrumentation.md#自动化浏览器检测)和[行为标志](./instrumentation.md#行为评分)。
 
-失败时返回 `{ success: false, reason }`。Instrumentation 失败还带有 `instr_error: true`，`instr_automated_browser` 和 `instr_automated_interaction` 带有 `blockedBy` 列表，行为检测失败带有 `behavior`。[错误码表](./troubleshooting/instrumentation.md#错误码)列出了所有 `reason`。
+失败时返回 `{ success: false, reason }`。Instrumentation 失败还带有 `instr_error: true`，`instr_automated_browser` 和 `instr_automated_interaction` 带有 `blockedBy` 列表，行为检测失败带有 `behavior`。[错误码表](./error-codes.md)列出了所有 `reason`。
 
 ### 底层导出
 

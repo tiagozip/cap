@@ -17,7 +17,7 @@ The frame shares the page's origin so the program can see the page around it. Pa
 
 ## Automated browser detection
 
-With **Attempt to block headless browsers** on in capd, or `blockAutomatedBrowsers` in core, the server blocks browsers that show automation markers: `navigator.webdriver`, headless user agents, stealth plugin patches, Playwright's Firefox protocol, or a page and Web Worker that disagree about the device. The checks look for automation and tampering, never for which browser someone uses. Failed checks are listed in `blockedBy`, and weaker hints go to `riskFlags` without blocking.
+With **Attempt to block headless browsers** on in capd, or `blockAutomatedBrowsers` in core, the server blocks browsers that show automation markers. Failed checks are listed in `blockedBy`, and weaker hints go to `riskFlags` without blocking.
 
 ## Interaction detection
 
@@ -37,7 +37,7 @@ Cap names AI agents from marks their tools leave in the page, from click and typ
 
 The program runs in the visitor's browser, so the defenses make faking it cost more than running it: frozen built-ins, hashes over every field, results tied to one challenge, and failure markers that only ever fail. Cap still can't tell a person from a real browser that a person drives, so it doesn't stop paid human solvers, agents whose input arrives as ordinary operating system events, or browsers rebuilt from source to hide automation. Proof of work is what still charges each of those solves.
 
-The failure codes are listed in [troubleshooting](./troubleshooting/instrumentation.md#error-codes).
+The failure codes are listed in [troubleshooting](./error-codes.md).
 
 ## Widgets from earlier releases
 

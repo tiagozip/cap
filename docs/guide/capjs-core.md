@@ -253,7 +253,7 @@ Format 1 returns `{ challenge, token, expires, instrumentation? }`, and format 2
 
 On success it returns `{ success: true, token, tokenKey, expires, scope, iat, riskFlags }`, plus `behavior` or `agent` as described in [behavior and agents](#behavior-and-agents). `riskFlags` lists signals that don't block on their own, like `native_tamper` or `legacy_widget`, so you can raise the difficulty for that visitor. The instrumentation page lists the [browser check flags](./instrumentation.md#automated-browser-detection) and the [behavior flags](./instrumentation.md#behavior-scoring).
 
-On failure it returns `{ success: false, reason }`. Instrumentation failures also have `instr_error: true`, `instr_automated_browser` and `instr_automated_interaction` have a `blockedBy` list, and behavior failures have `behavior`. Every `reason` is listed in the [error codes table](./troubleshooting/instrumentation.md#error-codes).
+On failure it returns `{ success: false, reason }`. Instrumentation failures also have `instr_error: true`, `instr_automated_browser` and `instr_automated_interaction` have a `blockedBy` list, and behavior failures have `behavior`. Every `reason` is listed in the [error codes table](./error-codes.md).
 
 ### Lower-level exports
 

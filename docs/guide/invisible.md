@@ -34,7 +34,7 @@ Without `element`, Cap creates a hidden `<cap-widget>` with haptics off. A hidde
 
 Fetches and solves a challenge. Resolves to `{ success, token }`.
 
-A failure fires an `error` event and rejects the promise with an `Error` whose `code` is one of the [error codes](./troubleshooting/instrumentation.md#error-codes), such as `instr_csp_blocked` for a [blocked frame](./widget.md#content-security-policy):
+A failure fires an `error` event and rejects the promise with an `Error` whose `code` is one of the [error codes](./error-codes.md), such as `instr_csp_blocked` for a [blocked frame](./widget.md#content-security-policy):
 
 ```js
 try {

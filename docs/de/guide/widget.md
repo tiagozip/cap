@@ -161,7 +161,7 @@ Jedes Event ist ein `CustomEvent`.
 | --- | --- | --- |
 | `solve` | Die Challenge gelöst ist | `{ token }` |
 | `progress` | Das Lösen voranschreitet | `{ progress }`, von 0 bis 100 |
-| `error` | Etwas fehlschlägt | `{ isCap, code, message }`. Die Codes stehen unter [Fehlerbehebung](./troubleshooting/instrumentation.md#error-codes). |
+| `error` | Etwas fehlschlägt | `{ isCap, code, message }`. Die Codes stehen unter [Fehlerbehebung](./error-codes.md). |
 | `reset` | Das Widget zurückgesetzt wird | `{}` |
 
 ## Attribute {#attributes}

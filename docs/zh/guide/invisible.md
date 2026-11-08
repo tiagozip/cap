@@ -34,7 +34,7 @@ const cap = new Cap({
 
 请求并求解一个质询。Promise 成功时返回 `{ success, token }`。
 
-失败时会触发 `error` 事件，并以一个 `Error` 拒绝 Promise，其 `code` 为[错误码](./troubleshooting/instrumentation.md#错误码)之一，例如[框架被拦截](./widget.md#内容安全策略)时的 `instr_csp_blocked`：
+失败时会触发 `error` 事件，并以一个 `Error` 拒绝 Promise，其 `code` 为[错误码](./error-codes.md)之一，例如[框架被拦截](./widget.md#内容安全策略)时的 `instr_csp_blocked`：
 
 ```js
 try {

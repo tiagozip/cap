@@ -97,5 +97,3 @@ description: "Try Cap live: a working demo of the open-source, self-hosted CAPTC
 </div>
 
 <DemoReply />
-
-<p style="font-size: 10px;line-height: 1.3;color: var(--vp-c-text-3);max-width: 300px;user-select: none;">This demo's placeholder server does not execute instrumentation.</p>

@@ -34,7 +34,7 @@ Ohne `element` erzeugt Cap ein verstecktes `<cap-widget>` mit deaktivierter Vibr
 
 Fordert eine Challenge an und löst sie. Das Promise liefert `{ success, token }`.
 
-Ein Fehler löst ein `error`-Event aus und lehnt das Promise mit einem `Error` ab, dessen `code` einer der [Fehlercodes](./troubleshooting/instrumentation.md#error-codes) ist, etwa `instr_csp_blocked` für einen [blockierten Frame](./widget.md#content-security-policy):
+Ein Fehler löst ein `error`-Event aus und lehnt das Promise mit einem `Error` ab, dessen `code` einer der [Fehlercodes](./error-codes.md) ist, etwa `instr_csp_blocked` für einen [blockierten Frame](./widget.md#content-security-policy):
 
 ```js
 try {
