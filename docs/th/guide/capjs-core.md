@@ -78,7 +78,9 @@ await store.delete(`cap-token:${tokenKey}`);
 
 ## HashWX {#format-2-hashwx}
 
-หากไม่ระบุตัวเลือก `generateChallenge` จะออก proof-of-work แบบ SHA-256 ส่วน [HashWX](./hashwx.md) ต้านทาน GPU ได้ดีกว่ามาก และ capd ใช้มันสำหรับคีย์ใหม่ เปิดใช้ผ่าน API รูปแบบ 2:
+โดยค่าเริ่มต้น `generateChallenge` จะออก proof-of-work แบบ [HashWX](./hashwx.md) ซึ่งเป็นรูปแบบเดียวกับที่ capd ใช้สำหรับคีย์ใหม่ และต้านทาน GPU ได้ดีกว่า SHA-256 มาก `instrumentation: true` และ `behavior` จะเพิ่ม instrumentation challenge เข้าไปด้วย
+
+หากต้องการระบุโปรโตคอลเอง ให้ส่งพร้อม `format: 2`:
 
 ```js
 return await generateChallenge(SECRET, {
@@ -87,7 +89,7 @@ return await generateChallenge(SECRET, {
 });
 ```
 
-วิดเจ็ตตรวจจับรูปแบบเอง และ `validateChallenge` รองรับทั้งสองรูปแบบ ให้ส่ง `protocols` เสมอเมื่อใช้รูปแบบ 2 หากไม่ส่ง challenge จะใช้โปรโตคอล RSW ที่เลิกใช้แล้ว ซึ่งต้องมีคู่คีย์ RSA ใน `keypair` หรือตัวสร้าง challenge ใน `rsw`
+`format: 1` จะกลับไปใช้ proof-of-work แบบ SHA-256 เช่นเดียวกับการส่ง `challengeCount`, `challengeSize` หรือ `challengeDifficulty` โดยไม่ระบุ `format` วิดเจ็ตตรวจจับรูปแบบเอง และ `validateChallenge` รองรับทั้งสองรูปแบบ HashWX ต้องใช้วิดเจ็ตเวอร์ชัน 0.1.58 ขึ้นไป ดังนั้นให้อัปเดตวิดเจ็ตที่ปักเวอร์ชันไว้ก่อนอัปเดตไลบรารี
 
 | ตัวเลือก | ค่าเริ่มต้น | หน้าที่ |
 | --- | --- | --- |
@@ -227,7 +229,7 @@ const result = await validateChallenge(SECRET, body, {
 | `instrumentation` | `false` | ดู [instrumentation](#instrumentation) |
 | `instrumentationGenerator` | `generateInstrumentation` | ฟังก์ชัน async ที่สร้างสคริปต์ instrumentation |
 | `behavior` | `false` | ดู[พฤติกรรมและเอเจนต์](#behavior-and-agents) |
-| `format`, `protocols` | รูปแบบ 1 | ดู [HashWX](#format-2-hashwx) |
+| `format`, `protocols` | รูปแบบ 2 กับ HashWX | ดู [HashWX](#format-2-hashwx) การส่ง `keypair` หรือ `rsw` โดยไม่มี `protocols` จะใช้โปรโตคอล RSW ที่เลิกใช้แล้ว |
 | `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | ดู [HashWX](#format-2-hashwx) | การตั้งค่า HashWX สำหรับรูปแบบ 2 |
 | `keypair`, `t`, `rsw` | ไม่มี | การตั้งค่าสำหรับโปรโตคอล RSW ที่เลิกใช้แล้ว |
 

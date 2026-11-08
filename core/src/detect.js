@@ -472,25 +472,23 @@ export function detectAutomation(S, opts = {}) {
 
   const glsh = isPlainObject(S.glsh) ? S.glsh : null;
   const glRenderer = typeof glsh?.r === "string" ? glsh.r : gl;
-  const claimed = /Direct3D|D3D1[01]/i.test(glRenderer)
-    ? "hlsl"
-    : /Metal/i.test(glRenderer)
-      ? "metal"
-      : /ANGLE \(.*(OpenGL|Vulkan|SwiftShader)/i.test(glRenderer)
-        ? "glsl"
-        : null;
+  const claimsMetal = /Metal/i.test(glRenderer);
   const translated = ["hlsl", "metal", "glsl"].includes(glsh?.t)
     ? glsh.t
     : null;
-  const shaderLie = !!claimed && !!translated && claimed !== translated;
+  const shaderLie =
+    !!glRenderer && !!translated && claimsMetal !== (translated === "metal");
   add(
     "shader_mismatch",
     !shaderLie,
-    claimed && translated
-      ? shaderLie
-        ? `renderer claims ${claimed}, shaders compile to ${translated}`
-        : "consistent"
-      : "not measured",
+    !glRenderer || !translated
+      ? "not measured"
+      : !shaderLie
+        ? "consistent"
+        : claimsMetal
+          ? `renderer claims Metal, shaders compile to ${translated}`
+          : "renderer hides Metal, shaders compile to metal",
+    false,
   );
 
   const family = (str) => {

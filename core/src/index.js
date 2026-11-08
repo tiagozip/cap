@@ -298,7 +298,14 @@ function instrOptions(opts, ttlMs, bh) {
 export async function generateChallenge(secret, opts = {}) {
   assertSecret(secret);
 
-  if (opts.format === 2) {
+  const format =
+    opts.format ??
+    (["challengeCount", "challengeSize", "challengeDifficulty"].some(
+      (k) => opts[k] !== undefined,
+    )
+      ? 1
+      : 2);
+  if (format === 2) {
     return generateChallengeV2(secret, opts);
   }
 
@@ -519,9 +526,11 @@ async function generateChallengeV2(secret, opts) {
   const requested =
     Array.isArray(opts.protocols) && opts.protocols.length
       ? opts.protocols
-      : ["rsw"];
+      : opts.keypair || opts.rsw
+        ? ["rsw"]
+        : ["hashwx"];
   const protocols =
-    bh && !requested.includes("instrumentation")
+    (bh || opts.instrumentation) && !requested.includes("instrumentation")
       ? [...requested, "instrumentation"]
       : requested;
   const ttlMs = opts.expiresMs ?? DEFAULT_CHALLENGE_TTL_MS;

@@ -17,11 +17,25 @@ describe("generateChallenge", () => {
     expect(r.instrumentation).toBeUndefined();
   });
 
-  test("uses defaults when no opts passed", async () => {
+  test("issues HashWX when no opts passed", async () => {
     const r = await generateChallenge(TEST_SECRET);
-    expect(r.challenge.c).toBe(50);
-    expect(r.challenge.s).toBe(32);
-    expect(r.challenge.d).toBe(4);
+    expect(r.format).toBe(2);
+    expect(r.challenges.map((c) => c.protocol)).toEqual(
+      Array(4).fill("hashwx"),
+    );
+  });
+
+  test("adds instrumentation to the HashWX default", async () => {
+    const r = await generateChallenge(TEST_SECRET, { instrumentation: true });
+    expect(r.format).toBe(2);
+    expect(r.challenges.some((c) => c.protocol === "instrumentation")).toBe(
+      true,
+    );
+  });
+
+  test("format 1 keeps the SHA-256 defaults", async () => {
+    const r = await generateChallenge(TEST_SECRET, { format: 1 });
+    expect(r.challenge).toEqual({ c: 50, s: 32, d: 4 });
   });
 
   test("respects custom expiresMs", async () => {

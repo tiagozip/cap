@@ -22,7 +22,7 @@ const challenge = await generateChallenge(SECRET, {
   scope: "signup",        // optional
   instrumentation: true,  // optional
 });
-// → { challenge: { c, s, d }, token, expires, instrumentation? }
+// → { token, format: 2, challenges, expires }
 
 // 2) Server route: validate the redeemed challenge
 const result = await validateChallenge(SECRET, {
@@ -43,12 +43,16 @@ if (result.success) {
 
 ## API
 
-### `generateChallenge(secret, opts?) → { challenge, token, expires, instrumentation? }`
+### `generateChallenge(secret, opts?) → { token, format: 2, challenges, expires }`
+
+Issues HashWX proof of work by default. HashWX needs widget 0.1.58 or later.
 
 - `secret` — string or Buffer ≥16 bytes. Master HMAC key.
-- `opts.challengeCount` — default `50`
-- `opts.challengeSize` — default `32`
-- `opts.challengeDifficulty` — default `4`
+- `opts.format` — `2` by default. `1` issues SHA-256 proof of work and returns `{ challenge, token, expires, instrumentation? }`
+- `opts.protocols` — format-2 protocols, default `["hashwx"]` plus `"instrumentation"` when instrumentation or behavior is on
+- `opts.challengeCount` — format 1, default `50`. Passing it, `challengeSize` or `challengeDifficulty` without `format` picks format 1
+- `opts.challengeSize` — format 1, default `32`
+- `opts.challengeDifficulty` — format 1, default `4`
 - `opts.expiresMs` — default `600000` (10 min)
 - `opts.scope` — optional string bound to the challenge
 - `opts.extra` — optional object embedded in the JWT payload

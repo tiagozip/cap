@@ -78,7 +78,9 @@ await store.delete(`cap-token:${tokenKey}`);
 
 ## HashWX {#format-2-hashwx}
 
-不传选项时，`generateChallenge` 签发 SHA-256 工作量证明。[HashWX](./hashwx.md) 抵抗 GPU 的能力强得多，capd 的新密钥使用它。通过 format-2 API 启用：
+`generateChallenge` 默认签发 [HashWX](./hashwx.md) 工作量证明，与 capd 新密钥使用的格式相同。它抵抗 GPU 的能力比 SHA-256 强得多。`instrumentation: true` 和 `behavior` 会额外添加一个检测质询。
+
+如需自行指定协议，请配合 `format: 2` 传入：
 
 ```js
 return await generateChallenge(SECRET, {
@@ -87,7 +89,7 @@ return await generateChallenge(SECRET, {
 });
 ```
 
-验证组件会自行检测格式，`validateChallenge` 支持两种格式。使用格式 2 时务必传入 `protocols`。否则，质询会使用已弃用的 RSW 协议，需要在 `keypair` 中提供 RSA 密钥对，或在 `rsw` 中提供 minter。
+`format: 1` 会切回 SHA-256 工作量证明，不传 `format` 却传入 `challengeCount`、`challengeSize` 或 `challengeDifficulty` 时也一样。验证组件会自行检测格式，`validateChallenge` 支持两种格式。HashWX 需要 0.1.58 或更高版本的验证组件，因此请先更新固定版本的验证组件，再更新本库。
 
 | 选项 | 默认值 | 作用 |
 | --- | --- | --- |
@@ -227,7 +229,7 @@ const result = await validateChallenge(SECRET, body, {
 | `instrumentation` | `false` | 见 [instrumentation](#instrumentation)。 |
 | `instrumentationGenerator` | `generateInstrumentation` | 生成 instrumentation 脚本的异步函数。 |
 | `behavior` | `false` | 见[行为与智能体](#行为与智能体)。 |
-| `format`, `protocols` | 格式 1 | 见 [HashWX](#format-2-hashwx)。 |
+| `format`, `protocols` | 格式 2，使用 HashWX | 见 [HashWX](#format-2-hashwx)。传入 `keypair` 或 `rsw` 但不传 `protocols` 时会使用已弃用的 RSW 协议。 |
 | `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | 见 [HashWX](#format-2-hashwx) | 格式 2 的 HashWX 设置。 |
 | `keypair`, `t`, `rsw` | 无 | 已弃用的 RSW 协议设置。 |
 

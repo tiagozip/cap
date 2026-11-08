@@ -7,7 +7,7 @@ description: "HashWX ist Caps GPU-resistenter Proof-of-Work. Jede Challenge erze
 
 HashWX ist Caps Standard-Proof-of-Work. Während SHA-256 eine feste Hash-Funktion nutzt, erzeugt HashWX für jeden Nonce-Block eine neue, gebaut aus Integer-Operationen und Verzweigungen, die GPUs schlecht ausführen. Entworfen hat es [tevador](https://github.com/tevador/hashwx), von dem auch RandomX stammt. Sein [Designdokument](https://github.com/tevador/hashwx/blob/master/doc/design.md) erklärt die Funktionsweise. Cap nutzt seinen WebAssembly-Referenz-Build.
 
-Es ist in capd der Standard für neue Keys. In der Core-Bibliothek ist es [opt-in](./capjs-core.md#format-2-hashwx).
+Es ist der Standard in capd und in der [Core-Bibliothek](./capjs-core.md#format-2-hashwx).
 
 ## Warum nicht SHA-256
 

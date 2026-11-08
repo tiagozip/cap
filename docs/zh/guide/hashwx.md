@@ -7,7 +7,7 @@ description: "HashWX 是 Cap 的抗 GPU 工作量证明。每个质询都会生�
 
 HashWX 是 Cap 默认的工作量证明。SHA-256 使用固定的哈希函数，HashWX 则为每个 nonce 块生成一个新的哈希函数，由 GPU 不擅长执行的整数运算和分支构成。它由 [tevador](https://github.com/tevador/hashwx) 设计，他也是 RandomX 的作者，其[设计文档](https://github.com/tevador/hashwx/blob/master/doc/design.md)解释了工作原理。Cap 使用他的 WebAssembly 参考构建。
 
-它是 capd 新建密钥的默认协议。在核心库中则需要[手动启用](./capjs-core.md#format-2-hashwx)。
+它是 capd 和[核心库](./capjs-core.md#format-2-hashwx)的默认协议。
 
 ## 为什么不用 SHA-256
 

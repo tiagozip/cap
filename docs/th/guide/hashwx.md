@@ -7,7 +7,7 @@ description: "HashWX คือ proof of work ที่ต้านทาน GPU 
 
 HashWX คือ proof of work เริ่มต้นของ Cap ในขณะที่ SHA-256 ใช้ฟังก์ชันแฮชตายตัว HashWX จะสร้างฟังก์ชันใหม่สำหรับ nonce ทุกบล็อก โดยประกอบจากการดำเนินการกับจำนวนเต็มและการแตกกิ่งที่ GPU รันได้ไม่ดี ผู้ออกแบบคือ [tevador](https://github.com/tevador/hashwx) คนเดียวกับที่เขียน RandomX และ[เอกสารการออกแบบ](https://github.com/tevador/hashwx/blob/master/doc/design.md)ของเขาอธิบายหลักการทำงานไว้ Cap ใช้บิลด์ WebAssembly ฉบับอ้างอิงของเขา
 
-HashWX เป็นค่าเริ่มต้นของคีย์ใหม่ใน capd ส่วนในไลบรารี core ต้อง[เลือกเปิดเอง](./capjs-core.md#format-2-hashwx)
+HashWX เป็นค่าเริ่มต้นทั้งใน capd และใน[ไลบรารี core](./capjs-core.md#format-2-hashwx)
 
 ## ทำไมไม่ใช้ SHA-256 {#why-not-sha-256}
 

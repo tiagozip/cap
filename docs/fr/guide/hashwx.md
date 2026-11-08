@@ -7,7 +7,7 @@ description: "HashWX est la preuve de travail résistante aux GPU de Cap. Chaque
 
 HashWX est la preuve de travail par défaut de Cap. Là où SHA-256 utilise une fonction de hachage fixe, HashWX en génère une nouvelle pour chaque bloc de nonces, construite avec des opérations entières et des branchements que les GPU exécutent mal. Elle a été conçue par [tevador](https://github.com/tevador/hashwx), également auteur de RandomX, et son [document de conception](https://github.com/tevador/hashwx/blob/master/doc/design.md) explique son fonctionnement. Cap utilise sa version WebAssembly de référence.
 
-C'est le protocole par défaut des nouvelles clés dans capd. Dans la bibliothèque core, il [s'active explicitement](./capjs-core.md#format-2-hashwx).
+C'est le protocole par défaut dans capd et dans la [bibliothèque core](./capjs-core.md#format-2-hashwx).
 
 ## Pourquoi pas SHA-256 {#why-not-sha-256}
 

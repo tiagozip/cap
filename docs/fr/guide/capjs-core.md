@@ -78,7 +78,9 @@ Supprimer la clé rend chaque jeton à usage unique.
 
 ## HashWX {#format-2-hashwx}
 
-Sans options, `generateChallenge` émet une preuve de travail SHA-256. [HashWX](./hashwx.md) résiste bien mieux aux GPU, et capd l'utilise pour les nouvelles clés. Activez-le avec l'API au format 2 :
+`generateChallenge` émet par défaut une preuve de travail [HashWX](./hashwx.md), le même format que capd utilise pour les nouvelles clés. Il résiste bien mieux aux GPU que SHA-256. `instrumentation: true` et `behavior` ajoutent un défi d'instrumentation.
+
+Pour choisir les protocoles vous-même, passez-les avec `format: 2` :
 
 ```js
 return await generateChallenge(SECRET, {
@@ -87,7 +89,7 @@ return await generateChallenge(SECRET, {
 });
 ```
 
-Le widget détecte le format automatiquement, et `validateChallenge` gère les deux. Passez toujours `protocols` avec le format 2. Sans cette option, le défi utilise le protocole RSW déprécié, qui nécessite une paire de clés RSA dans `keypair` ou un générateur dans `rsw`.
+`format: 1` revient à la preuve de travail SHA-256, tout comme passer `challengeCount`, `challengeSize` ou `challengeDifficulty` sans `format`. Le widget détecte le format automatiquement, et `validateChallenge` gère les deux. HashWX nécessite le widget 0.1.58 ou plus récent, donc mettez à jour un widget épinglé avant la bibliothèque.
 
 | Option | Valeur par défaut | Description |
 | --- | --- | --- |
@@ -227,7 +229,7 @@ Avec le comportement activé, un résultat réussi contient `behavior: { score, 
 | `instrumentation` | `false` | Voir l'[instrumentation](#instrumentation). |
 | `instrumentationGenerator` | `generateInstrumentation` | Fonction asynchrone qui génère le script d'instrumentation. |
 | `behavior` | `false` | Voir [Comportement et agents](#behavior-and-agents). |
-| `format`, `protocols` | format 1 | Voir [HashWX](#format-2-hashwx). |
+| `format`, `protocols` | format 2 avec HashWX | Voir [HashWX](#format-2-hashwx). Passer `keypair` ou `rsw` sans `protocols` choisit le protocole RSW déprécié. |
 | `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | voir [HashWX](#format-2-hashwx) | Réglages HashWX pour le format 2. |
 | `keypair`, `t`, `rsw` | aucune | Réglages du protocole RSW déprécié. |
 

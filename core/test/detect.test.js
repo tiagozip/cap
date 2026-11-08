@@ -855,13 +855,30 @@ describe("fingerprint consistency checks", () => {
     expect(detectAutomation(S).riskFlags).toContain("navigator_order");
   });
 
-  test("a Direct3D renderer compiling Metal shaders blocks", () => {
+  test("a Direct3D renderer compiling Metal shaders flags", () => {
     const S = real();
     S.glsh = {
       r: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)",
       t: "metal",
     };
-    expect(detectAutomation(S).blockedBy).toContain("shader_mismatch");
+    const r = detectAutomation(S);
+    expect(r.riskFlags).toContain("shader_mismatch");
+    expect(r.blockedBy ?? []).not.toContain("shader_mismatch");
+  });
+
+  test("a Metal renderer compiling GLSL flags", () => {
+    const S = real();
+    S.glsh = { ...S.glsh, t: "glsl" };
+    expect(detectAutomation(S).riskFlags).toContain("shader_mismatch");
+  });
+
+  test("Direct3D compiling GLSL passes, as Chrome 157 on Windows does", () => {
+    const S = real();
+    S.glsh = {
+      r: "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A78B) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      t: "glsl",
+    };
+    expect(detectAutomation(S).riskFlags).not.toContain("shader_mismatch");
   });
 
   test("WebGL and WebGPU vendors disagreeing flags", () => {

@@ -78,7 +78,9 @@ Durch das Löschen des Keys ist jedes Token nur einmal nutzbar.
 
 ## HashWX {#format-2-hashwx}
 
-Ohne Optionen stellt `generateChallenge` SHA-256-Proof-of-Work aus. [HashWX](./hashwx.md) ist gegen GPUs weit resistenter, und capd nutzt es für neue Keys. Aktiviere es über die Format-2-API:
+`generateChallenge` stellt standardmäßig [HashWX](./hashwx.md)-Proof-of-Work aus, dasselbe Format, das capd für neue Keys nutzt. Es ist gegen GPUs weit resistenter als SHA-256. `instrumentation: true` und `behavior` fügen eine Instrumentation-Challenge hinzu.
+
+Um die Protokolle selbst anzugeben, übergib sie mit `format: 2`:
 
 ```js
 return await generateChallenge(SECRET, {
@@ -87,7 +89,7 @@ return await generateChallenge(SECRET, {
 });
 ```
 
-Das Widget erkennt das Format automatisch, und `validateChallenge` verarbeitet beide. Übergib bei Format 2 immer `protocols`. Ohne diese Option nutzt die Challenge das abgekündigte RSW-Protokoll, das ein RSA-Keypair in `keypair` oder einen Minter in `rsw` benötigt.
+`format: 1` wechselt zurück zu SHA-256-Proof-of-Work, ebenso `challengeCount`, `challengeSize` oder `challengeDifficulty` ohne `format`. Das Widget erkennt das Format automatisch, und `validateChallenge` verarbeitet beide. HashWX braucht Widget 0.1.58 oder neuer, aktualisiere also ein fest gepinntes Widget vor der Bibliothek.
 
 | Option | Standard | Beschreibung |
 | --- | --- | --- |
@@ -227,7 +229,7 @@ Bei aktivierter Verhaltensbewertung enthält ein erfolgreiches Ergebnis `behavio
 | `instrumentation` | `false` | Siehe [Instrumentation](#instrumentation). |
 | `instrumentationGenerator` | `generateInstrumentation` | Asynchrone Funktion, die das Instrumentation-Skript erzeugt. |
 | `behavior` | `false` | Siehe [Verhalten und Agenten](#behavior-and-agents). |
-| `format`, `protocols` | Format 1 | Siehe [HashWX](#format-2-hashwx). |
+| `format`, `protocols` | Format 2 mit HashWX | Siehe [HashWX](#format-2-hashwx). `keypair` oder `rsw` ohne `protocols` wählt das abgekündigte RSW-Protokoll. |
 | `hashwxDifficulty`, `hashwxChallengeCount`, `hashwxNoncesPerHash` | siehe [HashWX](#format-2-hashwx) | HashWX-Einstellungen für Format 2. |
 | `keypair`, `t`, `rsw` | keine | Einstellungen für das abgekündigte RSW-Protokoll. |
 
