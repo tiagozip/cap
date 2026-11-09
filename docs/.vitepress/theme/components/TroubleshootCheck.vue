@@ -639,6 +639,27 @@ onMounted(async () => {
     agentSummary: agent,
     telemetry: await collect(),
     instr: instrData,
+    nativesProbe:
+      out.widgetError?.code === "instr_natives_tampered"
+        ? await new Promise((resolve) => {
+            const frame = document.createElement("iframe");
+            const nonce = Math.random().toString(36).slice(2);
+            const done = (v) => {
+              removeEventListener("message", onMessage);
+              frame.remove();
+              resolve(v);
+            };
+            const onMessage = (e) => {
+              if (e.source === frame.contentWindow && e.data?.nonce === nonce) done(e.data.result);
+            };
+            addEventListener("message", onMessage);
+            setTimeout(() => done(null), 3000);
+            frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
+            frame.style.cssText = "position:absolute;width:1px;height:1px;top:-9999px;left:-9999px;border:none;opacity:0;";
+            frame.srcdoc = `<!DOCTYPE html><html><body><script>(function(){var r={tampered:[],evalError:null,functionError:null,error:null};try{var fts=Function.prototype.toString;var items=[["Function.prototype.toString",fts],["Reflect.apply",Reflect.apply],["String.prototype.indexOf",String.prototype.indexOf],["Object.keys",Object.keys],["Array.isArray",Array.isArray],["Array.prototype.sort",Array.prototype.sort],["Array.prototype.slice",Array.prototype.slice],["Array.prototype.indexOf",Array.prototype.indexOf],["Array.prototype.push",Array.prototype.push],["String.prototype.charCodeAt",String.prototype.charCodeAt],["String.fromCharCode",String.fromCharCode],["Number.prototype.toString",Number.prototype.toString],["Object.freeze",Object.freeze],["Object.defineProperty",Object.defineProperty],["Performance.prototype.now",Performance.prototype.now],["JSON.parse",JSON.parse],["Math.round",Math.round],["Math.max",Math.max],["Math.min",Math.min],["eval",eval],["Function",Function],["EvalError",EvalError],["EventTarget.prototype.addEventListener",EventTarget.prototype.addEventListener]];for(var i=0;i<items.length;i++){var f=items[i][1],s=null;try{s=typeof f==="function"?String(fts.call(f)):typeof f}catch(x){s="toString threw: "+x}if(typeof s!=="string"||s.indexOf("[native code]")<=0)r.tampered.push({name:items[i][0],source:String(s).slice(0,200)})}try{(0,eval)("0")}catch(x){r.evalError=String(x).slice(0,200)}try{Function("")}catch(x){r.functionError=String(x).slice(0,200)}}catch(x){r.error=String(x).slice(0,200)}parent.postMessage({nonce:${JSON.stringify(nonce)},result:r},"*")})()</scr${"ipt"}></body></html>`;
+            document.body.appendChild(frame);
+          })
+        : null,
     domUnknown: await Promise.race([domDone.then(({ unknown }) => unknown), new Promise((r) => setTimeout(() => r(null), Math.max(0, 4000 - (performance.now() - started))))]),
     extensions: await Promise.race([extensionsDone, new Promise((r) => setTimeout(() => r(null), Math.max(0, 4000 - (performance.now() - started))))]),
   };

@@ -341,6 +341,45 @@ describe("detectAutomation humans", () => {
     expect(detectAutomation(S).pass).toBe(true);
   });
 
+  test("an iPad in desktop mode passes with an iPad worker platform", () => {
+    const S = safariHuman();
+    S.maxTouchPoints = 5;
+    S.mainNav = nav({ ua: S.ua, brands: null });
+    S.workerNav = nav({ ua: S.ua, platform: "iPad", brands: null });
+    expect(detectAutomation(S).pass).toBe(true);
+  });
+
+  test("an iPad worker platform without touch still blocks", () => {
+    const S = safariHuman();
+    S.mainNav = nav({ ua: S.ua, brands: null });
+    S.workerNav = nav({ ua: S.ua, platform: "iPad", brands: null });
+    expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+  });
+
+  test("Safari reporting Apple GPU and compiling Metal passes", () => {
+    const S = safariHuman();
+    S.glsh = { r: "Apple GPU", t: "metal" };
+    expect(detectAutomation(S).riskFlags).not.toContain("shader_mismatch");
+  });
+
+  test("hinted text on ChromeOS at 1x passes", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36";
+    S.screen = { width: 1366, height: 768, dpr: 1 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
+  });
+
+  test("hinted text on Linux at 1x passes", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36";
+    S.screen = { width: 1920, height: 1080, dpr: 1 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
+  });
+
   test("juggler flag on a non-gecko engine is ignored", () => {
     const S = safariHuman();
     S.juggler = true;
@@ -355,6 +394,24 @@ describe("detectAutomation bots", () => {
     const r = detectAutomation(S);
     expect(r.pass).toBe(false);
     expect(r.blockedBy).toEqual(["geometry_quantized"]);
+  });
+
+  test("whole-pixel text on Linux at 2x still blocks", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36";
+    S.screen = { width: 1920, height: 1080, dpr: 2 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).toContain("geometry_quantized");
+  });
+
+  test("whole-pixel text on ChromeOS at a fractional scale still blocks", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36";
+    S.screen = { width: 1366, height: 768, dpr: 1.25 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).toContain("geometry_quantized");
   });
 
   test("font widths measured in an unrendered frame are all zero", () => {

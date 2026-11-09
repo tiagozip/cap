@@ -361,7 +361,7 @@ function buildProbe(P) {
     `${sf}("plugins",function(){return {length:navigator.plugins.length}});`,
     `${sf}("pdfViewerEnabled",function(){return navigator.pdfViewerEnabled});`,
     `${sf}("engine",function(){return {hasMozInnerScreenX:typeof window.mozInnerScreenX!=="undefined",hasChrome:typeof window.chrome!=="undefined"}});`,
-    `${sf}("screen",function(){return {width:screen.width,height:screen.height}});`,
+    `${sf}("screen",function(){return {width:screen.width,height:screen.height,dpr:devicePixelRatio}});`,
     `${sf}("outerWH",function(){return [outerWidth,outerHeight]});`,
     `${sf}("isExtended",function(){return screen.isExtended===undefined?null:screen.isExtended});`,
     `${sf}("fontWidths",function(){var sp=document.createElement("span");sp.style.cssText="position:absolute;left:-9999px;top:-9999px;font-size:72px;white-space:nowrap";sp.textContent="mmmmmmmmmmlli WwWwGg @#Xj";document.body.appendChild(sp);var st=${JSON.stringify(PROBE_FONT_STACKS)};var out=[];for(var i=0;i<st.length;i++){sp.style.fontFamily=st[i];out.push(Math.round(sp.getBoundingClientRect().width*100)/100)}document.body.removeChild(sp);return out});`,
@@ -433,7 +433,7 @@ function buildBlockChecks(b, id, hF, hSet, h) {
   {
     const a = rVar();
     checks.push(
-      `if (!${b}) { try { var ${a} = ${JSON.stringify(navOwnHashes)}; for (const k of Object.getOwnPropertyNames(navigator)) { if (${hSet}(${a}, ${hF}(k))) { ${b} = true; break; } } } catch { ${b} = true; } }`,
+      `if (!${b}) { try { var ${a} = ${JSON.stringify(navOwnHashes)}; for (const k of Object.getOwnPropertyNames(navigator)) { if (${hSet}(${a}, ${hF}(k)) && !(${hF}(k) === ${h("hardwareConcurrency")} && typeof navigator.brave === "object" && (function () { var d = Object.getOwnPropertyDescriptor(navigator, k), g = Object.getOwnPropertyDescriptor(Navigator.prototype, k); return !!d && !d.get && !d.set && !d.writable && !d.configurable && Number.isInteger(d.value) && d.value >= 2 && !!g && !!g.get && d.value <= g.get.call(navigator); })())) { ${b} = true; break; } } } catch { ${b} = true; } }`,
     );
   }
 

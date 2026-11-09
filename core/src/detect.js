@@ -110,12 +110,18 @@ export function detectAutomation(S, opts = {}) {
   const mobile = isMobileVector(S);
 
   const geo = geometryStats(S.fontWidths);
-  const quantized = !!geo && geo.count >= 5 && geo.distinct >= 3;
+  const dpr = isNum(S.screen?.dpr) ? S.screen.dpr : null;
+  const hintedText =
+    dpr !== null &&
+    !mobile &&
+    ((/\bCrOS\b/.test(ua) && Math.round(dpr) === dpr) ||
+      (/\bLinux\b/.test(ua) && !/\bAndroid\b/.test(ua) && dpr <= 1));
+  const quantized = !!geo && geo.count >= 5 && geo.distinct >= 3 && !hintedText;
   add(
     "geometry_quantized",
     !quantized,
     geo
-      ? `${geo.count}/${geo.n} whole-px, ${geo.distinct} distinct`
+      ? `${geo.count}/${geo.n} whole-px, ${geo.distinct} distinct${hintedText ? ", hinted text expected" : ""}`
       : "not measured",
   );
 
@@ -235,11 +241,16 @@ export function detectAutomation(S, opts = {}) {
   if (mn && wn) {
     const fields = ["ua", "platform", "tz", "brands"];
     if (mn.brave !== true) fields.push("languages", "hc", "gl");
+    const iosDesktop =
+      mn.platform === "MacIntel" &&
+      /^(iPad|iPhone|iPod)/.test(wn.platform ?? "") &&
+      S.maxTouchPoints > 1;
     for (const f of fields) {
       const a = mn[f];
       const b = wn[f];
       if (a === null || a === undefined || b === null || b === undefined)
         continue;
+      if (f === "platform" && iosDesktop) continue;
       if (a !== b) mismatched.push(f);
     }
   }
@@ -481,7 +492,7 @@ export function detectAutomation(S, opts = {}) {
 
   const glsh = isPlainObject(S.glsh) ? S.glsh : null;
   const glRenderer = typeof glsh?.r === "string" ? glsh.r : gl;
-  const claimsMetal = /Metal/i.test(glRenderer);
+  const claimsMetal = /Metal|^Apple GPU$/i.test(glRenderer);
   const translated = ["hlsl", "metal", "glsl"].includes(glsh?.t)
     ? glsh.t
     : null;
