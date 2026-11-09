@@ -224,6 +224,17 @@ describe("script hardening", () => {
     expect(src.indexOf("[native code]")).toBeLessThan(src.indexOf("cap:ready"));
     expect(src.indexOf("Object.freeze")).toBeLessThan(src.indexOf("cap:ready"));
   });
+
+  test("a wrapped addEventListener is tolerated but every event is brand checked", async () => {
+    const meta = await generateInstrumentation({ obfuscationLevel: 1 });
+    const src = inflateRawSync(
+      Buffer.from(meta.instrumentation, "base64"),
+    ).toString();
+    const list = src.slice(src.indexOf("[native code]"), src.indexOf("for("));
+    expect(list).not.toContain("EventTarget.prototype.addEventListener]");
+    expect(list).toContain('(Event.prototype,"timeStamp").get]');
+    expect(src).toMatch(/Event\.prototype,"timeStamp"\)\.get;/);
+  });
 });
 
 describe("client to server tampering", () => {
