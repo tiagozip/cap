@@ -343,7 +343,13 @@ export function analyzeBehavior(trace, ctx = {}) {
     if (t.vis < 0) flags.push("bh_activation_unseen");
     else if (fineClock && a.t - t.vis < 120) flags.push("bh_too_fast");
 
-    if (a.sox === 0 && a.soy === 0 && !fullscreen && chromeH >= 40) {
+    if (
+      a.pt !== 2 &&
+      a.sox === 0 &&
+      a.soy === 0 &&
+      !fullscreen &&
+      chromeH >= 40
+    ) {
       flags.push("bh_screen_coords_leak");
     }
 

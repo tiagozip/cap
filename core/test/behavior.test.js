@@ -233,6 +233,16 @@ describe("analyzeBehavior", () => {
     expect(kiosk.flags).not.toContain("bh_screen_coords_leak");
   });
 
+  test("an iOS tap with zero screen offset is not a CDP leak", () => {
+    const tap = analyzeBehavior(
+      base({
+        m: humanMoves(512.4, 331.7, 4000),
+        a: pointerAct({ sox: 0, soy: 0, pt: 2 }),
+      }),
+    );
+    expect(tap.flags).not.toContain("bh_screen_coords_leak");
+  });
+
   test("metronome typing vs human typing", () => {
     const bot = [];
     for (let i = 0; i < 16; i++)

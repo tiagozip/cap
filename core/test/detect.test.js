@@ -386,6 +386,36 @@ describe("detectAutomation humans", () => {
     }
   });
 
+  test("DuckDuckGo's fixed page core count passes", () => {
+    const S = safariHuman();
+    S.mainNav = nav({ ua: S.ua, brands: null, hc: 4, ddg: true });
+    S.workerNav = nav({ ua: S.ua, brands: null, hc: 8 });
+    expect(detectAutomation(S).blockedBy).not.toContain("worker_mismatch");
+  });
+
+  test("a DuckDuckGo marker with an odd core count still blocks", () => {
+    const S = safariHuman();
+    S.mainNav = nav({ ua: S.ua, brands: null, hc: 16, ddg: true });
+    S.workerNav = nav({ ua: S.ua, brands: null, hc: 8 });
+    expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+  });
+
+  test("DuckDuckGo's extra brand on Windows passes", () => {
+    const S = chromeHuman();
+    const brands = "Chromium/157,Not.A/Brand/99,Microsoft Edge WebView2/157";
+    S.mainNav = nav({ brands: `${brands},DuckDuckGo/157`, ddg: true });
+    S.workerNav = nav({ brands });
+    expect(detectAutomation(S).blockedBy).not.toContain("worker_mismatch");
+  });
+
+  test("an extra brand without the DuckDuckGo marker still blocks", () => {
+    const S = chromeHuman();
+    const brands = "Chromium/157,Not.A/Brand/99";
+    S.mainNav = nav({ brands: `${brands},DuckDuckGo/157` });
+    S.workerNav = nav({ brands });
+    expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+  });
+
   test("a lower page core count outside Chromium still blocks", () => {
     const S = safariHuman();
     S.mainNav = nav({ ua: S.ua, brands: null, hc: 6 });
@@ -440,6 +470,47 @@ describe("detectAutomation bots", () => {
     S.screen = { width: 1920, height: 1080, dpr: 2 };
     S.fontWidths = ints(17);
     expect(detectAutomation(S).blockedBy).toContain("geometry_quantized");
+  });
+
+  test("hinted Firefox text on Linux at 2x passes, as with resistFingerprinting", () => {
+    const S = firefoxHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; Linux x86_64; rv:159.0) Gecko/20100101 Firefox/159.0";
+    S.oscpu = "Linux x86_64";
+    S.screen = { width: 1920, height: 1080, dpr: 2 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
+  });
+
+  test("whole-pixel Firefox text on Linux at a fractional scale still blocks", () => {
+    const S = firefoxHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; Linux x86_64; rv:159.0) Gecko/20100101 Firefox/159.0";
+    S.oscpu = "Linux x86_64";
+    S.screen = { width: 1920, height: 1080, dpr: 1.5 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).toContain("geometry_quantized");
+  });
+
+  test("Brave's bucketed screen with a zoomed-out window passes", () => {
+    const S = chromeHuman();
+    S.mainNav = nav({ brave: true });
+    S.workerNav = nav({ brave: true });
+    S.isExtended = false;
+    S.screen = { width: 3840, height: 2160, dpr: 1 };
+    S.outerWH = [4268, 2400];
+    S.innerWH = [4260, 2392];
+    const r = detectAutomation(S);
+    expect(r.blockedBy).not.toContain("window_exceeds_screen");
+    expect(r.blockedBy).not.toContain("viewport_override");
+  });
+
+  test("a window taller than an odd screen still blocks outside Brave", () => {
+    const S = chromeHuman();
+    S.isExtended = false;
+    S.screen = { width: 3840, height: 2160, dpr: 1 };
+    S.outerWH = [4268, 2400];
+    expect(detectAutomation(S).blockedBy).toContain("window_exceeds_screen");
   });
 
   test("whole-pixel text on ChromeOS at a fractional scale still blocks", () => {

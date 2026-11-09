@@ -6,6 +6,15 @@ const MAX_TAMPER_KEYS = 8;
 const MAX_TAMPER_KEY_LENGTH = 32;
 const MAX_DETAIL_FIELDS = 6;
 const OUTER_HEIGHT_SLACK = 16;
+const BRAVE_SCREENS = new Set([
+  "1280x800",
+  "1366x768",
+  "1440x900",
+  "1680x1050",
+  "1920x1080",
+  "2560x1440",
+  "3840x2160",
+]);
 
 const isNum = (x) => typeof x === "number" && Number.isFinite(x);
 const isPlainObject = (x) => !!x && typeof x === "object" && !Array.isArray(x);
@@ -115,7 +124,9 @@ export function detectAutomation(S, opts = {}) {
     dpr !== null &&
     !mobile &&
     ((/\bCrOS\b/.test(ua) && Math.round(dpr) === dpr) ||
-      (/\bLinux\b/.test(ua) && !/\bAndroid\b/.test(ua) && dpr <= 1));
+      (/\bLinux\b/.test(ua) &&
+        !/\bAndroid\b/.test(ua) &&
+        (dpr <= 1 || (gecko && Math.round(dpr) === dpr))));
   const quantized = !!geo && geo.count >= 5 && geo.distinct >= 3 && !hintedText;
   add(
     "geometry_quantized",
@@ -151,7 +162,9 @@ export function detectAutomation(S, opts = {}) {
   const sc = S.screen || {};
   const ow = Array.isArray(S.outerWH) ? S.outerWH : [];
   const iw = Array.isArray(S.innerWH) ? S.innerWH : [];
-  const singleMonitor = S.isExtended === false;
+  const braveScreen =
+    S.mainNav?.brave === true && BRAVE_SCREENS.has(`${sc.width}x${sc.height}`);
+  const singleMonitor = S.isExtended === false && !braveScreen;
   const outerTaller =
     isNum(ow[1]) && isNum(sc.height) && ow[1] > sc.height + OUTER_HEIGHT_SLACK;
   const exceeds = outerTaller && singleMonitor;
@@ -162,11 +175,14 @@ export function detectAutomation(S, opts = {}) {
       ? exceeds
         ? `outerHeight ${ow[1]} > screen.height ${sc.height}`
         : "ok"
-      : "monitor layout unknown",
+      : braveScreen
+        ? "brave screen bucket"
+        : "monitor layout unknown",
   );
 
   const viewportIsScreen =
     !mobile &&
+    !braveScreen &&
     isNum(iw[0]) &&
     isNum(iw[1]) &&
     iw[0] === sc.width &&
@@ -235,6 +251,13 @@ export function detectAutomation(S, opts = {}) {
     chromeMissing ? "chromium without window.chrome" : "ok",
   );
 
+  const withoutDdg = (v) =>
+    typeof v === "string"
+      ? v
+          .split(",")
+          .filter((x) => !x.startsWith("DuckDuckGo/"))
+          .join(",")
+      : v;
   const mn = isPlainObject(S.mainNav) ? S.mainNav : null;
   const wn = isPlainObject(S.workerNav) ? S.workerNav : null;
   const mismatched = [];
@@ -259,7 +282,13 @@ export function detectAutomation(S, opts = {}) {
       if (a === null || a === undefined || b === null || b === undefined)
         continue;
       if (f === "platform" && iosDesktop) continue;
-      if (f === "hc" && noisedCores) continue;
+      if (
+        f === "hc" &&
+        (noisedCores || (mn.ddg === true && (a === 4 || a === 8)))
+      )
+        continue;
+      if (f === "brands" && mn.ddg === true && withoutDdg(a) === withoutDdg(b))
+        continue;
       if (a !== b) mismatched.push(f);
     }
   }
@@ -344,11 +373,19 @@ export function detectAutomation(S, opts = {}) {
   const frameDiff = [];
   if (hn && mn) {
     const fields = ["platform", "brands"];
-    if (mn.brave !== true) fields.push("languages", "hc");
+    if (mn.brave !== true) fields.push("languages");
+    if (mn.brave !== true && mn.ddg !== true && hn.ddg !== true)
+      fields.push("hc");
     for (const f of fields) {
       const a = mn[f];
       const b = hn[f];
       if (a === null || a === undefined || b === null || b === undefined)
+        continue;
+      if (
+        f === "brands" &&
+        (mn.ddg === true || hn.ddg === true) &&
+        withoutDdg(a) === withoutDdg(b)
+      )
         continue;
       if (a !== b) frameDiff.push(f);
     }
