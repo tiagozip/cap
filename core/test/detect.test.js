@@ -356,6 +356,43 @@ describe("detectAutomation humans", () => {
     expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
   });
 
+  test("Helium core noise passes for every value it can pick", () => {
+    for (const [real, shown] of [
+      [20, 16],
+      [20, 14],
+      [20, 12],
+      [8, 4],
+      [7, 6],
+      [4, 2],
+    ]) {
+      const S = chromeHuman();
+      S.mainNav = nav({ hc: shown });
+      S.workerNav = nav({ hc: real });
+      expect(detectAutomation(S).blockedBy).not.toContain("worker_mismatch");
+    }
+  });
+
+  test("core counts Helium can't produce still block", () => {
+    for (const [real, shown] of [
+      [4, 8],
+      [20, 10],
+      [8, 2],
+      [8, 5],
+    ]) {
+      const S = chromeHuman();
+      S.mainNav = nav({ hc: shown });
+      S.workerNav = nav({ hc: real });
+      expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+    }
+  });
+
+  test("a lower page core count outside Chromium still blocks", () => {
+    const S = safariHuman();
+    S.mainNav = nav({ ua: S.ua, brands: null, hc: 6 });
+    S.workerNav = nav({ ua: S.ua, brands: null, hc: 8 });
+    expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+  });
+
   test("Safari reporting Apple GPU and compiling Metal passes", () => {
     const S = safariHuman();
     S.glsh = { r: "Apple GPU", t: "metal" };

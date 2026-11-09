@@ -245,12 +245,21 @@ export function detectAutomation(S, opts = {}) {
       mn.platform === "MacIntel" &&
       /^(iPad|iPhone|iPod)/.test(wn.platform ?? "") &&
       S.maxTouchPoints > 1;
+    const noisedCores = (() => {
+      if (!/\bChrome\//.test(ua)) return false;
+      if (!Number.isInteger(mn.hc) || !Number.isInteger(wn.hc)) return false;
+      const n = Math.min(16, Math.max(2, wn.hc)) & ~1;
+      return (
+        mn.hc === n || (n > 2 && mn.hc === n - 2) || (n > 4 && mn.hc === n - 4)
+      );
+    })();
     for (const f of fields) {
       const a = mn[f];
       const b = wn[f];
       if (a === null || a === undefined || b === null || b === undefined)
         continue;
       if (f === "platform" && iosDesktop) continue;
+      if (f === "hc" && noisedCores) continue;
       if (a !== b) mismatched.push(f);
     }
   }

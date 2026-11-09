@@ -128,9 +128,9 @@ const loadWorld = () => {
 {#if failed}
   <p class="py-6 text-center text-sm text-muted-foreground">Couldn't load the map. Switch to the list view instead.</p>
 {:else}
-  <div class="relative aspect-[2.4] max-h-96 w-full" bind:this={wrap}>
+  <div class="relative mx-auto aspect-[2.4] w-full max-w-[57.6rem]" bind:this={wrap}>
     <canvas
-      class="block size-full {hover && onpick ? 'cursor-pointer' : 'cursor-crosshair'}"
+      class="absolute inset-0 block size-full {hover && onpick ? 'cursor-pointer' : 'cursor-crosshair'}"
       bind:this={canvas}
       aria-label="World map of traffic by country"
       onmousemove={onmove}
