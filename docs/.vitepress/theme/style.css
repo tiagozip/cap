@@ -1137,4 +1137,24 @@ html:lang(th) .vp-doc {
   .VPNav::after {
     right: calc(var(--fl) - 6px);
   }
+
+  .Layout:has(.VPContent.has-sidebar) .VPNav::before,
+  .Layout:has(.VPContent.has-sidebar) .VPNav::after {
+    content: none;
+  }
+
+  .Layout:has(.VPContent.has-sidebar)::after {
+    content: "";
+    position: fixed;
+    top: calc(var(--vp-layout-top-height, 0px) + var(--vp-nav-height) - 7px);
+    left: calc(var(--fl) - 6px);
+    right: calc(var(--fl) - 6px);
+    z-index: 36;
+    height: 13px;
+    background: var(--edge-solid);
+    mask:
+      var(--spark) left / 13px 13px no-repeat,
+      var(--spark) right / 13px 13px no-repeat;
+    pointer-events: none;
+  }
 }
