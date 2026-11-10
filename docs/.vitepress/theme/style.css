@@ -38,11 +38,13 @@
 
 :root,
 .dark {
+  --spark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='4.5 4 13 13'%3E%3Cpath d='M10.5 4C10.5 7.31371 7.81371 10 4.5 10H0.5V11H4.5C7.81371 11 10.5 13.6863 10.5 17V21H11.5V17C11.5 13.6863 14.1863 11 17.5 11H21.5V10H17.5C14.1863 10 11.5 7.31371 11.5 4V0H10.5V4Z'/%3E%3C/svg%3E");
   --ground: #11111b;
   --panel: #181825;
   --raised: #1e1e2e;
   --edge: #ffffff10;
   --edge-strong: #ffffff1f;
+  --edge-solid: #202029;
   --text: #cdd6f4;
   --text-secondary: #a6adc8;
   --text-faint: #7f849c;
@@ -1119,21 +1121,20 @@ html:lang(th) .vp-doc {
   .VPNav::after {
     content: "";
     position: absolute;
-    bottom: -5px;
+    bottom: -6px;
     z-index: 40;
-    width: 6px;
-    height: 11px;
-    background: #585b70;
-    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    width: 13px;
+    height: 13px;
+    background: var(--edge-solid);
+    mask: var(--spark) center / 100% 100% no-repeat;
     pointer-events: none;
   }
 
   .VPNav::before {
-    left: var(--fl);
+    left: calc(var(--fl) - 6px);
   }
 
   .VPNav::after {
-    right: var(--fl);
-    clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    right: calc(var(--fl) - 6px);
   }
 }

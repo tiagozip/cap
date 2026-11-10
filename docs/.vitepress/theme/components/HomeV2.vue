@@ -254,6 +254,24 @@ const copyPrompt = async () => {
 };
 cleanups.push(() => clearTimeout(promptTimer));
 
+const codeEl = ref(null);
+const codeCopied = ref(false);
+let codeTimer = 0;
+const copyCode = async () => {
+  try {
+    await navigator.clipboard.writeText(codeEl.value.textContent);
+  } catch {
+    return;
+  }
+  track("cta_click", { cta: "copy_code", location: "cta_block" });
+  codeCopied.value = true;
+  clearTimeout(codeTimer);
+  codeTimer = setTimeout(() => {
+    codeCopied.value = false;
+  }, 2200);
+};
+cleanups.push(() => clearTimeout(codeTimer));
+
 const dismissWidgetBanner = () => {
   fromWidget.value = false;
   try {
@@ -456,9 +474,9 @@ onBeforeUnmount(() => {
           <div class="frame trust-inner">
             <p>{{ trustParts[0] }}<HomeOdometer :lang="numLang" />{{ trustParts[1] }}</p>
             <div class="logos">
-              <img src="/logos/bunny-duo.svg" alt="bunny.net" width="112" height="43" loading="lazy" />
-              <img src="/logos/adguard-duo.svg" alt="AdGuard" width="104" height="24" loading="lazy" />
-              <img src="/logos/fraunhofer-duo.svg" alt="Fraunhofer" width="258" height="72" loading="lazy" />
+              <span><img src="/logos/bunny-duo.svg" alt="bunny.net" width="112" height="43" loading="lazy" /></span>
+              <span><img src="/logos/adguard-duo.svg" alt="AdGuard" width="104" height="24" loading="lazy" /></span>
+              <span><img src="/logos/fraunhofer-duo.svg" alt="Fraunhofer" width="258" height="72" loading="lazy" /></span>
             </div>
           </div>
         </div>
@@ -685,7 +703,19 @@ onBeforeUnmount(() => {
                 <a class="btn btn-ghost" href="https://github.com/tiagozip/cap" data-cta="github" data-cta-location="cta_block">{{ t.startGithub }}</a>
               </div>
             </div>
-            <pre class="code" :aria-label="t.startCodeLabel"><code><span class="c-tag">&lt;script</span> <span class="c-attr">src</span>=<span class="c-str">"https://cdn.jsdelivr.net/npm/@cap.js/widget"</span><span class="c-tag">&gt;&lt;/script&gt;</span>
+            <div class="code-win">
+              <div class="code-head">
+                <span>signup.html</span>
+                <button type="button" class="code-copy" :class="{ 'is-copied': codeCopied }" @click="copyCode">
+                  <span class="cc-icons" aria-hidden="true">
+                    <svg class="cc-copy" viewBox="0 0 16 16"><rect x="5.25" y="5.25" width="8" height="8" rx="2" /><path d="M10.75 3.5v-.25a1.5 1.5 0 0 0-1.5-1.5h-5a1.5 1.5 0 0 0-1.5 1.5v5a1.5 1.5 0 0 0 1.5 1.5h.25" /></svg>
+                    <svg class="cc-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-6.5" /></svg>
+                  </span>
+                  <span>{{ codeCopied ? t.heroCtaCopied : t.startCopy }}</span>
+                  <span class="sr-only" role="status">{{ codeCopied ? t.heroCtaCopied : "" }}</span>
+                </button>
+              </div>
+              <pre ref="codeEl" class="code" :aria-label="t.startCodeLabel"><code><span class="c-tag">&lt;script</span> <span class="c-attr">src</span>=<span class="c-str">"https://cdn.jsdelivr.net/npm/@cap.js/widget"</span><span class="c-tag">&gt;&lt;/script&gt;</span>
 
 <span class="c-tag">&lt;form</span> <span class="c-attr">action</span>=<span class="c-str">"/signup"</span> <span class="c-attr">method</span>=<span class="c-str">"POST"</span><span class="c-tag">&gt;</span>
   <span class="c-tag">&lt;input</span> <span class="c-attr">name</span>=<span class="c-str">"email"</span> <span class="c-tag">/&gt;</span>
@@ -694,6 +724,7 @@ onBeforeUnmount(() => {
   <span class="c-tag">&gt;&lt;/cap-widget&gt;</span>
   <span class="c-tag">&lt;button&gt;</span>Sign up<span class="c-tag">&lt;/button&gt;</span>
 <span class="c-tag">&lt;/form&gt;</span></code></pre>
+            </div>
           </div>
         </div>
       </section>
@@ -773,6 +804,7 @@ html.home-v2-active {
   --raised: #1e1e2e;
   --edge: #ffffff10;
   --edge-strong: #ffffff1f;
+  --edge-solid: #202029;
   --text: #cdd6f4;
   --text-secondary: #a6adc8;
   --text-faint: #7f849c;
@@ -876,6 +908,7 @@ html.home-v2-active main.main {
   width: 100%;
   max-width: 1168px;
   margin-inline: auto;
+  margin-left: max(0px, round(down, (100% - 1168px) / 2, 1px));
   padding-inline: var(--wrap-pad);
 }
 #homev2 .frame {
@@ -900,27 +933,26 @@ html.home-v2-active main.main {
 #homev2 .top > .wrap::after {
   content: "";
   position: absolute;
-  top: -6px;
+  top: -7px;
   z-index: 2;
-  width: 6px;
-  height: 11px;
-  background: var(--tick);
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  width: 13px;
+  height: 13px;
+  background: var(--edge-solid);
+  mask: var(--spark) center / 100% 100% no-repeat;
   pointer-events: none;
 }
 #homev2 .top > .wrap::before,
 #homev2 .top > .wrap::after {
   top: auto;
-  bottom: -5px;
+  bottom: -6px;
 }
 #homev2 .band + .band > .wrap::before,
 #homev2 .top > .wrap::before {
-  left: var(--wrap-pad);
+  left: calc(var(--wrap-pad) - 6px);
 }
 #homev2 .band + .band > .wrap::after,
 #homev2 .top > .wrap::after {
-  right: var(--wrap-pad);
-  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+  right: calc(var(--wrap-pad) - 6px);
 }
 #homev2 .section {
   padding-block: 96px;
@@ -1400,29 +1432,36 @@ html.home-v2-active main.main {
   }
 }
 #homev2 .trust-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px 48px;
-  padding-block: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  padding-right: 0;
 }
 #homev2 .trust p {
+  align-self: center;
   max-width: 25em;
+  padding-block: 36px;
+  padding-right: 32px;
   text-wrap: balance;
   word-break: keep-all;
   font-size: 0.9375rem;
   color: var(--text-secondary);
 }
 #homev2 .logos {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 20px 48px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#homev2 .logos > span {
+  display: grid;
+  place-items: center;
+  min-height: 112px;
+  padding: 24px 20px;
+  box-shadow: inset 1px 0 var(--edge);
 }
 #homev2 .logos img,
 #homev2 .quote figcaption img {
   height: 24px;
   width: auto;
+  max-width: 100%;
 }
 #homev2 .logos img[alt="bunny.net"],
 #homev2 .logos img[alt="Fraunhofer"] {
@@ -2211,13 +2250,81 @@ html.home-v2-active main.main {
 #homev2 .start-copy .actions {
   margin-top: 10px;
 }
-#homev2 .code {
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 20px 22px;
+#homev2 .code-win {
+  min-width: 0;
   border-radius: 14px;
   background: var(--panel);
   box-shadow: inset 0 0 0 1px var(--edge);
+}
+#homev2 .code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 44px;
+  padding-inline: 22px 8px;
+  box-shadow: inset 0 -1px var(--edge);
+  font-size: 0.8125rem;
+  color: var(--text-faint);
+}
+#homev2 .code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding-inline: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: scale 200ms ease-out;
+}
+#homev2 .code-copy:active {
+  scale: 0.97;
+}
+@media (hover: hover) {
+  #homev2 .code-copy:hover {
+    background: var(--edge);
+    color: var(--text);
+  }
+}
+#homev2 .cc-icons {
+  display: grid;
+  width: 14px;
+  height: 14px;
+}
+#homev2 .cc-icons svg {
+  grid-area: 1 / 1;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity 200ms var(--ease-out),
+    scale 200ms var(--ease-out),
+    filter 200ms var(--ease-out);
+}
+#homev2 .cc-check,
+#homev2 .code-copy.is-copied .cc-copy {
+  opacity: 0;
+  scale: 0.25;
+  filter: blur(4px);
+}
+#homev2 .code-copy.is-copied .cc-check {
+  opacity: 1;
+  scale: 1;
+  filter: none;
+  color: var(--success);
+}
+#homev2 .code {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 18px 22px 20px;
   font: 0.8125rem/1.75 var(--font-code);
   color: var(--text);
   white-space: pre;
@@ -2370,8 +2477,21 @@ html.home-v2-active main.main {
     grid-template-columns: minmax(0, 1fr);
   }
   #homev2 .trust-inner {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 0;
+  }
+  #homev2 .trust p {
+    padding: 32px var(--frame-pad) 28px;
+  }
+  #homev2 .logos {
+    box-shadow: inset 0 1px var(--edge);
+  }
+  #homev2 .logos > span {
+    min-height: 88px;
+    padding: 20px 12px;
+  }
+  #homev2 .logos > span:first-child {
+    box-shadow: none;
   }
 }
 @media (max-width: 760px) {
