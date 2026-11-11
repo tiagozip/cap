@@ -91,7 +91,7 @@ export async function initEvents() {
   } catch (e) {
     lastError = e.message;
     console.error(
-      `[cap] ${BACKEND} event store unavailable, falling back:`,
+      `[cap] ${BACKEND} event store unavailable, falling back to DuckDB:`,
       e.message,
     );
     store = await fallbackStore();
@@ -252,8 +252,8 @@ export async function storageStatus() {
   return {
     backend: store?.kind ?? BACKEND,
     configured: BACKEND,
-    healthy: healthy && !lastError && !info?.disabled,
-    lastError: lastError ?? info?.disabled ?? null,
+    healthy: healthy && !lastError,
+    lastError,
     buffered: buffer.length,
     dropped,
     info,

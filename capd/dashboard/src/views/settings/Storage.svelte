@@ -81,7 +81,7 @@ const save = async () => {
   {/snippet}
   <div class="flex flex-col divide-y divide-border">
     <Row
-      label={status.backend === "none" ? "Event storage off" : `${ENGINES[status.backend] ?? status.backend} ${status.backend === "clickhouse" ? "database" : "on this server"}`}
+      label="{ENGINES[status.backend] ?? status.backend} {status.backend === 'clickhouse' ? 'database' : 'on this server'}"
       help="{compact(status.info?.events ?? 0)} events, {bytes(status.info?.bytes)}.{status.buffered ? ` ${status.buffered} waiting to be written.` : ''}{status.dropped ? ` ${status.dropped} dropped.` : ''}"
     >
       <div><Tag tone={status.healthy ? "success" : "warning"} dot>{status.healthy ? "Working" : "Having trouble"}</Tag></div>
@@ -89,10 +89,7 @@ const save = async () => {
         {#if status.backend === "duckdb"}
           <p class="text-sm text-pretty text-muted-foreground">Events are stored in a file inside this container, so each Cap container keeps its own history. ClickHouse keeps one history for all of them. Start Cap with <code class="text-[0.9em]">CLICKHOUSE_URL</code> set to use it.</p>
         {/if}
-        {#if status.backend === "none"}
-          <p class="text-sm text-pretty text-muted-foreground">Cap isn't saving events, so analytics stay empty. Challenges and solves work as usual.</p>
-        {/if}
-        {#if status.configured !== status.backend && status.backend === "duckdb"}
+        {#if status.configured !== status.backend}
           <p class="text-sm text-destructive md:text-end" role="alert">Couldn't reach ClickHouse, so Cap is storing events in DuckDB for now.</p>
         {/if}
         {#if status.lastError}

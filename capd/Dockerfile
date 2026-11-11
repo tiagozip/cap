@@ -16,7 +16,7 @@ COPY capd/package.json capd/bun.lock ./
 RUN bun install --frozen-lockfile --production
 RUN apt-get update \
   && apt-get install -y --no-install-recommends binutils \
-  && find node_modules/@duckdb -name 'libduckdb.so' -exec strip -s {} +
+  && find node_modules -name 'libduckdb.so' -exec strip -s {} +
 COPY core/package.json /tmp/capjs-core/package.json
 COPY core/src /tmp/capjs-core/src
 RUN rm -rf node_modules/capjs-core \
