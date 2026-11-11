@@ -268,6 +268,22 @@ export function detectAutomation(S, opts = {}) {
       mn.platform === "MacIntel" &&
       /^(iPad|iPhone|iPod)/.test(wn.platform ?? "") &&
       S.maxTouchPoints > 1;
+    const geckoDesktopMode = (() => {
+      if (!gecko) return false;
+      const desk =
+        /^Mozilla\/5\.0 \(X11; Linux x86_64; rv:(\d+)\.0\) Gecko\/20100101 Firefox\/(\d+)\.0$/.exec(
+          mn.ua ?? "",
+        );
+      const droid =
+        /^Mozilla\/5\.0 \(Android [\d.]+; (?:Mobile|Tablet|TV); rv:(\d+)\.0\) Gecko\/(\d+)\.0 Firefox\/(\d+)\.0$/.exec(
+          wn.ua ?? "",
+        );
+      return (
+        !!desk &&
+        !!droid &&
+        new Set([...desk.slice(1), ...droid.slice(1)]).size === 1
+      );
+    })();
     const noisedCores = (() => {
       if (!/\bChrome\//.test(ua)) return false;
       if (!Number.isInteger(mn.hc) || !Number.isInteger(wn.hc)) return false;
@@ -282,6 +298,7 @@ export function detectAutomation(S, opts = {}) {
       if (a === null || a === undefined || b === null || b === undefined)
         continue;
       if (f === "platform" && iosDesktop) continue;
+      if (f === "ua" && geckoDesktopMode) continue;
       if (
         f === "hc" &&
         (noisedCores || (mn.ddg === true && (a === 4 || a === 8)))

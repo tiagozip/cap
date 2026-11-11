@@ -349,6 +349,43 @@ describe("detectAutomation humans", () => {
     expect(detectAutomation(S).pass).toBe(true);
   });
 
+  const firefoxTabletDesktopMode = (version = 160, workerVersion = version) => {
+    const S = firefoxHuman();
+    S.ua = `Mozilla/5.0 (X11; Linux x86_64; rv:${version}.0) Gecko/20100101 Firefox/${version}.0`;
+    S.oscpu = "Linux armv81";
+    S.maxTouchPoints = 5;
+    S.screen = { width: 1280, height: 800 };
+    S.innerWH = [1280, 720];
+    S.outerWH = [1280, 720];
+    S.mainNav = nav({ ua: S.ua, platform: "Linux armv81", brands: null });
+    S.workerNav = nav({
+      ua: `Mozilla/5.0 (Android 15; Mobile; rv:${workerVersion}.0) Gecko/${workerVersion}.0 Firefox/${workerVersion}.0`,
+      platform: "Linux armv81",
+      brands: null,
+    });
+    return S;
+  };
+
+  test("Firefox for Android in desktop mode passes with an Android worker UA", () => {
+    expect(
+      detectAutomation(firefoxTabletDesktopMode()).blockedBy,
+    ).toEqual([]);
+  });
+
+  test("Firefox desktop mode with a different worker version still blocks", () => {
+    expect(
+      detectAutomation(firefoxTabletDesktopMode(160, 159)).blockedBy,
+    ).toContain("worker_mismatch");
+  });
+
+  test("an Android Firefox worker UA on a non-gecko engine still blocks", () => {
+    const S = firefoxTabletDesktopMode();
+    S.engine = { hasMozInnerScreenX: false, hasChrome: false };
+    S.productSub = "20030107";
+    S.oscpu = "__undefined";
+    expect(detectAutomation(S).blockedBy).toContain("worker_mismatch");
+  });
+
   test("an iPad worker platform without touch still blocks", () => {
     const S = safariHuman();
     S.mainNav = nav({ ua: S.ua, brands: null });
