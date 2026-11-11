@@ -55,6 +55,7 @@ const show = async (reason, ids, agent) => {
   demoVerdict.value = {
     reason,
     agent: agent && (names.agents.get(agent) ?? agent),
+    agentId: agent,
     checks: [...new Set(ids)]
       .filter((id) => id !== "cdp_console_trap")
       .map((id) => ({ id, name: names.checks.get(id) ?? id })),
