@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { t } from "./i18n.svelte.js";
 
 export const catalog = $state({
   loaded: false,
@@ -28,33 +29,66 @@ export function loadCatalog() {
 export const agentName = (id) =>
   catalog.agents.find(([a]) => a === id)?.[1] ?? id;
 
+export const fieldLabel = (id) => t(catalog.fields[id]?.label ?? id);
+
 export function signalInfo(flag) {
   for (const g of catalog.signals) {
     const s = g.signals.find(([id]) => id === flag);
-    if (s) return { id: s[0], text: s[1], strength: s[2], group: g.label };
+    if (s)
+      return { id: s[0], text: t(s[1]), strength: s[2], group: t(g.label) };
   }
   if (flag.startsWith("agent:"))
     return {
       id: flag,
-      text: `AI agent: ${agentName(flag.slice(6))}`,
-      group: "AI agents",
+      text: t("AI agent: {name}", { name: agentName(flag.slice(6)) }),
+      group: t("AI agents"),
     };
   if (flag.startsWith("rule:"))
-    return { id: flag, text: `Matched rule ${flag.slice(5)}`, group: "Rules" };
+    return {
+      id: flag,
+      text: t("Matched rule {id}", { id: flag.slice(5) }),
+      group: t("Rules"),
+    };
   return { id: flag, text: flag };
 }
 
 export const OUTCOMES = {
-  pass: { label: "Passed", icon: "check" },
-  fail: { label: "Failed", icon: "x" },
-  block: { label: "Blocked", icon: "ban" },
-  limit: { label: "Rate limited", icon: "clock" },
+  pass: {
+    get label() {
+      return t("Passed");
+    },
+    icon: "check",
+  },
+  fail: {
+    get label() {
+      return t("Failed");
+    },
+    icon: "x",
+  },
+  block: {
+    get label() {
+      return t("Blocked");
+    },
+    icon: "ban",
+  },
+  limit: {
+    get label() {
+      return t("Rate limited");
+    },
+    icon: "clock",
+  },
 };
 
 export const EVENT_TYPES = {
-  challenge: "Challenge",
-  redeem: "Redeem",
-  siteverify: "Siteverify",
+  get challenge() {
+    return t("Challenge");
+  },
+  get redeem() {
+    return t("Redeem");
+  },
+  get siteverify() {
+    return t("Siteverify");
+  },
 };
 
 const REASONS = {
@@ -95,9 +129,10 @@ const REASONS = {
 
 export function reasonLabel(r) {
   if (!r) return "";
-  if (r.startsWith("rule:")) return `Rule ${r.slice(5)}`;
-  if (r.startsWith("allowed:")) return `Allowed by ${r.slice(8)}`;
-  if (r.startsWith("signal:")) return `Signal ${r.slice(7)}`;
-  if (r.startsWith("harder_x")) return `Puzzle ×${r.slice(8)}`;
-  return REASONS[r] ?? r;
+  if (r.startsWith("rule:")) return t("Rule {id}", { id: r.slice(5) });
+  if (r.startsWith("allowed:")) return t("Allowed by {id}", { id: r.slice(8) });
+  if (r.startsWith("signal:")) return t("Signal {id}", { id: r.slice(7) });
+  if (r.startsWith("harder_x"))
+    return t("Puzzle ×{factor}", { factor: r.slice(8) });
+  return REASONS[r] ? t(REASONS[r]) : r;
 }

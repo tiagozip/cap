@@ -1,6 +1,7 @@
 <script>
 import { Chart, registerables } from "chart.js";
 import { onMount, untrack } from "svelte";
+import { locale } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import ChartTooltip from "./ChartTooltip.svelte";
 import { chartColor, createResolver, deepResolve } from "./colors.js";
@@ -148,6 +149,7 @@ $effect(() => {
 $effect(() => {
   data;
   options;
+  locale.value;
   const instance = untrack(() => chart);
   if (!instance || !root) return;
   const resolver = createResolver(root);

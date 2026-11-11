@@ -1,6 +1,7 @@
 <script>
 import { Icon, Tag } from "../../components/cap/index.js";
 import { OUTCOMES } from "../../lib/catalog.svelte.js";
+import { t } from "../../lib/i18n.svelte.js";
 
 let { outcome, label, flagged = false } = $props();
 
@@ -14,7 +15,7 @@ const info = $derived(OUTCOMES[outcome]);
 </script>
 
 {#if flagged}
-  <Tag tone="warning"><Icon name="flag" size={12} stroke={2.25} />{label ?? "Flagged"}</Tag>
+  <Tag tone="warning"><Icon name="flag" size={12} stroke={2.25} />{label ?? t("Flagged")}</Tag>
 {:else}
   <Tag tone={TONES[outcome] ?? "neutral"}>
     {#if info}<Icon name={info.icon} size={12} stroke={2.5} />{/if}

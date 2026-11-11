@@ -9,6 +9,7 @@ import {
   Switch,
 } from "../components/cap/index.js";
 import { api } from "../lib/api.js";
+import { t } from "../lib/i18n.svelte.js";
 import { app, loadKeys, navigate } from "../lib/state.svelte.js";
 import OriginList from "./config/OriginList.svelte";
 import { normalizeOrigin } from "./config/origins.js";
@@ -78,22 +79,22 @@ async function submit() {
 
 {#if created}
   <Dialog
-    title="Your site key is ready"
-    description="Your server needs the secret key to check tokens. You can reveal it again from the key's settings."
+    title={t("Your site key is ready")}
+    description={t("Your server needs the secret key to check tokens. You can reveal it again from the key's settings.")}
     onclose={close}
   >
-    <Field label="Site key">
-      <CopyText value={created.siteKey} label="Copy site key" />
+    <Field label={t("Site key")}>
+      <CopyText value={created.siteKey} label={t("Copy site key")} />
     </Field>
-    <Field label="Secret key">
-      <CopyText value={created.secretKey} label="Copy secret key" />
+    <Field label={t("Secret key")}>
+      <CopyText value={created.secretKey} label={t("Copy secret key")} />
     </Field>
     {#snippet footer()}
-      <Button variant="primary" onclick={setUp}>Set up the widget</Button>
+      <Button variant="primary" onclick={setUp}>{t("Set up the widget")}</Button>
     {/snippet}
   </Dialog>
 {:else}
-  <Dialog title="Create site key" description="One key per website. You can change all of this later." onclose={close}>
+  <Dialog title={t("Create site key")} description={t("One key per website. You can change all of this later.")} onclose={close}>
     <form
       id="createKeyForm"
       class="flex flex-col gap-4"
@@ -103,13 +104,13 @@ async function submit() {
         submit();
       }}
     >
-      <Field label="Name" for="newKeyName">
+      <Field label={t("Name")} for="newKeyName">
         <Input
           id="newKeyName"
           type="text"
           maxlength="600"
           autocomplete="off"
-          placeholder="My website"
+          placeholder={t("My website")}
           invalid={nameInvalid}
           aria-describedby="newKeyError"
           bind:value={name}
@@ -121,9 +122,9 @@ async function submit() {
       </Field>
 
       <div class="flex flex-col gap-1.5">
-        <p class="text-sm font-medium">Protection level</p>
+        <p class="text-sm font-medium">{t("Protection level")}</p>
         <Segmented
-          label="Protection level"
+          label={t("Protection level")}
           class="w-full"
           bind:value={level}
           options={PRESETS.map((p) => [p.id, p.name])}
@@ -134,8 +135,8 @@ async function submit() {
       <div class="flex flex-col gap-3 border-t border-border pt-4">
         <div class="flex items-center justify-between gap-4">
           <div class="flex flex-col gap-0.5">
-            <label for="newKeyCorsEnabled" class="text-sm font-medium">Only allow my websites</label>
-            <p class="text-xs text-pretty text-muted-foreground">Other sites can't load puzzles with this key.</p>
+            <label for="newKeyCorsEnabled" class="text-sm font-medium">{t("Only allow my websites")}</label>
+            <p class="text-xs text-pretty text-muted-foreground">{t("Other sites can't load puzzles with this key.")}</p>
           </div>
           <Switch id="newKeyCorsEnabled" bind:checked={corsOn} />
         </div>
@@ -145,13 +146,13 @@ async function submit() {
       </div>
 
       {#if error}
-        <p id="newKeyError" class="text-sm text-destructive" role="alert">{error}</p>
+        <p id="newKeyError" class="text-sm text-destructive" role="alert">{t(error)}</p>
       {/if}
     </form>
     {#snippet footer()}
-      <Button variant="ghost" onclick={close}>Cancel</Button>
+      <Button variant="ghost" onclick={close}>{t("Cancel")}</Button>
       <Button variant="primary" type="submit" form="createKeyForm" disabled={submitting}>
-        {submitting ? "Creating site key" : "Create site key"}
+        {submitting ? t("Creating site key") : t("Create site key")}
       </Button>
     {/snippet}
   </Dialog>

@@ -1,8 +1,30 @@
+import { t } from "../lib/i18n.svelte.js";
+
 export const KEY_TABS = [
-  { id: "activity", label: "Overview" },
-  { id: "events", label: "Events" },
-  { id: "protection", label: "Protection" },
-  { id: "configuration", label: "Settings" },
+  {
+    id: "activity",
+    get label() {
+      return t("Overview");
+    },
+  },
+  {
+    id: "events",
+    get label() {
+      return t("Events");
+    },
+  },
+  {
+    id: "protection",
+    get label() {
+      return t("Protection");
+    },
+  },
+  {
+    id: "configuration",
+    get label() {
+      return t("Settings");
+    },
+  },
 ];
 
 const ALIASES = {

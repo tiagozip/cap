@@ -1,4 +1,5 @@
 <script>
+import { numFmt } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 
 let {
@@ -36,9 +37,7 @@ const format = (item) => {
     typeof item.value === "object" && item.value !== null
       ? (item.parsed?.y ?? item.parsed)
       : item.value;
-  return typeof value === "number"
-    ? value.toLocaleString()
-    : String(value ?? "");
+  return typeof value === "number" ? numFmt(value) : String(value ?? "");
 };
 </script>
 

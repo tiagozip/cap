@@ -1,4 +1,5 @@
 <script>
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import Button from "../button/Button.svelte";
 import Icon from "../icon/Icon.svelte";
@@ -73,7 +74,7 @@ const glyph = {
         <div class="flex w-max items-center pe-3">
           <span class="flex size-4 shrink-0 items-center justify-center">
             {#if note.state === "pending"}
-              <Spinner class="size-4 text-muted-foreground" label="In progress" />
+              <Spinner class="size-4 text-muted-foreground" label={t("In progress")} />
             {:else}
               <Icon name={glyph[note.state]} class={cn("shrink-0", ink[note.state])} />
             {/if}

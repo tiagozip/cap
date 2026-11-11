@@ -1,6 +1,7 @@
 <script>
 import { Button } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { numFmt, t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import Bars from "./Bars.svelte";
@@ -20,7 +21,7 @@ let hover = $state(null);
 let dragging = $state(false);
 let saving = $state(false);
 
-const t = $derived(threshold ?? current);
+const thresh = $derived(threshold ?? current);
 
 const bins = $derived.by(() => {
   const out = Array.from({ length: 100 / STEP }, (_, i) => ({
@@ -46,14 +47,13 @@ const at = $derived.by(() => {
   let total = 0;
   for (const r of rows) {
     total += r.n;
-    if (r.b < t) continue;
+    if (r.b < thresh) continue;
     caught += r.n;
     if (r.outcome !== "block") through += r.n;
   }
   return { caught, through, total };
 });
 
-const nf = new Intl.NumberFormat();
 const pct = (n) =>
   at.total ? `${Math.round((n / at.total) * 1000) / 10}%` : "0%";
 
@@ -84,48 +84,48 @@ const key = (e) => {
   }[e.key];
   if (e.key === "Home") threshold = MIN;
   else if (e.key === "End") threshold = 100;
-  else if (delta) threshold = Math.min(100, Math.max(MIN, t + delta));
+  else if (delta) threshold = Math.min(100, Math.max(MIN, thresh + delta));
   else return;
   e.preventDefault();
 };
 
 const apply = async () => {
   saving = true;
-  const value = t / 100;
+  const value = thresh / 100;
   const patch = { behaviorThreshold: value === 0.75 ? null : value };
   const res = await api("PUT", `/keys/${app.key.siteKey}/config`, patch);
   saving = false;
   if (!res?.success) {
-    toast(res?.error || "Couldn't save the threshold", "error");
+    toast(t(res?.error || "Couldn't save the threshold"), "error");
     return;
   }
   app.key.config = { ...app.key.config, ...patch };
   threshold = null;
-  toast(`Cap now acts on scores of ${t}% and up`);
+  toast(t("Cap now acts on scores of {pct}% and up", { pct: thresh }));
 };
 </script>
 
 {#snippet overlay()}
-  <div data-bone="ignore" class="pointer-events-none absolute inset-y-0 end-0 bg-destructive/[0.06] transition-[left] duration-150 ease-(--ease-out) motion-reduce:transition-none" style:left="{t}%"></div>
-  {#if t !== current}
+  <div data-bone="ignore" class="pointer-events-none absolute inset-y-0 end-0 bg-destructive/[0.06] transition-[left] duration-150 ease-(--ease-out) motion-reduce:transition-none" style:left="{thresh}%"></div>
+  {#if thresh !== current}
     <div data-bone="ignore" class="pointer-events-none absolute inset-y-0 border-s border-dashed border-faint-foreground/60" style:left="{current}%">
-      <span class="absolute bottom-1 start-1 rounded-[4px] bg-background px-1 text-[11px] whitespace-nowrap text-muted-foreground">Now {current}%</span>
+      <span class="absolute bottom-1 start-1 rounded-[4px] bg-background px-1 text-[11px] whitespace-nowrap text-muted-foreground">{t("Now {pct}%", { pct: current })}</span>
     </div>
   {/if}
   <div data-bone="ignore"
     class="absolute inset-y-0 -ms-2.5 flex w-5 cursor-ew-resize justify-center outline-none transition-[left] duration-150 ease-(--ease-out) motion-reduce:transition-none focus-visible:[&>span]:ring-2 focus-visible:[&>span]:ring-ring {dragging ? 'duration-0' : ''}"
-    style:left="{t}%"
+    style:left="{thresh}%"
     role="slider"
     tabindex="0"
-    aria-label="Risk score threshold"
+    aria-label={t("Risk score threshold")}
     aria-valuemin={MIN}
     aria-valuemax={100}
-    aria-valuenow={t}
-    aria-valuetext="{t}%"
+    aria-valuenow={thresh}
+    aria-valuetext="{thresh}%"
     onkeydown={key}
   >
     <span class="h-full w-0.5 rounded-full bg-destructive"></span>
-    <span class="absolute -top-1 rounded-[5px] bg-destructive px-1 text-[11px] leading-4 font-medium text-background tabular-nums">{t}%</span>
+    <span class="absolute -top-1 rounded-[5px] bg-destructive px-1 text-[11px] leading-4 font-medium text-background tabular-nums">{thresh}%</span>
   </div>
 {/snippet}
 
@@ -133,8 +133,8 @@ const apply = async () => {
   {bins}
   bind:plot
   bind:hover
-  label="Solves by risk score, in steps of {STEP}%"
-  title={(b) => `Scored ${b.from} to ${b.from + STEP}%`}
+  label={t("Solves by risk score, in steps of {step}%", { step: STEP })}
+  title={(b) => t("Scored {from} to {to}%", { from: b.from, to: b.from + STEP })}
   ticks={[0, 25, 50, 75, 100].map((v) => ({ x: v / 100, label: `${v}%` }))}
   class="cursor-ew-resize"
   onpointerdown={down}
@@ -147,19 +147,19 @@ const apply = async () => {
 <div class="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
   <p class="max-w-md text-sm text-pretty text-muted-foreground" role="status">
     {#if !at.total}
-      No scored solves in this period.
+      {t("No scored solves in this period.")}
     {:else}
-      <span class="font-medium text-foreground tabular-nums">{nf.format(at.caught)}</span> solves scored {t}% or more ({pct(at.caught)}).
+      <span class="font-medium text-foreground tabular-nums">{numFmt(at.caught)}</span> {t("solves scored {pct}% or more ({share}).", { pct: thresh, share: pct(at.caught) })}
       {#if at.through}
-        <span class="font-medium text-foreground tabular-nums">{nf.format(at.through)}</span> of them got through{blocking ? "" : " because behavior checks only report right now"}.
+        <span class="font-medium text-foreground tabular-nums">{numFmt(at.through)}</span> {blocking ? t("of them got through.") : t("of them got through because behavior checks only report right now.")}
       {:else}
-        Cap blocked all of them.
+        {t("Cap blocked all of them.")}
       {/if}
     {/if}
   </p>
   <div class="flex items-center gap-2">
-    {#if t !== current}
-      <Button size="sm" disabled={saving} onclick={apply}>{saving ? "Saving" : `Use ${t}%`}</Button>
+    {#if thresh !== current}
+      <Button size="sm" disabled={saving} onclick={apply}>{saving ? t("Saving") : t("Use {pct}%", { pct: thresh })}</Button>
     {/if}
   </div>
 </div>

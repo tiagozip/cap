@@ -1,4 +1,5 @@
 <script>
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import Icon from "../icon/Icon.svelte";
 
@@ -12,5 +13,5 @@ let { class: className, ...rest } = $props();
   {...rest}
 >
   <Icon name="dots" />
-  <span class="sr-only">More pages</span>
+  <span class="sr-only">{t("More pages")}</span>
 </span>

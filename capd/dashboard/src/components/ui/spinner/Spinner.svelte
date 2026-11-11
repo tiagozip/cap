@@ -1,11 +1,12 @@
 <script>
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 
 let {
   class: className,
   variant = "default",
   dynamic = true,
-  label = "Loading",
+  label,
   ...rest
 } = $props();
 
@@ -74,7 +75,7 @@ $effect(() => {
     data-slot="spinner"
     data-variant={variant}
     role="status"
-    aria-label={label}
+    aria-label={label ?? t("Loading")}
     class={cn("size-4 animate-spin", className)}
     {...rest}
   >
@@ -105,7 +106,7 @@ $effect(() => {
     data-slot="spinner"
     data-variant={variant}
     role="status"
-    aria-label={label}
+    aria-label={label ?? t("Loading")}
     class={cn("size-4", className)}
     {...rest}
   >
@@ -134,7 +135,7 @@ $effect(() => {
     data-variant={variant}
     data-dynamic={dynamic || undefined}
     role="status"
-    aria-label={label}
+    aria-label={label ?? t("Loading")}
     class={cn("size-4 animate-spin", className)}
     {...rest}
   >

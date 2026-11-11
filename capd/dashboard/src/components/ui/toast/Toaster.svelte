@@ -1,4 +1,5 @@
 <script>
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import { dismissToast, pauseToasts, toasts } from "../toast.svelte.js";
 import ToastPill from "./ToastPill.svelte";
@@ -97,7 +98,7 @@ const leave = (_node, params) => {
 <svelte:document onvisibilitychange={() => (hidden = document.hidden)} />
 
 <section
-  aria-label="Notifications"
+  aria-label={t("Notifications")}
   aria-live="polite"
   class={cn("pointer-events-none fixed inset-x-0 z-100", side === "top" ? "top-4" : "bottom-4", className)}
   onpointerenter={() => (hovering = true)}

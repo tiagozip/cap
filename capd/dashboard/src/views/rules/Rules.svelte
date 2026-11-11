@@ -23,6 +23,7 @@ import {
 import { api, qs } from "../../lib/api.js";
 import { loadCatalog } from "../../lib/catalog.svelte.js";
 import { compact } from "../../lib/format.js";
+import { t, tx } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 import { app, openEvents } from "../../lib/state.svelte.js";
 import { confirm, toast } from "../../lib/ui.svelte.js";
@@ -69,7 +70,7 @@ async function save(next) {
 async function quickSave(next) {
   const res = await save(next);
   if (res.success) return;
-  toast(res.error || "Couldn't save rules", "error");
+  toast(t(res.error || "Couldn't save rules"), "error");
   refresh();
 }
 
@@ -83,16 +84,16 @@ function move(i, dir) {
 
 async function remove(i) {
   const ok = await confirm({
-    title: `Delete "${rules[i].name}"?`,
-    message: "Traffic it matched stops being blocked, allowed or flagged.",
-    confirmText: "Delete rule",
+    title: t('Delete "{name}"?', { name: rules[i].name }),
+    message: t("Traffic it matched stops being blocked, allowed or flagged."),
+    confirmText: t("Delete rule"),
     danger: true,
   });
   if (ok) quickSave(current().filter((_, j) => j !== i));
 }
 
-const fromTemplate = (t) => {
-  editor = { rule: { ...t, enabled: true }, index: -1 };
+const fromTemplate = (tpl) => {
+  editor = { rule: { ...tpl, name: tpl.name, enabled: true }, index: -1 };
 };
 
 async function saveFromEditor(rule) {
@@ -103,7 +104,7 @@ async function saveFromEditor(rule) {
       : [...all, rule];
   const res = await save(next);
   if (res.success) {
-    toast(editor.index >= 0 ? "Rule saved" : "Rule added");
+    toast(editor.index >= 0 ? t("Rule saved") : t("Rule added"));
     editor = null;
   }
   return res;
@@ -115,7 +116,7 @@ async function saveFromEditor(rule) {
     <Tag tone={ACTION_TONES[r.action]}>{actionLabel(r)}</Tag>
     {#each r.conditions as c, j (j)}
       {@const p = conditionParts(c, lists)}
-      {#if j}<span class="text-xs text-muted-foreground">{r.match === "any" ? "or" : "and"}</span>{/if}
+      {#if j}<span class="text-xs text-muted-foreground">{r.match === "any" ? t("or") : t("and")}</span>{/if}
       <span class="inline-flex min-h-6 max-w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 py-0.5 rounded-md bg-muted pr-0.5 pl-1.5 text-xs shadow-[inset_0_0_0_1px_var(--border)] {p.value ? '' : 'pr-1.5'}">
         <span class="min-w-0 break-words">{p.field}</span>
         <span class="shrink-0 whitespace-nowrap text-muted-foreground">{p.op}</span>
@@ -131,7 +132,7 @@ async function saveFromEditor(rule) {
 
 <Group
   id="rules"
-  title="Rules"
+  title={t("Rules")}
   flush
 >
   {#snippet action()}
@@ -139,33 +140,33 @@ async function saveFromEditor(rule) {
     <Menu width="w-72">
       {#snippet trigger(props)}
         <Button {...props} size="sm">
-          Use a template
+          {t("Use a template")}
           <Icon name="down" size={13} class="-mr-0.5 text-muted-foreground" />
         </Button>
       {/snippet}
-      <MenuLabel>Templates</MenuLabel>
-      {#each TEMPLATES as t (t.name)}
-        <MenuItem onselect={() => fromTemplate(t)}>{t.name}</MenuItem>
+      <MenuLabel>{t("Templates")}</MenuLabel>
+      {#each TEMPLATES as tpl, idx (idx)}
+        <MenuItem onselect={() => fromTemplate(tpl)}>{tpl.name}</MenuItem>
       {/each}
     </Menu>
     {/if}
     <Button variant="primary" size="sm" class="pl-2" onclick={() => (editor = { rule: null, index: -1 })}>
       <Icon name="plus" size={14} />
-      New rule
+      {t("New rule")}
     </Button>
   {/snippet}
 
-  <Skeleton data={loading ? null : rules} sample={samples.rules} error={failed} empty={!loading && !failed && !rules.length} label="Loading rules">
+  <Skeleton data={loading ? null : rules} sample={samples.rules} error={failed} empty={!loading && !failed && !rules.length} label={t("Loading rules")}>
     {#snippet errorMessage()}
-      <p class="px-5 py-5 text-sm text-destructive" role="alert">Couldn't load the rules for this key.</p>
+      <p class="px-5 py-5 text-sm text-destructive" role="alert">{t("Couldn't load the rules for this key.")}</p>
     {/snippet}
     {#snippet emptyMessage()}
-      <Empty title="No rules yet">
-        Rules block, allow, flag or slow down visitors based on where they come from and what Cap noticed. Start from one of these.
+      <Empty title={t("No rules yet")}>
+        {t("Rules block, allow, flag or slow down visitors based on where they come from and what Cap noticed. Start from one of these.")}
         {#snippet action()}
           <div class="flex flex-wrap justify-center gap-2">
-            {#each TEMPLATES.slice(0, 4) as t (t.name)}
-              <Button size="sm" onclick={() => fromTemplate(t)}>{t.name}</Button>
+            {#each TEMPLATES.slice(0, 4) as tpl, idx (idx)}
+              <Button size="sm" onclick={() => fromTemplate(tpl)}>{tpl.name}</Button>
             {/each}
           </div>
         {/snippet}
@@ -175,11 +176,11 @@ async function saveFromEditor(rule) {
       <Table flush>
         <TableHeader>
           <TableRow>
-            <TableHead class="md:w-56">Name</TableHead>
-            <TableHead class="max-md:hidden">Rule</TableHead>
-            <TableHead class="w-px text-right! whitespace-nowrap max-sm:hidden">Matches, 24 hours</TableHead>
-            <TableHead class="w-px"><span class="sr-only">On</span></TableHead>
-            <TableHead class="w-px"><span class="sr-only">Actions</span></TableHead>
+            <TableHead class="md:w-56">{t("Name")}</TableHead>
+            <TableHead class="max-md:hidden">{t("Rule")}</TableHead>
+            <TableHead class="w-px text-right! whitespace-nowrap max-sm:hidden">{t("Matches, 24 hours")}</TableHead>
+            <TableHead class="w-px"><span class="sr-only">{tx("rule", "On")}</span></TableHead>
+            <TableHead class="w-px"><span class="sr-only">{t("Actions")}</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -189,7 +190,7 @@ async function saveFromEditor(rule) {
                 <span class="flex min-w-0 flex-col gap-0.5">
                   <span class="font-medium break-words">{r.name}</span>
                   <span class="text-xs text-muted-foreground">
-                    {r.enabled ? (r.stage === "challenge" ? "Before the puzzle" : r.stage === "redeem" ? "After the solve" : `Rule ${i + 1}`) : "Off"}
+                    {r.enabled ? (r.stage === "challenge" ? t("Before the puzzle") : r.stage === "redeem" ? t("After the solve") : t("Rule {id}", { id: i + 1 })) : t("Off")}
                   </span>
                   <span class="mt-1.5 md:hidden">{@render ruleLine(r)}</span>
                 </span>
@@ -200,7 +201,7 @@ async function saveFromEditor(rule) {
                   <button
                     type="button"
                     class="cursor-pointer rounded-sm font-medium tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)]:hover:underline"
-                    title="Show the events this rule matched"
+                    title={t("Show the events this rule matched")}
                     onclick={() => openEvents([`rule:${r.id}`])}
                   >{compact(counts[r.id])}</button>
                 {:else}
@@ -210,27 +211,27 @@ async function saveFromEditor(rule) {
               <TableCell>
                 <Switch
                   checked={r.enabled}
-                  label="Turn on {r.name}"
+                  label={t("Turn on {name}", { name: r.name })}
                   onchange={(v) => quickSave(current().map((x, j) => (j === i ? { ...x, enabled: v } : x)))}
                 />
               </TableCell>
               <TableCell>
                 <Menu width="w-44">
                   {#snippet trigger(props)}
-                    <Button {...props} variant="ghost" size="sm" icon aria-label="More for {r.name}">
+                    <Button {...props} variant="ghost" size="sm" icon aria-label={t("More for {name}", { name: r.name })}>
                       <Icon name="more" size={16} stroke={3} />
                     </Button>
                   {/snippet}
-                  <MenuItem icon="edit" onselect={() => (editor = { rule: r, index: i })}>Edit</MenuItem>
-                  <MenuItem icon="events" onselect={() => openEvents([`rule:${r.id}`])}>Show matches</MenuItem>
+                  <MenuItem icon="edit" onselect={() => (editor = { rule: r, index: i })}>{t("Edit")}</MenuItem>
+                  <MenuItem icon="events" onselect={() => openEvents([`rule:${r.id}`])}>{t("Show matches")}</MenuItem>
                   {#if i > 0}
-                    <MenuItem icon="up" onselect={() => move(i, -1)}>Move up</MenuItem>
+                    <MenuItem icon="up" onselect={() => move(i, -1)}>{t("Move up")}</MenuItem>
                   {/if}
                   {#if i < list.length - 1}
-                    <MenuItem icon="down" onselect={() => move(i, 1)}>Move down</MenuItem>
+                    <MenuItem icon="down" onselect={() => move(i, 1)}>{t("Move down")}</MenuItem>
                   {/if}
                   <MenuSeparator />
-                  <MenuItem icon="trash" danger onselect={() => remove(i)}>Delete</MenuItem>
+                  <MenuItem icon="trash" danger onselect={() => remove(i)}>{t("Delete")}</MenuItem>
                 </Menu>
               </TableCell>
             </TableRow>

@@ -1,14 +1,16 @@
 <script>
 import { compact } from "../../lib/format.js";
+import { dtf, t } from "../../lib/i18n.svelte.js";
 
 let { hours, mode = "all" } = $props();
 
-const DAYS = Array.from({ length: 7 }, (_, i) =>
-  new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(
-    new Date(Date.UTC(2024, 0, 1 + i, 12)),
+const weekdayFmt = dtf({ weekday: "short" });
+const DAYS = $derived(
+  Array.from({ length: 7 }, (_, i) =>
+    weekdayFmt.format(new Date(Date.UTC(2024, 0, 1 + i, 12))),
   ),
 );
-const hourFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric" });
+const hourFmt = dtf({ hour: "numeric" });
 const hourLabel = (h) => hourFmt.format(new Date(2024, 0, 1, h));
 
 let hover = $state(null);
@@ -44,7 +46,17 @@ const peak = $derived.by(() => {
 });
 </script>
 
-<div data-bone="block" class="flex flex-col gap-1" role="img" aria-label="Events by weekday and hour{peak != null ? `, busiest on ${DAYS[Math.floor(peak / 24)]} at ${hourLabel(peak % 24)}` : ''}">
+<div
+  data-bone="block"
+  class="flex flex-col gap-1"
+  role="img"
+  aria-label={peak != null
+    ? t("Events by weekday and hour, busiest on {day} at {hour}", {
+        day: DAYS[Math.floor(peak / 24)],
+        hour: hourLabel(peak % 24),
+      })
+    : t("Events by weekday and hour")}
+>
   {#each DAYS as day, d (day)}
     <div class="grid grid-cols-[2.25rem_1fr] items-center gap-2">
       <span class="text-[11px] text-muted-foreground">{day}</span>
@@ -73,12 +85,24 @@ const peak = $derived.by(() => {
 <p class="mt-3 min-h-5 border-t border-border pt-3 text-sm text-muted-foreground" role="status">
   {#if hover != null}
     {@const c = grid[hover]}
-    {DAYS[Math.floor(hover / 24)]}, {hourLabel(hover % 24)} to {hourLabel((hover % 24 + 1) % 24)}:
-    <span class="font-medium text-foreground tabular-nums">{compact(c.n)}</span> events,
-    <span class="font-medium text-foreground tabular-nums">{compact(c.bad)}</span> flagged or blocked
+    {t("{day}, {from} to {to}:", {
+      day: DAYS[Math.floor(hover / 24)],
+      from: hourLabel(hover % 24),
+      to: hourLabel((hover % 24 + 1) % 24),
+    })}
+    <span class="font-medium text-foreground tabular-nums">{compact(c.n)}</span> {t("events")}{t(", ")}
+    <span class="font-medium text-foreground tabular-nums">{compact(c.bad)}</span> {t("flagged or blocked")}
   {:else if peak != null}
-    {mode === "bad" ? "Most flagged and blocked traffic" : "Busiest"} on {DAYS[Math.floor(peak / 24)]} around {hourLabel(peak % 24)}, in your time zone
+    {mode === "bad"
+      ? t("Most flagged and blocked traffic on {day} around {hour}, in your time zone", {
+          day: DAYS[Math.floor(peak / 24)],
+          hour: hourLabel(peak % 24),
+        })
+      : t("Busiest on {day} around {hour}, in your time zone", {
+          day: DAYS[Math.floor(peak / 24)],
+          hour: hourLabel(peak % 24),
+        })}
   {:else}
-    Nothing in this period.
+    {t("Nothing in this period.")}
   {/if}
 </p>

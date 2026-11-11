@@ -9,6 +9,7 @@ import {
   InputGroupInput,
 } from "../../components/ui/index.js";
 import { EVENT_TYPES } from "../../lib/catalog.svelte.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { FILTER_LABELS, filterValueLabel, splitFilter } from "./labels.js";
 
 let { filters, query = "", onadd, onremove, ontoggle, onquery } = $props();
@@ -102,7 +103,7 @@ const suggestions = $derived.by(() => {
     f: k,
     neg: word.startsWith("-") ? "-" : "",
     label: FILTER_LABELS[k],
-    hint,
+    hint: t(hint),
   }));
 });
 const open = $derived(
@@ -190,16 +191,16 @@ const keydown = (e) => {
         <button
           type="button"
           class="flex h-full min-w-0 cursor-pointer items-center gap-1 rounded-s-md ps-2 pe-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          title={c.neg ? "Show only these instead" : "Hide these instead"}
+          title={c.neg ? t("Show only these instead") : t("Hide these instead")}
           onclick={() => ontoggle(f)}
         >
-          <span class="shrink-0 text-muted-foreground">{FILTER_LABELS[c.field] ?? c.field}{c.neg ? " is not" : ""}</span>
+          <span class="shrink-0 text-muted-foreground">{FILTER_LABELS[c.field] ?? c.field}{c.neg ? t(" is not") : ""}</span>
           <span class="truncate font-medium">{filterValueLabel(c.field, c.value)}</span>
         </button>
         <button
           type="button"
           class="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-e-md text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)]:hover:text-foreground"
-          aria-label="Remove {FILTER_LABELS[c.field] ?? c.field} filter"
+          aria-label={t("Remove {field} filter", { field: FILTER_LABELS[c.field] ?? c.field })}
           onclick={() => onremove(f)}
         >
           <Icon name="x" size={12} />
@@ -218,7 +219,7 @@ const keydown = (e) => {
       aria-autocomplete="list"
       aria-activedescendant={open ? `evSearchOpt${active}` : undefined}
       class="h-7 min-w-40 px-1"
-      placeholder={filters.length ? "Add a filter" : "Search, or filter with country:US"}
+      placeholder={filters.length ? t("Add a filter") : t("Search, or filter with country:US")}
       oninput={() => {
         active = 0;
         commit();
@@ -231,7 +232,7 @@ const keydown = (e) => {
       <InputGroupAddon align="inline-end" class="py-0">
         <InputGroupButton
           size="icon-xs"
-          aria-label="Clear search and filters"
+          aria-label={t("Clear search and filters")}
           onclick={(e) => {
             e.stopPropagation();
             text = sent = "";

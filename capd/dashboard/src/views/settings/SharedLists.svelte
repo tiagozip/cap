@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "../../components/ui/index.js";
 import { api } from "../../lib/api.js";
+import { numFmt, t } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 import { app } from "../../lib/state.svelte.js";
 import ListEditor from "../lists/ListEditor.svelte";
@@ -22,8 +23,6 @@ let lists = $state(null);
 let usedBy = $state({});
 let error = $state("");
 let editing = $state(undefined);
-
-const nf = new Intl.NumberFormat();
 
 async function load() {
   const [l, perKey] = await Promise.all([
@@ -57,15 +56,15 @@ async function load() {
 load();
 </script>
 
-<Skeleton data={lists} sample={samples.lists} {error} empty={lists?.length === 0} label="Loading lists">
+<Skeleton data={lists} sample={samples.lists} {error} empty={lists?.length === 0} label={t("Loading lists")}>
   {#snippet errorMessage()}
-    <p class="py-5 text-sm text-destructive" role="alert">{error}</p>
+    <p class="py-5 text-sm text-destructive" role="alert">{t(error)}</p>
   {/snippet}
   {#snippet emptyMessage()}
-    <Empty title="No shared lists yet">
-      Make one when several keys should block or allow the same IPs, networks or countries.
+    <Empty title={t("No shared lists yet")}>
+      {t("Make one when several keys should block or allow the same IPs, networks or countries.")}
       {#snippet action()}
-        <Button variant="primary" onclick={() => (editing = null)}><Icon name="plus" size={15} />New list</Button>
+        <Button variant="primary" onclick={() => (editing = null)}><Icon name="plus" size={15} />{t("New list")}</Button>
       {/snippet}
     </Empty>
   {/snippet}
@@ -74,10 +73,10 @@ load();
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead class="w-px whitespace-nowrap">Entries</TableHead>
-            <TableHead class="hidden sm:table-cell">Used by</TableHead>
-            <TableHead class="w-px"><span class="sr-only">Actions</span></TableHead>
+            <TableHead>{t("Name")}</TableHead>
+            <TableHead class="w-px whitespace-nowrap">{t("Entries")}</TableHead>
+            <TableHead class="hidden sm:table-cell">{t("Used by")}</TableHead>
+            <TableHead class="w-px"><span class="sr-only">{t("Actions")}</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -85,17 +84,17 @@ load();
             {@const keys = usedBy[l.id] ?? []}
             <TableRow>
               <TableCell class="max-w-56 truncate font-medium" title={l.name}>{l.name}</TableCell>
-              <TableCell class="text-muted-foreground tabular-nums">{nf.format(l.count)}</TableCell>
-              <TableCell class="hidden max-w-64 truncate text-muted-foreground sm:table-cell" title={keys.join(", ")}>{keys.length ? keys.join(", ") : "No rules yet"}</TableCell>
+              <TableCell class="text-muted-foreground tabular-nums">{numFmt(l.count)}</TableCell>
+              <TableCell class="hidden max-w-64 truncate text-muted-foreground sm:table-cell" title={keys.join(", ")}>{keys.length ? keys.join(", ") : t("No rules yet")}</TableCell>
               <TableCell class="text-end">
-                <Button variant="ghost" size="sm" aria-label="Edit {l.name}" onclick={() => (editing = l.id)}>Edit</Button>
+                <Button variant="ghost" size="sm" aria-label={t("Edit {name}", { name: l.name })} onclick={() => (editing = l.id)}>{t("Edit")}</Button>
               </TableCell>
             </TableRow>
           {/each}
         </TableBody>
       </Table>
       <div>
-        <Button onclick={() => (editing = null)}><Icon name="plus" size={15} />New list</Button>
+        <Button onclick={() => (editing = null)}><Icon name="plus" size={15} />{t("New list")}</Button>
       </div>
   </div>
   {/snippet}

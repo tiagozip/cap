@@ -1,12 +1,13 @@
 <script>
+import { t } from "../../../lib/i18n.svelte.js";
 import Button from "../button/Button.svelte";
 import CopyCheck from "./CopyCheck.svelte";
 import { createReceipt } from "./receipt.svelte.js";
 
 let {
   text,
-  label = "Copy",
-  copiedLabel = "Copied",
+  label,
+  copiedLabel,
   variant = "ghost",
   size = "icon-sm",
   onCopy,
@@ -20,7 +21,7 @@ const receipt = createReceipt();
 <Button
   {variant}
   {size}
-  aria-label={children ? undefined : receipt.copied ? copiedLabel : label}
+  aria-label={children ? undefined : receipt.copied ? (copiedLabel ?? t("Copied")) : (label ?? t("Copy"))}
   onclick={async () => {
     const value = typeof text === "function" ? await text() : text;
     if (value == null) return;

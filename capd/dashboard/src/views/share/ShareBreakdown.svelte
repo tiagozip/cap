@@ -2,6 +2,7 @@
 import { Button, Dialog, Input, Skeleton } from "../../components/cap/index.js";
 import { Card, SlidingTabs } from "../../components/ui/index.js";
 import { compact } from "../../lib/format.js";
+import { t, tx } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 
 let { tabs, note, stale = false } = $props();
@@ -40,8 +41,8 @@ const pct = (n) => {
 {#snippet header()}
   <div class="flex items-center gap-2 px-2 pb-1.5 text-xs font-medium text-muted-foreground">
     <span class="me-auto">{tab.column}</span>
-    <span class="w-12 text-right">Share</span>
-    <span class="w-14 text-right">Events</span>
+    <span class="w-12 text-right">{tx("table", "Share")}</span>
+    <span class="w-14 text-right">{t("Events")}</span>
   </div>
 {/snippet}
 
@@ -61,11 +62,11 @@ const pct = (n) => {
   </li>
 {/snippet}
 
-<Card variant="layered" class="min-w-0" role="region" aria-label={tabs.map((t) => t.label).join(" and ")}>
+<Card variant="layered" class="min-w-0" role="region" aria-label={tabs.map((x) => x.label).join(t(" and "))}>
   <div class="flex items-center gap-2 pe-3">
     <div class="min-w-0 overflow-x-auto px-1 pb-1">
       <SlidingTabs
-        tabs={tabs.map((t) => ({ id: t.id, label: t.label }))}
+        tabs={tabs.map((x) => ({ id: x.id, label: x.label }))}
         bind:value={() => tab.id, (v) => (picked = v)}
         flat
         pillClass="rounded-lg bg-background"
@@ -77,7 +78,7 @@ const pct = (n) => {
   </div>
 
   <div class="flex flex-1 flex-col rounded-lg bg-background p-3 transition-opacity duration-200 lg:min-h-72 {stale ? 'opacity-60' : ''}">
-    <Skeleton class="skeleton-fill" data={rows} sample={samples.breakdown} empty={rows?.length === 0} preload={tab.image && rows?.slice(0, VISIBLE).map(tab.image)} label="Loading {tab.label.toLowerCase()}">
+    <Skeleton class="skeleton-fill" data={rows} sample={samples.breakdown} empty={rows?.length === 0} preload={tab.image && rows?.slice(0, VISIBLE).map(tab.image)} label={t("Loading {label}", { label: tab.label.toLowerCase() })}>
       {#snippet emptyMessage()}
         <p class="m-auto max-w-56 py-10 text-center text-sm text-balance text-muted-foreground">{tab.empty}</p>
       {/snippet}
@@ -88,7 +89,7 @@ const pct = (n) => {
         </ul>
         {#if list.length > VISIBLE}
           <div class="mt-auto flex justify-center pt-2">
-            <Button variant="ghost" size="sm" onclick={() => (details = true)}>Show all {list.length}</Button>
+            <Button variant="ghost" size="sm" onclick={() => (details = true)}>{t("Show all {count}", { count: list.length })}</Button>
           </div>
         {/if}
       {/snippet}
@@ -97,14 +98,14 @@ const pct = (n) => {
 </Card>
 
 <Dialog bind:open={details} title={tab.label} size="md" onclose={() => (query = "")}>
-  <Input icon="search" type="search" placeholder="Search {tab.label.toLowerCase()}" aria-label="Search {tab.label.toLowerCase()}" bind:value={query} />
+  <Input icon="search" type="search" placeholder={t("Search {label}", { label: tab.label.toLowerCase() })} aria-label={t("Search {label}", { label: tab.label.toLowerCase() })} bind:value={query} />
   <div class="-mx-2 max-h-[60dvh] overflow-y-auto">
     {@render header()}
     <ul class="flex flex-col gap-0.5">
       {#each filtered as r (r.value)}{@render row(r)}{/each}
     </ul>
     {#if !filtered.length}
-      <p class="py-8 text-center text-sm text-muted-foreground">Nothing matches "{query}"</p>
+      <p class="py-8 text-center text-sm text-muted-foreground">{t('Nothing matches "{query}"', { query })}</p>
     {/if}
   </div>
 </Dialog>

@@ -1,5 +1,6 @@
 <script>
 import { latency } from "../../lib/format.js";
+import { t } from "../../lib/i18n.svelte.js";
 import Bars from "./Bars.svelte";
 
 let { solve } = $props();
@@ -88,20 +89,20 @@ const stats = $derived.by(() => {
 <Bars
   {bins}
   bind:hover
-  label="Solves by how long the proof of work took"
-  title={(b) => `${latency(b.from)} to ${latency(b.to)}`}
+  label={t("Solves by how long the proof of work took")}
+  title={(b) => t("{from} to {to}", { from: latency(b.from), to: latency(b.to) })}
   {ticks}
 />
 
 <div class="mt-4 border-t border-border pt-4">
   <p class="max-w-md text-sm text-pretty text-muted-foreground">
     {#if !stats}
-      No solves in this period.
+      {t("No solves in this period.")}
     {:else}
-      Half of all solves finish in <span class="font-medium text-foreground tabular-nums">{latency(stats.median)}</span>.
-      The fastest tenth take under <span class="font-medium text-foreground tabular-nums">{latency(stats.p10)}</span>, and
+      {t("Half of all solves finish in")} <span class="font-medium text-foreground tabular-nums">{latency(stats.median)}</span>{t(".")}
+      {t("The fastest tenth take under")} <span class="font-medium text-foreground tabular-nums">{latency(stats.p10)}</span>{t(", and")}
       <span class="font-medium tabular-nums {stats.fastBad > stats.allBad * 1.5 ? 'text-warning' : 'text-foreground'}">{stats.fastBad}%</span>
-      of those were flagged or blocked, against {stats.allBad}% overall.
+      {t("of those were flagged or blocked, against {allBad}% overall.", { allBad: stats.allBad })}
     {/if}
   </p>
 </div>

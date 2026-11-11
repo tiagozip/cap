@@ -1,5 +1,6 @@
 <script>
 import { Button, Icon, Input } from "../../components/cap/index.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { normalizeOrigin } from "./origins.js";
 
 let { values = $bindable(), bad = $bindable({}), id, describedby } = $props();
@@ -27,7 +28,7 @@ tidy();
         autocomplete="off"
         spellcheck="false"
         mono
-        aria-label="Allowed website {i + 1}"
+        aria-label={t("Allowed website {n}", { n: i + 1 })}
         invalid={!!bad[i]}
         aria-describedby={bad[i] ? describedby : undefined}
         placeholder="example.com"
@@ -50,7 +51,7 @@ tidy();
       <Button
         variant="ghost"
         icon
-        aria-label={values[i]?.trim() ? `Remove ${values[i]}` : "Clear this row"}
+        aria-label={values[i]?.trim() ? t("Remove {value}", { value: values[i] }) : t("Clear this row")}
         onclick={() => {
           values = values.filter((_, j) => j !== i);
           bad = {};
@@ -61,5 +62,5 @@ tidy();
       </Button>
     </div>
   {/each}
-  <p class="text-xs text-pretty text-muted-foreground">*.example.com covers every subdomain of example.com. A * inside a name, as in app*.example.com, stands for any letters, digits or dashes.</p>
+  <p class="text-xs text-pretty text-muted-foreground">{t("*.example.com covers every subdomain of example.com. A * inside a name, as in app*.example.com, stands for any letters, digits or dashes.")}</p>
 </div>

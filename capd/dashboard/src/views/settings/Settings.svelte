@@ -2,6 +2,7 @@
 import { onMount, untrack } from "svelte";
 import { Group, PageHeader, Skeleton } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 import { scrollToTop } from "../../lib/utils.js";
 import ApiKeys from "./ApiKeys.svelte";
@@ -16,58 +17,58 @@ import WidgetFiles from "./WidgetFiles.svelte";
 
 let { section } = $props();
 
-const SECTIONS = [
+const SECTIONS = $derived([
   {
     id: "security",
-    title: "Default protection",
-    text: "A key's own settings win over these.",
+    title: t("Default protection"),
+    text: t("A key's own settings win over these."),
     view: Protection,
   },
   {
     id: "ipdata",
-    title: "Visitor location",
+    title: t("Visitor location"),
     view: Location,
   },
   {
     id: "analytics",
-    title: "Data and storage",
+    title: t("Data and storage"),
     view: Storage,
   },
   {
     id: "widget",
-    title: "Widget files",
+    title: t("Widget files"),
     view: WidgetFiles,
   },
   {
     id: "lists",
-    title: "Shared lists",
+    title: t("Shared lists"),
     view: SharedLists,
   },
   {
     id: "apikeys",
-    title: "API keys",
+    title: t("API keys"),
     view: ApiKeys,
   },
   {
     id: "proxy",
-    title: "Proxy sign-in",
+    title: t("Proxy sign-in"),
     view: ProxySignIn,
   },
   {
     id: "sessions",
-    title: "Sign-in sessions",
+    title: t("Sign-in sessions"),
     view: Sessions,
   },
   {
     id: "appearance",
-    title: "Appearance",
+    title: t("Appearance"),
     view: Appearance,
   },
   {
     id: "about",
-    title: "About",
+    title: t("About"),
   },
-];
+]);
 
 let about = $state(null);
 let current = $state(untrack(() => section) ?? "security");
@@ -105,10 +106,10 @@ onMount(() => {
 });
 </script>
 
-<PageHeader title="Instance settings" />
+<PageHeader title={t("Instance settings")} />
 
 <div id="settingsBody" class="flex items-start gap-10 px-4 pt-5 pb-12 md:px-5">
-  <nav class="sticky top-16 w-44 shrink-0 max-lg:hidden" aria-label="Settings sections">
+  <nav class="sticky top-16 w-44 shrink-0 max-lg:hidden" aria-label={t("Settings sections")}>
     <ul class="flex flex-col gap-0.5">
       {#each SECTIONS as s (s.id)}
         <li>
@@ -138,7 +139,7 @@ onMount(() => {
           {#if s.view}
             <s.view />
           {:else}
-            <Skeleton data={about} sample={samples.about} label="Loading version details">
+            <Skeleton data={about} sample={samples.about} label={t("Loading version details")}>
               {#snippet children(a)}
                 <dl class="grid grid-cols-[8rem_1fr] gap-y-2 py-4 text-sm">
                   <dt class="text-muted-foreground">Cap</dt>

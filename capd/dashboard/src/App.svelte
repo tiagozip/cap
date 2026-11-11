@@ -9,6 +9,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "./components/ui/index.js";
+import { t } from "./lib/i18n.svelte.js";
 import { app, init } from "./lib/state.svelte.js";
 import CreateKey from "./views/CreateKey.svelte";
 import KeyDetail from "./views/KeyDetail.svelte";
@@ -86,12 +87,12 @@ const grab = (e) => {
 
 <a
   class="fixed start-3 -top-24 z-[200] rounded-lg bg-popover px-3 py-2 text-sm text-popover-foreground shadow-overlay transition-[top] duration-150 focus-visible:top-3"
-  href="#main">Skip to content</a>
+  href="#main">{t("Skip to content")}</a>
 
 <NotchFilter />
 
 <SidebarProvider class="h-dvh min-h-0 text-foreground" style="--sidebar-width: 15rem;">
-  <KSidebar variant="inset" label="Main">
+  <KSidebar variant="inset" label={t("Main")}>
     {#if app.ready}<Sidebar />{/if}
   </KSidebar>
 
@@ -99,10 +100,10 @@ const grab = (e) => {
     <div id="main" tabindex="-1" bind:this={main} onscroll={sync} class="flex min-h-0 flex-1 flex-col overflow-y-auto outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0">
     {#if !app.ready || (app.route.view === "key" && app.loadingKey && !app.key)}
       <header class="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-2 md:hidden">
-        <SidebarTrigger label="Open menu" />
+        <SidebarTrigger label={t("Open menu")} />
       </header>
       <div class="grid flex-1 place-items-center" role="status">
-        <Spinner label="Loading dashboard" />
+        <Spinner label={t("Loading dashboard")} />
       </div>
     {:else if app.route.view === "settings"}
       <Settings section={app.route.section} />

@@ -1,11 +1,12 @@
 <script>
+import { t } from "../../lib/i18n.svelte.js";
 import { SidebarTrigger } from "../ui/index.js";
 
 let { title, description, actions, children, class: className = "" } = $props();
 </script>
 
 <header class="notch-shadow sticky top-0 z-40 flex h-12 items-center border-b border-border bg-background ps-2 pe-3 md:pointer-events-none md:h-11 md:items-stretch md:border-b-0 md:bg-transparent md:px-0 md:[&>*:not(:nth-child(4))]:pointer-events-auto {className}">
-  <div class="flex shrink-0 md:hidden"><SidebarTrigger label="Open menu" /></div>
+  <div class="flex shrink-0 md:hidden"><SidebarTrigger label={t("Open menu")} /></div>
   <div class="relative flex min-w-0 items-center ps-1.5 md:rounded-tl-lg md:bg-sidebar md:ps-5 md:pe-2">
     <h1 class="truncate text-[15px] font-medium text-foreground">{title}</h1>
     <span class="absolute start-0 end-0 bottom-0 hidden h-px bg-border md:block"></span>

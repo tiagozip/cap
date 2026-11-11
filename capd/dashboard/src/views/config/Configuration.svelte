@@ -10,6 +10,7 @@ import {
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { loadCatalog } from "../../lib/catalog.svelte.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app, loadKeys } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import { scrollToTop } from "../../lib/utils.js";
@@ -26,7 +27,7 @@ import WidgetDemo from "./WidgetDemo.svelte";
 let form = $state(formFrom(app.key));
 let errors = $state({});
 let originBad = $state({});
-let saving = $state("");
+let saving = $state(false);
 let hooks = $state(null);
 let demoOpen = $state(false);
 
@@ -102,11 +103,11 @@ async function save() {
     form = formFrom(app.key);
     return;
   }
-  saving = "Saving";
+  saving = true;
   const res = await api("PUT", `/keys/${app.key.siteKey}/config`, body);
-  saving = "";
+  saving = false;
   if (!res?.success) {
-    toast(res?.error || "Couldn't save your changes", "error");
+    toast(t(res?.error || "Couldn't save your changes"), "error");
     return;
   }
   const { name, ...config } = body;
@@ -116,23 +117,23 @@ async function save() {
     loadKeys();
   }
   form = formFrom(app.key);
-  toast("Settings saved");
+  toast(t("Settings saved"));
 }
 </script>
 
-<PageHeader title="Settings" />
+<PageHeader title={t("Settings")} />
 
 <div class="flex items-start gap-10 px-4 pt-5 pb-12 md:px-5">
 <SectionNav
-  label="Settings sections"
+  label={t("Settings sections")}
   items={[
-    { id: "cfgSetup", label: "Install" },
-    { id: "cfgGeneral", label: "General" },
-    { id: "cfgAccess", label: "Access" },
-    { id: "cfgPuzzle", label: "Puzzle" },
-    { id: "webhooks", label: "Webhooks" },
-    { id: "cfgShares", label: "Share links" },
-    { id: "cfgDanger", label: "Danger zone" },
+    { id: "cfgSetup", label: t("Install") },
+    { id: "cfgGeneral", label: t("General") },
+    { id: "cfgAccess", label: t("Access") },
+    { id: "cfgPuzzle", label: t("Puzzle") },
+    { id: "webhooks", label: t("Webhooks") },
+    { id: "cfgShares", label: t("Share links") },
+    { id: "cfgDanger", label: t("Danger zone") },
   ]}
 />
 <div class="flex max-w-3xl min-w-0 flex-1 flex-col gap-6">
@@ -146,8 +147,8 @@ async function save() {
       save();
     }}
   >
-    <Group id="cfgGeneral" title="General">
-      <Row label="Key name" for="cfgName" help="Only you see it, in the sidebar.">
+    <Group id="cfgGeneral" title={t("General")}>
+      <Row label={t("Key name")} for="cfgName" help={t("Only you see it, in the sidebar.")}>
         <div class="flex w-full flex-col gap-1.5 md:max-w-sm">
           <Input
             id="cfgName"
@@ -158,13 +159,13 @@ async function save() {
             aria-describedby={errors.name ? "cfgName-error" : undefined}
             bind:value={form.name}
           />
-          {#if errors.name}<p id="cfgName-error" class="text-sm text-destructive">{errors.name}</p>{/if}
+          {#if errors.name}<p id="cfgName-error" class="text-sm text-destructive">{t(errors.name)}</p>{/if}
         </div>
       </Row>
-      <Row label="Demo" help="Try this key's widget on your device and style it.">
+      <Row label={t("Demo")} help={t("Try this key's widget on your device and style it.")}>
         <Button onclick={() => (demoOpen = true)}>
           <Icon name="eye" size={14} />
-          Open demo
+          {t("Open demo")}
         </Button>
       </Row>
     </Group>
@@ -191,7 +192,7 @@ async function save() {
     class="sticky bottom-5 z-40 mx-auto -mt-6 mb-6 flex w-[calc(100%-1.5rem)] max-w-md items-center gap-2 rounded-xl bg-popover py-2 ps-4 pe-2 text-sm text-popover-foreground shadow-overlay transition-[translate,opacity] duration-200 ease-(--ease-out) starting:translate-y-3 starting:opacity-0 motion-reduce:transition-none"
     role="status"
   >
-    <span class="me-auto">{Object.keys(errors).length ? "Fix the marked fields to save" : "You have unsaved changes"}</span>
+    <span class="me-auto">{Object.keys(errors).length ? t("Fix the marked fields to save") : t("You have unsaved changes")}</span>
     <Button
       variant="ghost"
       size="sm"
@@ -201,8 +202,8 @@ async function save() {
         originBad = {};
       }}
     >
-      Discard
+      {t("Discard")}
     </Button>
-    <Button variant="primary" size="sm" disabled={!!saving} onclick={save}>{saving || "Save changes"}</Button>
+    <Button variant="primary" size="sm" disabled={saving} onclick={save}>{saving ? t("Saving") : t("Save changes")}</Button>
   </div>
 {/if}

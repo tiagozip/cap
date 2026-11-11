@@ -1,5 +1,6 @@
 <script>
 import { compact } from "../../lib/format.js";
+import { numFmt, t } from "../../lib/i18n.svelte.js";
 
 let {
   bins,
@@ -14,11 +15,15 @@ let {
   ...rest
 } = $props();
 
-const PARTS = [
-  ["pass", "Passed", "color-mix(in oklab, var(--foreground) 22%, transparent)"],
-  ["flagged", "Flagged", "var(--warning)"],
-  ["blocked", "Blocked", "var(--destructive)"],
-];
+const PARTS = $derived([
+  [
+    "pass",
+    t("Passed"),
+    "color-mix(in oklab, var(--foreground) 22%, transparent)",
+  ],
+  ["flagged", t("Flagged"), "var(--warning)"],
+  ["blocked", t("Blocked"), "var(--destructive)"],
+]);
 
 const nice = (v) => {
   if (v <= 1) return 1;
@@ -42,8 +47,8 @@ const pick = (e) => {
 
 <div class="grid grid-cols-[auto_1fr] gap-x-3">
   <div class="relative h-40 w-7 text-right text-[11px] text-muted-foreground tabular-nums" aria-hidden="true">
-    {#each yTicks as t (t)}
-      <span class="absolute right-0 leading-none" style:bottom="{y(t)}%" style:transform="translateY(50%)">{compact(t)}</span>
+    {#each yTicks as tick (tick)}
+      <span class="absolute right-0 leading-none" style:bottom="{y(tick)}%" style:transform="translateY(50%)">{compact(tick)}</span>
     {/each}
   </div>
 
@@ -58,8 +63,8 @@ const pick = (e) => {
     }}
     onpointerleave={() => (hover = null)}
   >
-    {#each yTicks as t (t)}
-      <div class="pointer-events-none absolute inset-x-0 border-t {t === 0 ? 'border-border' : 'border-dashed border-border'}" style:bottom="{y(t)}%"></div>
+    {#each yTicks as tick (tick)}
+      <div class="pointer-events-none absolute inset-x-0 border-t {tick === 0 ? 'border-border' : 'border-dashed border-border'}" style:bottom="{y(tick)}%"></div>
     {/each}
     <div data-bone="block" class="pointer-events-none absolute inset-0 flex items-end gap-px">
       {#each bins as b, i (i)}
@@ -94,7 +99,7 @@ const pick = (e) => {
             <li class="flex items-center gap-2">
               <span class="size-2 shrink-0 rounded-full" style:background={c}></span>
               {name}
-              <span class="ms-auto tabular-nums">{b[k].toLocaleString()}</span>
+              <span class="ms-auto tabular-nums">{numFmt(b[k])}</span>
             </li>
           {/each}
         </ul>
@@ -104,8 +109,8 @@ const pick = (e) => {
 
   <div></div>
   <div class="relative mt-2 h-4 text-[11px] text-muted-foreground tabular-nums" aria-hidden="true">
-    {#each ticks as t (t.x)}
-      <span class="absolute whitespace-nowrap" style:left="{t.x * 100}%" style:transform="translateX({t.x === 0 ? '0' : t.x === 1 ? '-100%' : '-50%'})">{t.label}</span>
+    {#each ticks as tick (tick.x)}
+      <span class="absolute whitespace-nowrap" style:left="{tick.x * 100}%" style:transform="translateX({tick.x === 0 ? '0' : tick.x === 1 ? '-100%' : '-50%'})">{tick.label}</span>
     {/each}
   </div>
 </div>

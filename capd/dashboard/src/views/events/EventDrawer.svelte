@@ -21,6 +21,7 @@ import {
 } from "../../lib/catalog.svelte.js";
 import { ago, compact, fullFmt, latency } from "../../lib/format.js";
 import { flagUrl } from "../../lib/geo.js";
+import { dtf, t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import { scrollToTop } from "../../lib/utils.js";
@@ -31,6 +32,7 @@ import {
   filterValueLabel,
   groupSolves,
   isFlagged,
+  verdictLabel,
 } from "./labels.js";
 
 let {
@@ -68,41 +70,58 @@ $effect(() => {
   );
 });
 
-const DECISIONS = {
+const DECISIONS = $derived({
   timeout: [
-    "Not solved",
+    t("Not solved"),
     "text-muted-foreground",
     "clock",
     "bg-muted text-muted-foreground",
   ],
-  issued: ["Issued", "text-muted-foreground", "radar", "bg-info/12 text-info"],
-  pass: ["Allowed", "text-foreground", "check", "bg-success/12 text-success"],
-  flagged: ["Flagged", "text-warning", "flag", "bg-warning/15 text-warning"],
+  issued: [
+    t("Issued"),
+    "text-muted-foreground",
+    "radar",
+    "bg-info/12 text-info",
+    true,
+  ],
+  pass: [
+    t("Allowed"),
+    "text-foreground",
+    "check",
+    "bg-success/12 text-success",
+    true,
+  ],
+  flagged: [t("Flagged"), "text-warning", "flag", "bg-warning/15 text-warning"],
   fail: [
-    "Failed",
+    t("Failed"),
     "text-muted-foreground",
     "ban",
     "bg-muted text-muted-foreground",
   ],
   failBad: [
-    "Failed",
+    t("Failed"),
     "text-destructive",
     "ban",
     "bg-destructive/12 text-destructive",
   ],
   block: [
-    "Blocked",
+    t("Blocked"),
     "text-destructive",
     "ban",
     "bg-destructive/12 text-destructive",
   ],
-  limit: ["Rate limited", "text-violet", "clock", "bg-violet/12 text-violet"],
-};
-const KINDS = {
-  challenge: ["Challenge issued", "radar", "bg-info/12 text-info"],
-  redeem: ["Challenge solved", "check", "bg-primary/12 text-primary"],
-  siteverify: ["Token verified", "key", "bg-success/12 text-success"],
-};
+  limit: [
+    t("Rate limited"),
+    "text-violet",
+    "clock",
+    "bg-violet/12 text-violet",
+  ],
+});
+const KINDS = $derived({
+  challenge: [t("Challenge issued"), "radar", "bg-info/12 text-info"],
+  redeem: [t("Challenge solved"), "check", "bg-primary/12 text-primary"],
+  siteverify: [t("Token verified"), "key", "bg-success/12 text-success"],
+});
 const issued = (x) => x.type === "challenge" && x.outcome === "pass";
 const decisionOf = (x) =>
   DECISIONS[
@@ -116,13 +135,13 @@ const decisionOf = (x) =>
   ] ?? [x.outcome, "text-foreground"];
 const kindOf = (x) =>
   x.outcome === "block"
-    ? ["Request blocked", "ban", "bg-destructive/12 text-destructive"]
+    ? [t("Request blocked"), "ban", "bg-destructive/12 text-destructive"]
     : x.outcome === "limit"
-      ? ["Too many requests", "clock", "bg-violet/12 text-violet"]
+      ? [t("Too many requests"), "clock", "bg-violet/12 text-violet"]
       : x.outcome === "fail" && x.type === "redeem"
-        ? ["Solve failed", "ban", "bg-muted text-muted-foreground"]
+        ? [t("Solve failed"), "ban", "bg-muted text-muted-foreground"]
         : x.outcome === "fail" && x.type === "siteverify"
-          ? ["Verify failed", "ban", "bg-muted text-muted-foreground"]
+          ? [t("Verify failed"), "ban", "bg-muted text-muted-foreground"]
           : (KINDS[x.type] ?? [
               EVENT_TYPES[x.type] ?? x.type,
               "events",
@@ -133,13 +152,13 @@ const stepNote = (x) =>
   x.type === "challenge"
     ? (x.origin ?? "")
     : x.type === "redeem" && x.outcome === "pass" && x.solve_ms
-      ? `in ${latency(x.solve_ms)}`
+      ? t("in {time}", { time: latency(x.solve_ms) })
       : x.type === "siteverify" && x.outcome === "pass"
-        ? "By your server"
+        ? t("By your server")
         : x.reason
           ? reasonLabel(x.reason)
           : "";
-const stepTime = new Intl.DateTimeFormat(undefined, {
+const stepTime = dtf({
   hour: "numeric",
   minute: "2-digit",
   second: "2-digit",
@@ -158,10 +177,13 @@ const gap = $derived.by(() => {
   const redeem = steps.find((x) => x.type === "redeem");
   if (!redeem)
     return timedOut
-      ? ["Not solved", "The challenge expired after 15 minutes"]
-      : ["Not solved yet", "The challenge is still waiting for a solution"];
+      ? [t("Not solved"), t("The challenge expired after 15 minutes")]
+      : [
+          t("Not solved yet"),
+          t("The challenge is still waiting for a solution"),
+        ];
   if (redeem.outcome === "pass" && !steps.some((x) => x.type === "siteverify"))
-    return ["Not verified", "Your server never checked this token"];
+    return [t("Not verified"), t("Your server never checked this token")];
   return null;
 });
 const decision = $derived(
@@ -186,46 +208,66 @@ const ipSolves = $derived.by(() => {
 const PROTOCOLS = { hashwx: "HashWX", "sha256-pow": "SHA-256" };
 const facts = (x) =>
   [
-    ["Time", fullFmt.format(new Date(x.ts))],
-    ["Website", x.origin],
-    ["Reason", x.reason && reasonLabel(x.reason)],
-    ["Solve time", x.solve_ms != null && `${(x.solve_ms / 1000).toFixed(2)}s`],
-    ["Protocol", x.protocol && (PROTOCOLS[x.protocol] ?? x.protocol)],
+    [t("Time"), fullFmt.format(new Date(x.ts)), false],
+    [t("Website"), x.origin, false],
+    [t("Reason"), x.reason && reasonLabel(x.reason), false],
     [
-      "Verdict",
-      x.verdict &&
-        (x.verdict === "ok"
-          ? "OK"
-          : `${x.verdict.charAt(0).toUpperCase()}${x.verdict.slice(1)}`),
+      t("Solve time"),
+      x.solve_ms != null && `${(x.solve_ms / 1000).toFixed(2)}s`,
+      false,
     ],
-    ["Risk", x.score != null && `${Math.round(x.score * 100)} of 100`],
+    [t("Protocol"), x.protocol && (PROTOCOLS[x.protocol] ?? x.protocol), false],
+    [t("Verdict"), x.verdict && verdictLabel(x.verdict), false],
     [
-      "Signals",
+      t("Risk"),
+      x.score != null &&
+        t("{score} of 100", { score: Math.round(x.score * 100) }),
+      false,
+    ],
+    [
+      t("Signals"),
       x.flags?.length && x.flags.map((f) => signalInfo(f).text).join(", "),
+      false,
     ],
-    ["Rule", x.rule],
-    ["IP", x.ip !== e?.ip && x.ip],
-    ["Browser", x.ua !== e?.ua && [x.browser, x.os].filter(Boolean).join(", ")],
-    ["Token", x.token_id],
-    ["Event ID", x.id],
+    [t("Rule"), x.rule, false],
+    [t("IP"), x.ip !== e?.ip && x.ip, true],
+    [
+      t("Browser"),
+      x.ua !== e?.ua && [x.browser, x.os].filter(Boolean).join(", "),
+      false,
+    ],
+    [t("Token"), x.token_id, true],
+    [t("Event ID"), x.id, true],
   ].filter(([, v]) => v);
 const scoreWord = (s) =>
-  s >= 0.75 ? "looks automated" : s >= 0.4 ? "suspicious" : "looks human";
+  s >= 0.75
+    ? t("looks automated")
+    : s >= 0.4
+      ? t("suspicious")
+      : t("looks human");
 
 const similar = $derived(
   e
     ? [
-        e.ip && ["ip", e.ip, "From this IP"],
-        e.fp && ["fp", e.fp, "From this visitor"],
-        e.reason && ["reason", e.reason, "With this reason"],
-        e.asn_org && ["asn_org", e.asn_org, "From this network"],
+        e.ip && ["ip", e.ip, t("From this IP")],
+        e.fp && ["fp", e.fp, t("From this visitor")],
+        e.reason && ["reason", e.reason, t("With this reason")],
+        e.asn_org && ["asn_org", e.asn_org, t("From this network")],
         e.country && [
           "country",
           e.country,
-          `From ${filterValueLabel("country", e.country)}`,
+          t("From {value}", { value: filterValueLabel("country", e.country) }),
         ],
-        e.agent && ["agent", e.agent, `From ${agentName(e.agent)}`],
-        e.browser && ["browser", e.browser, `From ${e.browser}`],
+        e.agent && [
+          "agent",
+          e.agent,
+          t("From {value}", { value: agentName(e.agent) }),
+        ],
+        e.browser && [
+          "browser",
+          e.browser,
+          t("From {value}", { value: e.browser }),
+        ],
       ].filter(Boolean)
     : [],
 );
@@ -238,11 +280,11 @@ async function block() {
   });
   blocking = false;
   if (!r.success) {
-    toast(r.error || "Couldn't block this IP", "error");
+    toast(t(r.error || "Couldn't block this IP"), "error");
     return;
   }
   blocked = true;
-  toast(`Blocked ${e.ip} on this key`);
+  toast(t("Blocked {ip} on this key", { ip: e.ip }));
 }
 </script>
 
@@ -263,9 +305,9 @@ async function block() {
       {@const x = g.main}
       {@const many = g.events.length > 1}
       {@const d = g.timedOut ? DECISIONS.timeout : many ? (DECISIONS[g.decision === "fail" ? failKind(g.events.find((y) => y.outcome === "fail") ?? {}) : g.decision] ?? DECISIONS.pass) : decisionOf(x)}
-      {@const quiet = d[0] === "Issued" || d[0] === "Allowed"}
-      {@const origin = g.client.origin ? `on ${g.client.origin}` : ""}
-      {@const note = many && x.type === "redeem" && x.outcome === "pass" && x.solve_ms ? `in ${latency(x.solve_ms)} ${origin}` : x.type === "challenge" || many ? origin : x.type === "siteverify" && x.outcome === "pass" ? "by your server" : stepNote(x)}
+      {@const quiet = !!d[4]}
+      {@const origin = g.client.origin ? t("on {origin}", { origin: g.client.origin }) : ""}
+      {@const note = many && x.type === "redeem" && x.outcome === "pass" && x.solve_ms ? `${t("in {time}", { time: latency(x.solve_ms) })}${origin ? ` ${origin}` : ""}` : x.type === "challenge" || many ? origin : x.type === "siteverify" && x.outcome === "pass" ? t("by your server") : stepNote(x)}
       <li>
         <button
           type="button"
@@ -273,7 +315,7 @@ async function block() {
           onclick={() => onopen(x.id, g)}
         >
           <span class="min-w-0 flex-1 truncate">
-            {g.timedOut ? "Challenge expired" : many ? g.title : kindOf(x)[0]}
+            {g.timedOut ? t("Challenge expired") : many ? g.title : kindOf(x)[0]}
             {#if note}<span class="ms-1 text-muted-foreground">{note}</span>{/if}
           </span>
           {#if !quiet}<span class="shrink-0 text-xs font-medium {d[1]}">{d[0]}</span>{/if}
@@ -286,9 +328,9 @@ async function block() {
 
 <Drawer
   bind:open
-  title={!solve && !timedOut && e && issued(e) ? kind[0] : decision ? decision[0] : "Event"}
+  title={!solve && !timedOut && e && issued(e) ? kind[0] : decision ? decision[0] : t("Event")}
   titleClass={!solve && !timedOut && e && issued(e) ? "" : decision ? decision[1] : ""}
-  description={e ? (solve || issued(e) ? fullFmt.format(new Date(e.ts)) : `${kind[0]}, ${fullFmt.format(new Date(e.ts))}`) : "Loading the event"}
+  description={e ? (solve || issued(e) ? fullFmt.format(new Date(e.ts)) : `${kind[0]}, ${fullFmt.format(new Date(e.ts))}`) : t("Loading the event")}
 >
   {#snippet lead()}
     {#if decision?.[2]}
@@ -299,15 +341,15 @@ async function block() {
   {/snippet}
   <div bind:this={top} class="flex flex-col text-sm">
     {#if missing}
-      <p class="text-muted-foreground">Cap no longer stores this event. Events older than the retention period are deleted.</p>
+      <p class="text-muted-foreground">{t("Cap no longer stores this event. Events older than the retention period are deleted.")}</p>
     {:else}
-      <Skeleton loading={!e} label="Loading the event">
+      <Skeleton loading={!e} label={t("Loading the event")}>
         {#if e}
           {@const v = res.related.visitor}
           {@const flags = e.flags ?? []}
           <div class="flex flex-col">
             {#if timedOut}
-              <p class="pb-3 text-pretty">Cap issued this challenge, but nothing solved it within 15 minutes, so it expired.</p>
+              <p class="pb-3 text-pretty">{t("Cap issued this challenge, but nothing solved it within 15 minutes, so it expired.")}</p>
             {:else if !solve && !issued(e)}
               <p class="pb-3 text-pretty">{eventSentence(e)}</p>
             {/if}
@@ -315,7 +357,7 @@ async function block() {
               {#if e.ip}
                 <Button size="sm" class="text-destructive" disabled={blocked || blocking} onclick={block}>
                   <Icon name={blocked ? "check" : "ban"} size={14} />
-                  {blocked ? "Blocked" : "Block this IP"}
+                  {blocked ? t("Blocked") : t("Block this IP")}
                 </Button>
                 <Button
                   size="sm"
@@ -327,14 +369,14 @@ async function block() {
                     ])}
                 >
                   <Icon name="list" size={14} />
-                  Add to list
+                  {t("Add to list")}
                 </Button>
               {/if}
               {#if similar.length}
                 <Menu width="w-60" align="start">
                   {#snippet trigger(props)}
                     <Button size="sm" {...props}>
-                      Show similar events
+                      {t("Show similar events")}
                       <Icon name="down" size={14} class="text-muted-foreground" />
                     </Button>
                   {/snippet}
@@ -347,7 +389,7 @@ async function block() {
 
             {#if steps}
               <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-                {@render section("This solve")}
+                {@render section(t("This solve"))}
                 <ol class="-mx-2 flex flex-col">
                   {#each steps as x, i (x.id)}
                     {@const ok = x.outcome === "pass"}
@@ -386,10 +428,10 @@ async function block() {
                       </button>
                       {#if shown}
                         <dl id="step-{x.id}" class="mb-1 ms-[2.375rem] me-2 flex flex-col rounded-lg bg-muted/60 px-3 py-1.5">
-                          {#each facts(x) as [label, value] (label)}
+                          {#each facts(x) as [label, value, mono] (label)}
                             <div class="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-3 py-1">
                               <dt class="text-xs text-muted-foreground">{label}</dt>
-                              <dd class="min-w-0 text-xs break-words tabular-nums {label === 'Token' || label === 'Event ID' || label === 'IP' ? 'font-mono' : ''}">{value}</dd>
+                              <dd class="min-w-0 text-xs break-words tabular-nums {mono ? 'font-mono' : ''}">{value}</dd>
                             </div>
                           {/each}
                         </dl>
@@ -415,7 +457,7 @@ async function block() {
 
             <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
               <div class="flex items-center justify-between gap-3 pb-1.5">
-                <h3 class="text-sm font-semibold">What happened</h3>
+                <h3 class="text-sm font-semibold">{t("What happened")}</h3>
                 {#if e.score != null}
                   {@const pct = Math.round(e.score * 100)}
                   {@const parts = flags
@@ -434,21 +476,21 @@ async function block() {
                           </div>
                         {/each}
                         <div class="mt-0.5 flex justify-between gap-3 border-t border-current/15 pt-1.5">
-                          <span>Risk</span>
-                          <span class="tabular-nums">{pct} of 100</span>
+                          <span>{t("Risk")}</span>
+                          <span class="tabular-nums">{t("{score} of 100", { score: pct })}</span>
                         </div>
                       {:else}
-                        <span>No interaction flags, so the risk is {pct}.</span>
+                        <span>{t("No interaction flags, so the risk is {score}.", { score: pct })}</span>
                       {/if}
                       {#if capped}
-                        <span class="opacity-70 text-pretty">Only weak flags fired, so the risk stops at {pct}.</span>
+                        <span class="opacity-70 text-pretty">{t("Only weak flags fired, so the risk stops at {score}.", { score: pct })}</span>
                       {/if}
-                      <span class="opacity-70 text-pretty">Flags combine as independent chances. This key blocks at {line}.</span>
+                      <span class="opacity-70 text-pretty">{t("Flags combine as independent chances. This key blocks at {line}.", { line })}</span>
                     </div>
                   {/snippet}
                   <Tip content={breakdown} side="bottom" align="end">
                     {#snippet children(props)}
-                  <span {...props} class="flex cursor-default items-center gap-2 text-xs text-muted-foreground" aria-label="Risk {pct} of 100">
+                  <span {...props} class="flex cursor-default items-center gap-2 text-xs text-muted-foreground" aria-label={t("Risk {score} of 100", { score: pct })}>
                     {scoreWord(e.score)}
                     <span class="relative inline-flex size-8 items-center justify-center">
                       <svg viewBox="0 0 32 32" class="absolute inset-0 -rotate-90" aria-hidden="true">
@@ -476,43 +518,43 @@ async function block() {
               <dl class="flex flex-col">
                 {#if e.reason}
                   {#snippet reason()}{reasonLabel(e.reason)}{/snippet}
-                  {@render row("Reason", reason)}
+                  {@render row(t("Reason"), reason)}
                 {/if}
                 {#if e.solve_ms != null}
                   {#snippet solve()}{(e.solve_ms / 1000).toFixed(2)}s{/snippet}
-                  {@render row("Solve time", solve)}
+                  {@render row(t("Solve time"), solve)}
                 {/if}
                 {#if e.agent}
                   {#snippet agent()}
                     <span class="inline-flex items-center gap-2 align-middle"><AgentIcon id={e.agent} size={14} />{agentName(e.agent)}</span>
-                    <span class="text-muted-foreground">{e.agent_confidence} confidence{e.agent_verified ? ", signature verified" : ""}</span>
+                    <span class="text-muted-foreground">{t("{level} confidence", { level: t(e.agent_confidence) })}{e.agent_verified ? t(", signature verified") : ""}</span>
                   {/snippet}
-                  {@render row("AI agent", agent)}
+                  {@render row(t("AI agent"), agent)}
                 {/if}
                 {#if e.verdict}
-                  {#snippet verdict()}{e.verdict === "ok" ? "OK" : `${e.verdict.charAt(0).toUpperCase()}${e.verdict.slice(1)}`}{/snippet}
-                  {@render row("Verdict", verdict)}
+                  {#snippet verdict()}{verdictLabel(e.verdict)}{/snippet}
+                  {@render row(t("Verdict"), verdict)}
                 {/if}
                 {#if e.rule}
                   {#snippet rule()}{e.rule}{/snippet}
-                  {@render row("Rule", rule)}
+                  {@render row(t("Rule"), rule)}
                 {/if}
                 {#if e.protocol}
                   {#snippet protocol()}{({ hashwx: "HashWX", "sha256-pow": "SHA-256" })[e.protocol] ?? e.protocol}{/snippet}
-                  {@render row("Protocol", protocol)}
+                  {@render row(t("Protocol"), protocol)}
                 {/if}
               </dl>
             </section>
 
             {#if flags.length}
               <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-                {@render section("Signals")}
+                {@render section(t("Signals"))}
                 <ul class="flex flex-wrap gap-1.5 pt-1">
                   {#each flags as f (f)}
                     {@const info = signalInfo(f)}
                     <li title={f}>
                       <Tag tone={info.strength === "strong" ? "warning" : "neutral"}>
-                        {info.text}{#if info.strength === "strong"}<span class="sr-only">, strong signal</span>{/if}
+                        {info.text}{#if info.strength === "strong"}<span class="sr-only">{t(", strong signal")}</span>{/if}
                       </Tag>
                     </li>
                   {/each}
@@ -521,7 +563,7 @@ async function block() {
             {/if}
 
             <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-              {@render section("Visitor")}
+              {@render section(t("Visitor"))}
               <dl class="flex flex-col">
                 {#if e.ip}
                   {#snippet ip()}
@@ -544,31 +586,31 @@ async function block() {
                       {/if}
                     </span>
                   {/snippet}
-                  {@render row("IP", ip)}
+                  {@render row(t("IP"), ip)}
                 {/if}
                 {#if e.asn_org}
                   {#snippet net()}{e.asn_org} {#if e.asn}<span class="text-muted-foreground">AS{e.asn}</span>{/if}{/snippet}
-                  {@render row("Network", net)}
+                  {@render row(t("Network"), net)}
                 {/if}
                 {#if e.browser || e.os || e.platform}
-                  {#snippet client()}{[e.browser, e.os, e.platform].filter(Boolean).join(", ")}{/snippet}
-                  {@render row("Browser", client)}
+                  {#snippet client()}{[e.browser, e.os, e.platform && t(e.platform)].filter(Boolean).join(", ")}{/snippet}
+                  {@render row(t("Browser"), client)}
                 {/if}
                 {#if e.origin}
                   {#snippet origin()}{e.origin}{/snippet}
-                  {@render row("Website", origin)}
+                  {@render row(t("Website"), origin)}
                 {/if}
                 {#if e.lang}
                   {#snippet lang()}{filterValueLabel("lang", e.lang)}{/snippet}
-                  {@render row("Language", lang)}
+                  {@render row(t("Language"), lang)}
                 {/if}
                 {#if e.ua}
                   {#snippet ua()}<span class="text-xs text-muted-foreground">{e.ua}</span>{/snippet}
-                  {@render row("User agent", ua)}
+                  {@render row(t("User agent"), ua)}
                 {/if}
                 {#if e.fp}
                   {#snippet fp()}<span class="font-mono text-xs">{e.fp}</span>{/snippet}
-                  {@render row("Visitor ID", fp)}
+                  {@render row(t("Visitor ID"), fp)}
                 {/if}
               </dl>
             </section>
@@ -576,11 +618,11 @@ async function block() {
             {#if v}
               <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
                 <div class="flex items-baseline justify-between gap-3 pb-3">
-                  <h3 class="text-sm font-semibold">This visitor</h3>
-                  <span class="text-xs text-muted-foreground">Within a day of this event</span>
+                  <h3 class="text-sm font-semibold">{t("This visitor")}</h3>
+                  <span class="text-xs text-muted-foreground">{t("Within a day of this event")}</span>
                 </div>
                 <dl class="grid grid-cols-4 gap-2">
-                  {#each [["Solved", v.solved, ""], ["Failed", v.failed, v.failed ? "text-destructive" : ""], ["Blocked", v.blocked, v.blocked ? "text-destructive" : ""], ["Rate limited", v.limited, v.limited ? "text-violet" : ""]] as [label, n, tone] (label)}
+                  {#each [[t("Solved"), v.solved, ""], [t("Failed"), v.failed, v.failed ? "text-destructive" : ""], [t("Blocked"), v.blocked, v.blocked ? "text-destructive" : ""], [t("Rate limited"), v.limited, v.limited ? "text-violet" : ""]] as [label, n, tone] (label)}
                     <div class="flex flex-col gap-0.5 rounded-lg bg-muted/60 px-3 py-2.5">
                       <dt class="truncate text-xs text-muted-foreground">{label}</dt>
                       <dd class="text-lg font-semibold tabular-nums {tone}">{compact(n)}</dd>
@@ -592,14 +634,14 @@ async function block() {
 
             {#if res.related.chain.length && !steps}
               <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-                {@render section("Same token")}
+                {@render section(t("Same token"))}
                 {@render mini(res.related.chain.map((x) => ({ id: x.id, ts: x.ts, main: x, client: x, events: [x] })))}
               </section>
             {/if}
 
             {#if ipSolves.length}
               <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-                {@render section("Other events from this IP")}
+                {@render section(t("Other events from this IP"))}
                 {@render mini(ipSolves)}
               </section>
             {/if}
@@ -609,7 +651,7 @@ async function block() {
                 class="flex h-8 cursor-pointer list-none items-center gap-1.5 rounded-md text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden"
               >
                 <Icon name="right" size={14} class="text-muted-foreground transition-[rotate] duration-150 group-open:rotate-90 motion-reduce:transition-none" />
-                Raw event
+                {t("Raw event")}
               </summary>
               <CodeBlock class="mt-2 mb-2" code={JSON.stringify(e, null, 2)} language="json" lineNumbers={false} download={false} />
             </details>
@@ -617,15 +659,15 @@ async function block() {
         {:else}
           <div class="flex flex-col">
             {#if timedOut || !solve}
-              <p class="pb-3">Someone on Chrome in Germany solved a challenge.</p>
+              <p class="pb-3">{t("Someone on Chrome in Germany solved a challenge.")}</p>
             {/if}
             <div class="flex flex-wrap items-center gap-2 pb-5">
-              <Button size="sm"><Icon name="ban" size={14} />Block this IP</Button>
-              <Button size="sm"><Icon name="list" size={14} />Add to list</Button>
+              <Button size="sm"><Icon name="ban" size={14} />{t("Block this IP")}</Button>
+              <Button size="sm"><Icon name="list" size={14} />{t("Add to list")}</Button>
             </div>
             {#if solve}
               <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-                {@render section("This solve")}
+                {@render section(t("This solve"))}
                 <ol class="-mx-2 flex flex-col">
                   {#each solve.events as x (x.id)}
                     <li class="flex items-start gap-3 px-2 py-1.5">
@@ -641,9 +683,9 @@ async function block() {
               </section>
             {/if}
             <section class="-mx-5 flex flex-col border-t border-border px-5 py-4">
-              {@render section("What happened")}
+              {@render section(t("What happened"))}
               <dl class="flex flex-col">
-                {#each ["Browser", "Location", "Network", "Website"] as label (label)}
+                {#each [t("Browser"), t("Location"), t("Network"), t("Website")] as label (label)}
                   <div class="grid grid-cols-[6rem_minmax(0,1fr)] items-baseline gap-3 py-1.5">
                     <dt>{label}</dt>
                     <dd>Chrome on macOS</dd>

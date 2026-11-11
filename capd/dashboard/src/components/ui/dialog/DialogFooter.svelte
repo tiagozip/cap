@@ -1,5 +1,6 @@
 <script>
 import { Dialog } from "bits-ui";
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 
 let {
@@ -17,7 +18,7 @@ let {
     <Dialog.Close
       class="inline-flex h-8 cursor-pointer items-center justify-center rounded-lg bg-foreground/5 px-3 text-sm text-foreground hover:bg-foreground/10"
     >
-      Close
+      {t("Close")}
     </Dialog.Close>
   {/if}
 </div>

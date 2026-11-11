@@ -1,8 +1,9 @@
 <script>
 import { onMount } from "svelte";
+import { t } from "../../lib/i18n.svelte.js";
 import { scrollToTop } from "../../lib/utils.js";
 
-let { items, label = "Sections" } = $props();
+let { items, label } = $props();
 let current = $state(items[0]?.id);
 
 onMount(() => {
@@ -25,7 +26,7 @@ onMount(() => {
 });
 </script>
 
-<nav class="sticky top-16 w-44 shrink-0 self-start max-lg:hidden" aria-label={label}>
+<nav class="sticky top-16 w-44 shrink-0 self-start max-lg:hidden" aria-label={label ?? t("Sections")}>
   <ul class="flex flex-col gap-0.5">
     {#each items as it (it.id)}
       <li>

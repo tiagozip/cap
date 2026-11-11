@@ -7,6 +7,7 @@ import {
   Row,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app, loadKeys, navigate } from "../../lib/state.svelte.js";
 import { confirm, toast } from "../../lib/ui.svelte.js";
 import { setSecret } from "./secret.svelte.js";
@@ -17,10 +18,11 @@ let busy = $state("");
 
 async function rotate() {
   const ok = await confirm({
-    title: "Reset the secret key?",
-    message:
+    title: t("Reset the secret key?"),
+    message: t(
       "Your server stops verifying tokens until you replace the old secret with the new one.",
-    confirmText: "Reset secret key",
+    ),
+    confirmText: t("Reset secret key"),
     danger: true,
   });
   if (!ok) return;
@@ -28,7 +30,7 @@ async function rotate() {
   const res = await api("POST", `/keys/${app.key.siteKey}/rotate-secret`);
   busy = "";
   if (!res?.secretKey) {
-    toast(res?.error || "Couldn't reset the secret key", "error");
+    toast(t(res?.error || "Couldn't reset the secret key"), "error");
     return;
   }
   secret = res.secretKey;
@@ -41,10 +43,11 @@ async function rotate() {
 
 async function remove() {
   const ok = await confirm({
-    title: `Delete ${app.key?.name}?`,
-    message:
+    title: t("Delete {name}?", { name: app.key?.name ?? "" }),
+    message: t(
       "This deletes the key with its stats, rules, lists and share links. Sites using it stop working. You can't undo this.",
-    confirmText: "Delete key",
+    ),
+    confirmText: t("Delete key"),
     danger: true,
   });
   if (!ok) return;
@@ -52,41 +55,41 @@ async function remove() {
   const res = await api("DELETE", `/keys/${app.key.siteKey}`);
   busy = "";
   if (!res?.success) {
-    toast(res?.error || "Couldn't delete the key", "error");
+    toast(t(res?.error || "Couldn't delete the key"), "error");
     return;
   }
-  toast("Key deleted");
+  toast(t("Key deleted"));
   await loadKeys();
   navigate({ view: "home" });
   app.key = null;
 }
 </script>
 
-<Group id="cfgDanger" title="Danger zone">
+<Group id="cfgDanger" title={t("Danger zone")}>
   <Row
-    label="Reset secret key"
+    label={t("Reset secret key")}
     help={app.key?.secretOutdated
-      ? "This key's secret is from an older Cap release, and /siteverify rejects it. Reset it and give your server the new one."
-      : "Use this if the secret leaked or you lost it. Your server stops verifying tokens until you give it the new key."}
+      ? t("This key's secret is from an older Cap release, and /siteverify rejects it. Reset it and give your server the new one.")
+      : t("Use this if the secret leaked or you lost it. Your server stops verifying tokens until you give it the new key.")}
   >
     <Button size="sm" class="self-start text-destructive md:self-auto" disabled={!!busy} onclick={rotate}>
-      {busy === "rotate" ? "Resetting" : "Reset secret key"}
+      {busy === "rotate" ? t("Resetting") : t("Reset secret key")}
     </Button>
   </Row>
-  <Row label="Delete key" help="Deletes its stats, rules, lists and share links. Sites using it stop working.">
+  <Row label={t("Delete key")} help={t("Deletes its stats, rules, lists and share links. Sites using it stop working.")}>
     <Button size="sm" class="self-start text-destructive md:self-auto" disabled={!!busy} onclick={remove}>
-      {busy === "delete" ? "Deleting" : "Delete key"}
+      {busy === "delete" ? t("Deleting") : t("Delete key")}
     </Button>
   </Row>
 </Group>
 
 <Dialog
   bind:open={showSecret}
-  title="New secret key"
-  description="Put it on your server in place of the old one. You can reveal it again under Add Cap to your site."
+  title={t("New secret key")}
+  description={t("Put it on your server in place of the old one. You can reveal it again under Add Cap to your site.")}
 >
-  <CopyText value={secret ?? ""} label="Copy secret key" />
+  <CopyText value={secret ?? ""} label={t("Copy secret key")} />
   {#snippet footer()}
-    <Button variant="primary" onclick={() => (showSecret = false)}>Done</Button>
+    <Button variant="primary" onclick={() => (showSecret = false)}>{t("Done")}</Button>
   {/snippet}
 </Dialog>

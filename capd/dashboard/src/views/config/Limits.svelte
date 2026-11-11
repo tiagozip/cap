@@ -6,6 +6,7 @@ import {
   Row,
   Switch,
 } from "../../components/cap/index.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 import { BROWSER_HEADERS } from "./form.js";
 import OriginList from "./OriginList.svelte";
@@ -16,10 +17,10 @@ const seconds = $derived((app.settings.ratelimit?.duration ?? 5000) / 1000);
 const rateError = $derived(errors.ratelimitMax ?? errors.ratelimitSeconds);
 </script>
 
-<Group id="cfgAccess" title="Access">
+<Group id="cfgAccess" title={t("Access")}>
   <Row
-    label="Rate limit"
-    help="How many challenges one visitor can ask for. Leave it blank to use the server default of {max} every {seconds} seconds."
+    label={t("Rate limit")}
+    help={t("How many challenges one visitor can ask for. Leave it blank to use the server default of {max} every {seconds} seconds.", { max, seconds })}
   >
     <div class="flex flex-col gap-1.5 md:items-end">
       <div class="flex items-center gap-2 text-sm whitespace-nowrap text-muted-foreground">
@@ -31,12 +32,12 @@ const rateError = $derived(errors.ratelimitMax ?? errors.ratelimitSeconds);
           max="10000"
           class="max-w-20 tabular-nums"
           placeholder={String(max)}
-          aria-label="Requests"
+          aria-label={t("Requests")}
           invalid={!!errors.ratelimitMax}
           aria-describedby={rateError ? "cfgRate-error" : undefined}
           bind:value={form.ratelimitMax}
         />
-        <span>requests every</span>
+        <span>{t("requests every")}</span>
         <Input
           id="cfgRatelimitSeconds"
           type="number"
@@ -45,18 +46,18 @@ const rateError = $derived(errors.ratelimitMax ?? errors.ratelimitSeconds);
           max="3600"
           class="max-w-20 tabular-nums"
           placeholder={String(seconds)}
-          aria-label="Seconds"
+          aria-label={t("Seconds")}
           invalid={!!errors.ratelimitSeconds}
           aria-describedby={rateError ? "cfgRate-error" : undefined}
           bind:value={form.ratelimitSeconds}
         />
-        <span>seconds</span>
+        <span>{t("seconds")}</span>
       </div>
-      {#if rateError}<p id="cfgRate-error" class="text-sm text-destructive">{rateError}</p>{/if}
+      {#if rateError}<p id="cfgRate-error" class="text-sm text-destructive">{t(rateError)}</p>{/if}
     </div>
   </Row>
 
-  <Row label="Only allow these websites" for="cfgCorsEnabled" help="Other websites can't load challenges with this key.">
+  <Row label={t("Only allow these websites")} for="cfgCorsEnabled" help={t("Other websites can't load challenges with this key.")}>
     <Switch id="cfgCorsEnabled" bind:checked={form.corsOn} />
     {#snippet below()}
       {#if form.corsOn}
@@ -67,20 +68,20 @@ const rateError = $derived(errors.ratelimitMax ?? errors.ratelimitSeconds);
             bind:bad={originBad}
             describedby={errors.origins ? "cfgOrigin-error" : undefined}
           />
-          {#if errors.origins}<p id="cfgOrigin-error" class="text-sm text-destructive">{errors.origins}</p>{/if}
+          {#if errors.origins}<p id="cfgOrigin-error" class="text-sm text-destructive">{t(errors.origins)}</p>{/if}
         </div>
       {/if}
     {/snippet}
   </Row>
 
-  <Row label="Block clients that aren't browsers" for="cfgBlockNonBrowserUA" help="Turns away tools like curl and python-requests.">
+  <Row label={t("Block clients that aren't browsers")} for="cfgBlockNonBrowserUA" help={t("Turns away tools like curl and python-requests.")}>
     <Switch id="cfgBlockNonBrowserUA" bind:checked={form.blockNonBrowserUA} />
   </Row>
 
   <Row
-    label="Require headers every browser sends"
+    label={t("Require headers every browser sends")}
     for="cfgRequiredHeadersEnabled"
-    help="Requests missing any checked header are blocked."
+    help={t("Requests missing any checked header are blocked.")}
   >
     <Switch
       id="cfgRequiredHeadersEnabled"
@@ -92,7 +93,7 @@ const rateError = $derived(errors.ratelimitMax ?? errors.ratelimitSeconds);
     {#snippet below()}
       {#if form.headersOn}
         <fieldset class="grid w-full gap-x-6 gap-y-2.5 sm:grid-cols-2 md:max-w-sm">
-          <legend class="sr-only">Required headers</legend>
+          <legend class="sr-only">{t("Required headers")}</legend>
           {#each BROWSER_HEADERS as h (h)}
             <label class="flex cursor-pointer items-center gap-2.5">
               <Checkbox

@@ -8,12 +8,16 @@
     <script>
       (() => {
         let pref = "system";
+        let lang = "en";
         try {
           pref = localStorage.getItem("cap_theme") || "system";
+          const storedLang = localStorage.getItem("cap_locale");
+          if (storedLang && /^zh(?:-(?:cn|hans))?$/i.test(storedLang.trim())) lang = "zh-CN";
         } catch {}
         const dark = pref === "dark" || (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.classList.toggle("dark", dark);
         document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document.documentElement.lang = lang;
       })();
     </script>
   </head>

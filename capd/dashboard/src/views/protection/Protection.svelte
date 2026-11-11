@@ -33,6 +33,7 @@ import {
 import { api, qs } from "../../lib/api.js";
 import { catalog, loadCatalog } from "../../lib/catalog.svelte.js";
 import { compact } from "../../lib/format.js";
+import { numFmt, t, tx } from "../../lib/i18n.svelte.js";
 import { app, navigate, openEvents } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import BlockRules from "../config/BlockRules.svelte";
@@ -148,23 +149,26 @@ const signals = $derived(
   catalog.signals.flatMap((g) =>
     g.signals.map(([id, text, strength]) => ({
       id,
-      text,
+      rawText: text,
+      text: t(text),
       strength,
-      group: g.label,
+      groupId: g.id,
+      rawGroup: g.label,
+      group: t(g.label),
       requires: g.requires,
     })),
   ),
 );
 const matches = (...texts) => {
   const q = checkQuery.trim().toLowerCase();
-  return !q || texts.some((t) => t?.toLowerCase().includes(q));
+  return !q || texts.some((txt) => txt?.toLowerCase().includes(q));
 };
 const shownSignals = $derived(
-  signals.filter((s) => matches(s.text, s.group, s.id)),
+  signals.filter((s) => matches(s.text, s.rawText, s.group, s.rawGroup, s.id)),
 );
 const shownAgents = $derived(
   catalog.agents.filter(([id, name, about]) =>
-    matches(id, name, about, "AI agents"),
+    matches(id, name, about, about && t(about), "AI agents", t("AI agents")),
   ),
 );
 
@@ -172,48 +176,52 @@ const seenCount = $derived(
   seen ? Object.values(seen).filter(Boolean).length : null,
 );
 
-const ROWS = [
+const ROWS = $derived([
   {
     id: "automation",
-    title: "Automation tools",
-    text: "Headless and remote-controlled browsers, like Puppeteer, Playwright or Selenium.",
+    title: t("Automation tools"),
+    text: t(
+      "Headless and remote-controlled browsers, like Puppeteer, Playwright or Selenium.",
+    ),
     options: [
-      ["report", "Flag"],
-      ["block", "Block"],
+      ["report", t("Flag")],
+      ["block", t("Block")],
     ],
-    blockNote: "This also stops your own test scripts.",
+    blockNote: t("This also stops your own test scripts."),
   },
   {
     id: "scripted",
-    title: "Scripted clicks",
-    text: "Clicks and key presses that a script sent instead of a person.",
+    title: t("Scripted clicks"),
+    text: t("Clicks and key presses that a script sent instead of a person."),
     options: [
-      ["off", "Allow"],
-      ["report", "Flag"],
-      ["block", "Block"],
+      ["off", t("Allow")],
+      ["report", t("Flag")],
+      ["block", t("Block")],
     ],
   },
   {
     id: "behavior",
-    title: "Robotic movement",
-    text: "Mouse paths and typing rhythm that don't look like a person.",
+    title: t("Robotic movement"),
+    text: t("Mouse paths and typing rhythm that don't look like a person."),
     options: [
-      ["off", "Allow"],
-      ["report", "Flag"],
-      ["block", "Block"],
+      ["off", t("Allow")],
+      ["report", t("Flag")],
+      ["block", t("Block")],
     ],
   },
   {
     id: "agents",
-    title: "AI agents",
-    text: "Browsers that ChatGPT, Claude, Comet and similar tools drive for someone.",
+    title: t("AI agents"),
+    text: t(
+      "Browsers that ChatGPT, Claude, Comet and similar tools drive for someone.",
+    ),
     options: [
-      ["off", "Flag"],
-      ["identified", "Block known"],
-      ["all", "Block all"],
+      ["off", t("Flag")],
+      ["identified", t("Block known")],
+      ["all", t("Block all")],
     ],
   },
-];
+]);
 
 async function save() {
   saving = true;
@@ -221,26 +229,26 @@ async function save() {
   const res = await api("PUT", `/keys/${key.siteKey}/config`, patch);
   saving = false;
   if (!res?.success) {
-    toast(res?.error || "Couldn't save protection settings", "error");
+    toast(t(res?.error || "Couldn't save protection settings"), "error");
     return;
   }
   if (app.key?.siteKey === key.siteKey)
     app.key.config = { ...app.key.config, ...patch };
   saved = fromConfig({ ...(key.config ?? {}), ...patch });
   form = fromConfig({ ...(key.config ?? {}), ...patch });
-  toast("Protection settings saved");
+  toast(t("Protection settings saved"));
 }
 </script>
 
-{#snippet sectionHead(label, count)}
-  {@const shown = sectionOpen(label)}
+{#snippet sectionHead(groupId, label, count)}
+  {@const shown = sectionOpen(groupId)}
   <TableRow class="bg-muted/50 hover:bg-muted/50">
     <TableCell colspan={narrow ? 2 : 3} class="h-9 p-0!">
       <button
         type="button"
         class="flex h-9 w-full cursor-pointer items-center gap-1.5 ps-6 pe-6 text-left text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:ps-10 [.cap-card_&]:ps-5"
         aria-expanded={shown}
-        onclick={() => toggleSection(label)}
+        onclick={() => toggleSection(groupId)}
       >
         <Icon name="right" size={12} class="transition-[rotate] duration-150 motion-reduce:transition-none {shown ? 'rotate-90' : ''}" />
         {label}
@@ -264,12 +272,12 @@ async function save() {
   {/if}
 {/snippet}
 
-<PageHeader title="Protection" />
+<PageHeader title={t("Protection")} />
 
 <div class="flex max-w-4xl flex-col gap-6 px-4 pt-5 pb-12 md:px-5">
   <Group
     id="protLevel"
-    title="Defaults"
+    title={t("Defaults")}
   >
     <RadioGroup
       aria-labelledby="protLevel"
@@ -299,7 +307,7 @@ async function save() {
       {/each}
     </RadioGroup>
     {#if form.protocol === "hashwx"}
-      <Row label="HashWX difficulty" help="How many hashes a solve takes on average. Higher means a longer wait on slow devices.">
+      <Row label={t("HashWX difficulty")} help={t("How many hashes a solve takes on average. Higher means a longer wait on slow devices.")}>
         <div class="flex w-full max-w-72 items-center gap-3">
           <Slider
             bind:value={() => Number(form.hashwxDifficulty), (v) => (form.hashwxDifficulty = v)}
@@ -307,14 +315,14 @@ async function save() {
             max={5000000}
             step={50000}
             size="sm"
-            thumbLabel="HashWX difficulty"
+            thumbLabel={t("HashWX difficulty")}
           />
-          <output class="w-20 shrink-0 text-right text-sm tabular-nums">{Number(form.hashwxDifficulty).toLocaleString()}</output>
+          <output class="w-20 shrink-0 text-right text-sm tabular-nums">{numFmt(Number(form.hashwxDifficulty))}</output>
         </div>
       </Row>
     {:else}
-      <Row label="Puzzle difficulty" help="This key uses SHA-256 puzzles. Picking a default above switches it to HashWX.">
-        <Button size="sm" onclick={() => navigate({ view: "key", siteKey: key.siteKey, tab: "configuration" })}>Open puzzle settings</Button>
+      <Row label={t("Puzzle difficulty")} help={t("This key uses SHA-256 puzzles. Picking a default above switches it to HashWX.")}>
+        <Button size="sm" onclick={() => navigate({ view: "key", siteKey: key.siteKey, tab: "configuration" })}>{t("Open puzzle settings")}</Button>
       </Row>
     {/if}
     {#each ROWS as row (row.id)}
@@ -332,28 +340,28 @@ async function save() {
           {/if}
           {#if row.id === "agents"}
             <label class="flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground">
-              <Checkbox bind:checked={form.signedAgents} label="Always let in agents that sign their requests" />
-              Always let in agents that sign their requests
+              <Checkbox bind:checked={form.signedAgents} label={t("Always let in agents that sign their requests")} />
+              {t("Always let in agents that sign their requests")}
             </label>
           {/if}
         {/snippet}
       </Row>
     {/each}
     {#if form.behavior !== "off"}
-      <Row label="{form.behavior === 'block' ? 'Block' : 'Flag'} when Cap is this sure" help="For robotic movement. Lower catches more bots and more false alarms.">
+      <Row label={form.behavior === "block" ? t("Block when Cap is this sure") : t("Flag when Cap is this sure")} help={t("For robotic movement. Lower catches more bots and more false alarms.")}>
         <div class="flex w-full max-w-64 items-center gap-3">
-          <Slider bind:value={form.threshold} min={0.4} max={1} step={0.05} size="sm" thumbLabel="{form.behavior === 'block' ? 'Block' : 'Flag'} when Cap is this sure" />
+          <Slider bind:value={form.threshold} min={0.4} max={1} step={0.05} size="sm" thumbLabel={form.behavior === "block" ? t("Block when Cap is this sure") : t("Flag when Cap is this sure")} />
           <output class="w-10 text-right text-sm tabular-nums">{Math.round(form.threshold * 100)}%</output>
         </div>
       </Row>
-      <Row label="Count weak signals" for="protStrict" help="Catches more bots, and some people using voice control.">
+      <Row label={t("Count weak signals")} for="protStrict" help={t("Catches more bots, and some people using voice control.")}>
         <Switch id="protStrict" bind:checked={form.strict} />
       </Row>
       {#if form.behavior === "block"}
         <Row
-          label="Require a click or key press"
+          label={t("Require a click or key press")}
           for="protRequire"
-          help="Block solves where nobody touched the widget. Leave it off for invisible widgets."
+          help={t("Block solves where nobody touched the widget. Leave it off for invisible widgets.")}
         >
           <Switch id="protRequire" bind:checked={form.requireInteraction} />
         </Row>
@@ -368,42 +376,42 @@ async function save() {
   <Card variant="layered" class="cap-card">
     <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 pt-2.5 pb-3">
       <span class="flex min-w-0 items-center gap-1.5 text-sm">
-        <span class="font-semibold">Single checks</span>
-        {#if seenCount}<span class="text-muted-foreground tabular-nums">{seenCount} fired this week</span>{/if}
+        <span class="font-semibold">{t("Single checks")}</span>
+        {#if seenCount}<span class="text-muted-foreground tabular-nums">{t("{count} fired this week", { count: seenCount })}</span>{/if}
       </span>
       <InputGroup class="w-full sm:w-64">
         <InputGroupAddon><Icon name="search" size={15} /></InputGroupAddon>
-        <InputGroupInput bind:value={checkQuery} placeholder="Search checks" aria-label="Search checks" />
+        <InputGroupInput bind:value={checkQuery} placeholder={t("Search checks")} aria-label={t("Search checks")} />
       </InputGroup>
     </div>
-    <Skeleton data={seen} sample={{}} label="Loading checks">
+    <Skeleton data={seen} sample={{}} label={t("Loading checks")}>
       {#snippet children(counts)}
         <CardContent class="max-h-[36rem] overflow-y-auto px-0">
         <Table flush class="max-sm:[&>table]:table-fixed">
           <TableHeader class="sticky top-0 z-10 bg-background!">
             <TableRow>
-              <TableHead>Check</TableHead>
-              <TableHead class="w-px text-right! whitespace-nowrap max-sm:hidden">This week</TableHead>
-              <TableHead class="w-px max-sm:w-[8.25rem]">Action</TableHead>
+              <TableHead>{t("Check")}</TableHead>
+              <TableHead class="w-px text-right! whitespace-nowrap max-sm:hidden">{t("This week")}</TableHead>
+              <TableHead class="w-px max-sm:w-[8.25rem]">{t("Action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {#each shownSignals as s, i (s.id)}
-              {#if s.group !== shownSignals[i - 1]?.group}
-                {@render sectionHead(s.group, shownSignals.filter((x) => x.group === s.group).length)}
+              {#if s.groupId !== shownSignals[i - 1]?.groupId}
+                {@render sectionHead(s.groupId, s.group, shownSignals.filter((x) => x.groupId === s.groupId).length)}
               {/if}
-              {#if sectionOpen(s.group)}
+              {#if sectionOpen(s.groupId)}
               <TableRow>
                 <TableCell class="whitespace-normal">
                   <span class="flex min-w-0 flex-col">
                     <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span class="text-pretty">{s.text}</span>
-                      {#if s.strength === "strong"}<Tag tone="warning">Strong</Tag>{/if}
+                      {#if s.strength === "strong"}<Tag tone="warning">{tx("signal", "Strong")}</Tag>{/if}
                     </span>
                     {#if s.requires === "behavior" && form.behavior === "off"}
-                      <span class="text-xs text-muted-foreground">Runs once robotic movement is set to Flag or Block</span>
+                      <span class="text-xs text-muted-foreground">{t("Runs once robotic movement is set to Flag or Block")}</span>
                     {/if}
-                    <span class="text-xs text-muted-foreground tabular-nums sm:hidden">{compact(counts[s.id] ?? 0)} this week</span>
+                    <span class="text-xs text-muted-foreground tabular-nums sm:hidden">{t("{count} this week", { count: compact(counts[s.id] ?? 0) })}</span>
                   </span>
                 </TableCell>
                 <TableCell class="text-right whitespace-nowrap max-sm:hidden">{@render seenLink(counts[s.id], `flag:${s.id}`)}</TableCell>
@@ -411,11 +419,11 @@ async function save() {
                   <Select
                     size="sm"
                     class="w-24 sm:w-28"
-                    aria-label="What to do with: {s.text}"
+                    aria-label={t("What to do with: {text}", { text: s.text })}
                     options={[
-                      ["off", "Allow"],
-                      ["report", "Flag"],
-                      ["block", "Block"],
+                      ["off", t("Allow")],
+                      ["report", t("Flag")],
+                      ["block", t("Block")],
                     ]}
                     bind:value={() => form.signals[s.id] ?? "report", (v) => {
                       if (v === "report") delete form.signals[s.id];
@@ -426,26 +434,26 @@ async function save() {
               </TableRow>
               {/if}
             {/each}
-            {#if shownAgents.length}{@render sectionHead("AI agents", shownAgents.length)}{/if}
-            {#each sectionOpen("AI agents") ? shownAgents : [] as [id, name, about] (id)}
+            {#if shownAgents.length}{@render sectionHead("agents", t("AI agents"), shownAgents.length)}{/if}
+            {#each sectionOpen("agents") ? shownAgents : [] as [id, name, about] (id)}
               <TableRow>
                 <TableCell class="whitespace-normal">
                   <span class="flex min-w-0 flex-col">
                     <span class="flex min-w-0 items-center gap-2.5"><AgentIcon {id} /><span class="truncate">{name}</span>{#if catalog.signedAgents.includes(id)}
-                      <Tip label="Signs requests">
+                      <Tip label={t("Signs requests")}>
                         {#snippet children(props)}
                           <span {...props} tabindex="0" class="-ms-1 flex shrink-0 rounded-full text-info outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
                               <path fill="currentColor" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
                               <path d="m9 12 2 2 4-4" fill="none" stroke="#fff" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <span class="sr-only">Signs requests</span>
+                            <span class="sr-only">{t("Signs requests")}</span>
                           </span>
                         {/snippet}
                       </Tip>
                     {/if}</span>
-                    {#if about}<span class="ps-[26px] text-xs text-pretty text-muted-foreground">{about}</span>{/if}
-                    <span class="text-xs text-muted-foreground tabular-nums sm:hidden">{compact(agentSeen[id] ?? 0)} this week</span>
+                    {#if about}<span class="ps-[26px] text-xs text-pretty text-muted-foreground">{t(about)}</span>{/if}
+                    <span class="text-xs text-muted-foreground tabular-nums sm:hidden">{t("{count} this week", { count: compact(agentSeen[id] ?? 0) })}</span>
                   </span>
                 </TableCell>
                 <TableCell class="text-right whitespace-nowrap max-sm:hidden">{@render seenLink(agentSeen[id], `agent:${id}`)}</TableCell>
@@ -453,12 +461,12 @@ async function save() {
                   <Select
                     size="sm"
                     class="w-24 sm:w-28"
-                    aria-label="What to do with {name}"
+                    aria-label={t("What to do with {name}", { name })}
                     options={[
-                      ["default", "Default"],
-                      ["allow", "Allow"],
-                      ["report", "Flag"],
-                      ["block", "Block"],
+                      ["default", t("Default")],
+                      ["allow", t("Allow")],
+                      ["report", t("Flag")],
+                      ["block", t("Block")],
                     ]}
                     bind:value={() => form.agentActions[id] ?? "default", (v) => {
                       if (v === "default") delete form.agentActions[id];
@@ -469,7 +477,7 @@ async function save() {
               </TableRow>
             {/each}
             {#if !shownSignals.length && !shownAgents.length}
-              <TableRow><TableCell colspan="3" class="text-muted-foreground">No checks match "{checkQuery.trim()}".</TableCell></TableRow>
+              <TableRow><TableCell colspan="3" class="text-muted-foreground">{t('No checks match "{query}".', { query: checkQuery.trim() })}</TableCell></TableRow>
             {/if}
           </TableBody>
         </Table>
@@ -484,8 +492,8 @@ async function save() {
     class="sticky bottom-5 z-40 mx-auto mt-6 flex w-[calc(100%-1.5rem)] max-w-md items-center gap-2 rounded-xl bg-popover py-2 ps-4 pe-2 text-sm text-popover-foreground shadow-overlay transition-[translate,opacity] duration-200 ease-(--ease-out) starting:translate-y-3 starting:opacity-0 motion-reduce:transition-none"
     role="status"
   >
-    <span class="me-auto">You have unsaved changes</span>
-    <Button variant="ghost" size="sm" onclick={() => (form = fromConfig({ ...(key.config ?? {}) }))}>Discard</Button>
-    <Button variant="primary" size="sm" disabled={saving} onclick={save}>{saving ? "Saving" : "Save changes"}</Button>
+    <span class="me-auto">{t("You have unsaved changes")}</span>
+    <Button variant="ghost" size="sm" onclick={() => (form = fromConfig({ ...(key.config ?? {}) }))}>{t("Discard")}</Button>
+    <Button variant="primary" size="sm" disabled={saving} onclick={save}>{saving ? t("Saving") : t("Save changes")}</Button>
   </div>
 {/if}

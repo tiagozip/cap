@@ -9,6 +9,7 @@ import {
   Select,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { t, tp } from "../../lib/i18n.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import { TTL_OPTIONS } from "./labels.js";
 
@@ -30,7 +31,7 @@ api("GET", "/lists").then((l) => {
 });
 
 const kindLabel = (k) =>
-  k === "asn" ? "Network" : k === "visitor" ? "Visitor" : "IP";
+  k === "asn" ? t("Network") : k === "visitor" ? t("Visitor") : t("IP");
 
 async function add() {
   if (pick === "__new" && !newName.trim()) {
@@ -49,7 +50,7 @@ async function add() {
     const created = await api("POST", "/lists", { name: newName.trim() });
     if (!created.id) {
       busy = false;
-      toast(created.error || "Couldn't create the list", "error");
+      toast(t(created.error || "Couldn't create the list"), "error");
       return;
     }
     id = created.id;
@@ -60,26 +61,26 @@ async function add() {
   busy = false;
   onclose();
   if (r.success)
-    toast(`Added ${r.added} ${r.added === 1 ? "entry" : "entries"}`);
-  else toast(r.error || "Couldn't add to the list", "error");
+    toast(tp(r.added, "Added {count} entry", "Added {count} entries"));
+  else toast(t(r.error || "Couldn't add to the list"), "error");
 }
 </script>
 
-<Dialog title="Add to a list" {onclose}>
-  <Field label="List" for="addListPick">
+<Dialog title={t("Add to a list")} {onclose}>
+  <Field label={t("List")} for="addListPick">
     <Select
       id="addListPick"
       class="w-full"
       bind:value={pick}
-      options={[...lists.map((l) => [l.id, l.name]), ["__new", "New list"]]}
+      options={[...lists.map((l) => [l.id, l.name]), ["__new", t("New list")]]}
     />
   </Field>
   {#if pick === "__new"}
-    <Field label="Name" for="addListName" error={nameError}>
+    <Field label={t("Name")} for="addListName" error={t(nameError)}>
       <Input
         id="addListName"
         maxlength={80}
-        placeholder="Known scrapers"
+        placeholder={t("Known scrapers")}
         bind:ref={nameInput}
         bind:value={newName}
         invalid={!!nameError}
@@ -89,7 +90,7 @@ async function add() {
     </Field>
   {/if}
   <fieldset class="flex flex-col gap-1">
-    <legend class="mb-1.5 text-sm font-medium">Add</legend>
+    <legend class="mb-1.5 text-sm font-medium">{t("Add")}</legend>
     {#each candidates as c, i (i)}
       <div class="flex h-8 min-w-0 items-center gap-2.5">
         <Checkbox id="addCand{i}" bind:checked={checked[i]} onchange={() => (pickError = "")} />
@@ -100,13 +101,13 @@ async function add() {
         </label>
       </div>
     {/each}
-    {#if pickError}<p class="text-sm text-destructive" role="alert">{pickError}</p>{/if}
+    {#if pickError}<p class="text-sm text-destructive" role="alert">{t(pickError)}</p>{/if}
   </fieldset>
-  <Field label="Remove after" for="addListTtl">
-    <Select id="addListTtl" class="w-full" bind:value={ttl} options={TTL_OPTIONS.map(([v, l]) => [String(v), l])} />
+  <Field label={t("Remove after")} for="addListTtl">
+    <Select id="addListTtl" class="w-full" bind:value={ttl} options={TTL_OPTIONS.map(([v, l]) => [String(v), t(l)])} />
   </Field>
   {#snippet footer()}
-    <Button variant="ghost" onclick={onclose}>Cancel</Button>
-    <Button variant="primary" disabled={busy} onclick={add}>Add to list</Button>
+    <Button variant="ghost" onclick={onclose}>{t("Cancel")}</Button>
+    <Button variant="primary" disabled={busy} onclick={add}>{t("Add to list")}</Button>
   {/snippet}
 </Dialog>
