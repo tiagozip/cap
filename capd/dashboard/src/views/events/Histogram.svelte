@@ -1,54 +1,55 @@
 <script>
 import { compact } from "../../lib/format.js";
+import { dtf, numFmt, t } from "../../lib/i18n.svelte.js";
 
 let { series, bucket, onpick, active = null, height = 180 } = $props();
 
 const DAY = 86_400_000;
 
-const SETS = [
+const SETS = $derived([
   {
     id: "issued",
-    label: "Challenge issued",
+    label: t("Challenge issued"),
     color: "var(--chart-4)",
     value: (b) => b.challenges,
   },
   {
     id: "solved",
-    label: "Solved",
+    label: t("Solved"),
     color: "var(--chart-2)",
     value: (b) => Math.max(0, b.solved - b.flagged),
   },
   {
     id: "verified",
-    label: "Verified",
+    label: t("Verified"),
     color: "var(--chart-1)",
     value: (b) => b.verified,
   },
   {
     id: "flagged",
-    label: "Flagged",
+    label: t("Flagged"),
     color: "var(--warning)",
     value: (b) => b.flagged,
   },
   {
     id: "failed",
-    label: "Failed",
+    label: t("Failed"),
     color: "var(--faint-foreground)",
     value: (b) => b.failed,
   },
   {
     id: "limited",
-    label: "Rate limited",
+    label: t("Rate limited"),
     color: "var(--violet)",
     value: (b) => b.limited,
   },
   {
     id: "blocked",
-    label: "Blocked",
+    label: t("Blocked"),
     color: "var(--destructive)",
     value: (b) => b.blocked,
   },
-];
+]);
 
 let hover = $state(null);
 
@@ -69,15 +70,15 @@ const gap = $derived(
   series.length > 60 ? 1 : series.length > 32 ? 2 : series.length > 16 ? 3 : 4,
 );
 
-const hourFmt = new Intl.DateTimeFormat(undefined, {
+const hourFmt = dtf({
   hour: "numeric",
   minute: "2-digit",
 });
-const dayFmt = new Intl.DateTimeFormat(undefined, {
+const dayFmt = dtf({
   month: "short",
   day: "numeric",
 });
-const longFmt = new Intl.DateTimeFormat(undefined, {
+const longFmt = dtf({
   weekday: "short",
   month: "short",
   day: "numeric",
@@ -88,7 +89,10 @@ const longFmt = new Intl.DateTimeFormat(undefined, {
 const spanLabel = (b) =>
   bucket >= DAY
     ? dayFmt.format(new Date(b))
-    : `${longFmt.format(new Date(b))} to ${hourFmt.format(new Date(b + bucket))}`;
+    : t("{from} to {to}", {
+        from: longFmt.format(new Date(b)),
+        to: hourFmt.format(new Date(b + bucket)),
+      });
 
 const ticks = $derived.by(() => {
   const n = rows.length;
@@ -120,7 +124,7 @@ const ticks = $derived.by(() => {
       style:height="{height}px"
       style:gap="{gap}px"
       role="group"
-      aria-label="Events over time. Pick a bar to see the events in it."
+      aria-label={t("Events over time. Pick a bar to see the events in it.")}
       onpointerleave={() => (hover = null)}
     >
       {#each rows as r, i (r.b)}
@@ -130,7 +134,7 @@ const ticks = $derived.by(() => {
             ? 'cursor-pointer'
             : ''}"
           disabled={!r.total}
-          aria-label="{spanLabel(r.b)}, {r.total.toLocaleString()} events. Show them."
+          aria-label={t("{span}, {count} events. Show them.", { span: spanLabel(r.b), count: numFmt(r.total) })}
           onpointerenter={() => (hover = i)}
           onfocus={() => (hover = i)}
           onblur={() => (hover = null)}
@@ -166,7 +170,7 @@ const ticks = $derived.by(() => {
               <li class="flex items-center gap-2 text-muted-foreground">
                 <span class="size-2 shrink-0 rounded-full" style:background={s.color}></span>
                 {s.label}
-                <span class="ml-auto font-medium text-foreground tabular-nums">{r.parts[j].toLocaleString()}</span>
+                <span class="ml-auto font-medium text-foreground tabular-nums">{numFmt(r.parts[j])}</span>
               </li>
             {/if}
           {/each}
@@ -175,8 +179,8 @@ const ticks = $derived.by(() => {
     {/if}
 
     <div class="relative mt-2 h-4 text-[11px] text-muted-foreground tabular-nums" aria-hidden="true">
-      {#each ticks as t (t.i)}
-        <span class="absolute whitespace-nowrap" style:left="{(t.i / rows.length) * 100}%">{t.text}</span>
+      {#each ticks as tick (tick.i)}
+        <span class="absolute whitespace-nowrap" style:left="{(tick.i / rows.length) * 100}%">{tick.text}</span>
       {/each}
     </div>
   </div>

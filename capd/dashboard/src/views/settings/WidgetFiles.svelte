@@ -11,6 +11,7 @@ import {
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { ago } from "../../lib/format.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 import { toast } from "../../lib/ui.svelte.js";
 import { setWidgetFiles, widgetScript } from "../integration/embed.svelte.js";
@@ -99,7 +100,7 @@ const save = async () => {
     return;
   }
   if (r.status) apply(r.status);
-  toast("Widget file settings saved");
+  toast(t("Widget file settings saved"));
   if (form.enabled) setTimeout(load, 3000);
 };
 
@@ -108,7 +109,7 @@ const download = async () => {
   const r = await api("POST", "/settings/assets/refresh");
   downloading = false;
   if (r?.status) apply(r.status);
-  if (!r?.success) toast(r?.error || "Couldn't download the files", "error");
+  if (!r?.success) toast(t(r?.error || "Couldn't download the files"), "error");
 };
 
 const check = async () => {
@@ -116,34 +117,34 @@ const check = async () => {
   const r = await api("GET", "/settings/assets/latest");
   checking = false;
   if (!r?.success) {
-    toast(r?.error || "Couldn't check for new versions", "error");
+    toast(t(r?.error || "Couldn't check for new versions"), "error");
     return;
   }
   latest = { widget: r.widget, wasm: r.wasm };
-  if (!newer) toast("These are the newest versions");
+  if (!newer) toast(t("These are the newest versions"));
 };
 </script>
 
-<Skeleton loading={!ready && !loadError} error={loadError} label="Loading widget file settings">
+<Skeleton loading={!ready && !loadError} error={loadError} label={t("Loading widget file settings")}>
   {#snippet errorMessage()}
-    <p class="py-5 text-sm text-destructive" role="alert">{loadError}</p>
+    <p class="py-5 text-sm text-destructive" role="alert">{t(loadError)}</p>
   {/snippet}
   <div class="flex flex-col divide-y divide-border">
     <Row
-      label="Serve widget files from this server"
+      label={t("Serve widget files from this server")}
       for="assets-enabled"
-      help="Visitors load the widget and its WebAssembly from this server's /assets instead of jsDelivr. Each key's setup snippet follows this setting."
+      help={t("Visitors load the widget and its WebAssembly from this server's /assets instead of jsDelivr. Each key's setup snippet follows this setting.")}
     >
       <Switch id="assets-enabled" bind:checked={form.enabled} />
     </Row>
 
     <Row
-      label="Versions"
-      help="This Cap release was built with widget {status.builtWith.widget} and WebAssembly {status.builtWith.wasm}. An older widget can miss features this server expects."
+      label={t("Versions")}
+      help={t("This Cap release was built with widget {widget} and WebAssembly {wasm}. An older widget can miss features this server expects.", { widget: status.builtWith.widget, wasm: status.builtWith.wasm })}
     >
       <div class="flex w-full flex-col gap-3 md:max-w-xs">
         <div class="grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-2">
-          <label for="assets-widget" class="text-sm text-muted-foreground">Widget</label>
+          <label for="assets-widget" class="text-sm text-muted-foreground">{t("Widget")}</label>
           <Input id="assets-widget" mono bind:value={form.widget} invalid={!!error} />
           <label for="assets-wasm" class="text-sm text-muted-foreground">WebAssembly</label>
           <Input id="assets-wasm" mono bind:value={form.wasm} invalid={!!error} />
@@ -157,16 +158,16 @@ const check = async () => {
                 form.wasm = status.builtWith.wasm;
               }}
             >
-              Use built-in versions
+              {t("Use built-in versions")}
             </Button>
           {/if}
           <Button variant="link" disabled={checking} onclick={check}>
-            {checking ? "Checking" : "Check for newer versions"}
+            {checking ? t("Checking") : t("Check for newer versions")}
           </Button>
         </div>
         {#if newer}
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm md:justify-end">
-            <span class="text-muted-foreground">Newest on npm: widget {newer.widget}, WebAssembly {newer.wasm}</span>
+            <span class="text-muted-foreground">{t("Newest on npm: widget {widget}, WebAssembly {wasm}", { widget: newer.widget, wasm: newer.wasm })}</span>
             <Button
               variant="link"
               onclick={() => {
@@ -174,7 +175,7 @@ const check = async () => {
                 form.wasm = newer.wasm;
               }}
             >
-              Use these
+              {t("Use these")}
             </Button>
           </div>
         {/if}
@@ -183,25 +184,25 @@ const check = async () => {
 
     {#if status.enabled}
       <Row
-        label="Downloaded files"
-        help="Cap downloads the files from {host} into Valkey when you save new versions, and checks every hour that they're there."
+        label={t("Downloaded files")}
+        help={t("Cap downloads the files from {host} into Valkey when you save new versions, and checks every hour that they're there.", { host })}
       >
         <div class="flex flex-col gap-2 md:items-end">
           {#if status.cached}
             <Tag tone={status.cached.widget === status.widget && status.cached.wasm === status.wasm ? "success" : "warning"} dot>
-              Widget {status.cached.widget}, WebAssembly {status.cached.wasm}
+              {t("Widget {widget}, WebAssembly {wasm}", { widget: status.cached.widget, wasm: status.cached.wasm })}
             </Tag>
             <p class="text-sm text-muted-foreground md:text-end">
-              Downloaded {ago(status.cached.at)} from {host}.{status.cached.hashwx ? "" : " This WebAssembly version has no HashWX file, so HashWX keys load it from jsDelivr."}
+              {t("Downloaded {time} from {host}.", { time: ago(status.cached.at), host })}{status.cached.hashwx ? "" : ` ${t("This WebAssembly version has no HashWX file, so HashWX keys load it from jsDelivr.")}`}
             </p>
           {:else}
-            <p class="text-sm text-muted-foreground md:text-end">{status.updating ? "Downloading now." : "Nothing downloaded yet."}</p>
+            <p class="text-sm text-muted-foreground md:text-end">{status.updating ? t("Downloading now.") : t("Nothing downloaded yet.")}</p>
           {/if}
           {#if status.error}
-            <p class="text-sm text-destructive md:text-end" role="alert">The last download failed: {status.error}</p>
+            <p class="text-sm text-destructive md:text-end" role="alert">{t("The last download failed: {error}", { error: status.error })}</p>
           {/if}
           <Button size="sm" disabled={downloading} onclick={download}>
-            {downloading ? "Downloading" : "Download again"}
+            {downloading ? t("Downloading") : t("Download again")}
           </Button>
         </div>
       </Row>
@@ -219,7 +220,7 @@ const check = async () => {
             size={14}
             class="text-muted-foreground transition-[rotate] duration-200 ease-out motion-reduce:transition-none {usageOpen ? 'rotate-90' : ''}"
           />
-          Usage
+          {t("Usage")}
         </button>
         <div
           id="assets-usage"
@@ -228,9 +229,8 @@ const check = async () => {
         >
           <div class="flex min-h-0 flex-col gap-3 overflow-hidden">
             <p class="pt-2 text-sm text-pretty text-muted-foreground">
-              Load the widget from this server on any page that uses one of its keys, and replace
-              <code class="font-mono text-[0.9em] text-foreground">&lt;site-key&gt;</code> with the key's site key.
-              Each key's setup section already shows this snippet with its own key filled in.
+              {t("Load the widget from this server on any page that uses one of its keys, and replace")}
+              <code class="font-mono text-[0.9em] text-foreground">&lt;site-key&gt;</code> {t("with the key's site key. Each key's setup section already shows this snippet with its own key filled in.")}
             </p>
             <CodeBlock class="min-w-0" filename="index.html" language="html" download={false} code={usage} html={highlight(usage)} />
           </div>
@@ -240,9 +240,9 @@ const check = async () => {
 
     <div class="flex flex-wrap items-center justify-end gap-3 py-5">
       {#if error}
-        <p class="me-auto text-sm text-destructive" role="alert">{error}</p>
+        <p class="me-auto text-sm text-destructive" role="alert">{t(error)}</p>
       {/if}
-      <Button variant="primary" disabled={saving || !dirty} onclick={save}>{saving ? "Saving" : "Save widget file settings"}</Button>
+      <Button variant="primary" disabled={saving || !dirty} onclick={save}>{saving ? t("Saving") : t("Save widget file settings")}</Button>
     </div>
   </div>
 </Skeleton>

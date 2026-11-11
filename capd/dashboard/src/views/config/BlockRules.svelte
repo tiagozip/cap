@@ -22,21 +22,39 @@ import {
 import { api } from "../../lib/api.js";
 import { fullFmt, until } from "../../lib/format.js";
 import { countryFlagEmoji, countryName, countryNames } from "../../lib/geo.js";
+import { locale, t } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 import { app } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 
 const sk = app.key.siteKey;
-const TYPES = {
-  ip: "IP address",
-  cidr: "IP range",
-  asn: "Network (ASN)",
-  country: "Country",
+const TYPES = $derived({
+  ip: t("IP address"),
+  cidr: t("IP range"),
+  asn: t("Network (ASN)"),
+  country: t("Country"),
+});
+const EMPTY_ERRORS = {
+  ip: "Enter the IP address to block.",
+  cidr: "Enter the IP range to block.",
+  asn: "Enter the network to block.",
+  country: "Choose a country to block.",
 };
-const NOUNS = { ip: "IP address", cidr: "IP range", asn: "network" };
+const INVALID_ERRORS = {
+  ip: "That doesn't look like a valid IP address.",
+  cidr: "That doesn't look like a valid IP range.",
+  asn: "That doesn't look like a valid network.",
+};
 const PLACEHOLDERS = { ip: "1.2.3.4", cidr: "10.0.0.0/8", asn: "AS15169" };
-const countries = Object.entries(countryNames).sort((a, b) =>
-  a[1].localeCompare(b[1]),
+const countries = $derived(
+  Object.keys(countryNames)
+    .map((code) => [code, countryName(code)])
+    .sort((a, b) =>
+      a[1].localeCompare(
+        b[1],
+        locale.value === "en" ? undefined : locale.value,
+      ),
+    ),
 );
 
 let items = $state(null);
@@ -70,17 +88,14 @@ async function remove(item) {
     value: item.ip,
   });
   removing = null;
-  if (res?.error) toast(res.error, "error");
+  if (res?.error) toast(t(res.error), "error");
   await load();
 }
 
 async function submit() {
   const v = type === "country" ? country : value.trim();
   if (!v) {
-    addError =
-      type === "country"
-        ? "Choose a country to block."
-        : `Enter the ${NOUNS[type]} to block.`;
+    addError = EMPTY_ERRORS[type];
     document
       .getElementById(
         type === "country" ? "blockRuleCountry" : "blockRuleValue",
@@ -99,21 +114,21 @@ async function submit() {
   if (!res?.success) {
     addError =
       res?.error === "Invalid value"
-        ? `That doesn't look like a valid ${NOUNS[type]}.`
+        ? (INVALID_ERRORS[type] ?? "Couldn't add the rule. Try again.")
         : res?.error || "Couldn't add the rule. Try again.";
     return;
   }
   adding = false;
   value = "";
   country = "";
-  toast("Block rule added");
+  toast(t("Block rule added"));
   await load();
 }
 </script>
 
 <Group
   id="cfgBlocked"
-  title="Blocked networks"
+  title={t("Blocked networks")}
   flush={!!items?.length}
 >
   {#snippet action()}
@@ -125,24 +140,24 @@ async function submit() {
       }}
     >
       <Icon name="plus" size={14} />
-      Block a network
+      {t("Block a network")}
     </Button>
   {/snippet}
-  <Skeleton data={items} sample={samples.blocked} error={loadError} empty={items?.length === 0} label="Loading blocked networks">
+  <Skeleton data={items} sample={samples.blocked} error={loadError} empty={items?.length === 0} label={t("Loading blocked networks")}>
     {#snippet errorMessage()}
-      <p class="py-4 text-sm text-destructive" role="alert">{loadError}</p>
+      <p class="py-4 text-sm text-destructive" role="alert">{t(loadError)}</p>
     {/snippet}
     {#snippet emptyMessage()}
-      <Empty>Nobody is blocked. Block an IP address, range, network or country to stop it from solving.</Empty>
+      <Empty>{t("Nobody is blocked. Block an IP address, range, network or country to stop it from solving.")}</Empty>
     {/snippet}
     {#snippet children(rows)}
       <Table flush>
         <TableHeader>
           <TableRow>
-            <TableHead>Blocked</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Expires</TableHead>
-            <TableHead class="w-0"><span class="sr-only">Actions</span></TableHead>
+            <TableHead>{t("Blocked")}</TableHead>
+            <TableHead>{t("Type")}</TableHead>
+            <TableHead>{t("Expires")}</TableHead>
+            <TableHead class="w-0"><span class="sr-only">{t("Actions")}</span></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -158,9 +173,9 @@ async function submit() {
               <TableCell><Tag>{TYPES[item.type] ?? item.type}</Tag></TableCell>
               <TableCell class="whitespace-nowrap text-muted-foreground tabular-nums">
                 {#if item.permanent}
-                  Never
+                  {t("Never")}
                 {:else}
-                  <span title={fullFmt.format(new Date(item.expires))}>In {until(item.expires)}</span>
+                  <span title={fullFmt.format(new Date(item.expires))}>{t("In {time}", { time: until(item.expires) })}</span>
                 {/if}
               </TableCell>
               <TableCell>
@@ -168,10 +183,10 @@ async function submit() {
                   variant="ghost"
                   size="sm"
                   disabled={removing === `${item.type}:${item.ip}`}
-                  aria-label="Unblock {item.type === 'country' ? countryName(item.ip) : item.ip}"
+                  aria-label={t("Unblock {value}", { value: item.type === "country" ? countryName(item.ip) : item.ip })}
                   onclick={() => remove(item)}
                 >
-                  Unblock
+                  {t("Unblock")}
                 </Button>
               </TableCell>
             </TableRow>
@@ -182,7 +197,7 @@ async function submit() {
   </Skeleton>
 </Group>
 
-<Dialog bind:open={adding} title="Block a network" description="Visitors from it can't solve challenges for this key.">
+<Dialog bind:open={adding} title={t("Block a network")} description={t("Visitors from it can't solve challenges for this key.")}>
   <form
     id="blockRuleForm"
     class="flex flex-col gap-4"
@@ -192,7 +207,7 @@ async function submit() {
       submit();
     }}
   >
-    <Field label="What to block" for="blockRuleType">
+    <Field label={t("What to block")} for="blockRuleType">
       <Select
         id="blockRuleType"
         class="w-full"
@@ -202,18 +217,18 @@ async function submit() {
       />
     </Field>
     {#if type === "country"}
-      <Field label="Country" for="blockRuleCountry" error={addError}>
+      <Field label={t("Country")} for="blockRuleCountry" error={t(addError)}>
         <Select
           id="blockRuleCountry"
           class="w-full"
-          options={[["", "Choose a country"], ...countries.map(([code, name]) => [code, `${countryFlagEmoji(code)} ${name}`])]}
+          options={[["", t("Choose a country")], ...countries.map(([code, name]) => [code, `${countryFlagEmoji(code)} ${name}`])]}
           bind:value={country}
           aria-invalid={addError ? "true" : undefined}
           aria-describedby={addError ? "blockRuleCountry-error" : undefined}
         />
       </Field>
     {:else}
-      <Field label={type === "asn" ? "ASN number or name" : TYPES[type]} for="blockRuleValue" error={addError}>
+      <Field label={type === "asn" ? t("ASN number or name") : TYPES[type]} for="blockRuleValue" error={t(addError)}>
         <Input
           id="blockRuleValue"
           type="text"
@@ -227,25 +242,25 @@ async function submit() {
         />
       </Field>
     {/if}
-    <Field label="For how long" for="blockRuleDuration">
+    <Field label={t("For how long")} for="blockRuleDuration">
       <Select
         id="blockRuleDuration"
         class="w-full"
         options={[
-          ["0", "Until I remove it"],
-          ["3600", "1 hour"],
-          ["86400", "24 hours"],
-          ["604800", "7 days"],
-          ["2592000", "30 days"],
+          ["0", t("Until I remove it")],
+          ["3600", t("1 hour")],
+          ["86400", t("24 hours")],
+          ["604800", t("7 days")],
+          ["2592000", t("30 days")],
         ]}
         bind:value={duration}
       />
     </Field>
   </form>
   {#snippet footer()}
-    <Button variant="ghost" onclick={() => (adding = false)}>Cancel</Button>
+    <Button variant="ghost" onclick={() => (adding = false)}>{t("Cancel")}</Button>
     <Button type="submit" form="blockRuleForm" variant="danger" disabled={submitting}>
-      {submitting ? "Blocking" : "Block network"}
+      {submitting ? t("Blocking") : t("Block network")}
     </Button>
   {/snippet}
 </Dialog>

@@ -1,3 +1,5 @@
+import { dtf, t } from "./i18n.svelte.js";
+
 export const compact = (n) => {
   const v = Number(n) || 0;
   if (v >= 1e6)
@@ -13,16 +15,16 @@ export const latency = (ms) => {
   return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
 };
 
-export const timeFmt = new Intl.DateTimeFormat(undefined, {
+export const timeFmt = dtf({
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
 });
-export const dateFmt = new Intl.DateTimeFormat(undefined, {
+export const dateFmt = dtf({
   month: "short",
   day: "numeric",
 });
-export const fullFmt = new Intl.DateTimeFormat(undefined, {
+export const fullFmt = dtf({
   dateStyle: "medium",
   timeStyle: "medium",
 });
@@ -34,19 +36,27 @@ export const when = (ts) => {
     : `${dateFmt.format(d)} ${timeFmt.format(d)}`;
 };
 
-export const ago = (ts) => {
-  const s = Math.round((Date.now() - ts) / 1000);
-  if (s < 60) return `${Math.max(s, 0)}s ago`;
-  if (s < 3600) return `${Math.round(s / 60)}m ago`;
-  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
-  return `${Math.round(s / 86400)}d ago`;
+export const duration = (sec) => {
+  const s = Math.max(Math.round(sec), 0);
+  if (s < 60) return t("{n}s", { n: s });
+  if (s < 3600) return t("{n}m", { n: Math.round(s / 60) });
+  if (s < 86400) return t("{n}h", { n: Math.round(s / 3600) });
+  return t("{n}d", { n: Math.round(s / 86400) });
 };
 
-export const until = (ts) => ago(2 * Date.now() - ts).replace(" ago", "");
+export const ago = (ts) => {
+  const s = Math.max(Math.round((Date.now() - ts) / 1000), 0);
+  if (s < 60) return t("{n}s ago", { n: s });
+  if (s < 3600) return t("{n}m ago", { n: Math.round(s / 60) });
+  if (s < 86400) return t("{n}h ago", { n: Math.round(s / 3600) });
+  return t("{n}d ago", { n: Math.round(s / 86400) });
+};
+
+export const until = (ts) => duration((ts - Date.now()) / 1000);
 
 export const trend = (current, previous) => {
   if (previous == null || (!current && !previous)) return null;
-  if (!previous) return { dir: "up", text: "New" };
+  if (!previous) return { dir: "up", text: t("New") };
   const pct = Math.round(((current - previous) / previous) * 100);
   if (pct === 0) return { dir: "flat", text: "0%" };
   return { dir: pct > 0 ? "up" : "down", text: `${Math.abs(pct)}%` };

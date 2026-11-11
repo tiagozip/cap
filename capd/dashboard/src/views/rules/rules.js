@@ -1,6 +1,7 @@
-import { agentName, catalog } from "../../lib/catalog.svelte.js";
+import { agentName, fieldLabel } from "../../lib/catalog.svelte.js";
+import { t } from "../../lib/i18n.svelte.js";
 
-export const OP_LABELS = {
+const OPS_EN = {
   eq: "is",
   neq: "is not",
   in: "is one of",
@@ -23,13 +24,31 @@ export const OP_LABELS = {
   is_false: "is no",
 };
 
+export const OP_LABELS = Object.fromEntries(
+  Object.keys(OPS_EN).map((k) => [k, undefined]),
+);
+for (const [k, en] of Object.entries(OPS_EN)) {
+  Object.defineProperty(OP_LABELS, k, {
+    enumerable: true,
+    get: () => t(en),
+  });
+}
+
 export const NO_VALUE_OPS = ["exists", "not_exists", "is_true", "is_false"];
 
 export const ACTION_LABELS = {
-  block: "Block",
-  allow: "Allow",
-  flag: "Flag",
-  harder: "Harder puzzle",
+  get block() {
+    return t("Block");
+  },
+  get allow() {
+    return t("Allow");
+  },
+  get flag() {
+    return t("Flag");
+  },
+  get harder() {
+    return t("Harder puzzle");
+  },
 };
 
 export const ACTION_TONES = {
@@ -40,24 +59,40 @@ export const ACTION_TONES = {
 };
 
 export const ACTION_HELP = {
-  block:
-    "Cap rejects the request. A rule that only looks at the request stops the puzzle from loading at all.",
-  allow:
-    "Cap lets the visitor through and skips every rule and automatic block after this one.",
-  flag: "Cap lets the visitor through and adds this rule to the risk flags your server gets back from siteverify.",
-  harder: "Cap gives the visitor a puzzle that takes longer to solve.",
+  get block() {
+    return t(
+      "Cap rejects the request. A rule that only looks at the request stops the puzzle from loading at all.",
+    );
+  },
+  get allow() {
+    return t(
+      "Cap lets the visitor through and skips every rule and automatic block after this one.",
+    );
+  },
+  get flag() {
+    return t(
+      "Cap lets the visitor through and adds this rule to the risk flags your server gets back from siteverify.",
+    );
+  },
+  get harder() {
+    return t("Cap gives the visitor a puzzle that takes longer to solve.");
+  },
 };
 
 export const TEMPLATES = [
   {
-    name: "Harder puzzles for fast repeat visitors",
+    get name() {
+      return t("Harder puzzles for fast repeat visitors");
+    },
     action: "harder",
     factor: 4,
     match: "all",
     conditions: [{ field: "ip_velocity", op: "gt", value: 20 }],
   },
   {
-    name: "Block headless browsers",
+    get name() {
+      return t("Block headless browsers");
+    },
     action: "block",
     match: "any",
     conditions: [
@@ -66,13 +101,17 @@ export const TEMPLATES = [
     ],
   },
   {
-    name: "Flag suspicious interaction",
+    get name() {
+      return t("Flag suspicious interaction");
+    },
     action: "flag",
     match: "all",
     conditions: [{ field: "score", op: "gte", value: 0.4 }],
   },
   {
-    name: "Block unverified AI agents",
+    get name() {
+      return t("Block unverified AI agents");
+    },
     action: "block",
     match: "all",
     conditions: [
@@ -81,7 +120,9 @@ export const TEMPLATES = [
     ],
   },
   {
-    name: "Block requests without a browser fetch header",
+    get name() {
+      return t("Block requests without a browser fetch header");
+    },
     action: "block",
     match: "all",
     conditions: [
@@ -91,12 +132,24 @@ export const TEMPLATES = [
 ];
 
 export const TRIGGER_LABELS = {
-  block: "Blocked requests",
-  fail: "Failed solves",
-  flagged: "Solves with risk flags",
-  agent: "AI agents",
-  rule: "Rule matches",
-  all: "Every event",
+  get block() {
+    return t("Blocked requests");
+  },
+  get fail() {
+    return t("Failed solves");
+  },
+  get flagged() {
+    return t("Solves with risk flags");
+  },
+  get agent() {
+    return t("AI agents");
+  },
+  get rule() {
+    return t("Rule matches");
+  },
+  get all() {
+    return t("Every event");
+  },
 };
 
 export const VERDICTS = [
@@ -113,19 +166,24 @@ const lowerFirst = (s) =>
 
 export function conditionText(c, lists) {
   if (c.field === "agent" && c.op === "neq" && !c.value)
-    return "an AI agent was detected";
+    return t("an AI agent was detected");
   if (c.field === "list" && (c.op === "in_list" || c.op === "not_in_list"))
-    return `the visitor is ${c.op === "in_list" ? "on" : "not on"} the ${lists.find((l) => l.id === c.value)?.name ?? c.value} list`;
-  const f = catalog.fields[c.field];
+    return c.op === "in_list"
+      ? t("the visitor is on the {list} list", {
+          list: lists.find((l) => l.id === c.value)?.name ?? c.value,
+        })
+      : t("the visitor is not on the {list} list", {
+          list: lists.find((l) => l.id === c.value)?.name ?? c.value,
+        });
   const name =
     c.field === "header"
-      ? `the ${c.header} header`
-      : lowerFirst(f?.label ?? c.field);
+      ? t("the {header} header", { header: c.header })
+      : lowerFirst(fieldLabel(c.field));
   let value = c.value;
   if (c.field === "list")
     value = lists.find((l) => l.id === c.value)?.name ?? c.value;
   else if (c.field === "agent")
-    value = c.value ? agentName(c.value) : "any agent";
+    value = c.value ? agentName(c.value) : t("any agent");
   else if (Array.isArray(value)) value = value.join(", ");
   return `${name} ${OP_LABELS[c.op] ?? c.op}${value != null && value !== "" ? ` ${value}` : ""}`;
 }
@@ -133,27 +191,28 @@ export function conditionText(c, lists) {
 export const ruleSentence = (r, lists) => {
   const verb =
     r.action === "harder"
-      ? `Make the puzzle ${r.factor ?? 2}× harder`
+      ? t("Make the puzzle {factor}× harder", { factor: r.factor ?? 2 })
       : ACTION_LABELS[r.action];
   const joined = r.conditions
     .map((c) => conditionText(c, lists))
-    .join(r.match === "any" ? " or " : " and ");
-  return `${verb} when ${joined}`;
+    .join(r.match === "any" ? ` ${t("or")} ` : ` ${t("and")} `);
+  return t("{verb} when {conditions}", { verb, conditions: joined });
 };
 
 export function conditionParts(c, lists) {
   if (c.field === "agent" && c.op === "neq" && !c.value)
-    return { field: "AI agent", op: "is present" };
-  const f = catalog.fields[c.field];
+    return { field: t("AI agent"), op: OP_LABELS.exists };
   const field =
-    c.field === "header" ? `${c.header} header` : (f?.label ?? c.field);
+    c.field === "header"
+      ? t("{header} header", { header: c.header })
+      : fieldLabel(c.field);
   const op = OP_LABELS[c.op] ?? c.op;
   if (NO_VALUE_OPS.includes(c.op)) return { field, op };
   let value = c.value;
   if (c.field === "list")
     value = lists.find((l) => l.id === c.value)?.name ?? c.value;
   else if (c.field === "agent")
-    value = c.value ? agentName(c.value) : "any agent";
+    value = c.value ? agentName(c.value) : t("any agent");
   else if (Array.isArray(value)) value = value.join(", ");
   return {
     field,

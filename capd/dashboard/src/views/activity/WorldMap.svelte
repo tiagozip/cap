@@ -22,6 +22,7 @@ const loadWorld = () => {
   import { onMount } from "svelte";
   import { createResolver } from "../../components/ui/chart/colors.js";
   import { countryCentroids, countryName, flagUrl, numericToAlpha2 } from "../../lib/geo.js";
+  import { t } from "../../lib/i18n.svelte.js";
 
   let { values = {}, color = "var(--chart-3)", diverging = false, describe, onpick } = $props();
 
@@ -126,13 +127,13 @@ const loadWorld = () => {
 </script>
 
 {#if failed}
-  <p class="py-6 text-center text-sm text-muted-foreground">Couldn't load the map. Switch to the list view instead.</p>
+  <p class="py-6 text-center text-sm text-muted-foreground">{t("Couldn't load the map. Switch to the list view instead.")}</p>
 {:else}
   <div class="relative mx-auto aspect-[2.4] w-full max-w-[57.6rem]" bind:this={wrap}>
     <canvas
       class="absolute inset-0 block size-full {hover && onpick ? 'cursor-pointer' : 'cursor-crosshair'}"
       bind:this={canvas}
-      aria-label="World map of traffic by country"
+      aria-label={t("World map of traffic by country")}
       onmousemove={onmove}
       onmouseleave={() => (hover = null)}
       onclick={() => hover && onpick?.(hover.code)}

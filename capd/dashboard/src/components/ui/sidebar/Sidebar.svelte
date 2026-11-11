@@ -1,5 +1,6 @@
 <script>
 import { Dialog } from "bits-ui";
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import SheetContent from "../sheet/SheetContent.svelte";
 import { useSidebar } from "./context.svelte.js";
@@ -8,7 +9,7 @@ let {
   side = "start",
   variant = "sidebar",
   collapsible = "offcanvas",
-  label = "Sidebar",
+  label,
   class: className,
   ref = $bindable(null),
   children,
@@ -55,7 +56,7 @@ $effect(() => {
       data-sidebar="sidebar"
       data-slot="sidebar"
       data-mobile="true"
-      aria-label={label}
+      aria-label={label ?? t("Sidebar")}
       class="rounded-[calc(var(--radius)+8px)] bg-sidebar p-0 text-sidebar-foreground data-[side=left]:w-(--sidebar-width) data-[side=right]:w-(--sidebar-width)"
       style="--sidebar-width: 18rem;"
       side={physicalSide}
@@ -86,7 +87,7 @@ $effect(() => {
     ></div>
     <aside
       bind:this={ref}
-      aria-label={label}
+      aria-label={label ?? t("Sidebar")}
       data-slot="sidebar-container"
       data-side={physicalSide}
       inert={sidebar.state === "collapsed" && collapsible === "offcanvas"}

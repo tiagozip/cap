@@ -1,4 +1,6 @@
 <script>
+import { t } from "../../lib/i18n.svelte.js";
+
 let {
   label,
   for: htmlFor,
@@ -13,7 +15,7 @@ let {
 <div class="flex flex-col gap-1.5 {className}">
   {#if label}
     <label for={htmlFor} class="text-sm font-medium">
-      {label}{#if optional}<span class="font-normal text-muted-foreground">{" "}(optional)</span>{/if}
+      {label}{#if optional}<span class="font-normal text-muted-foreground">{" "}({t("optional")})</span>{/if}
     </label>
   {/if}
   {@render children()}

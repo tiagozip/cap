@@ -8,6 +8,7 @@ import {
   Segmented,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 
 let loaded = $state(null);
@@ -39,11 +40,11 @@ const save = async () => {
   });
   saving = false;
   if (!res?.success) {
-    toast(res?.error || "Couldn't save proxy sign-in", "error");
+    toast(t(res?.error || "Couldn't save proxy sign-in"), "error");
     return;
   }
   await load();
-  toast("Proxy sign-in saved");
+  toast(t("Proxy sign-in saved"));
 };
 
 const rotate = async () => {
@@ -51,7 +52,7 @@ const rotate = async () => {
   const res = await api("POST", "/settings/proxy-auth/secret");
   rotating = false;
   if (!res?.success) {
-    toast(res?.error || "Couldn't generate a secret", "error");
+    toast(t(res?.error || "Couldn't generate a secret"), "error");
     return;
   }
   secret = res.secret;
@@ -61,53 +62,53 @@ const rotate = async () => {
 
 <div class="flex flex-col divide-y divide-border">
   <Row
-    label="Sign in through a proxy"
-    help="For a dashboard behind Authentik, Authelia or another sign-in proxy. The proxy sends a secret header, and Cap signs in whoever it lets through."
+    label={t("Sign in through a proxy")}
+    help={t("For a dashboard behind Authentik, Authelia or another sign-in proxy. The proxy sends a secret header, and Cap signs in whoever it lets through.")}
   >
     <Segmented
       class="self-start md:self-auto"
-      label="Proxy sign-in"
+      label={t("Proxy sign-in")}
       bind:value={mode}
       options={[
-        ["off", "Off"],
-        ["allow", "Proxy or admin key"],
-        ["require", "Proxy only"],
+        ["off", t("Off")],
+        ["allow", t("Proxy or admin key")],
+        ["require", t("Proxy only")],
       ]}
     />
     {#snippet below()}
       {#if mode === "require"}
-        <p class="text-sm text-pretty text-muted-foreground md:text-end">The admin key stops working on the sign-in page, and every dashboard request needs the header. API keys keep working.</p>
+        <p class="text-sm text-pretty text-muted-foreground md:text-end">{t("The admin key stops working on the sign-in page, and every dashboard request needs the header. API keys keep working.")}</p>
       {/if}
       {#if dirty}
         <div class="flex items-center gap-3">
-          <span class="text-sm text-muted-foreground" role="status">Unsaved changes</span>
-          <Button variant="primary" disabled={saving} onclick={save}>{saving ? "Saving" : "Save proxy sign-in"}</Button>
+          <span class="text-sm text-muted-foreground" role="status">{t("Unsaved changes")}</span>
+          <Button variant="primary" disabled={saving} onclick={save}>{saving ? t("Saving") : t("Save proxy sign-in")}</Button>
         </div>
       {/if}
     {/snippet}
   </Row>
 
-  <Row label="Header and secret" help="Set your proxy to add this header with the secret on requests it has already signed in.">
+  <Row label={t("Header and secret")} help={t("Set your proxy to add this header with the secret on requests it has already signed in.")}>
     <div class="flex w-full flex-col gap-4 md:max-w-sm">
-      <Field label="Header name" for="proxy-header">
+      <Field label={t("Header name")} for="proxy-header">
         <Input id="proxy-header" mono placeholder="X-Cap-Proxy-Secret" bind:value={header} />
       </Field>
       {#if secret}
-        <Field label="Secret" for="proxy-secret" help="Copy it now. Cap only keeps a hash, so you can't see it again.">
-          <CopyText value={secret} label="Copy secret" secret />
+        <Field label={t("Secret")} for="proxy-secret" help={t("Copy it now. Cap only keeps a hash, so you can't see it again.")}>
+          <CopyText value={secret} label={t("Copy secret")} secret />
         </Field>
         <div class="flex flex-col gap-1.5">
-          <p class="text-sm font-medium">Caddy example</p>
-          <CopyText value={`header_up ${cleanHeader} ${secret}`} label="Copy Caddy line" secret />
+          <p class="text-sm font-medium">{t("Caddy example")}</p>
+          <CopyText value={`header_up ${cleanHeader} ${secret}`} label={t("Copy Caddy line")} secret />
         </div>
       {/if}
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
         <Button disabled={rotating || !loaded} onclick={rotate}>
-          {rotating ? "Generating" : loaded?.hasSecret ? "Replace secret" : "Generate secret"}
+          {rotating ? t("Generating") : loaded?.hasSecret ? t("Replace secret") : t("Generate secret")}
         </Button>
         {#if loaded?.hasSecret}
           <span class="text-sm text-muted-foreground" role="status">
-            {loaded.requestPasses ? "This page came through your proxy." : "This page didn't come with the header."}
+            {loaded.requestPasses ? t("This page came through your proxy.") : t("This page didn't come with the header.")}
           </span>
         {/if}
       </div>

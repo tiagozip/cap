@@ -1,4 +1,5 @@
 import { toast as kitToast } from "../components/ui/toast.svelte.js";
+import { t } from "./i18n.svelte.js";
 
 export const ui = $state({ confirm: null });
 
@@ -24,9 +25,9 @@ export const confirm = ({ title, message, confirmText, danger = false }) =>
 export async function copy(text) {
   try {
     await navigator.clipboard.writeText(text);
-    toast("Copied to clipboard");
+    toast(t("Copied to clipboard"));
   } catch {
-    toast("Couldn't copy, select the text and copy it yourself", "error");
+    toast(t("Couldn't copy, select the text and copy it yourself"), "error");
   }
 }
 

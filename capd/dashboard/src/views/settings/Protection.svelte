@@ -8,6 +8,7 @@ import {
   Switch,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app, refreshSettings } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 
@@ -144,22 +145,22 @@ const save = async () => {
   };
   rows = [...origins.map((o) => row(o)), row()];
   await refreshSettings();
-  toast("Protection defaults saved");
+  toast(t("Protection defaults saved"));
 };
 </script>
 
 <div class="flex flex-col divide-y divide-border">
-  <Row label="Challenges per visitor" help="A visitor who goes over this waits before they get another challenge.">
+  <Row label={t("Challenges per visitor")} help={t("A visitor who goes over this waits before they get another challenge.")}>
     <div class="flex flex-wrap items-center gap-2 text-sm">
-      <label for="rl-max" class="sr-only">Challenges allowed</label>
+      <label for="rl-max" class="sr-only">{t("Challenges allowed")}</label>
       <div class="w-20"><Input id="rl-max" type="number" inputmode="numeric" min="1" max="10000" bind:value={max} /></div>
-      <label for="rl-window" class="text-muted-foreground">every</label>
+      <label for="rl-window" class="text-muted-foreground">{t("every")}</label>
       <div class="w-20"><Input id="rl-window" type="number" inputmode="decimal" min="1" max="3600" step="any" bind:value={seconds} /></div>
-      <span class="text-muted-foreground">seconds</span>
+      <span class="text-muted-foreground">{t("seconds")}</span>
     </div>
   </Row>
 
-  <Row label="Only allow my websites" for="cors-on" help="Challenges load only on the sites you list, so nobody else can use your keys.">
+  <Row label={t("Only allow my websites")} for="cors-on" help={t("Challenges load only on the sites you list, so nobody else can use your keys.")}>
     <Switch
       id="cors-on"
       bind:checked={corsOn}
@@ -169,12 +170,12 @@ const save = async () => {
     />
     {#snippet below()}
       {#if corsOn}
-        <div class="flex w-full flex-col gap-2 md:max-w-xs" role="group" aria-label="Allowed websites">
+        <div class="flex w-full flex-col gap-2 md:max-w-xs" role="group" aria-label={t("Allowed websites")}>
           {#each rows as r (r.id)}
             <Input
               type="text"
               inputmode="url"
-              aria-label="Allowed website"
+              aria-label={t("Allowed website")}
               placeholder="example.com"
               invalid={r.invalid}
               bind:value={r.value}
@@ -195,7 +196,7 @@ const save = async () => {
                     icon
                     size="sm"
                     class="size-7"
-                    aria-label="Remove {r.value}"
+                    aria-label={t("Remove {value}", { value: r.value })}
                     onclick={() => {
                       rows = rows.filter((x) => x.id !== r.id);
                       ensureEmptyRow();
@@ -212,11 +213,11 @@ const save = async () => {
     {/snippet}
   </Row>
 
-  <Row label="Block scripts and command-line tools" for="block-ua" help="Turns away clients like curl and python-requests before they get a challenge.">
+  <Row label={t("Block scripts and command-line tools")} for="block-ua" help={t("Turns away clients like curl and python-requests before they get a challenge.")}>
     <Switch id="block-ua" bind:checked={blockUA} />
   </Row>
 
-  <Row label="Block requests that don't look like a browser" for="req-headers" help="Every real browser sends certain headers. Requests missing any you check here are blocked.">
+  <Row label={t("Block requests that don't look like a browser")} for="req-headers" help={t("Every real browser sends certain headers. Requests missing any you check here are blocked.")}>
     <Switch
       id="req-headers"
       bind:checked={headersOn}
@@ -226,7 +227,7 @@ const save = async () => {
     />
     {#snippet below()}
       {#if headersOn}
-        <div class="grid gap-x-6 gap-y-2.5 sm:grid-cols-2" role="group" aria-label="Required headers">
+        <div class="grid gap-x-6 gap-y-2.5 sm:grid-cols-2" role="group" aria-label={t("Required headers")}>
           {#each HEADERS as h (h)}
             <div class="flex items-center gap-2.5">
               <Checkbox
@@ -246,10 +247,10 @@ const save = async () => {
 
   <div class="flex flex-wrap items-center justify-end gap-3 py-5">
     {#if error}
-      <p class="me-auto text-sm text-destructive" role="alert">{error}</p>
+      <p class="me-auto text-sm text-destructive" role="alert">{t(error)}</p>
     {:else if anyDirty}
-      <span class="text-sm text-muted-foreground" role="status">Unsaved changes</span>
+      <span class="text-sm text-muted-foreground" role="status">{t("Unsaved changes")}</span>
     {/if}
-    <Button variant="primary" disabled={!anyDirty || saving} onclick={save}>{saving ? "Saving" : "Save changes"}</Button>
+    <Button variant="primary" disabled={!anyDirty || saving} onclick={save}>{saving ? t("Saving") : t("Save changes")}</Button>
   </div>
 </div>

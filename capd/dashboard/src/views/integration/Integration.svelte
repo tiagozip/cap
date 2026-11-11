@@ -9,6 +9,7 @@ import {
   Row,
 } from "../../components/cap/index.js";
 import { PasswordEye } from "../../components/ui/index.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 import {
   currentSecret,
@@ -97,7 +98,7 @@ let copyTimer;
 
 <Group
   id="cfgSetup"
-  title="Add Cap to your site"
+  title={t("Add Cap to your site")}
 >
   {#snippet action()}
     <Button
@@ -114,21 +115,21 @@ let copyTimer;
       }}
     >
       <Icon name={copied ? "check" : "copy"} size={14} />
-      {copied ? "Copied prompt" : "Copy prompt for an AI assistant"}
+      {copied ? t("Copied prompt") : t("Copy prompt for an AI assistant")}
     </Button>
   {/snippet}
-  <Row label="Site key" help="Public. It goes in your page next to the widget.">
-    <div class="w-full md:max-w-sm"><CopyText value={sk} label="Copy site key" /></div>
+  <Row label={t("Site key")} help={t("Public. It goes in your page next to the widget.")}>
+    <div class="w-full md:max-w-sm"><CopyText value={sk} label={t("Copy site key")} /></div>
   </Row>
-  <Row label="Secret key" help="Private. Your server sends it to /siteverify. Only admins can reveal it.">
+  <Row label={t("Secret key")} help={t("Private. Your server sends it to /siteverify. Only admins can reveal it.")}>
     {#if app.key?.secretOutdated || entry.error}
       <div class="flex w-full flex-col gap-2 md:max-w-sm">
         <p class="text-sm text-pretty {app.key?.secretOutdated ? 'text-destructive' : 'text-muted-foreground'}" role="status">
           {app.key?.secretOutdated
-            ? "This secret is from an older Cap release, and /siteverify rejects it. Reset it, then put the new secret in your server's environment."
-            : entry.error}
+            ? t("This secret is from an older Cap release, and /siteverify rejects it. Reset it, then put the new secret in your server's environment.")
+            : t(entry.error)}
         </p>
-        <Button size="sm" class="self-start" onclick={() => onreset?.()}>Go to reset</Button>
+        <Button size="sm" class="self-start" onclick={() => onreset?.()}>{t("Go to reset")}</Button>
       </div>
     {:else}
       <div class="flex h-9 w-full min-w-0 items-center gap-1 rounded-[10px] bg-muted pr-1 pl-3 md:max-w-sm">
@@ -140,40 +141,40 @@ let copyTimer;
           size="sm"
           icon
           class="size-7 rounded-[6px]"
-          aria-label={shown ? "Hide secret" : "Reveal secret"}
+          aria-label={shown ? t("Hide secret") : t("Reveal secret")}
           aria-pressed={shown}
           disabled={entry.busy}
           onclick={toggleSecret}
         >
           <PasswordEye revealed={shown} />
         </Button>
-        <CopyButton text={loadSecret} label="Copy secret key" class="rounded-[6px]" />
+        <CopyButton text={loadSecret} label={t("Copy secret key")} class="rounded-[6px]" />
       </div>
     {/if}
   </Row>
   <ol class="flex flex-col divide-y divide-border">
     <li class="flex flex-col gap-3 py-4">
       <div class="flex flex-col gap-1">
-        <h3 class="text-sm font-medium">1. Add the widget to your form</h3>
+        <h3 class="text-sm font-medium">{t("1. Add the widget to your form")}</h3>
         <p class="text-sm text-pretty text-muted-foreground">
-          Paste this into the page you want to protect. The
+          {t("Paste this into the page you want to protect. The")}
           <a
             class="text-foreground underline underline-offset-2 [@media(hover:hover)]:hover:text-primary"
             href="https://trycap.dev/guide/widget.html#usage"
             target="_blank"
-            rel="noreferrer">widget guide</a
+            rel="noreferrer">{t("widget guide")}</a
           >
-          covers React, Vue and invisible mode.
+          {t("covers React, Vue and invisible mode.")}
         </p>
       </div>
       <CodeBlock class="min-w-0" filename="index.html" language="html" download={false} code={widget} html={highlight(widget)} />
     </li>
     <li class="flex flex-col gap-3 py-4">
       <div class="flex flex-col gap-1">
-        <h3 class="text-sm font-medium">2. Check the token on your server</h3>
+        <h3 class="text-sm font-medium">{t("2. Check the token on your server")}</h3>
         <p class="text-sm text-pretty text-muted-foreground">
-          Put your keys in the server's environment, then send each token to Cap and only accept the form when
-          <code class="font-mono text-[0.9em] text-foreground">success</code> is true.
+          {t("Put your keys in the server's environment, then send each token to Cap and only accept the form when")}
+          <code class="font-mono text-[0.9em] text-foreground">success</code> {t("is true.")}
         </p>
       </div>
       {#if !entry.error}
@@ -194,7 +195,7 @@ let copyTimer;
             <button
               type="button"
               class={action}
-              aria-label={shown ? "Hide secret" : "Reveal secret"}
+              aria-label={shown ? t("Hide secret") : t("Reveal secret")}
               aria-pressed={shown}
               disabled={entry.busy}
               onclick={toggleSecret}

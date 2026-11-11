@@ -15,40 +15,45 @@ import {
   TableRow,
 } from "../../components/ui/index.js";
 import { compact } from "../../lib/format.js";
+import { numFmt, t, tp } from "../../lib/i18n.svelte.js";
 import { app, navigate } from "../../lib/state.svelte.js";
 
 const total = $derived(
   app.keys.reduce((n, k) => n + (k.solvesLast24h || 0), 0),
 );
-const nf = new Intl.NumberFormat();
 </script>
 
 <PageHeader
-  title="Site keys"
+  title={t("Site keys")}
   description={app.route.error
-    ? `Couldn't open that key: ${app.route.error}`
+    ? t("Couldn't open that key: {error}", { error: t(app.route.error) })
     : app.keys.length
-      ? `${nf.format(total)} solves across ${app.keys.length} ${app.keys.length === 1 ? "key" : "keys"} in the last 24 hours.`
-      : "Create a key for your website, add the widget to a form, and check the token on your server."}
+      ? tp(
+          app.keys.length,
+          "{total} solves across {count} key in the last 24 hours.",
+          "{total} solves across {count} keys in the last 24 hours.",
+          { total: numFmt(total) },
+        )
+      : t("Create a key for your website, add the widget to a form, and check the token on your server.")}
 >
   {#snippet actions()}
     <Button variant="primary" onclick={() => (app.createKeyOpen = true)}>
       <Icon name="plus" size={14} />
-      Create site key
+      {t("Create site key")}
     </Button>
   {/snippet}
 </PageHeader>
 
 {#if app.keysError}
-  <div class="px-4 md:px-5"><Empty title="Couldn't load your site keys">{app.keysError}</Empty></div>
+  <div class="px-4 md:px-5"><Empty title={t("Couldn't load your site keys")}>{t(app.keysError)}</Empty></div>
 {:else if app.keys.length}
   <Table flush class="border-t border-border">
     <TableHeader>
       <TableRow>
-        <TableHead>Name</TableHead>
-        <TableHead class="max-sm:hidden">Site key</TableHead>
-        <TableHead class="text-right!">Solves, 24 hours</TableHead>
-        <TableHead class="w-10"><span class="sr-only">Open</span></TableHead>
+        <TableHead>{t("Name")}</TableHead>
+        <TableHead class="max-sm:hidden">{t("Site key")}</TableHead>
+        <TableHead class="text-right!">{t("Solves, 24 hours")}</TableHead>
+        <TableHead class="w-10"><span class="sr-only">{t("Open")}</span></TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
@@ -70,7 +75,7 @@ const nf = new Intl.NumberFormat();
               }}
             >
               <span class="truncate">{key.name}</span>
-              {#if key.secretOutdated}<Tag tone="danger">Reset secret</Tag>{/if}
+              {#if key.secretOutdated}<Tag tone="danger">{t("Reset secret")}</Tag>{/if}
             </a>
           </TableCell>
           <TableCell class="font-mono text-xs text-muted-foreground max-sm:hidden">{key.siteKey}</TableCell>

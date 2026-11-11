@@ -1,5 +1,6 @@
 <script>
 import { flushSync } from "svelte";
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import InputGroup from "../input-group/InputGroup.svelte";
 import InputGroupAddon from "../input-group/InputGroupAddon.svelte";
@@ -109,7 +110,7 @@ const toggle = () => {
   <InputGroup class={strength ? undefined : className}>
     <InputGroupInput bind:ref bind:value type={visible ? "text" : "password"} {...rest} />
     <InputGroupAddon align="inline-end">
-      <InputGroupButton size="icon-xs" aria-label={revealed ? "Hide password" : "Show password"} onclick={toggle}>
+      <InputGroupButton size="icon-xs" aria-label={revealed ? t("Hide password") : t("Show password")} onclick={toggle}>
         <PasswordEye {revealed} />
       </InputGroupButton>
     </InputGroupAddon>
@@ -128,7 +129,7 @@ const toggle = () => {
           )}
         ></div>
       {/each}
-      <p aria-live="polite" class="sr-only">{["", "Weak", "Fair", "Strong"][score]}</p>
+      <p aria-live="polite" class="sr-only">{["", t("Weak"), t("Fair"), t("Strong")][score]}</p>
     </div>
   </div>
 {:else}

@@ -5,7 +5,8 @@ import {
   reasonLabel,
   signalInfo,
 } from "../../lib/catalog.svelte.js";
-import { countryName } from "../../lib/geo.js";
+import { countryName, languageName } from "../../lib/geo.js";
+import { t, tp } from "../../lib/i18n.svelte.js";
 
 export const countryFlag = (code) =>
   /^[a-z]{2}$/i.test(code ?? "")
@@ -15,46 +16,95 @@ export const countryFlag = (code) =>
     : "";
 
 export const FILTER_LABELS = {
-  type: "Event",
-  outcome: "Outcome",
-  reason: "Reason",
-  ip: "IP",
-  country: "Country",
-  asn: "Network number",
-  asn_org: "Network",
-  browser: "Browser",
-  os: "System",
-  platform: "Device",
-  origin: "Website",
-  lang: "Language",
-  fp: "Visitor",
-  verdict: "Verdict",
-  agent: "AI agent",
-  rule: "Rule",
-  flag: "Signal",
-  token_id: "Token",
-  protocol: "Protocol",
-  agent_confidence: "Agent confidence",
+  get type() {
+    return t("Event");
+  },
+  get outcome() {
+    return t("Outcome");
+  },
+  get reason() {
+    return t("Reason");
+  },
+  get ip() {
+    return t("IP");
+  },
+  get country() {
+    return t("Country");
+  },
+  get asn() {
+    return t("Network number");
+  },
+  get asn_org() {
+    return t("Network");
+  },
+  get browser() {
+    return t("Browser");
+  },
+  get os() {
+    return t("System");
+  },
+  get platform() {
+    return t("Device");
+  },
+  get origin() {
+    return t("Website");
+  },
+  get lang() {
+    return t("Language");
+  },
+  get fp() {
+    return t("Visitor");
+  },
+  get verdict() {
+    return t("Verdict");
+  },
+  get agent() {
+    return t("AI agent");
+  },
+  get rule() {
+    return t("Rule");
+  },
+  get flag() {
+    return t("Signal");
+  },
+  get token_id() {
+    return t("Token");
+  },
+  get protocol() {
+    return t("Protocol");
+  },
+  get agent_confidence() {
+    return t("Agent confidence");
+  },
+};
+
+export const verdictLabel = (v) => {
+  if (!v) return "";
+  if (v === "ok") return "OK";
+  const map = {
+    suspicious: "Suspicious",
+    automated: "Automated",
+    agent: "Agent",
+    no_interaction: "No interaction",
+    missing: "Missing",
+  };
+  return map[v] ? t(map[v]) : `${v.charAt(0).toUpperCase()}${v.slice(1)}`;
 };
 
 export const filterValueLabel = (field, value) => {
   if (field === "country") return countryName(value.toUpperCase());
-  if (field === "outcome") return OUTCOMES[value]?.label ?? value;
+  if (field === "outcome")
+    return value === "flagged"
+      ? t("Flagged")
+      : (OUTCOMES[value]?.label ?? value);
   if (field === "type") return EVENT_TYPES[value] ?? value;
   if (field === "reason") return reasonLabel(value);
   if (field === "agent") return agentName(value);
   if (field === "flag") return signalInfo(value).text;
   if (field === "asn") return `AS${value}`;
-  if (field === "lang") {
-    try {
-      return (
-        new Intl.DisplayNames(undefined, { type: "language" }).of(value) ??
-        value
-      );
-    } catch {
-      return value;
-    }
-  }
+  if (field === "lang") return languageName(value);
+  if (field === "platform") return t(value);
+  if (field === "verdict") return verdictLabel(value);
   return value;
 };
 
@@ -87,19 +137,29 @@ export function eventSentence(e) {
   if (e.outcome === "pass") {
     const base =
       e.type === "challenge"
-        ? "Challenge issued"
+        ? t("Challenge issued")
         : e.type === "siteverify"
-          ? "Token checked by your server"
-          : "Solved the challenge";
-    if (e.agent) return `${base} by ${agentName(e.agent)}`;
+          ? t("Token checked by your server")
+          : t("Solved the challenge");
+    if (e.agent)
+      return t("{base} by {agent}", { base, agent: agentName(e.agent) });
     const n = e.flags?.length ?? 0;
-    if (n) return `${base} with ${n} risk ${n === 1 ? "signal" : "signals"}`;
+    if (n)
+      return tp(
+        n,
+        "{base} with {count} risk signal",
+        "{base} with {count} risk signals",
+        { base },
+      );
     return base;
   }
-  if (e.outcome === "limit") return "Sent too many requests";
+  if (e.outcome === "limit") return t("Sent too many requests");
   const label = OUTCOMES[e.outcome]?.label ?? e.outcome;
   if (!e.reason || e.reason === "rate_limited") return label;
-  return `${label}: ${lowerFirst(reasonLabel(e.reason))}`;
+  return t("{label}: {reason}", {
+    label,
+    reason: lowerFirst(reasonLabel(e.reason)),
+  });
 }
 
 export const TTL_OPTIONS = [
@@ -175,12 +235,12 @@ export function groupSolves(
         redeem?.outcome === "pass"
           ? verify
             ? verify.outcome === "pass"
-              ? "Solved and verified"
-              : "Solved, verify failed"
-            : "Solved"
+              ? t("Solved and verified")
+              : t("Solved, verify failed")
+            : t("Solved")
           : redeem
-            ? "Solve failed"
-            : "Token verified",
+            ? t("Solve failed")
+            : t("Token verified"),
     };
   });
 }

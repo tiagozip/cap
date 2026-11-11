@@ -1,5 +1,6 @@
 <script>
 import { Dialog } from "bits-ui";
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import Icon from "../icon/Icon.svelte";
 
@@ -59,7 +60,7 @@ const physicalSide = $derived(
         class="absolute end-4 top-4 inline-flex size-8 cursor-pointer items-center justify-center rounded-full bg-foreground/5 text-muted-foreground transition-ring outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
       >
         <Icon name="x" class="size-4" stroke={1.8} />
-        <span class="sr-only">Close</span>
+        <span class="sr-only">{t("Close")}</span>
       </Dialog.Close>
     {/if}
   </Dialog.Content>

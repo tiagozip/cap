@@ -4,6 +4,7 @@ import {
   Button,
   Empty,
   RangePicker,
+  Select,
   Skeleton,
 } from "../../components/cap/index.js";
 import NotchFilter from "../../components/cap/NotchFilter.svelte";
@@ -12,50 +13,56 @@ import { Card, CardContent } from "../../components/ui/index.js";
 import { url } from "../../lib/api.js";
 import { compact, latency, trend } from "../../lib/format.js";
 import { countryName, flagUrl } from "../../lib/geo.js";
+import { dtf, LOCALES, locale, setLocale, t } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 import OsIcon from "../activity/OsIcon.svelte";
 import TrafficChart from "../activity/TrafficChart.svelte";
 import ShareBreakdown from "./ShareBreakdown.svelte";
 
-const RANGES = [
-  { id: "today", short: "1d", label: "Today", long: "today" },
-  { id: "yesterday", short: "", label: "Yesterday", long: "yesterday" },
+const RANGES = $derived([
+  { id: "today", short: "1d", label: t("Today"), long: t("today") },
+  {
+    id: "yesterday",
+    short: "",
+    label: t("Yesterday"),
+    long: t("yesterday"),
+  },
   {
     id: "last7days",
     short: "7d",
-    label: "Past 7 days",
-    long: "the last 7 days",
+    label: t("Past 7 days"),
+    long: t("the last 7 days"),
   },
   {
     id: "last28days",
     short: "28d",
-    label: "Past 28 days",
-    long: "the last 28 days",
+    label: t("Past 28 days"),
+    long: t("the last 28 days"),
   },
   {
     id: "last91days",
     short: "91d",
-    label: "Past 3 months",
-    long: "the last 3 months",
+    label: t("Past 3 months"),
+    long: t("the last 3 months"),
   },
-  { id: "alltime", short: "", label: "All time", long: "this period" },
-];
+  { id: "alltime", short: "", label: t("All time"), long: t("this period") },
+]);
 
-const METRICS = [
+const METRICS = $derived([
   {
     id: "challenges",
-    label: "Challenges",
+    label: t("Challenges"),
     color: "var(--chart-1)",
     chart: true,
   },
-  { id: "solved", label: "Passed", color: "var(--success)", chart: true },
+  { id: "solved", label: t("Passed"), color: "var(--success)", chart: true },
   {
     id: "failed",
-    label: "Failed",
+    label: t("Failed"),
     color: "var(--faint-foreground)",
     chart: true,
   },
-];
+]);
 
 const token = location.hash.slice(1);
 
@@ -69,20 +76,20 @@ let seq = 0;
 
 const rangeInfo = $derived(RANGES.find((r) => r.id === range));
 
-const dayFmt = new Intl.DateTimeFormat(undefined, {
+const dayFmt = dtf({
   month: "short",
   day: "numeric",
   year: "numeric",
 });
 
-const utcDayFmt = new Intl.DateTimeFormat(undefined, {
+const utcDayFmt = dtf({
   month: "short",
   day: "numeric",
   year: "numeric",
   timeZone: "UTC",
 });
 
-const utcShortFmt = new Intl.DateTimeFormat(undefined, {
+const utcShortFmt = dtf({
   month: "short",
   day: "numeric",
   timeZone: "UTC",
@@ -127,7 +134,7 @@ const span = $derived.by(() => {
     from.getUTCFullYear() === to.getUTCFullYear()
       ? utcShortFmt.format(from)
       : utcDayFmt.format(from);
-  return `${first} to ${last}, UTC`;
+  return t("{from} to {to}, UTC", { from: first, to: last });
 });
 
 const expires = $derived(
@@ -147,8 +154,8 @@ const geoTabs = $derived.by(() => ({
   places: [
     {
       id: "countries",
-      label: "Countries",
-      column: "Country",
+      label: t("Countries"),
+      column: t("Country"),
       rows: rows(
         geo?.countries,
         (c) => c.code,
@@ -157,38 +164,38 @@ const geoTabs = $derived.by(() => ({
       total: geo?.totalCountry,
       icon: flagIcon,
       image: (r) => flagUrl(r.value),
-      empty: "No location data yet",
+      empty: t("No location data yet"),
     },
     {
       id: "networks",
-      label: "Networks",
-      column: "Network",
+      label: t("Networks"),
+      column: t("Network"),
       rows: rows(
         geo?.asns,
         (a) => a.name,
         (a) => a.name,
       ),
       total: geo?.totalAsn,
-      empty: "No network data yet",
+      empty: t("No network data yet"),
     },
   ],
   clients: [
     {
       id: "devices",
-      label: "Devices",
-      column: "Device",
+      label: t("Devices"),
+      column: t("Device"),
       rows: rows(
         geo?.platforms,
         (p) => p.name,
         (p) => p.name,
       ),
       total: geo?.totalPlatform,
-      empty: "No device data yet",
+      empty: t("No device data yet"),
     },
     {
       id: "os",
-      label: "Systems",
-      column: "Operating system",
+      label: t("Systems"),
+      column: t("Operating system"),
       rows: rows(
         geo?.oses,
         (o) => o.name,
@@ -196,7 +203,7 @@ const geoTabs = $derived.by(() => ({
       ),
       total: geo?.totalOs,
       icon: osIcon,
-      empty: "No operating system data yet",
+      empty: t("No operating system data yet"),
     },
   ],
 }));
@@ -245,14 +252,20 @@ async function load(withGeo = false) {
     error = data?.shown
       ? data.error
       : "This share link is invalid or has expired.";
-    document.title = "Stats unavailable";
     return;
   }
   error = "";
   notice = "";
   share = data;
-  document.title = `${data.name} · Cap stats`;
 }
+
+$effect(() => {
+  document.title = error
+    ? t("Stats unavailable")
+    : share
+      ? t("{name} · Cap stats", { name: share.name })
+      : t("Cap stats");
+});
 
 const setRange = (id) => {
   if (id === range) return;
@@ -289,17 +302,17 @@ onMount(() => {
 {/snippet}
 
 {#snippet change(kind, pair)}
-  {@const t = trend(pair[0], pair[1])}
-  {#if t}
-    <span class="inline-flex items-center gap-0.5 text-xs tabular-nums {t.dir === 'flat' ? 'text-muted-foreground' : kind === 'bad' ? (t.dir === 'up' ? 'text-destructive' : 'text-success') : kind === 'slow' ? (t.dir === 'up' ? 'text-warning' : 'text-success') : 'text-muted-foreground'}">
-      {#if t.dir !== "flat"}
-        <Icon name={t.dir === "up" ? "trendUp" : "trendDown"} size={12} stroke={2.25} />
-        <span class="sr-only">{t.dir === "up" ? "Up" : "Down"}</span>
+  {@const trendInfo = trend(pair[0], pair[1])}
+  {#if trendInfo}
+    <span class="inline-flex items-center gap-0.5 text-xs tabular-nums {trendInfo.dir === 'flat' ? 'text-muted-foreground' : kind === 'bad' ? (trendInfo.dir === 'up' ? 'text-destructive' : 'text-success') : kind === 'slow' ? (trendInfo.dir === 'up' ? 'text-warning' : 'text-success') : 'text-muted-foreground'}">
+      {#if trendInfo.dir !== "flat"}
+        <Icon name={trendInfo.dir === "up" ? "trendUp" : "trendDown"} size={12} stroke={2.25} />
+        <span class="sr-only">{trendInfo.dir === "up" ? t("Up") : t("Down")}</span>
       {/if}
-      {t.text}
+      {trendInfo.text}
     </span>
   {:else}
-    <span class="text-xs text-muted-foreground">No earlier data</span>
+    <span class="text-xs text-muted-foreground">{t("No earlier data")}</span>
   {/if}
 {/snippet}
 
@@ -325,8 +338,8 @@ onMount(() => {
   <header class="notch-shadow z-40 flex flex-wrap items-center gap-x-3 gap-y-2.5 border-b border-border bg-background px-4 py-2.5 md:pointer-events-none md:h-11 md:flex-nowrap md:items-stretch md:gap-0 md:border-b-0 md:bg-transparent md:p-0 md:[&>*]:pointer-events-auto">
     <div class="relative flex min-w-0 flex-1 items-center gap-2.5 md:flex-none md:rounded-tl-lg md:bg-sidebar md:ps-4 md:pe-2">
       <img src="./public/logo-small.webp" alt="" width="22" height="22" class="size-[22px] shrink-0" />
-      <Skeleton class="min-w-0" loading={!share && !error} label="Loading stats">
-        <h1 class="truncate text-[15px] font-medium" title={error ? undefined : share?.name}>{error ? "Stats unavailable" : (share?.name ?? "Shared stats")}</h1>
+      <Skeleton class="min-w-0" loading={!share && !error} label={t("Loading stats")}>
+        <h1 class="truncate text-[15px] font-medium" title={error ? undefined : share?.name}>{error ? t("Stats unavailable") : (share?.name ?? t("Shared stats"))}</h1>
       </Skeleton>
       <span class="absolute start-0 end-0 bottom-0 hidden h-px bg-border md:block"></span>
     </div>
@@ -336,7 +349,7 @@ onMount(() => {
       <svg class="hidden h-11 w-7 shrink-0 md:block" viewBox="0 0 28 44" aria-hidden="true"><path fill="var(--sidebar)" d="M28 0H0C6.5 0 9.4 3 10.4 8.4L14 35.6C15 41 18 44 24 44H28Z" /><clipPath id="share-ear-r"><rect y="1.25" width="28" height="44" /></clipPath><path fill="none" stroke="var(--border)" clip-path="url(#share-ear-r)" d="M0 .5C6.2.5 8.9 3 9.9 8.5L13.5 35.5C14.5 40.8 17.7 43.5 24 43.5H28" /></svg>
       <div class="relative flex shrink-0 items-center gap-1.5 max-md:w-full md:rounded-tr-lg md:bg-sidebar md:pt-[3px] md:pe-[3px] md:pb-1 md:ps-1">
         <RangePicker class="max-md:flex-1 max-md:justify-between" value={range} ranges={RANGES} onchange={setRange} />
-        <Button icon aria-label="Refresh" title="Refresh" disabled={!share} onclick={() => load(true)}>
+        <Button icon aria-label={t("Refresh")} title={t("Refresh")} disabled={!share} onclick={() => load(true)}>
           <Icon name="refresh" size={15} class={loading && share ? "motion-safe:animate-spin" : ""} />
         </Button>
         <span class="absolute start-0 end-0 bottom-0 hidden h-px bg-border md:block"></span>
@@ -352,23 +365,23 @@ onMount(() => {
     {/if}
     {#if error}
       <div class="flex flex-1 items-center justify-center py-16" role="alert">
-        <Empty title="This link doesn't work">{error} Ask the person who shared it for a new link.</Empty>
+        <Empty title={t("This link doesn't work")}>{t(error)} {t("Ask the person who shared it for a new link.")}</Empty>
       </div>
     {:else}
-      {#if notice}<p class="text-sm text-pretty text-destructive" role="status">{notice}</p>{/if}
-      <Card variant="layered" role="region" aria-label="Traffic">
+      {#if notice}<p class="text-sm text-pretty text-destructive" role="status">{t(notice)}</p>{/if}
+      <Card variant="layered" role="region" aria-label={t("Traffic")}>
         <div class="grid grid-cols-2 pb-1 sm:grid-cols-4">
-          {@render tile("Challenges", "var(--chart-1)", compact(stats?.challenges[0]), stats?.challenges)}
-          {@render tile("Passed", "var(--success)", compact(stats?.solved[0]), stats?.solved)}
-          {@render tile("Failed", "var(--faint-foreground)", compact(stats?.failed[0]), stats?.failed, "bad")}
-          {@render tile("Avg. solve time", null, latency(stats?.avg[0]), stats?.avg, "slow")}
+          {@render tile(t("Challenges"), "var(--chart-1)", compact(stats?.challenges[0]), stats?.challenges)}
+          {@render tile(t("Passed"), "var(--success)", compact(stats?.solved[0]), stats?.solved)}
+          {@render tile(t("Failed"), "var(--faint-foreground)", compact(stats?.failed[0]), stats?.failed, "bad")}
+          {@render tile(t("Avg. solve time"), null, latency(stats?.avg[0]), stats?.avg, "slow")}
         </div>
 
         <CardContent class="gap-2 pt-5 pb-4 transition-opacity duration-200 {loading && share ? 'opacity-60' : ''}">
-          <Skeleton data={share && { series, bucket, total: stats?.challenges[0] }} sample={sampleChart} label="Loading chart">
+          <Skeleton data={share && { series, bucket, total: stats?.challenges[0] }} sample={sampleChart} label={t("Loading chart")}>
             {#snippet children(c)}
               {#if !c.series.length || !c.total}
-                <p class="flex h-[15rem] items-center justify-center text-center text-sm text-muted-foreground">No traffic in {rangeInfo.long}</p>
+                <p class="flex h-[15rem] items-center justify-center text-center text-sm text-muted-foreground">{t("No traffic in {range}", { range: rangeInfo.long })}</p>
               {:else}
                 <TrafficChart series={c.series} bucket={c.bucket} metric="challenges" metrics={METRICS} />
               {/if}
@@ -378,8 +391,8 @@ onMount(() => {
       </Card>
 
       <div class="grid gap-4 lg:grid-cols-2">
-        <ShareBreakdown tabs={geoTabs.places} note="All time" />
-        <ShareBreakdown tabs={geoTabs.clients} note="All time" />
+        <ShareBreakdown tabs={geoTabs.places} note={t("All time")} />
+        <ShareBreakdown tabs={geoTabs.clients} note={t("All time")} />
       </div>
     {/if}
   </main>
@@ -391,9 +404,18 @@ onMount(() => {
       target="_blank"
       rel="noreferrer"
     >
-      Stats from Cap, the open source CAPTCHA
+      {t("Stats from Cap, the open source CAPTCHA")}
     </a>
-    {#if expires && !error}<span>This link expires {expires}</span>{/if}
+    <div class="flex flex-wrap items-center gap-3">
+      {#if expires && !error}<span>{t("This link expires {date}", { date: expires })}</span>{/if}
+      <Select
+        size="sm"
+        class="w-auto shrink-0"
+        aria-label={t("Language")}
+        options={LOCALES}
+        bind:value={() => locale.value, (v) => setLocale(v)}
+      />
+    </div>
   </footer>
   <div class="pointer-events-none absolute inset-0 z-50 hidden rounded-[inherit] shadow-[inset_0_0_0_1px_var(--border)] md:block" aria-hidden="true"></div>
 </div>

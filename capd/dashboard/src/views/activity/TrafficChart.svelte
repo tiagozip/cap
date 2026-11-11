@@ -1,5 +1,6 @@
 <script>
 import { compact } from "../../lib/format.js";
+import { dtf, numFmt, t } from "../../lib/i18n.svelte.js";
 
 let { series, bucket, metric, metrics } = $props();
 
@@ -84,27 +85,27 @@ const gap = $derived(
   series.length > 60 ? 1 : series.length > 32 ? 2 : series.length > 16 ? 3 : 4,
 );
 
-const hourFmt = new Intl.DateTimeFormat(undefined, {
+const hourFmt = dtf({
   hour: "numeric",
   minute: "2-digit",
 });
-const dayFmt = new Intl.DateTimeFormat(undefined, {
+const dayFmt = dtf({
   month: "short",
   day: "numeric",
 });
-const longFmt = new Intl.DateTimeFormat(undefined, {
+const longFmt = dtf({
   weekday: "short",
   month: "short",
   day: "numeric",
   hour: "numeric",
   minute: "2-digit",
 });
-const utcDayFmt = new Intl.DateTimeFormat(undefined, {
+const utcDayFmt = dtf({
   month: "short",
   day: "numeric",
   timeZone: "UTC",
 });
-const utcLongDayFmt = new Intl.DateTimeFormat(undefined, {
+const utcLongDayFmt = dtf({
   weekday: "short",
   month: "short",
   day: "numeric",
@@ -133,10 +134,16 @@ const tickLabel = (b) =>
 
 const spanLabel = (b) =>
   bucket > DAY
-    ? `${utcLongDayFmt.format(new Date(b))} to ${utcLongDayFmt.format(new Date(b + bucket - DAY))}, UTC`
+    ? t("{from} to {to}, UTC", {
+        from: utcLongDayFmt.format(new Date(b)),
+        to: utcLongDayFmt.format(new Date(b + bucket - DAY)),
+      })
     : bucket === DAY
       ? `${utcLongDayFmt.format(new Date(b))}, UTC`
-      : `${longFmt.format(new Date(b))} to ${hourFmt.format(new Date(b + bucket))}`;
+      : t("{from} to {to}", {
+          from: longFmt.format(new Date(b)),
+          to: hourFmt.format(new Date(b + bucket)),
+        });
 
 const pick = (e) => {
   const rect = plot.getBoundingClientRect();
@@ -145,15 +152,20 @@ const pick = (e) => {
 };
 
 const summary = $derived(
-  `${current?.label}: ${values.reduce((a, b) => a + b, 0).toLocaleString()} in ${series.length} intervals, peaking at ${Math.max(0, ...values).toLocaleString()}.`,
+  t("{label}: {total} in {count} intervals, peaking at {peak}.", {
+    label: current?.label ?? "",
+    total: numFmt(values.reduce((a, b) => a + b, 0)),
+    count: series.length,
+    peak: numFmt(Math.max(0, ...values)),
+  }),
 );
 </script>
 
 <div class="grid grid-cols-[auto_1fr] gap-x-3">
   <div class="relative h-56 w-8 text-right text-[11px] text-muted-foreground tabular-nums" aria-hidden="true">
-    {#each scale.ticks as t (t)}
-      <span class="absolute right-0 leading-none" style:bottom="{(t / scale.max) * 100}%" style:transform="translateY(50%)">
-        {compact(t)}
+    {#each scale.ticks as tick (tick)}
+      <span class="absolute right-0 leading-none" style:bottom="{(tick / scale.max) * 100}%" style:transform="translateY(50%)">
+        {compact(tick)}
       </span>
     {/each}
   </div>
@@ -166,10 +178,10 @@ const summary = $derived(
     onpointermove={pick}
     onpointerleave={() => (hover = null)}
   >
-    {#each scale.ticks as t (t)}
+    {#each scale.ticks as tick (tick)}
       <div
-        class="pointer-events-none absolute inset-x-0 border-t {t === 0 ? 'border-border' : 'border-dashed border-border'}"
-        style:bottom="{(t / scale.max) * 100}%"
+        class="pointer-events-none absolute inset-x-0 border-t {tick === 0 ? 'border-border' : 'border-dashed border-border'}"
+        style:bottom="{(tick / scale.max) * 100}%"
       ></div>
     {/each}
 
@@ -210,7 +222,7 @@ const summary = $derived(
             <li class="flex items-center gap-2 {m.id === metric ? 'font-medium text-foreground' : 'text-muted-foreground'}">
               <span class="size-2 shrink-0 rounded-full" style:background={m.color}></span>
               {m.label}
-              <span class="ml-auto tabular-nums {m.id === metric ? 'text-foreground' : ''}">{(s[m.id] ?? 0).toLocaleString()}</span>
+              <span class="ml-auto tabular-nums {m.id === metric ? 'text-foreground' : ''}">{numFmt(s[m.id] ?? 0)}</span>
             </li>
           {/each}
         </ul>

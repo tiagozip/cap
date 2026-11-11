@@ -1,4 +1,5 @@
 import { api } from "../../lib/api.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 
@@ -38,7 +39,7 @@ export const loadSecret = async () => {
     return null;
   }
   secret.entry = { ...blank(), siteKey };
-  toast(res?.error || "Couldn't load the secret key", "error");
+  toast(t(res?.error || "Couldn't load the secret key"), "error");
   return null;
 };
 

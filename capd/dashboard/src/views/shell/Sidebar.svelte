@@ -18,6 +18,7 @@ import {
 } from "../../components/ui/index.js";
 import { signOut } from "../../lib/api.js";
 import { compact } from "../../lib/format.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app, navigate } from "../../lib/state.svelte.js";
 import { KEY_TABS, keyTab } from "../keyTabs.js";
 
@@ -57,7 +58,7 @@ const go = (e, route) => {
           <Icon name="selector" size={14} class="shrink-0 text-faint-foreground" />
         </SidebarMenuButton>
       {/snippet}
-      <MenuLabel>Site keys</MenuLabel>
+      <MenuLabel>{t("Site keys")}</MenuLabel>
       {#each app.keys as k (k.siteKey)}
         <MenuItem
           icon={k.siteKey === current?.siteKey ? "check" : null}
@@ -70,15 +71,15 @@ const go = (e, route) => {
             <span class="truncate">{k.name}</span>
             <span class="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
               {#if k.solvesLast24h && dir && pct}
-                <span class={dir === "up" ? "text-success" : "text-destructive"}><span class="sr-only">{dir === "up" ? "Up" : "Down"} </span>{dir === "up" ? "+" : "\u2212"}{pct}%</span>
+                <span class={dir === "up" ? "text-success" : "text-destructive"}><span class="sr-only">{dir === "up" ? t("Up") : t("Down")} </span>{dir === "up" ? "+" : "\u2212"}{pct}%</span>
               {/if}
-              <span class="truncate">{k.solvesLast24h ? `${compact(k.solvesLast24h)} solves in 24h` : "No solves in 24h"}</span>
+              <span class="truncate">{k.solvesLast24h ? t("{count} solves in 24h", { count: compact(k.solvesLast24h) }) : t("No solves in 24h")}</span>
             </span>
           </span>
         </MenuItem>
       {/each}
       <MenuSeparator />
-      <MenuItem icon="plus" onselect={() => (app.createKeyOpen = true)}>Create site key</MenuItem>
+      <MenuItem icon="plus" onselect={() => (app.createKeyOpen = true)}>{t("Create site key")}</MenuItem>
     </Menu>
   {/if}
 </SidebarHeader>
@@ -86,18 +87,18 @@ const go = (e, route) => {
 <SidebarContent class="gap-5 p-0 pt-3">
   {#if current}
     <SidebarGroup class="p-0">
-      <SidebarGroupLabel class="h-7 px-2 text-xs text-faint-foreground">Key</SidebarGroupLabel>
+      <SidebarGroupLabel class="h-7 px-2 text-xs text-faint-foreground">{t("Key")}</SidebarGroupLabel>
       <SidebarMenu class="gap-px">
-        {#each KEY_TABS as t (t.id)}
+        {#each KEY_TABS as item (item.id)}
           <SidebarMenuItem>
             <SidebarMenuButton
-              href="#/keys/{current.siteKey}/{t.id}"
-              isActive={onKey && tab === t.id}
+              href="#/keys/{current.siteKey}/{item.id}"
+              isActive={onKey && tab === item.id}
               class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground"
-              onclick={(e) => go(e, { view: "key", siteKey: current.siteKey, tab: t.id })}
+              onclick={(e) => go(e, { view: "key", siteKey: current.siteKey, tab: item.id })}
             >
-              <Icon name={ICONS[t.id]} size={18} />
-              <span>{t.label}</span>
+              <Icon name={ICONS[item.id]} size={18} />
+              <span>{item.label}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         {/each}
@@ -109,7 +110,7 @@ const go = (e, route) => {
         <SidebarMenuItem>
           <SidebarMenuButton class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground" onclick={() => (app.createKeyOpen = true)}>
             <Icon name="plus" size={18} />
-            <span>Create your first key</span>
+            <span>{t("Create your first key")}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -126,20 +127,20 @@ const go = (e, route) => {
           onclick={(e) => go(e, { view: "settings" })}
         >
           <Icon name="server" size={18} />
-          <span>Instance settings</span>
+          <span>{t("Instance settings")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground" href="https://trycap.dev/guide/capd/" target="_blank" rel="noopener">
           <Icon name="book" size={18} />
-          <span class="flex-1">Docs</span>
+          <span class="flex-1">{t("Docs")}</span>
           <Icon name="external" size={13} />
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
         <SidebarMenuButton class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground" onclick={() => signOut({ revoke: true })}>
           <Icon name="logout" size={18} />
-          <span>Sign out</span>
+          <span>{t("Sign out")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>

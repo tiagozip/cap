@@ -1,4 +1,5 @@
 <script>
+import { t } from "../../../lib/i18n.svelte.js";
 import { cn } from "../../../lib/utils.js";
 import CopyCheck from "../copy-check/CopyCheck.svelte";
 import { createReceipt } from "../copy-check/receipt.svelte.js";
@@ -69,17 +70,17 @@ const save = () => {
       {@render actions?.(action)}
       {#if download !== false}
         <Tooltip>
-          <TooltipTrigger class={action} aria-label={filename ? `Download ${filename}` : "Download this code"} onclick={save}>
+          <TooltipTrigger class={action} aria-label={filename ? t("Download {file}", { file: filename }) : t("Download this code")} onclick={save}>
             <Icon name="download" data-slot="download-icon" size={16} stroke={1.8} />
           </TooltipTrigger>
-          <TooltipContent>{downloaded.copied ? "Downloaded" : "Download"}</TooltipContent>
+          <TooltipContent>{downloaded.copied ? t("Downloaded") : t("Download")}</TooltipContent>
         </Tooltip>
       {/if}
       <Tooltip>
-        <TooltipTrigger class={action} aria-label={filename ? `Copy ${filename}` : "Copy this code"} onclick={copy}>
+        <TooltipTrigger class={action} aria-label={filename ? t("Copy {file}", { file: filename }) : t("Copy this code")} onclick={copy}>
           <CopyCheck copied={copied.copied} size={16} />
         </TooltipTrigger>
-        <TooltipContent>{copied.copied ? "Copied" : "Copy"}</TooltipContent>
+        <TooltipContent>{copied.copied ? t("Copied") : t("Copy")}</TooltipContent>
       </Tooltip>
     </div>
   </figcaption>

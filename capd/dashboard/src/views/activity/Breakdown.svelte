@@ -2,6 +2,7 @@
 import { Button, Dialog, Input, Skeleton } from "../../components/cap/index.js";
 import { Card, SlidingTabs } from "../../components/ui/index.js";
 import { compact } from "../../lib/format.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { samples } from "../../lib/samples.js";
 
 let { tabs, tint = "var(--foreground)", stale = false, onpick } = $props();
@@ -32,8 +33,8 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
 {#snippet header()}
   <div class="flex items-center gap-2 px-2 pb-1.5 text-[11px] font-medium text-muted-foreground">
     <span class="mr-auto">{tab.column}</span>
-    {#if tab.risk}<span class="w-14 text-right">Blocked</span>{/if}
-    <span class="w-14 text-right">Events</span>
+    {#if tab.risk}<span class="w-14 text-right">{t("Blocked")}</span>{/if}
+    <span class="w-14 text-right">{t("Events")}</span>
   </div>
 {/snippet}
 
@@ -43,7 +44,7 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
     <button
       type="button"
       class="group relative flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] transition-[scale] duration-150"
-      title="Show events where {tab.column.toLowerCase()} is {tab.name(r)}"
+      title={t("Show events where {column} is {name}", { column: tab.column.toLowerCase(), name: tab.name(r) })}
       onclick={() => {
         details = false;
         onpick([`${tab.field}:${r.value}`]);
@@ -73,7 +74,7 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
 <div class="flex flex-1 flex-col">
   <div class="overflow-x-auto px-1 pb-1">
     <SlidingTabs
-      tabs={tabs.map((t) => ({ id: t.id, label: t.label }))}
+      tabs={tabs.map((x) => ({ id: x.id, label: x.label }))}
       bind:value={active}
       flat
       pillClass="rounded-lg bg-background"
@@ -88,7 +89,7 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
     {#if tab.body}
       {@render tab.body()}
     {:else}
-      <Skeleton class="skeleton-fill" data={rows} sample={samples.breakdown} empty={rows?.length === 0} preload={tab.image && rows?.slice(0, VISIBLE).map(tab.image)} label="Loading {tab.label.toLowerCase()}">
+      <Skeleton class="skeleton-fill" data={rows} sample={samples.breakdown} empty={rows?.length === 0} preload={tab.image && rows?.slice(0, VISIBLE).map(tab.image)} label={t("Loading {label}", { label: tab.label.toLowerCase() })}>
         {#snippet emptyMessage()}
           <p class="m-auto max-w-56 text-center text-sm text-balance text-muted-foreground">{tab.empty}</p>
         {/snippet}
@@ -100,7 +101,7 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
           {#if list.length > VISIBLE}
             <div class="mt-auto flex justify-center pt-2">
               <Button variant="ghost" size="sm" onclick={() => (details = true)}>
-                Show all {list.length}
+                {t("Show all {count}", { count: list.length })}
               </Button>
             </div>
           {/if}
@@ -113,14 +114,14 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
 
 {#if details}
   <Dialog title={tab.label} size="md" onclose={() => ((details = false), (query = ""))}>
-    <Input icon="search" type="search" placeholder="Search {tab.label.toLowerCase()}" aria-label="Search {tab.label.toLowerCase()}" bind:value={query} />
+    <Input icon="search" type="search" placeholder={t("Search {label}", { label: tab.label.toLowerCase() })} aria-label={t("Search {label}", { label: tab.label.toLowerCase() })} bind:value={query} />
     <div class="-mx-2 max-h-[60dvh] overflow-y-auto">
       {@render header()}
       <ul class="flex flex-col gap-0.5">
         {#each filtered as r (r.value)}{@render row(r)}{/each}
       </ul>
       {#if !filtered.length}
-        <p class="py-8 text-center text-sm text-muted-foreground">Nothing matches "{query}"</p>
+        <p class="py-8 text-center text-sm text-muted-foreground">{t('Nothing matches "{query}"', { query })}</p>
       {/if}
     </div>
   </Dialog>

@@ -10,6 +10,7 @@ import {
   Switch,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 
 let { onclose } = $props();
@@ -56,44 +57,44 @@ const submit = async (e) => {
 
 <Dialog
   bind:open
-  title={created ? "API key created" : "Create API key"}
-  description={created ? "Copy it now. Cap won't show this key again." : "Your scripts send this key to manage Cap without signing in."}
+  title={created ? t("API key created") : t("Create API key")}
+  description={created ? t("Copy it now. Cap won't show this key again.") : t("Your scripts send this key to manage Cap without signing in.")}
   {onclose}
 >
   {#if created}
-    <Field label="API key">
-      <CopyText value={created} label="Copy API key" />
+    <Field label={t("API key")}>
+      <CopyText value={created} label={t("Copy API key")} />
     </Field>
   {:else}
     <form id="apikey-form" class="flex flex-col gap-5" onsubmit={submit} novalidate>
-      <Field label="Name" for="apikey-name" error={invalid === "name" ? error : ""}>
+      <Field label={t("Name")} for="apikey-name" error={invalid === "name" ? t(error) : ""}>
         <Input
           id="apikey-name"
-          placeholder="Deploy script"
+          placeholder={t("Deploy script")}
           bind:value={name}
           invalid={invalid === "name"}
           aria-describedby={invalid === "name" ? "apikey-name-error" : undefined}
         />
       </Field>
       <div class="flex flex-col gap-2" role="group" aria-labelledby="apikey-scope-label">
-        <span id="apikey-scope-label" class="text-sm font-medium">Site keys it can use</span>
+        <span id="apikey-scope-label" class="text-sm font-medium">{t("Site keys it can use")}</span>
         <Segmented
-          label="Site keys it can use"
+          label={t("Site keys it can use")}
           class="self-start"
           bind:value={access}
           options={[
-            ["all", "All site keys"],
-            ["scoped", "Only some"],
+            ["all", t("All site keys")],
+            ["scoped", t("Only some")],
           ]}
         />
         {#if access === "all"}
-          <p class="text-sm text-muted-foreground">Includes keys you create later.</p>
+          <p class="text-sm text-muted-foreground">{t("Includes keys you create later.")}</p>
         {/if}
         {#if access === "scoped"}
           <div
             class="mt-1 flex max-h-48 flex-col gap-0.5 overflow-y-auto"
             role="group"
-            aria-label="Site keys"
+            aria-label={t("Site keys")}
             aria-describedby={invalid === "scope" ? "apikey-scope-error" : undefined}
           >
             {#each app.keys as k (k.siteKey)}
@@ -111,32 +112,32 @@ const submit = async (e) => {
                 </label>
               </div>
             {:else}
-              <p class="text-sm text-muted-foreground">You don't have any site keys yet.</p>
+              <p class="text-sm text-muted-foreground">{t("You don't have any site keys yet.")}</p>
             {/each}
           </div>
           {#if invalid === "scope"}
-            <p id="apikey-scope-error" class="text-sm text-destructive" role="alert">{error}</p>
+            <p id="apikey-scope-error" class="text-sm text-destructive" role="alert">{t(error)}</p>
           {/if}
         {/if}
       </div>
       <div class="flex items-start justify-between gap-4">
         <div class="flex flex-col gap-0.5">
-          <label for="apikey-readonly" class="text-sm font-medium">Read-only</label>
-          <p class="text-sm text-muted-foreground">It can read keys and stats, but can't change anything.</p>
+          <label for="apikey-readonly" class="text-sm font-medium">{t("Read-only")}</label>
+          <p class="text-sm text-muted-foreground">{t("It can read keys and stats, but can't change anything.")}</p>
         </div>
         <Switch id="apikey-readonly" bind:checked={readonly} />
       </div>
       {#if error && !invalid}
-        <p class="text-sm text-destructive" role="alert">{error}</p>
+        <p class="text-sm text-destructive" role="alert">{t(error)}</p>
       {/if}
     </form>
   {/if}
   {#snippet footer()}
     {#if created}
-      <Button variant="primary" onclick={onclose}>Done</Button>
+      <Button variant="primary" onclick={onclose}>{t("Done")}</Button>
     {:else}
-      <Button onclick={onclose}>Cancel</Button>
-      <Button type="submit" variant="primary" form="apikey-form" disabled={busy}>{busy ? "Creating API key" : "Create API key"}</Button>
+      <Button onclick={onclose}>{t("Cancel")}</Button>
+      <Button type="submit" variant="primary" form="apikey-form" disabled={busy}>{busy ? t("Creating API key") : t("Create API key")}</Button>
     {/if}
   {/snippet}
 </Dialog>

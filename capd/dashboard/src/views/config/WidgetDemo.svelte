@@ -11,6 +11,7 @@ import {
   Slider,
   Spinner,
 } from "../../components/cap/index.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { app } from "../../lib/state.svelte.js";
 import {
   endpointOf,
@@ -22,7 +23,7 @@ import { highlight } from "../integration/highlight.js";
 
 let { open = $bindable(false), dirty = false } = $props();
 
-const COLORS = [
+const COLOR_DEFS = [
   ["--cap-background", "Background", "#fdfdfd"],
   ["--cap-color", "Text", "#212121"],
   ["--cap-border-color", "Border", "#dddddd8f"],
@@ -31,8 +32,9 @@ const COLORS = [
   ["--cap-spinner-background-color", "Spinner track", "#eeeeee"],
   ["--cap-focus-ring", "Focus ring", "#0066cc"],
 ];
+const COLORS = $derived(COLOR_DEFS.map(([k, l, d]) => [k, t(l), d]));
 
-const SIZES = [
+const SIZE_DEFS = [
   ["--cap-widget-width", "Width", 260, 200, 400, "px"],
   ["--cap-widget-height", "Height", 58, 44, 90, "px"],
   ["--cap-border-radius", "Corner radius", 14, 0, 30, "px"],
@@ -42,49 +44,55 @@ const SIZES = [
   ["--cap-checkbox-border-radius", "Checkbox radius", 6, 0, 18, "px"],
   ["--cap-spinner-thickness", "Spinner thickness", 3, 1, 6, ""],
 ];
+const SIZES = $derived(
+  SIZE_DEFS.map(([k, l, d, min, max, u]) => [k, t(l), d, min, max, u]),
+);
 
-const LABELS = [
+const LABEL_DEFS = [
   ["initial-state", "Prompt", "Verify you're human"],
   ["verifying-label", "While solving", "Verifying..."],
   ["solved-label", "When solved", "You're a human"],
   ["error-label", "On error", "Error. Try again."],
 ];
+const LABELS = $derived(LABEL_DEFS.map(([k, l, fb]) => [k, t(l), fb]));
 
-const LANGS = [
-  ["", "Visitor's browser language"],
-  ["en", "English"],
-  ["ar", "Arabic"],
-  ["zh-cn", "Chinese (Simplified)"],
-  ["fr", "French"],
-  ["de", "German"],
-  ["hi", "Hindi"],
-  ["ja", "Japanese"],
-  ["pt", "Portuguese"],
-  ["ru", "Russian"],
-  ["es", "Spanish"],
-];
+const LANGS = $derived([
+  ["", t("Visitor's browser language")],
+  ["en", t("English")],
+  ["ar", t("Arabic")],
+  ["zh-cn", t("Chinese (Simplified)")],
+  ["fr", t("French")],
+  ["de", t("German")],
+  ["hi", t("Hindi")],
+  ["ja", t("Japanese")],
+  ["pt", t("Portuguese")],
+  ["ru", t("Russian")],
+  ["es", t("Spanish")],
+]);
 
 const defaults = () => ({
-  colors: Object.fromEntries(COLORS.map(([k, , d]) => [k, d])),
-  sizes: Object.fromEntries(SIZES.map(([k, , d]) => [k, d])),
-  labels: Object.fromEntries(LABELS.map(([k]) => [k, ""])),
+  colors: Object.fromEntries(COLOR_DEFS.map(([k, , d]) => [k, d])),
+  sizes: Object.fromEntries(SIZE_DEFS.map(([k, , d]) => [k, d])),
+  labels: Object.fromEntries(LABEL_DEFS.map(([k]) => [k, ""])),
   lang: "",
   font: "",
 });
 
-const MODES = [
-  ["checkbox", "Checkbox", "Visitors click the widget to solve."],
+const MODES = $derived([
+  ["checkbox", t("Checkbox"), t("Visitors click the widget to solve.")],
   [
     "programmatic",
-    "Programmatic",
-    "The widget is on the page, and your code calls its solve() method.",
+    t("Programmatic"),
+    t("The widget is on the page, and your code calls its solve() method."),
   ],
   [
     "invisible",
-    "Invisible",
-    "Nothing shows on the page. Your code creates a Cap instance and calls solve().",
+    t("Invisible"),
+    t(
+      "Nothing shows on the page. Your code creates a Cap instance and calls solve().",
+    ),
   ],
-];
+]);
 
 let look = $state(defaults());
 let mode = $state("checkbox");
@@ -290,48 +298,47 @@ const solveFromCode = () => {
 <Dialog
   bind:open
   size="xl"
-  title="Try the widget"
-  description="Solve a real puzzle with this key's saved settings. Solves here count in its activity."
+  title={t("Try the widget")}
+  description={t("Solve a real puzzle with this key's saved settings. Solves here count in its activity.")}
 >
   <div class="grid min-w-0 gap-6 {styled ? 'md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]' : ''} md:gap-8">
     <div class="contents md:sticky md:top-0 md:flex md:min-w-0 md:flex-col md:gap-4 md:self-start">
-      <section class="flex min-w-0 flex-col gap-2" aria-label="Mode">
-        <Segmented label="Mode" options={MODES.map(([value, label]) => [value, label])} bind:value={mode} />
+      <section class="flex min-w-0 flex-col gap-2" aria-label={t("Mode")}>
+        <Segmented label={t("Mode")} options={MODES.map(([value, label]) => [value, label])} bind:value={mode} />
         <p class="text-sm text-pretty text-muted-foreground">{MODES.find(([value]) => value === mode)?.[2]}</p>
       </section>
 
-      <section class="flex min-w-0 flex-col gap-3" aria-label="Preview">
+      <section class="flex min-w-0 flex-col gap-3" aria-label={t("Preview")}>
         {#snippet backdropToggle()}
           <Segmented
-            label="Preview background"
+            label={t("Preview background")}
             size="sm"
             options={[
-              ["light", "Light"],
-              ["dark", "Dark"],
+              ["light", t("Light")],
+              ["dark", t("Dark")],
             ]}
             bind:value={backdrop}
           />
         {/snippet}
-        {@render heading("Preview", styled ? backdropToggle : undefined)}
+        {@render heading(t("Preview"), styled ? backdropToggle : undefined)}
 
         {#if dirty}
           <p class="flex gap-2 text-sm text-pretty text-muted-foreground">
             <Icon name="info" size={16} class="mt-0.5 shrink-0" />
-            You have unsaved changes. Save them to try them here.
+            {t("You have unsaved changes. Save them to try them here.")}
           </p>
         {/if}
         {#if needsClick && mode !== "checkbox"}
           <p class="flex gap-2 text-sm text-pretty text-muted-foreground">
             <Icon name="info" size={16} class="mt-0.5 shrink-0" />
-            This key blocks solves without a click on the widget, so solve() called from code fails with behavior_no_interaction.
+            {t("This key blocks solves without a click on the widget, so solve() called from code fails with behavior_no_interaction.")}
           </p>
         {/if}
         {#if outside}
           <p class="flex gap-2 text-sm text-pretty text-muted-foreground">
             <Icon name="info" size={16} class="mt-0.5 shrink-0" />
             <span>
-              Only {allowed.join(", ")} can load this key's puzzles. The demo still runs because this dashboard
-              is on the same server as the API, and browsers only apply that list to other websites.
+              {t("Only {origins} can load this key's puzzles. The demo still runs because this dashboard is on the same server as the API, and browsers only apply that list to other websites.", { origins: allowed.join(", ") })}
             </span>
           </p>
         {/if}
@@ -347,13 +354,13 @@ const solveFromCode = () => {
             {@const percent = status.phase === "solved" ? 100 : status.phase === "solving" ? status.progress : 0}
             <div class="flex w-full max-w-xs flex-col gap-1.5">
               <div class="flex items-center justify-between gap-3 text-sm">
-                <span class="text-muted-foreground">Progress</span>
-                <span class="text-muted-foreground tabular-nums">{status.phase === "error" ? "Failed" : `${percent}%`}</span>
+                <span class="text-muted-foreground">{t("Progress")}</span>
+                <span class="text-muted-foreground tabular-nums">{status.phase === "error" ? t("Failed") : `${percent}%`}</span>
               </div>
               <div
                 class="h-1.5 overflow-hidden rounded-[2px] bg-muted"
                 role="progressbar"
-                aria-label="Solve progress"
+                aria-label={t("Solve progress")}
                 aria-valuemin="0"
                 aria-valuemax="100"
                 aria-valuenow={percent}
@@ -380,43 +387,42 @@ const solveFromCode = () => {
             {/key}
           {:else if script === "failed"}
             <p class="max-w-sm text-center text-sm text-pretty {!styled ? 'text-muted-foreground' : backdrop === 'dark' ? 'text-white/70' : 'text-black/60'}">
-              Couldn't load the widget script from jsDelivr or this server's asset route. Check your connection, or set
-              ENABLE_ASSETS_SERVER=true to serve it from here.
+              {t("Couldn't load the widget script from jsDelivr or this server's asset route. Check your connection, or set ENABLE_ASSETS_SERVER=true to serve it from here.")}
             </p>
           {:else}
-            <Spinner class="size-5 {backdrop === 'dark' ? 'text-white/60' : 'text-black/50'}" label="Loading the widget" />
+            <Spinner class="size-5 {backdrop === 'dark' ? 'text-white/60' : 'text-black/50'}" label={t("Loading the widget")} />
           {/if}
         </div>
 
         <div class="flex min-h-9 items-center justify-between gap-3">
           <p class="min-w-0 text-sm text-pretty" role="status">
             {#if script !== "ready"}
-              <span class="text-muted-foreground">{script === "failed" ? "The widget isn't available." : "Loading the widget"}</span>
+              <span class="text-muted-foreground">{script === "failed" ? t("The widget isn't available.") : t("Loading the widget")}</span>
             {:else if status.phase === "solving"}
-              <span class="text-muted-foreground tabular-nums">Solving, {status.progress}%</span>
+              <span class="text-muted-foreground tabular-nums">{t("Solving, {pct}%", { pct: status.progress })}</span>
             {:else if status.phase === "solved"}
               <span class="flex gap-1.5">
                 <Icon name="check" size={16} class="mt-0.5 shrink-0 text-success" />
                 <span>
-                  Solved. The token starts with
+                  {t("Solved. The token starts with")}
                   <code class="font-mono text-sm break-all">{status.token.slice(0, 20)}…</code>
                 </span>
               </span>
             {:else if status.phase === "error"}
               <span class="text-destructive">
-                {status.message}{#if status.code && !status.message.includes(status.code)}{" "}<code class="font-mono text-sm">{status.code}</code>{/if}
+                {t(status.message)}{#if status.code && !status.message.includes(status.code)}{" "}<code class="font-mono text-sm">{status.code}</code>{/if}
               </span>
             {:else if mode === "checkbox"}
-              <span class="text-muted-foreground">Click the widget to solve a puzzle.</span>
+              <span class="text-muted-foreground">{t("Click the widget to solve a puzzle.")}</span>
             {:else}
-              <span class="text-muted-foreground">Call solve() to run a puzzle.</span>
+              <span class="text-muted-foreground">{t("Call solve() to run a puzzle.")}</span>
             {/if}
           </p>
           <div class="flex shrink-0 gap-2">
             {#if styled}
               <Button size="sm" disabled={script !== "ready"} onclick={() => run++}>
                 <Icon name="refresh" size={14} />
-                Reset widget
+                {t("Reset widget")}
               </Button>
             {/if}
             {#if mode !== "checkbox"}
@@ -426,26 +432,26 @@ const solveFromCode = () => {
                 disabled={script !== "ready" || status.phase === "solving"}
                 onclick={solveFromCode}
               >
-                Call solve()
+                {t("Call solve()")}
               </Button>
             {/if}
           </div>
         </div>
       </section>
 
-      <section class="flex min-w-0 flex-col gap-3 max-md:order-last" aria-label="Embed code">
-        {@render heading("Embed code")}
+      <section class="flex min-w-0 flex-col gap-3 max-md:order-last" aria-label={t("Embed code")}>
+        {@render heading(t("Embed code"))}
         <CodeBlock class="min-w-0" filename="index.html" language="html" download={false} code={snippet} html={highlight(snippet)} />
       </section>
     </div>
 
     {#if styled}
     <div class="flex min-w-0 flex-col gap-6">
-      <section class="flex flex-col gap-3" aria-label="Colors">
+      <section class="flex flex-col gap-3" aria-label={t("Colors")}>
         {#snippet resetLook()}
-          <Button size="sm" variant="ghost" class="-me-2.5" onclick={() => (look = defaults())}>Reset styles</Button>
+          <Button size="sm" variant="ghost" class="-me-2.5" onclick={() => (look = defaults())}>{t("Reset styles")}</Button>
         {/snippet}
-        {@render heading("Colors", resetLook)}
+        {@render heading(t("Colors"), resetLook)}
         <div class="grid grid-cols-2 gap-x-3 gap-y-3">
           {#each COLORS as [key, label]}
             {@const hex = hexOf(look.colors[key])}
@@ -467,7 +473,7 @@ const solveFromCode = () => {
                     <input
                       type="color"
                       class="absolute inset-0 size-full cursor-pointer opacity-0"
-                      aria-label="Pick the {label.toLowerCase()} color"
+                      aria-label={t("Pick the {label} color", { label: label.toLowerCase() })}
                       value={hex?.rgb ?? "#000000"}
                       oninput={(e) => (look.colors[key] = `${e.currentTarget.value}${hex?.alpha ?? ""}`)}
                     />
@@ -479,8 +485,8 @@ const solveFromCode = () => {
         </div>
       </section>
 
-      <section class="flex flex-col gap-3" aria-label="Size and shape">
-        {@render heading("Size and shape")}
+      <section class="flex flex-col gap-3" aria-label={t("Size and shape")}>
+        {@render heading(t("Size and shape"))}
         <div class="flex flex-col gap-4">
           {#each SIZES as [key, label, , min, max, unit]}
             <div class="flex flex-col gap-2">
@@ -501,22 +507,22 @@ const solveFromCode = () => {
         </div>
       </section>
 
-      <section class="flex flex-col gap-3" aria-label="Text">
-        {@render heading("Text")}
+      <section class="flex flex-col gap-3" aria-label={t("Text")}>
+        {@render heading(t("Text"))}
         <div class="flex flex-col gap-3">
           <div class="flex flex-col gap-1.5">
-            <label for="demoLang" class="text-sm">Language</label>
+            <label for="demoLang" class="text-sm">{t("Language")}</label>
             <Select id="demoLang" size="sm" class="w-full" options={LANGS} bind:value={look.lang} />
           </div>
           {#each LABELS as [key, label, fallback]}
             <div class="flex flex-col gap-1.5">
               <label for="demoLabel-{key}" class="text-sm">{label}</label>
-              <Input id="demoLabel-{key}" size="sm" autocomplete="off" placeholder={fallback} bind:value={look.labels[key]} />
+              <Input id="demoLabel-{key}" size="sm" autocomplete="off" placeholder={t(fallback)} bind:value={look.labels[key]} />
             </div>
           {/each}
           <div class="flex flex-col gap-1.5">
-            <label for="demoFont" class="text-sm">Font</label>
-            <Input id="demoFont" size="sm" autocomplete="off" spellcheck="false" placeholder="System font" bind:value={look.font} />
+            <label for="demoFont" class="text-sm">{t("Font")}</label>
+            <Input id="demoFont" size="sm" autocomplete="off" spellcheck="false" placeholder={t("System font")} bind:value={look.font} />
           </div>
         </div>
       </section>

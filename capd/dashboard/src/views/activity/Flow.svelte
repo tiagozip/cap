@@ -1,5 +1,6 @@
 <script>
 import { compact } from "../../lib/format.js";
+import { t } from "../../lib/i18n.svelte.js";
 import { openEvents } from "../../lib/state.svelte.js";
 
 let { flow } = $props();
@@ -13,13 +14,13 @@ const steps = $derived.by(() => {
   const issued = Math.max(c("challenge", "pass"), attempts);
   const early = [
     [
-      "Blocked before solving",
+      t("Blocked before solving"),
       c("challenge", "block"),
       "var(--destructive)",
       ["type:challenge", "outcome:block"],
     ],
     [
-      "Rate limited",
+      t("Rate limited"),
       c("challenge", "limit"),
       "var(--warning)",
       ["type:challenge", "outcome:limit"],
@@ -29,26 +30,30 @@ const steps = $derived.by(() => {
   const solved = c("redeem", "pass");
   const verified = Math.min(solved, c("siteverify", "pass"));
   return [
-    { label: "Challenges requested", n: requested, drops: early },
+    { label: t("Challenges requested"), n: requested, drops: early },
     {
-      label: "Challenges issued",
+      label: t("Challenges issued"),
       n: issued,
       drops: [
-        ["Left without solving", issued - attempts, "var(--faint-foreground)"],
         [
-          "Failed the check",
+          t("Left without solving"),
+          issued - attempts,
+          "var(--faint-foreground)",
+        ],
+        [
+          t("Failed the check"),
           c("redeem", "fail"),
           "var(--faint-foreground)",
           ["type:redeem", "outcome:fail"],
         ],
         [
-          "Blocked on solve",
+          t("Blocked on solve"),
           c("redeem", "block"),
           "var(--destructive)",
           ["type:redeem", "outcome:block"],
         ],
         [
-          "Rate limited",
+          t("Rate limited"),
           c("redeem", "limit"),
           "var(--warning)",
           ["type:redeem", "outcome:limit"],
@@ -56,17 +61,17 @@ const steps = $derived.by(() => {
       ],
     },
     {
-      label: "Solved",
+      label: t("Solved"),
       n: solved,
       drops: [
         [
-          "Token never checked by your server",
+          t("Token never checked by your server"),
           solved - verified,
           "var(--faint-foreground)",
         ],
       ],
     },
-    { label: "Verified by your server", n: verified, drops: [] },
+    { label: t("Verified by your server"), n: verified, drops: [] },
   ];
 });
 
@@ -78,7 +83,7 @@ const share = (n) => {
 </script>
 
 {#if !steps[0].n}
-  <p class="m-auto py-10 text-sm text-muted-foreground">No challenges in this period.</p>
+  <p class="m-auto py-10 text-sm text-muted-foreground">{t("No challenges in this period.")}</p>
 {:else}
   <ol class="flex flex-col gap-3">
     {#each steps as s, i (s.label)}

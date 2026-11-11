@@ -1,3 +1,5 @@
+import { locale } from "./i18n.svelte.js";
+
 export const countryNames = {
   AD: "Andorra",
   AE: "United Arab Emirates",
@@ -201,8 +203,43 @@ export const countryNames = {
   ZW: "Zimbabwe",
 };
 
-export const countryName = (code) =>
-  Object.hasOwn(countryNames, code) ? countryNames[code] : code;
+const regionFmtCache = new Map();
+const langFmtCache = new Map();
+
+export const countryName = (code) => {
+  if (!code) return "";
+  const lang = locale.value;
+  if (lang !== "en") {
+    try {
+      let fmt = regionFmtCache.get(lang);
+      if (!fmt) {
+        fmt = new Intl.DisplayNames([lang], { type: "region" });
+        regionFmtCache.set(lang, fmt);
+      }
+      const localized = fmt.of(code.toUpperCase());
+      if (localized && localized !== code) return localized;
+    } catch {}
+  }
+  return Object.hasOwn(countryNames, code) ? countryNames[code] : code;
+};
+
+export const languageName = (code) => {
+  if (!code) return "";
+  const lang = locale.value;
+  const intlLocale = lang === "en" ? undefined : lang;
+  try {
+    let fmt = langFmtCache.get(lang);
+    if (!fmt) {
+      fmt = new Intl.DisplayNames(intlLocale ? [intlLocale] : undefined, {
+        type: "language",
+      });
+      langFmtCache.set(lang, fmt);
+    }
+    return fmt.of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
 
 export const flagUrl = (code) =>
   /^[A-Za-z]{2}$/.test(code || "")
