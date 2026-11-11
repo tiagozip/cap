@@ -1,6 +1,6 @@
 {
   "name": "capd",
-  "version": "4.0.10",
+  "version": "4.0.11",
   "imports": {
     "#platform": {
       "workerd": "./src/workers/platform.js",
@@ -78,7 +78,7 @@
     "docker:up": "docker compose up -d",
     "docker:up:duckdb": "docker compose -f docker-compose.duckdb.yml up -d",
     "docker:dev": "docker compose -f docker-compose.dev.yml up --build --watch",
-    "docker:publish": "cd .. && docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:4.0.10 -t tiago2/cap:4.0 -t tiago2/cap:4 -t tiago2/cap:latest -f capd/Dockerfile . --push"
+    "docker:publish": "cd .. && docker buildx build --platform linux/amd64,linux/arm64 -t tiago2/cap:4.0.11 -t tiago2/cap:4.0 -t tiago2/cap:4 -t tiago2/cap:latest -f capd/Dockerfile . --push"
   },
   "dependencies": {
     "@duckdb/node-api": "1.4.5-r.1",

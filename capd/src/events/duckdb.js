@@ -47,7 +47,20 @@ export async function createDuckdbStore({
     autoload_known_extensions: "false",
   });
   const writer = await instance.connect();
-  const reader = await instance.connect();
+  let writes = Promise.resolve();
+  const serial = (fn) => {
+    const run = writes.then(fn);
+    writes = run.catch(() => {});
+    return run;
+  };
+  const read = async (fn) => {
+    const conn = await instance.connect();
+    try {
+      return await fn(conn);
+    } finally {
+      conn.closeSync();
+    }
+  };
 
   await writer.run(
     `CREATE TABLE IF NOT EXISTS events (${COLUMNS.map(([n, k]) => `${n} ${TYPES[k]}`).join(", ")})`,
@@ -101,44 +114,48 @@ export async function createDuckdbStore({
     kind: "duckdb",
     dialect,
     async insert(rows) {
-      if (rows.length) await append(rows);
+      if (rows.length) await serial(() => append(rows));
     },
     async insertRollups(rows) {
-      if (rows.length) await upsertRollups(rows);
+      if (rows.length) await serial(() => upsertRollups(rows));
     },
     async query(sql, params = {}) {
       const bound = {};
       for (const [k, v] of Object.entries(params)) {
         bound[k] = Number.isInteger(v) ? BigInt(v) : v;
       }
-      const result = await reader.runAndReadAll(sql, bound);
+      const result = await read((conn) => conn.runAndReadAll(sql, bound));
       return result.getRowObjectsJS().map((row) => {
         const out = {};
         for (const k in row) out[k] = toJs(row[k]);
         return out;
       });
     },
-    async deleteSite(siteKey) {
-      await writer.run("DELETE FROM events WHERE site_key = $s", {
-        s: siteKey,
-      });
-      await writer.run("DELETE FROM rollup WHERE site_key = $s", {
-        s: siteKey,
+    deleteSite(siteKey) {
+      return serial(async () => {
+        await writer.run("DELETE FROM events WHERE site_key = $s", {
+          s: siteKey,
+        });
+        await writer.run("DELETE FROM rollup WHERE site_key = $s", {
+          s: siteKey,
+        });
       });
     },
-    async prune(retentionDays) {
-      const cutoff = BigInt(Date.now() - retentionDays * 86_400_000);
-      const result = await writer.run("DELETE FROM events WHERE ts < $t", {
-        t: cutoff,
+    prune(retentionDays) {
+      return serial(async () => {
+        const cutoff = BigInt(Date.now() - retentionDays * 86_400_000);
+        const result = await writer.run("DELETE FROM events WHERE ts < $t", {
+          t: cutoff,
+        });
+        const changes = Number(result.rowsChanged);
+        if (changes > 50_000) await writer.run("CHECKPOINT");
+        return changes;
       });
-      const changes = Number(result.rowsChanged);
-      if (changes > 50_000) await writer.run("CHECKPOINT");
-      return changes;
     },
     async setRetention() {},
     async info() {
-      const result = await reader.runAndReadAll(
-        "SELECT count(*) AS n FROM events",
+      const result = await read((conn) =>
+        conn.runAndReadAll("SELECT count(*) AS n FROM events"),
       );
       const [{ n }] = result.getRowObjectsJS();
       return {
@@ -148,12 +165,11 @@ export async function createDuckdbStore({
       };
     },
     async ping() {
-      await reader.run("SELECT 1");
+      await read((conn) => conn.run("SELECT 1"));
       return true;
     },
     async close() {
-      await writer.run("CHECKPOINT").catch(() => {});
-      reader.closeSync();
+      await serial(() => writer.run("CHECKPOINT")).catch(() => {});
       writer.closeSync();
       instance.closeSync();
     },
