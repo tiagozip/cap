@@ -47,6 +47,7 @@ const fromConfig = (c) => ({
       ? "sha256-pow"
       : "hashwx",
   hashwxDifficulty: c.hashwxDifficulty ?? 1_000_000,
+  sha256Fallback: !!c.sha256Fallback,
   automation: c.blockAutomatedBrowsers ? "block" : "report",
   scripted: c.blockAutomatedInteractions
     ? "block"
@@ -79,6 +80,7 @@ const toPatch = (f) => ({
   ...(f.protocol === "hashwx" && {
     protocol: f.protocol,
     hashwxDifficulty: Number(f.hashwxDifficulty),
+    sha256Fallback: f.sha256Fallback,
   }),
 });
 
@@ -131,6 +133,7 @@ const applyPreset = (p) => {
   const c = p.config;
   form.protocol = c.protocol;
   form.hashwxDifficulty = c.hashwxDifficulty;
+  form.sha256Fallback = c.sha256Fallback;
   form.automation = c.blockAutomatedBrowsers ? "block" : "report";
   form.scripted = c.blockAutomatedInteractions
     ? "block"

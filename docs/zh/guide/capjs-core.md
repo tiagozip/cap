@@ -159,6 +159,7 @@ instrumentation: {
 | `blockAutomatedBrowsers` | `false` | 以 `instr_automated_browser` 拒绝来自[自动化浏览器](./instrumentation.md#自动化浏览器检测)的求解。 |
 | `detectAutomatedInteractions` | `false` | 将 `interaction_synthetic_clicks` 和 `interaction_synthetic_keydowns` 加入 `riskFlags`。见[交互检测](./instrumentation.md#交互检测)。 |
 | `blockAutomatedInteractions` | `false` | 以 `instr_automated_interaction` 拒绝这些求解，同时开启检测。 |
+| `noWasm` | `false` | 当客户端声称无法运行 WebAssembly、你因此下发 SHA-256 时设置它。如果 WebAssembly 能在检查框架里编译，求解以 `instr_wasm_available` 失败，否则带上 `wasm_fallback` 风险标记。 |
 | `obfuscationLevel` | `5` | 取值为 1 到 10。级别 1 到 3 移除空白，4 到 7 还会编码字符串并压缩脚本，8 到 10 在安装了 `javascript-obfuscator` 时使用它处理脚本。级别越高，生成越慢。 |
 
 级别 8 到 10 需要可选的 `javascript-obfuscator` 包，每个质询会阻塞事件循环数十毫秒，因此仅用于低流量路由，或通过 `instrumentationGenerator` 在 worker 池中生成脚本。它接收 instrumentation 选项，并且必须解析为 `generateInstrumentation` 返回的内容。

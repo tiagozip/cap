@@ -159,6 +159,7 @@ instrumentation: {
 | `blockAutomatedBrowsers` | `false` | Lehnt Lösungen aus [automatisierten Browsern](./instrumentation.md#automated-browser-detection) mit `instr_automated_browser` ab. |
 | `detectAutomatedInteractions` | `false` | Fügt `interaction_synthetic_clicks` und `interaction_synthetic_keydowns` zu `riskFlags` hinzu. Siehe [Interaktionserkennung](./instrumentation.md#interaction-detection). |
 | `blockAutomatedInteractions` | `false` | Lehnt diese Lösungen mit `instr_automated_interaction` ab. Aktiviert auch die Erkennung. |
+| `noWasm` | `false` | Setze es, wenn du SHA-256 ausgibst, weil der Client sagt, dass er kein WebAssembly ausführen kann. Lösungen schlagen mit `instr_wasm_available` fehl, wenn WebAssembly im Frame des Checks kompiliert, und bekommen sonst das Risiko-Flag `wasm_fallback`. |
 | `obfuscationLevel` | `5` | Von 1 bis 10. Die Stufen 1 bis 3 entfernen Whitespace, 4 bis 7 kodieren außerdem Strings und minifizieren, und 8 bis 10 nutzen `javascript-obfuscator`, wenn es installiert ist. Höhere Stufen brauchen länger zum Erzeugen. |
 
 Die Stufen 8 bis 10 benötigen das optionale Paket `javascript-obfuscator` und blockieren die Event-Loop pro Challenge um mehrere zehn Millisekunden. Nutze sie deshalb nur für Routen mit wenig Traffic oder erzeuge Skripte mit `instrumentationGenerator` in einem Worker-Pool. Die Funktion erhält die Instrumentation-Optionen und muss ein Promise mit dem Rückgabewert von `generateInstrumentation` liefern.

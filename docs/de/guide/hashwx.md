@@ -79,7 +79,13 @@ Jede Lösung enthält zwei Roundtrips zum Testserver von je 80 bis 190 ms. Eine 
 
 Kommt der Großteil deines Traffics von Mobilgeräten, senke die Schwierigkeit. Die Lösungszeit skaliert mit ihr. 500.000 halbiert also ungefähr den Rechenanteil dieser Zahlen.
 
-HashWX braucht WebAssembly und auf iPhones iOS 15 oder neuer. Für Browser ohne WebAssembly nutze SHA-256, das einen JavaScript-Fallback hat.
+HashWX braucht WebAssembly und auf iPhones iOS 15 oder neuer.
+
+## Browser ohne WebAssembly {#browsers-without-webassembly}
+
+Safari im Blockierungsmodus hat kein WebAssembly, und eine Seite, deren CSP `'wasm-unsafe-eval'` nicht erlaubt, kann es nicht kompilieren. Für diese Browser nutze SHA-256, das einen JavaScript-Fallback hat, oder schalte in den erweiterten Einstellungen eines capd-Keys "Allow SHA-256 when WebAssembly is off" ein.
+
+Mit dieser Einstellung fordert ein Widget, das kein WebAssembly kompilieren kann, eine SHA-256-Challenge an und bekommt eine, die aus der SHA-256-Schwierigkeit und der Puzzle-Anzahl des Keys gebaut wird. Alle anderen Browser bekommen weiter HashWX. Das Preset Relaxed schaltet sie ein, überall sonst ist sie aus, weil jeder Client diese Anfrage stellen kann. Ein Bot kann also auch SHA-256 wählen, und GPUs lösen SHA-256 schneller als HashWX. Ist die Instrumentierung an, prüft der Browser-Check, ob WebAssembly in seinem eigenen Frame kompiliert. Wenn ja, schlägt die Lösung mit `instr_wasm_available` fehl, und wenn nein, bekommt sie das Risiko-Flag `wasm_fallback`, das du wie jedes andere Flag blockieren oder melden kannst. Das erwischt ein Skript, das in einem normalen Browser SHA-256 anfordert. Einen Browser, der ohne WebAssembly gestartet wurde, erwischt es nicht, und den SHA-256-Teil kann man überall lösen.
 
 ## Grenzen
 

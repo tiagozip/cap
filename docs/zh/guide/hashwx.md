@@ -79,7 +79,13 @@ WebAssembly 构建的速度大约是原生的 60%。在同一台 M3 上测得：
 
 如果你的流量以移动端为主，请调低难度。求解时间与难度成正比，因此 500,000 大约能让这些数字中的求解部分减半。
 
-HashWX 需要 WebAssembly，iPhone 则需要 iOS 15 或更高版本。对于不支持 WebAssembly 的浏览器，请使用带有 JavaScript 回退方案的 SHA-256。
+HashWX 需要 WebAssembly，iPhone 则需要 iOS 15 或更高版本。
+
+## 不支持 WebAssembly 的浏览器
+
+处于锁定模式的 Safari 没有 WebAssembly，CSP 未允许 `'wasm-unsafe-eval'` 的页面也无法编译它。对于这些浏览器，请使用带有 JavaScript 回退方案的 SHA-256，或在 capd 密钥的高级设置中打开 "Allow SHA-256 when WebAssembly is off"。
+
+打开该设置后，无法编译 WebAssembly 的验证组件会请求 SHA-256 挑战，服务器按密钥的 SHA-256 难度和谜题数量生成挑战。其他浏览器仍然拿到 HashWX。Relaxed 预设会打开它，其他预设都关闭，因为任何客户端都能发出这个请求，所以机器人也可以选择 SHA-256，而 GPU 解 SHA-256 比解 HashWX 快。开启插桩时，浏览器检查会测试 WebAssembly 能否在它自己的框架里编译。能编译时，求解以 `instr_wasm_available` 失败；不能编译时，求解会带上 `wasm_fallback` 风险标记，你可以像其他标记一样拦截或上报它。这能抓到在普通浏览器里请求 SHA-256 的脚本，但抓不到关闭 WebAssembly 启动的浏览器，而且 SHA-256 部分可以在任何地方求解。
 
 ## 限制
 

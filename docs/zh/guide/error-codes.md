@@ -42,6 +42,7 @@ description: "Cap 组件、capjs-core 和 capd 返回的所有错误码，以及
 | `instr_automated_interaction` | 服务端 | 脚本派发了三次或更多点击或按键。见[交互检测](./instrumentation.md#交互检测)。 |
 | `instr_host_unreachable` | 服务端 | 脚本无法读取框架外的页面，而密钥策略依赖这些信息。 |
 | `instr_isolated` | 服务端 | 页面设置了 [`CAP_ISOLATE`](./widget.md#pages-with-an-html-injection-bug)，而此密钥需要隔离框架无法收集的交互、行为或智能体数据。请关闭此密钥上的这些拦截设置，或移除 `CAP_ISOLATE`。 |
+| `instr_wasm_available` | 服务端 | 验证组件请求了 [SHA-256 回退](./hashwx.md#不支持-webassembly-的浏览器)，但 WebAssembly 在浏览器检查的框架里可以编译。 |
 | `instr_widget_outdated` | 服务端 | [旧版验证组件](./instrumentation.md#旧版验证组件)无法满足此密钥的要求。请更新验证组件。 |
 | `behavior_missing` | 服务端 | 行为评分已开启，但结果没有行为轨迹。 |
 | `behavior_automated` | 服务端 | [行为分数](./instrumentation.md#行为评分)达到阈值。 |

@@ -71,7 +71,13 @@ Each solve includes two round trips to the test server, 80 to 190 ms each. A pag
 
 If most of your traffic is mobile, lower the difficulty. Solve time scales with it, so 500,000 roughly halves the solving part of these numbers.
 
-HashWX needs WebAssembly, and iOS 15 or newer on iPhones. For browsers without WebAssembly, use SHA-256, which has a JavaScript fallback.
+HashWX needs WebAssembly, and iOS 15 or newer on iPhones.
+
+## Browsers without WebAssembly
+
+Safari in Lockdown Mode has no WebAssembly, and a page whose CSP leaves out `'wasm-unsafe-eval'` can't compile it. For those browsers, use SHA-256, which has a JavaScript fallback, or turn on "Allow SHA-256 when WebAssembly is off" in a capd key's advanced settings.
+
+With that setting on, a widget that can't compile WebAssembly asks for a SHA-256 challenge and gets one built from the key's SHA-256 difficulty and puzzle count. Every other browser still gets HashWX. The Relaxed preset turns it on, and it's off everywhere else because any client can make that request, so a bot can choose SHA-256 too, and GPUs solve SHA-256 faster than HashWX. With instrumentation on, the browser check tests whether WebAssembly compiles in its own frame. If it does, the solve fails with `instr_wasm_available`, and if it doesn't, the solve gets the `wasm_fallback` risk flag, which you can block or report like any other flag. That catches a script that asks for SHA-256 from a normal browser. It doesn't catch a browser launched with WebAssembly turned off, and the SHA-256 part can be solved anywhere.
 
 ## Limits
 

@@ -109,6 +109,10 @@ export const SIGNAL_GROUPS = [
         "csp_eval_blocked",
         "The page's CSP blocked eval, so the eval checks were skipped",
       ],
+      [
+        "wasm_fallback",
+        "Solved SHA-256 because the browser couldn't run WebAssembly",
+      ],
     ],
   },
   {

@@ -598,6 +598,8 @@ trace:function(){return $trace?$trace():null},
 stop:function(){for(var $i=0;$i<$offs.length;$i++){try{$offs[$i]()}catch($x){}}$offs=[];if($mo)$mo.disconnect();if($io)$io.disconnect()}
 }}`;
 
+const WASM_PROBE = `(function(){try{return new WebAssembly.Module(new Uint8Array([0,97,115,109,1,0,0,0])) instanceof WebAssembly.Module?1:0}catch(e){return 0}})()`;
+
 const NATIVE_PRELUDE = String.raw`var $ap,$keys,$isArr,$sort,$cca,$fcc,$nts,$pnow,$pobj,$P,$ce=0;
 var $ok=(function(){try{var $fts=Function.prototype.toString,$app=Reflect.apply,$idx=String.prototype.indexOf;
 var $nat=function($f){return typeof $f==="function"&&$app($idx,$app($fts,$f,[]),["[native code]"])>0};
@@ -669,6 +671,7 @@ function buildClientScript({
   salts,
   fold,
   cfg,
+  noWasm,
 }) {
   const h = hashWith(checkSeed);
   const pn = new Map();
@@ -749,6 +752,7 @@ function buildClientScript({
     `ce:${N("$ce")}`,
     `ia:${cfg.ia ? `${col}?${col}.ia():null` : "null"}`,
     `bh:${cfg.bh ? `${col}?${col}.trace():null` : "null"}`,
+    ...(noWasm ? [`wa:${WASM_PROBE}`] : []),
   ]).join(",");
 
   const post = (m) => `${N("$P")}.postMessage(${m},"*")`;
@@ -768,6 +772,7 @@ export async function generateInstrumentation(opts = {}) {
     opts.detectAutomatedInteractions === true || blockAutomatedInteractions;
   const behavior = opts.behavior === true;
   const behaviorEnforced = behavior && opts.behaviorEnforced === true;
+  const noWasm = opts.noWasm === true;
 
   let initVals;
   let vals;
@@ -865,6 +870,7 @@ export async function generateInstrumentation(opts = {}) {
       marks: AGENT_MARKS,
       attrs: MARK_ATTRS,
     },
+    noWasm,
   });
 
   const level = Math.max(1, Math.min(10, opts.obfuscationLevel ?? 5));
@@ -939,6 +945,7 @@ export async function generateInstrumentation(opts = {}) {
     detectAutomatedInteractions,
     behavior,
     behaviorEnforced,
+    ...(noWasm && { noWasm }),
     binding,
     instrumentation: Buffer.from(compressed).toString("base64"),
   };
@@ -958,6 +965,7 @@ const DATA_KEYS = new Set([
   "ce",
   "lw",
   "is",
+  "wa",
 ]);
 const PAYLOAD_KEYS = new Set(["i", "state", "d"]);
 const LEGACY_PAYLOAD_KEYS = new Set(["vp", "p", "ts"]);
@@ -1044,6 +1052,7 @@ function boundDataValid(d) {
   if (d.vp !== null && !isNumPair(d.vp)) return false;
   if (d.ce !== undefined && d.ce !== 0 && d.ce !== 1 && d.ce !== 2)
     return false;
+  if (d.wa !== undefined && d.wa !== 0 && d.wa !== 1) return false;
   if (d.lw !== undefined && (d.lw !== 1 || d.ia !== null || d.bh !== null)) {
     return false;
   }
@@ -1129,7 +1138,7 @@ export function verifyInstrumentationResult(
     if (!vars.every((v, i) => state[v] === expected[i])) return failed;
 
     if (!binding) {
-      if (challengeMeta.blockAutomatedBrowsers) {
+      if (challengeMeta.blockAutomatedBrowsers || challengeMeta.noWasm) {
         return { valid: false, reason: "instr_probe_missing" };
       }
       if (challengeMeta.behavior) {
@@ -1184,6 +1193,11 @@ export function verifyInstrumentationResult(
     if (legacy) riskFlags.push("legacy_widget");
     if (isolated) riskFlags.push("isolated_frame");
     if (data.ce > 0) riskFlags.push("csp_eval_blocked");
+    if (challengeMeta.noWasm === true) {
+      if (data.wa !== 0)
+        return { valid: false, reason: "instr_wasm_available" };
+      riskFlags.push("wasm_fallback");
+    }
 
     const interactionFlags = [];
     if (

@@ -42,6 +42,7 @@ This table is for site owners. The widget puts these codes in the `code` of its 
 | `instr_automated_interaction` | server | Scripts dispatched three or more clicks or key presses. See [interaction detection](./instrumentation.md#interaction-detection). |
 | `instr_host_unreachable` | server | The script couldn't read the page around its frame, and the key's policy depends on it. |
 | `instr_isolated` | server | The page sets [`CAP_ISOLATE`](./widget.md#pages-with-an-html-injection-bug), and this key needs interaction, behavior or agent data that an isolated frame can't collect. Turn those blocks off for this key, or remove `CAP_ISOLATE`. |
+| `instr_wasm_available` | server | The widget asked for the [SHA-256 fallback](./hashwx.md#browsers-without-webassembly), but WebAssembly compiled in the browser check's frame. |
 | `instr_widget_outdated` | server | A [widget from an earlier release](./instrumentation.md#widgets-from-earlier-releases) can't satisfy this key. Update the widget. |
 | `behavior_missing` | server | Behavior scoring is on, and the result has no behavior trace. |
 | `behavior_automated` | server | The [behavior score](./instrumentation.md#behavior-scoring) reached the threshold. |

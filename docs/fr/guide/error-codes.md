@@ -42,6 +42,7 @@ Ce tableau s'adresse aux propriétaires de sites. Le widget place ces codes dans
 | `instr_automated_interaction` | serveur | Des scripts ont déclenché au moins trois clics ou pressions de touches. Voir la [détection des interactions](./instrumentation.md#interaction-detection). |
 | `instr_host_unreachable` | serveur | Le script n'a pas pu lire la page autour de son iframe, et la politique de la clé en dépend. |
 | `instr_isolated` | serveur | La page définit [`CAP_ISOLATE`](./widget.md#pages-with-an-html-injection-bug), et cette clé exige des données sur les interactions, le comportement ou les agents qu'une iframe isolée ne peut pas collecter. Désactivez ces blocages pour cette clé, ou retirez `CAP_ISOLATE`. |
+| `instr_wasm_available` | serveur | Le widget a demandé le [repli SHA-256](./hashwx.md#browsers-without-webassembly), mais WebAssembly compile dans le cadre de la vérification du navigateur. |
 | `instr_widget_outdated` | serveur | Un [widget d'une version antérieure](./instrumentation.md#widgets-from-earlier-releases) ne peut pas satisfaire les exigences de cette clé. Mettez le widget à jour. |
 | `behavior_missing` | serveur | L'évaluation du comportement est activée, et le résultat n'a aucune trace de comportement. |
 | `behavior_automated` | serveur | Le [score de comportement](./instrumentation.md#behavior-scoring) a atteint le seuil. |

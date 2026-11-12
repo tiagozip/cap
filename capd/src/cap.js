@@ -90,6 +90,7 @@ const blockedReasons = new Set([
   "behavior_no_interaction",
   "instr_automated_browser",
   "instr_automated_interaction",
+  "instr_wasm_available",
 ]);
 
 export const capServer = new Elysia({
@@ -145,7 +146,7 @@ export const capServer = new Elysia({
 
   .post(
     "/:siteKey/challenge",
-    async ({ set, params, request, server: srv }) => {
+    async ({ set, params, query, request, server: srv }) => {
       const fields = await getKeyFields(params.siteKey);
 
       if (!fields.config) {
@@ -155,7 +156,11 @@ export const capServer = new Elysia({
 
       const keyConfig = JSON.parse(fields.config);
       const ctx = await requestContext(request, srv);
-      const protocol = resolveProtocol(keyConfig);
+      const noWasm =
+        query?.wasm === "0" &&
+        keyConfig.sha256Fallback === true &&
+        resolveProtocol(keyConfig) === "hashwx";
+      const protocol = noWasm ? "sha256-pow" : resolveProtocol(keyConfig);
       const base = {
         ...contextFields(ctx),
         site_key: params.siteKey,
@@ -236,6 +241,7 @@ export const capServer = new Elysia({
                     keyConfig.signalActions?.interaction_synthetic_keydowns ===
                       "block")),
               obfuscationLevel: keyConfig.obfuscationLevel,
+              ...(noWasm && { noWasm }),
             }
           : false;
 
@@ -256,7 +262,26 @@ export const capServer = new Elysia({
 
       const factor = decision.factor || 1;
       let challengeOpts;
-      if (protocol === "hashwx") {
+      if (noWasm) {
+        challengeOpts = {
+          format: 2,
+          protocols:
+            keyConfig.instrumentation !== false
+              ? ["sha256-pow", "instrumentation"]
+              : ["sha256-pow"],
+          challengeCount: Math.min(
+            500,
+            Math.round((keyConfig.challengeCount ?? 80) * factor),
+          ),
+          challengeSize: keyConfig.saltSize ?? 32,
+          challengeDifficulty: keyConfig.difficulty ?? 4,
+          expiresMs: CHALLENGE_TTL_MS,
+          scope: params.siteKey,
+          instrumentation: instrumentationOpts,
+          behavior: behaviorOpts,
+          extra: { pf: "sha256-pow" },
+        };
+      } else if (protocol === "hashwx") {
         const rawD =
           (Number(keyConfig.hashwxDifficulty) || DEFAULT_HASHWX_D) * factor;
         challengeOpts = {
@@ -308,7 +333,7 @@ export const capServer = new Elysia({
               ? `allowed:${decision.rule.id}`
               : "",
         rule: allowed ? decision.rule.id : (decision.matched?.[0] ?? ""),
-        flags: decision.flags,
+        flags: noWasm ? [...decision.flags, "wasm_fallback"] : decision.flags,
       });
 
       return result;
@@ -400,7 +425,15 @@ export const capServer = new Elysia({
         ...contextFields(ctx),
         site_key: params.siteKey,
         type: "redeem",
-        protocol: resolveProtocol(keyConfig),
+        protocol: (() => {
+          try {
+            const claims = JSON.parse(
+              Buffer.from(body.token.split(".")[1], "base64url").toString(),
+            );
+            if (claims.x?.pf === "sha256-pow") return "sha256-pow";
+          } catch {}
+          return resolveProtocol(keyConfig);
+        })(),
         solve_ms: result.iat ? Date.now() - result.iat : null,
         score: behavior?.score ?? null,
         verdict: behavior?.verdict ?? "",

@@ -288,6 +288,17 @@
 
   let wasmModulePromise = null;
 
+  const wasmCompiles = (() => {
+    try {
+      return (
+        new WebAssembly.Module(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0])) instanceof
+        WebAssembly.Module
+      );
+    } catch {
+      return false;
+    }
+  })();
+
   const getWasmModule = () => {
     if (wasmModulePromise) return wasmModulePromise;
 
@@ -662,7 +673,7 @@
         );
       }
       const pending = (async () => {
-        const raw = await capFetch(`${apiEndpoint}challenge`, {
+        const raw = await capFetch(`${apiEndpoint}challenge${wasmCompiles ? "" : "?wasm=0"}`, {
           method: "POST",
           signal: signal ?? this.#abort?.signal,
         });

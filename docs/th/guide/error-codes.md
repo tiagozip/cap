@@ -42,6 +42,7 @@ description: "รหัสข้อผิดพลาดทั้งหมดท
 | `instr_automated_interaction` | เซิร์ฟเวอร์ | สคริปต์ส่งการคลิกหรือการกดปุ่มตั้งแต่สามครั้งขึ้นไป ดู[การตรวจจับการโต้ตอบ](./instrumentation.md#interaction-detection) |
 | `instr_host_unreachable` | เซิร์ฟเวอร์ | สคริปต์อ่านหน้ารอบเฟรมไม่ได้ และนโยบายของคีย์ต้องใช้ข้อมูลนั้น |
 | `instr_isolated` | เซิร์ฟเวอร์ | หน้าตั้งค่า [`CAP_ISOLATE`](./widget.md#pages-with-an-html-injection-bug) และคีย์นี้ต้องใช้ข้อมูลการโต้ตอบ พฤติกรรม หรือ agent ที่เฟรมแบบแยกเก็บไม่ได้ ให้ปิดการบล็อกเหล่านั้นสำหรับคีย์นี้ หรือนำ `CAP_ISOLATE` ออก |
+| `instr_wasm_available` | เซิร์ฟเวอร์ | วิดเจ็ตขอ[ทางถอย SHA-256](./hashwx.md#browsers-without-webassembly) แต่ WebAssembly คอมไพล์ได้ในเฟรมของการตรวจเบราว์เซอร์ |
 | `instr_widget_outdated` | เซิร์ฟเวอร์ | [วิดเจ็ตจากรุ่นก่อนหน้า](./instrumentation.md#widgets-from-earlier-releases)ทำตามข้อกำหนดของคีย์นี้ไม่ได้ ให้อัปเดตวิดเจ็ต |
 | `behavior_missing` | เซิร์ฟเวอร์ | เปิดการให้คะแนนพฤติกรรมไว้ แต่ผลลัพธ์ไม่มีข้อมูลพฤติกรรม |
 | `behavior_automated` | เซิร์ฟเวอร์ | [คะแนนพฤติกรรม](./instrumentation.md#behavior-scoring)ถึงเกณฑ์ |

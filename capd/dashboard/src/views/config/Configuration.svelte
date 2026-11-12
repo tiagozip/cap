@@ -58,9 +58,10 @@ function validate() {
   const p = payloadOf(form);
   const next = {};
   if (!p.name) next.name = "Give this key a name so you can find it later.";
-  if (form.protocol === "sha256-pow" && !inRange(p.difficulty, 1, 8))
+  const sha = form.protocol === "sha256-pow" || p.sha256Fallback;
+  if (sha && !inRange(p.difficulty, 1, 8))
     next.difficulty = "Difficulty must be a whole number from 1 to 8.";
-  if (form.protocol === "sha256-pow" && !inRange(p.challengeCount, 1, 500))
+  if (sha && !inRange(p.challengeCount, 1, 500))
     next.challengeCount = "Challenge count must be from 1 to 500.";
   if (p.ratelimitMax !== null && !inRange(p.ratelimitMax, 1, 10000))
     next.ratelimitMax = "Max requests must be from 1 to 10,000.";

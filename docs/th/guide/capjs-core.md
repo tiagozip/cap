@@ -159,6 +159,7 @@ instrumentation: {
 | `blockAutomatedBrowsers` | `false` | ปฏิเสธการแก้จาก[เบราว์เซอร์อัตโนมัติ](./instrumentation.md#automated-browser-detection) ด้วย `instr_automated_browser` |
 | `detectAutomatedInteractions` | `false` | เพิ่ม `interaction_synthetic_clicks` และ `interaction_synthetic_keydowns` ใน `riskFlags` ดู[การตรวจจับปฏิสัมพันธ์](./instrumentation.md#interaction-detection) |
 | `blockAutomatedInteractions` | `false` | ปฏิเสธการแก้เหล่านั้นด้วย `instr_automated_interaction` และเปิดการตรวจจับด้วย |
+| `noWasm` | `false` | ตั้งค่านี้เมื่อคุณออก SHA-256 เพราะไคลเอนต์บอกว่ารัน WebAssembly ไม่ได้ การแก้จะล้มเหลวด้วย `instr_wasm_available` ถ้า WebAssembly คอมไพล์ได้ในเฟรมของการตรวจ และจะได้แฟล็กความเสี่ยง `wasm_fallback` ในกรณีอื่น |
 | `obfuscationLevel` | `5` | ตั้งแต่ 1 ถึง 10 ระดับ 1 ถึง 3 ลบช่องว่าง ระดับ 4 ถึง 7 เข้ารหัสสตริงและย่อสคริปต์เพิ่มด้วย และระดับ 8 ถึง 10 รัน `javascript-obfuscator` เมื่อติดตั้งไว้ ระดับที่สูงขึ้นใช้เวลาสร้างนานขึ้น |
 
 ระดับ 8 ถึง 10 ต้องใช้แพ็กเกจเสริม `javascript-obfuscator` และบล็อก event loop หลายสิบมิลลิวินาทีต่อ challenge จึงควรใช้เฉพาะเส้นทางที่มีปริมาณคำขอน้อย หรือสร้างสคริปต์ใน worker pool ด้วย `instrumentationGenerator` ซึ่งรับตัวเลือก instrumentation และต้อง resolve เป็นค่าที่ `generateInstrumentation` คืน

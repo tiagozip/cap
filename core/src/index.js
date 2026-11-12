@@ -260,7 +260,7 @@ async function evaluateBehavior(policy, trace, payload, opts, bound) {
   return { behavior, flags };
 }
 
-function sealedInstrMeta(instr, expires) {
+function sealedInstrMeta(instr, expires, opts) {
   if (!instr?.binding && !Array.isArray(instr?.expectedVals)) {
     throw new Error(
       "[capjs-core] instrumentationGenerator must return the binding from generateInstrumentation, or expectedVals",
@@ -278,6 +278,7 @@ function sealedInstrMeta(instr, expires) {
     detectAutomatedInteractions: instr.detectAutomatedInteractions === true,
     behavior: instr.behavior === true,
     behaviorEnforced: instr.behaviorEnforced === true,
+    ...(opts?.instrumentation?.noWasm === true && { noWasm: true }),
     expires,
   };
 }
@@ -348,7 +349,7 @@ export async function generateChallenge(secret, opts = {}) {
   if (opts.instrumentation || bh) {
     const generator = opts.instrumentationGenerator || generateInstrumentation;
     const instr = await generator(instrOptions(opts, ttlMs, bh));
-    payload.ei = encryptGcm(sealedInstrMeta(instr, expires), secret);
+    payload.ei = encryptGcm(sealedInstrMeta(instr, expires, opts), secret);
     instrumentation = instr.instrumentation;
   }
 
@@ -589,7 +590,7 @@ async function generateChallengeV2(secret, opts) {
       });
       expected.push({
         protocol: "instrumentation",
-        instrMeta: sealedInstrMeta(instr, exp),
+        instrMeta: sealedInstrMeta(instr, exp, opts),
       });
     } else {
       throw new Error(`[capjs-core] unknown protocol '${proto}'`);

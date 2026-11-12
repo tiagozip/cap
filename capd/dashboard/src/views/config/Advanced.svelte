@@ -5,6 +5,7 @@ import {
   Row,
   Select,
   Slider,
+  Switch,
 } from "../../components/cap/index.js";
 
 let { form = $bindable(), errors = {} } = $props();
@@ -40,7 +41,17 @@ let { form = $bindable(), errors = {} } = $props();
     />
   </Row>
 
-  {#if form.protocol === "sha256-pow"}
+  {#if form.protocol === "hashwx"}
+    <Row
+      label="Allow SHA-256 when WebAssembly is off"
+      for="cfgSha256Fallback"
+      help="Browsers that can't run WebAssembly, like Safari in Lockdown Mode, solve a SHA-256 puzzle instead. Any client can claim this, so bots can choose SHA-256 too, and GPUs solve SHA-256 faster than HashWX."
+    >
+      <Switch id="cfgSha256Fallback" bind:checked={form.sha256Fallback} />
+    </Row>
+  {/if}
+
+  {#if form.protocol === "sha256-pow" || form.sha256Fallback}
     <Row label="Difficulty" for="cfgDifficulty" help="From 1 to 8. Each step makes a puzzle about 16 times harder.">
       <div class="flex flex-col gap-1.5 md:items-end">
         <Input

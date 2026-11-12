@@ -11,6 +11,7 @@ export interface InstrumentationOptions {
   obfuscationLevel?: number;
   ttlMs?: number;
   behavior?: boolean;
+  noWasm?: boolean;
 }
 
 export interface InstrumentationBinding {
@@ -31,6 +32,7 @@ export interface GeneratedInstrumentation {
   detectAutomatedInteractions?: boolean;
   blockAutomatedInteractions?: boolean;
   behavior?: boolean;
+  noWasm?: boolean;
   instrumentation: string;
 }
 

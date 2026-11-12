@@ -79,7 +79,13 @@ Chaque résolution inclut deux allers-retours vers le serveur de test, de 80 à 
 
 Si l'essentiel de votre trafic vient du mobile, baissez la difficulté. Le temps de résolution évolue avec elle, donc 500 000 divise à peu près par deux la part de calcul de ces chiffres.
 
-HashWX exige WebAssembly, et iOS 15 ou plus récent sur iPhone. Pour les navigateurs sans WebAssembly, utilisez SHA-256, qui dispose d'un repli en JavaScript.
+HashWX exige WebAssembly, et iOS 15 ou plus récent sur iPhone.
+
+## Navigateurs sans WebAssembly {#browsers-without-webassembly}
+
+Safari en mode Isolement n'a pas WebAssembly, et une page dont la CSP n'autorise pas `'wasm-unsafe-eval'` ne peut pas le compiler. Pour ces navigateurs, utilisez SHA-256, qui dispose d'un repli en JavaScript, ou activez "Allow SHA-256 when WebAssembly is off" dans les réglages avancés d'une clé capd.
+
+Avec ce réglage, un widget qui ne peut pas compiler WebAssembly demande un défi SHA-256 et en reçoit un construit à partir de la difficulté SHA-256 et du nombre de puzzles de la clé. Tous les autres navigateurs reçoivent toujours HashWX. Le préréglage Relaxed l'active, et il est désactivé partout ailleurs, car n'importe quel client peut faire cette demande. Un bot peut donc aussi choisir SHA-256, et les GPU résolvent SHA-256 plus vite que HashWX. Quand l'instrumentation est active, la vérification du navigateur teste si WebAssembly compile dans son propre cadre. Si c'est le cas, la résolution échoue avec `instr_wasm_available`, et sinon elle reçoit l'indicateur de risque `wasm_fallback`, que vous pouvez bloquer ou signaler comme n'importe quel autre indicateur. Cela attrape un script qui demande SHA-256 depuis un navigateur normal. Cela n'attrape pas un navigateur lancé avec WebAssembly désactivé, et la partie SHA-256 peut être résolue n'importe où.
 
 ## Limites {#limits}
 

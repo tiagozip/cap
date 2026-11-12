@@ -74,6 +74,7 @@ const keyDefaults = {
   allowVerifiedAgents: false,
   protocol: "hashwx",
   hashwxDifficulty: 1_000_000,
+  sha256Fallback: false,
   signalActions: {},
   agentActions: {},
   behaviorThreshold: null,
@@ -172,6 +173,7 @@ export const server = new Elysia({
         protocol: body?.protocol ?? keyDefaults.protocol,
         hashwxDifficulty:
           body?.hashwxDifficulty ?? keyDefaults.hashwxDifficulty,
+        sha256Fallback: body?.sha256Fallback ?? keyDefaults.sha256Fallback,
       };
 
       if (
@@ -227,6 +229,7 @@ export const server = new Elysia({
         hashwxDifficulty: t.Optional(
           t.Number({ minimum: 50000, maximum: 5000000 }),
         ),
+        sha256Fallback: t.Optional(t.Boolean()),
       }),
       detail: {
         tags: ["Keys"],
@@ -321,6 +324,7 @@ export const server = new Elysia({
         requiredHeaders,
         protocol,
         hashwxDifficulty,
+        sha256Fallback,
         signalActions,
         agentActions,
         behaviorThreshold,
@@ -380,6 +384,8 @@ export const server = new Elysia({
           hashwxDifficulty ??
           existingConfig.hashwxDifficulty ??
           keyDefaults.hashwxDifficulty,
+        sha256Fallback:
+          sha256Fallback ?? existingConfig.sha256Fallback ?? false,
         signalActions:
           signalActions !== undefined
             ? cleanSignalActions(signalActions)
@@ -448,6 +454,7 @@ export const server = new Elysia({
         hashwxDifficulty: t.Optional(
           t.Number({ minimum: 50000, maximum: 5000000 }),
         ),
+        sha256Fallback: t.Optional(t.Boolean()),
         signalActions: t.Optional(t.Record(t.String(), t.String())),
         agentActions: t.Optional(t.Record(t.String(), t.String())),
         behaviorThreshold: t.Optional(

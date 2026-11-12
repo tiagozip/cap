@@ -42,6 +42,7 @@ Diese Tabelle ist für Website-Betreiber. Das Widget setzt diese Codes als `code
 | `instr_automated_interaction` | Server | Skripte lösten mindestens drei Klicks oder Tastendrücke aus. Siehe [Interaktionserkennung](./instrumentation.md#interaction-detection). |
 | `instr_host_unreachable` | Server | Das Skript konnte die Seite um seinen Frame nicht lesen, und die Richtlinie des Keys hängt davon ab. |
 | `instr_isolated` | Server | Die Seite setzt [`CAP_ISOLATE`](./widget.md#pages-with-an-html-injection-bug), und dieser Key benötigt Interaktions-, Verhaltens- oder Agentendaten, die ein isolierter Frame nicht erfassen kann. Deaktiviere diese Blockierungen für den Key oder entferne `CAP_ISOLATE`. |
+| `instr_wasm_available` | Server | Das Widget hat den [SHA-256-Fallback](./hashwx.md#browsers-without-webassembly) angefordert, aber WebAssembly kompiliert im Frame des Browser-Checks. |
 | `instr_widget_outdated` | Server | Ein [Widget aus einer früheren Version](./instrumentation.md#widgets-from-earlier-releases) kann die Anforderungen dieses Keys nicht erfüllen. Aktualisiere das Widget. |
 | `behavior_missing` | Server | Die Verhaltensbewertung ist aktiv, aber das Ergebnis enthält keine Verhaltensaufzeichnung. |
 | `behavior_automated` | Server | Der [Verhaltens-Score](./instrumentation.md#behavior-scoring) hat den Schwellenwert erreicht. |

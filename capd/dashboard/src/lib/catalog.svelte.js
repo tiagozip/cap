@@ -88,6 +88,7 @@ const REASONS = {
   instr_expired: "Browser check expired",
   instr_stale: "Browser check result too old",
   instr_oversized: "Browser check result too large",
+  instr_wasm_available: "Asked for SHA-256 with WebAssembly available",
   failed_challenge: "Wrong browser check answer",
   token_not_found: "Unknown or used token",
   token_expired: "Token expired",

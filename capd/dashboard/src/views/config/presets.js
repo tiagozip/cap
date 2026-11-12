@@ -10,6 +10,7 @@ export const PRESETS = [
       blockAutomatedBrowsers: false,
       blockAutomatedInteractions: false,
       behavior: "off",
+      sha256Fallback: true,
     },
   },
   {
@@ -23,6 +24,7 @@ export const PRESETS = [
       blockAutomatedBrowsers: false,
       blockAutomatedInteractions: false,
       behavior: "report",
+      sha256Fallback: false,
     },
   },
   {
@@ -36,11 +38,14 @@ export const PRESETS = [
       blockAutomatedBrowsers: true,
       blockAutomatedInteractions: true,
       behavior: "block",
+      sha256Fallback: false,
     },
   },
 ];
 
 export const presetOf = (values) =>
   PRESETS.find((p) =>
-    Object.entries(p.config).every(([k, v]) => values[k] === v),
+    Object.entries(p.config).every(
+      ([k, v]) => k === "sha256Fallback" || values[k] === v,
+    ),
   )?.id ?? "custom";
