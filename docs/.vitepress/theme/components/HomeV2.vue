@@ -476,7 +476,7 @@ onBeforeUnmount(() => {
             <div class="logos">
               <span><img src="/logos/bunny-duo.svg" alt="bunny.net" width="112" height="43" loading="lazy" /></span>
               <span><img src="/logos/adguard-duo.svg" alt="AdGuard" width="104" height="24" loading="lazy" /></span>
-              <span><img src="/logos/fraunhofer-duo.svg" alt="Fraunhofer" width="258" height="72" loading="lazy" /></span>
+              <span><img src="/logos/noyb-duo.svg" alt="noyb" width="48" height="48" loading="lazy" /></span>
             </div>
           </div>
         </div>
@@ -1354,6 +1354,8 @@ html.home-v2-active main.main {
   margin-inline: auto;
 }
 #homev2 .lead {
+  -webkit-user-select: text;
+  user-select: text;
   margin-top: 18px;
   max-width: 34em;
   font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
@@ -1463,9 +1465,11 @@ html.home-v2-active main.main {
   width: auto;
   max-width: 100%;
 }
-#homev2 .logos img[alt="bunny.net"],
-#homev2 .logos img[alt="Fraunhofer"] {
+#homev2 .logos img[alt="bunny.net"] {
   height: 28px;
+}
+#homev2 .logos img[alt="noyb"] {
+  height: 48px;
 }
 #homev2 .head {
   display: grid;
