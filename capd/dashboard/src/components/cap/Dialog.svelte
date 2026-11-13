@@ -32,7 +32,7 @@ const widths = {
     if (!v) onclose?.();
   }}
 >
-  <DialogContent class="flex max-h-[calc(100dvh-2rem)] flex-col {widths[size]}">
+  <DialogContent interactOutsideBehavior="ignore" class="flex max-h-[calc(100dvh-2rem)] flex-col {widths[size]}">
     <DialogHeader class="pe-8">
       <DialogTitle class="text-balance">{title}</DialogTitle>
       {#if description}
