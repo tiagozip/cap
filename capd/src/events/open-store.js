@@ -80,7 +80,12 @@ const [CLICKHOUSE, configError] = (() => {
     return [null, e.message];
   }
 })();
-export const BACKEND = CLICKHOUSE || configError ? "clickhouse" : "duckdb";
+export const BACKEND =
+  CLICKHOUSE || configError
+    ? "clickhouse"
+    : process.env.EVENT_BACKEND === "sqlite"
+      ? "sqlite"
+      : "duckdb";
 
 export async function openStore(s) {
   if (configError) throw new Error(configError);
@@ -92,7 +97,26 @@ export async function openStore(s) {
     await ch.init();
     return ch;
   }
-  return openDuckdb();
+  if (BACKEND === "sqlite") {
+    const { createSqliteStore } = await import("./sqlite.js");
+    return createSqliteStore(duckdbOptions());
+  }
+  try {
+    return await openDuckdb();
+  } catch (err) {
+    console.warn(
+      `[cap] DuckDB event store unavailable (${err.message}), falling back to SQLite.`,
+    );
+    const { createSqliteStore } = await import("./sqlite.js");
+    return createSqliteStore(duckdbOptions());
+  }
 }
 
-export const fallbackStore = () => openDuckdb();
+export const fallbackStore = async () => {
+  try {
+    return await openDuckdb();
+  } catch {
+    const { createSqliteStore } = await import("./sqlite.js");
+    return createSqliteStore(duckdbOptions());
+  }
+};
