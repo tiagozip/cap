@@ -7,7 +7,7 @@
       "dependencies": {
         "@duckdb/node-api": "1.4.5-r.1",
         "@elysiajs/swagger": "^1.3.1",
-        "capjs-core": "^0.1.16",
+        "capjs-core": "^0.1.17",
         "duckdb-v2": "npm:@duckdb/node-api@2.0.0-r.1",
         "elysia": "^1.4.28",
         "maxmind": "^5.0.6",
@@ -272,7 +272,7 @@
 
     "call-bound": ["call-bound@1.0.4", "", { "dependencies": { "call-bind-apply-helpers": "^1.0.2", "get-intrinsic": "^1.3.0" } }, "sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg=="],
 
-    "capjs-core": ["capjs-core@0.1.16", "", { "dependencies": { "esbuild": "^0.28.0" }, "optionalDependencies": { "javascript-obfuscator": "^4.2.2" } }, "sha512-J9qymfCx7VGnsNhNQFX4ObNK9RWcT22x6h4AkdOJDkj3TbxM0LInKz27Xv4HrDLAHtvsRF0+0d1JBIDQa9f6MA=="],
+    "capjs-core": ["capjs-core@0.1.17", "", { "dependencies": { "esbuild": "^0.28.0" }, "optionalDependencies": { "javascript-obfuscator": "^4.2.2" } }, "sha512-ZrQ0UNrjii/cp80t6oro/LgmxennYAl9Yo2sUbxub6rzOX9tR03jBbWBBJnvN5KxFF6k2z6GH1hvkbniAbHRpQ=="],
 
     "chalk": ["chalk@4.1.2", "", { "dependencies": { "ansi-styles": "^4.1.0", "supports-color": "^7.1.0" } }, "sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA=="],
 
