@@ -1088,6 +1088,17 @@ describe("fingerprint consistency checks", () => {
     expect(detectAutomation(S).riskFlags).toContain("shader_mismatch");
   });
 
+  test("Firefox on Apple Silicon passes with its sanitized Metal renderer", () => {
+    const S = firefoxHuman();
+    S.glsh = {
+      r: "ANGLE (Apple, ANGLE Metal Renderer: Apple M1), or similar",
+      t: "glsl",
+    };
+    const r = detectAutomation(S);
+    expect(r.riskFlags).not.toContain("shader_mismatch");
+    expect(r.pass).toBe(true);
+  });
+
   test("Direct3D compiling GLSL passes, as Chrome 157 on Windows does", () => {
     const S = real();
     S.glsh = {

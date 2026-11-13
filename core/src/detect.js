@@ -560,17 +560,22 @@ export function detectAutomation(S, opts = {}) {
     ? glsh.t
     : null;
   const shaderLie =
-    !!glRenderer && !!translated && claimsMetal !== (translated === "metal");
+    !gecko &&
+    !!glRenderer &&
+    !!translated &&
+    claimsMetal !== (translated === "metal");
   add(
     "shader_mismatch",
     !shaderLie,
-    !glRenderer || !translated
-      ? "not measured"
-      : !shaderLie
-        ? "consistent"
-        : claimsMetal
-          ? `renderer claims Metal, shaders compile to ${translated}`
-          : "renderer hides Metal, shaders compile to metal",
+    gecko
+      ? "gecko sanitizes the renderer string"
+      : !glRenderer || !translated
+        ? "not measured"
+        : !shaderLie
+          ? "consistent"
+          : claimsMetal
+            ? `renderer claims Metal, shaders compile to ${translated}`
+            : "renderer hides Metal, shaders compile to metal",
     false,
   );
 
