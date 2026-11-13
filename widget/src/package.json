@@ -45,7 +45,7 @@
     "url": "https://github.com/tiagozip/cap/issues"
   },
   "license": "Apache-2.0",
-  "author": "Tiago",
+  "author": "Tiago Montenegro <tiagoos2007+cap@protonmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tiagozip/cap.git"
