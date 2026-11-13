@@ -18,6 +18,8 @@ let {
   children,
 } = $props();
 
+let edited = $state(false);
+
 const widths = {
   sm: "sm:max-w-md",
   md: "sm:max-w-xl",
@@ -29,10 +31,17 @@ const widths = {
 <Dialog
   bind:open
   onOpenChange={(v) => {
-    if (!v) onclose?.();
+    if (v) return;
+    edited = false;
+    onclose?.();
   }}
 >
-  <DialogContent class="flex max-h-[calc(100dvh-2rem)] flex-col {widths[size]}">
+  <DialogContent
+    class="flex max-h-[calc(100dvh-2rem)] flex-col {widths[size]}"
+    interactOutsideBehavior={edited ? "ignore" : "close"}
+    oninput={() => (edited = true)}
+    onchange={() => (edited = true)}
+  >
     <DialogHeader class="pe-8">
       <DialogTitle class="text-balance">{title}</DialogTitle>
       {#if description}

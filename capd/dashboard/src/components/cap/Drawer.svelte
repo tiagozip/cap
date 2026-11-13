@@ -18,17 +18,24 @@ let {
   actions,
   children,
 } = $props();
+
+let edited = $state(false);
 </script>
 
 <Sheet
   bind:open
   onOpenChange={(v) => {
-    if (!v) onclose?.();
+    if (v) return;
+    edited = false;
+    onclose?.();
   }}
 >
   <SheetContent
     class="data-[side=right]:w-[34rem] {stacked ? 'z-[94]' : ''}"
     overlayClass={stacked ? "z-[94]" : ""}
+    interactOutsideBehavior={edited ? "ignore" : "close"}
+    oninput={() => (edited = true)}
+    onchange={() => (edited = true)}
   >
     <SheetHeader class="flex-row items-center gap-3 border-b border-border px-5 pe-14">
       {#if lead}{@render lead()}{/if}
