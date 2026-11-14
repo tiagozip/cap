@@ -23,7 +23,13 @@ RUN rm -rf node_modules/capjs-core \
   && mv /tmp/capjs-core node_modules/capjs-core
 
 FROM base AS release
-LABEL org.opencontainers.image.source="https://github.com/tiagozip/cap" \
+ARG CAPD_VERSION=dev
+ARG CAPD_REVISION=""
+ARG CAPD_CREATED=""
+LABEL org.opencontainers.image.version="${CAPD_VERSION}" \
+  org.opencontainers.image.revision="${CAPD_REVISION}" \
+  org.opencontainers.image.created="${CAPD_CREATED}" \
+  org.opencontainers.image.source="https://github.com/tiagozip/cap" \
   org.opencontainers.image.url="https://trycap.dev" \
   org.opencontainers.image.title="cap" \
   org.opencontainers.image.description="capd, the Cap server: a lightweight, open-source proof-of-work captcha" \
