@@ -1,6 +1,6 @@
 export const compact = (n) => {
   const v = Number(n) || 0;
-  if (v >= 1e6)
+  if (v >= 1e6 || Math.round(v / 1e3) >= 1000)
     return `${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/, "")}M`;
   if (v >= 1e4) return `${Math.round(v / 1e3)}k`;
   if (v >= 1e3) return `${(v / 1e3).toFixed(1).replace(/\.0$/, "")}k`;
@@ -9,8 +9,9 @@ export const compact = (n) => {
 
 export const latency = (ms) => {
   if (!ms) return "0ms";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
+  if (Math.round(ms) < 1000) return `${Math.round(ms)}ms`;
+  const s = (ms / 1000).toFixed(1);
+  return Number(s) < 10 ? `${s}s` : `${Math.round(ms / 1000)}s`;
 };
 
 export const timeFmt = new Intl.DateTimeFormat(undefined, {
@@ -37,8 +38,8 @@ export const when = (ts) => {
 export const ago = (ts) => {
   const s = Math.round((Date.now() - ts) / 1000);
   if (s < 60) return `${Math.max(s, 0)}s ago`;
-  if (s < 3600) return `${Math.round(s / 60)}m ago`;
-  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  if (Math.round(s / 60) < 60) return `${Math.round(s / 60)}m ago`;
+  if (Math.round(s / 3600) < 24) return `${Math.round(s / 3600)}h ago`;
   return `${Math.round(s / 86400)}d ago`;
 };
 
@@ -52,9 +53,11 @@ export const trend = (current, previous) => {
   return { dir: pct > 0 ? "up" : "down", text: `${Math.abs(pct)}%` };
 };
 
-export const bytes = (n) =>
-  n > 1e9
-    ? `${(n / 1e9).toFixed(1)} GB`
-    : n > 1e6
-      ? `${(n / 1e6).toFixed(1)} MB`
-      : `${Math.round((n ?? 0) / 1e3)} kB`;
+export const bytes = (n) => {
+  const v = n ?? 0;
+  if (v > 1e9 || Number((v / 1e6).toFixed(1)) >= 1000)
+    return `${(v / 1e9).toFixed(1)} GB`;
+  if (v > 1e6 || Math.round(v / 1e3) >= 1000)
+    return `${(v / 1e6).toFixed(1)} MB`;
+  return `${Math.round(v / 1e3)} kB`;
+};
