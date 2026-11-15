@@ -212,8 +212,8 @@ export function detectAutomation(S, opts = {}) {
     chromium &&
     !mobile &&
     S.uaDataPresent === true &&
-    ((Array.isArray(S.uaData?.brands) && S.uaData.brands.length === 0) ||
-      (!!hev && hev.fv === "" && hev.fl === ""));
+    Array.isArray(S.uaData?.brands) &&
+    S.uaData.brands.length === 0;
   add(
     "ua_hints_blank",
     !blankHints,

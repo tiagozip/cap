@@ -820,6 +820,12 @@ describe("detectAutomation headless research checks", () => {
     expect(detectAutomation(S).blockedBy).toContain("ua_hints_blank");
   });
 
+  test("a --user-agent flag that only blanks high-entropy hints passes", () => {
+    const S = human();
+    S.hev = { pv: "", ar: "", fv: "", bi: "", fl: "" };
+    expect(detectAutomation(S).blockedBy).not.toContain("ua_hints_blank");
+  });
+
   test("empty brands on android is not a block", () => {
     const S = human();
     S.ua =
