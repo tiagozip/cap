@@ -542,6 +542,17 @@ describe("detectAutomation bots", () => {
     expect(r.blockedBy).not.toContain("viewport_override");
   });
 
+  test("samsung internet on android reporting a taller window is not blocked", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/31.0 Chrome/148.0.0.0 Mobile Safari/537.36";
+    S.uaData = { ...S.uaData, mobile: true, platform: "Android" };
+    S.isExtended = false;
+    S.screen = { width: 384, height: 832, dpr: 2.8125 };
+    S.outerWH = [384, 870];
+    expect(detectAutomation(S).blockedBy).not.toContain("window_exceeds_screen");
+  });
+
   test("a window taller than an odd screen still blocks outside Brave", () => {
     const S = chromeHuman();
     S.isExtended = false;

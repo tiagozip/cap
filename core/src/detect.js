@@ -167,14 +167,16 @@ export function detectAutomation(S, opts = {}) {
   const singleMonitor = S.isExtended === false && !braveScreen;
   const outerTaller =
     isNum(ow[1]) && isNum(sc.height) && ow[1] > sc.height + OUTER_HEIGHT_SLACK;
-  const exceeds = outerTaller && singleMonitor;
+  const exceeds = !mobile && outerTaller && singleMonitor;
   add(
     "window_exceeds_screen",
     !exceeds,
     singleMonitor
       ? exceeds
         ? `outerHeight ${ow[1]} > screen.height ${sc.height}`
-        : "ok"
+        : mobile
+          ? "mobile browser"
+          : "ok"
       : braveScreen
         ? "brave screen bucket"
         : "monitor layout unknown",
