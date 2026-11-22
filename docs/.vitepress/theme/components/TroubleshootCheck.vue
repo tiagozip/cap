@@ -505,7 +505,8 @@ const readWidgetContext = () => {
 onMounted(async () => {
   const started = performance.now();
   const widgetContext = readWidgetContext();
-  fromUrl.value = widgetContext?.from ?? (document.referrer || null);
+  const from = widgetContext?.from ?? document.referrer;
+  fromUrl.value = typeof from === "string" && /^https?:\/\//i.test(from) ? from : null;
   setup.value = guessSetup();
   {
     const { os, deviceType } = setup.value;
