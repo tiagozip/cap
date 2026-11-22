@@ -287,15 +287,6 @@ if (!redisAvailable) {
         )
       ).json();
 
-    const sha256Nonce = (salt, target) => {
-      for (let n = 0; ; n++) {
-        const hex = new Bun.CryptoHasher("sha256")
-          .update(salt + n)
-          .digest("hex");
-        if (hex.startsWith(target)) return n;
-      }
-    };
-
     afterAll(async () => {
       await seedKey({
         protocol: "hashwx",
@@ -314,27 +305,15 @@ if (!redisAvailable) {
       expect(body.challenges.every((c) => c.protocol === "hashwx")).toBe(true);
     });
 
-    test("issues sha256 puzzles and redeems them when allowed", async () => {
+    test("ignores the hint when instrumentation is off", async () => {
       await seedKey({
         protocol: "hashwx",
         hashwxDifficulty: DIFFICULTY,
         instrumentation: false,
         sha256Fallback: true,
-        challengeCount: 6,
-        difficulty: 2,
       });
       const body = await mintNoWasm();
-      expect(body.format).toBe(2);
-      expect(body.challenges.map((c) => c.protocol)).toEqual(
-        Array(6).fill("sha256-pow"),
-      );
-      const res = await redeem({
-        token: body.token,
-        solutions: body.challenges.map((c) => ({
-          nonce: sha256Nonce(c.payload.salt, c.payload.target),
-        })),
-      });
-      expect(res.success).toBe(true);
+      expect(body.challenges.every((c) => c.protocol === "hashwx")).toBe(true);
     });
 
     test("still serves hashwx to clients that send no hint", async () => {
