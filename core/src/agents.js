@@ -425,10 +425,20 @@ export async function verifyWebBotAuth(req, opts = {}) {
       if (params.tag !== "web-bot-auth") continue;
       if (params.alg && params.alg !== "ed25519") continue;
       const nowSec = Math.floor(nowMs / 1000);
-      if (typeof params.created === "number" && params.created > nowSec + skew)
+      if (
+        typeof params.created !== "number" ||
+        typeof params.expires !== "number"
+      )
+        return { verified: false, reason: "missing_validity" };
+      if (params.created > nowSec + skew)
         return { verified: false, reason: "created_in_future" };
-      if (typeof params.expires === "number" && params.expires < nowSec - skew)
+      if (params.expires < nowSec - skew)
         return { verified: false, reason: "expired" };
+      if (
+        params.expires <= params.created ||
+        params.expires - params.created > 3600
+      )
+        return { verified: false, reason: "validity_too_long" };
 
       const listStr = def.slice(def.indexOf("(") + 1, def.lastIndexOf(")"));
       const comps = [

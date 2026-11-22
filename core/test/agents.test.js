@@ -140,6 +140,24 @@ describe("Web Bot Auth", () => {
     ).toBe("expired");
   });
 
+  test("rejects signatures with no expiry or a validity over an hour", async () => {
+    const long = await signed(URL_, '"https://chatgpt.com"', {
+      expiresIn: 7_200_000,
+    });
+    expect(
+      (await verifyWebBotAuth(long, { fetch: directoryFetch })).reason,
+    ).toBe("validity_too_long");
+
+    const req = await signed(URL_, '"https://chatgpt.com"');
+    const input = req.headers
+      .get("Signature-Input")
+      .replace(/;expires=\d+/, "");
+    req.headers.set("Signature-Input", input);
+    expect(
+      (await verifyWebBotAuth(req, { fetch: directoryFetch })).reason,
+    ).toBe("missing_validity");
+  });
+
   test("never fetches directories of unknown origins (SSRF)", async () => {
     const req = await signed(URL_, '"https://169.254.169.254"');
     const r = await verifyWebBotAuth(req, { fetch: directoryFetch });
