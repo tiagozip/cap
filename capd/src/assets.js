@@ -3,6 +3,7 @@ import { db } from "#db";
 import { defer, every } from "#platform";
 import pkg from "../package.json";
 import { deprecated } from "./config.js";
+import valkeyRateLimit from "./ratelimit.js";
 
 export const ASSET_SOURCE = "https://cdn.jsdelivr.net";
 export const BUILT_WITH = {
@@ -225,20 +226,27 @@ const TYPES = {
 export const assetsServer = new Elysia({
   prefix: "/assets",
   detail: { tags: ["Assets"] },
-}).get("/:file", async ({ params, set }) => {
-  const type = TYPES[params.file];
-  if (type && Date.now() - loadedAt > SETTINGS_TTL)
-    await loadAssetSettings().catch(() => {});
-  if (!type || !settings.enabled) {
-    set.status = 404;
-    return "Not found. Turn on Settings > Widget files in the dashboard to serve the widget from this server.";
-  }
-  const content = await db.getBuffer(`asset:${params.file}`);
-  if (!content) {
-    set.status = 503;
-    return "This file isn't downloaded yet. Settings > Widget files in the dashboard shows the download status.";
-  }
-  set.headers["Content-Type"] = type;
-  set.headers["Cache-Control"] = "public, max-age=3600";
-  return content;
-});
+})
+  .use(
+    valkeyRateLimit({
+      duration: 10_000,
+      max: 60,
+    }),
+  )
+  .get("/:file", async ({ params, set }) => {
+    const type = TYPES[params.file];
+    if (type && Date.now() - loadedAt > SETTINGS_TTL)
+      await loadAssetSettings().catch(() => {});
+    if (!type || !settings.enabled) {
+      set.status = 404;
+      return "Not found. Turn on Settings > Widget files in the dashboard to serve the widget from this server.";
+    }
+    const content = await db.getBuffer(`asset:${params.file}`);
+    if (!content) {
+      set.status = 503;
+      return "This file isn't downloaded yet. Settings > Widget files in the dashboard shows the download status.";
+    }
+    set.headers["Content-Type"] = type;
+    set.headers["Cache-Control"] = "public, max-age=3600";
+    return content;
+  });
