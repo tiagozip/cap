@@ -1,5 +1,8 @@
 const ORIGINS = new Set(["https://trycap.dev", "http://localhost:5173", "http://localhost:4173"]);
 const MAX_BODY = 96 * 1024;
+const STORE_MAX = 8 * 1024;
+const DAILY_CAP = 2000;
+const encoder = new TextEncoder();
 const WEBHOOKS = [
   ["DISCORD_WEBHOOK_REPORTS", 60],
   ["DISCORD_WEBHOOK", 12],
@@ -45,11 +48,15 @@ const notify = async (env, now, embed) => {
 };
 
 const readJson = async (request, origin) => {
+  const length = Number(request.headers.get("Content-Length"));
+  if (!request.headers.has("Content-Length") || !Number.isSafeInteger(length)) return { error: json({ error: "length_required" }, 411, origin) };
+  if (length > MAX_BODY) return { error: json({ error: "too_large" }, 413, origin) };
   const raw = await request.text();
-  if (raw.length > MAX_BODY) return { error: json({ error: "too_large" }, 413, origin) };
+  if (encoder.encode(raw).length > MAX_BODY) return { error: json({ error: "too_large" }, 413, origin) };
   try {
     const body = JSON.parse(raw);
-    if (!body || typeof body !== "object") return { error: json({ error: "invalid_body" }, 400, origin) };
+    if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).length > 64)
+      return { error: json({ error: "invalid_body" }, 400, origin) };
     return { body, raw };
   } catch {
     return { error: json({ error: "invalid_json" }, 400, origin) };
@@ -61,9 +68,26 @@ const handleReport = async (request, env, ctx, origin, ip) => {
   if (error) return error;
   if (typeof body.reason !== "string") return json({ error: "invalid_body" }, 400, origin);
 
+  const now = Date.now();
+  const today = await env.DB.prepare("SELECT COUNT(*) AS n FROM reports WHERE created_at > ?")
+    .bind(now - 86_400_000)
+    .first("n");
+  if (today >= DAILY_CAP) return json({ error: "daily_cap" }, 429, origin);
+
+  const kept = { ...body };
+  const dropped = [];
+  const largest = Object.keys(body).sort((a, b) => (JSON.stringify(body[b])?.length ?? 0) - (JSON.stringify(body[a])?.length ?? 0));
+  let stored = raw;
+  while (encoder.encode(stored).length > STORE_MAX && largest.length) {
+    const key = largest.shift();
+    delete kept[key];
+    dropped.push(key);
+    stored = JSON.stringify({ ...kept, dropped });
+  }
+  if (encoder.encode(stored).length > STORE_MAX) stored = JSON.stringify({ dropped });
+
   const cf = request.cf ?? {};
   const id = crypto.randomUUID().slice(0, 8);
-  const now = Date.now();
   const row = {
     reason: clip(body.reason, 80),
     blockedBy: Array.isArray(body.blockedBy) ? body.blockedBy.slice(0, 30).map((s) => clip(String(s), 60)) : [],
@@ -93,7 +117,7 @@ const handleReport = async (request, env, ctx, origin, ip) => {
       row.colo,
       ip ? await sha256(`${env.IP_SALT ?? ""}${ip}`) : null,
       clip(ip, 64),
-      raw,
+      stored,
     )
     .run();
 
@@ -146,9 +170,15 @@ const handleDetails = async (request, env, ctx, origin) => {
     note: clip(body.note, 2000),
     contact: clip(body.contact, 200),
   };
+  let stored = JSON.stringify(info);
+  while (encoder.encode(stored).length > STORE_MAX && info.extensions.length) {
+    info.extensions.pop();
+    stored = JSON.stringify(info);
+  }
+  if (encoder.encode(stored).length > STORE_MAX) return json({ error: "too_large" }, 413, origin);
   const now = Date.now();
   const res = await env.DB.prepare("UPDATE reports SET user_info = ? WHERE id = ? AND user_info IS NULL AND created_at > ?")
-    .bind(JSON.stringify(info), id, now - 86_400_000)
+    .bind(stored, id, now - 86_400_000)
     .run();
   if (!res.meta?.changes) return json({ error: "not_found" }, 404, origin);
 
@@ -181,7 +211,24 @@ export default {
     if (!ORIGINS.has(origin)) return json({ error: "forbidden" }, 403, origin);
 
     const ip = request.headers.get("CF-Connecting-IP") ?? "";
-    const { success } = await env.LIMIT.limit({ key: ip || "unknown" });
+    let bucket = ip || "unknown";
+    if (ip.includes(":")) {
+      const hex = ip
+        .toLowerCase()
+        .replace(/(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/, (_, a, b, c, d) => `${((+a << 8) | +b).toString(16)}:${((+c << 8) | +d).toString(16)}`);
+      const [left, right] = hex.split("::");
+      const l = left ? left.split(":") : [];
+      const r = right ? right.split(":") : [];
+      const groups = (hex.includes("::") ? [...l, ...Array(8 - l.length - r.length).fill("0"), ...r] : l).map((g) => Number.parseInt(g, 16) || 0);
+      const head = groups.slice(0, 6).join(":");
+      bucket = ["0:0:0:0:0:65535", "0:0:0:0:0:0", "100:65435:0:0:0:0"].includes(head)
+        ? [groups[6] >> 8, groups[6] & 255, groups[7] >> 8, groups[7] & 255].join(".")
+        : `${groups
+            .slice(0, 4)
+            .map((g) => g.toString(16))
+            .join(":")}::/64`;
+    }
+    const { success } = await env.LIMIT.limit({ key: bucket });
     if (!success) return json({ error: "rate_limited" }, 429, origin);
 
     return route(request, env, ctx, origin, ip);
