@@ -317,7 +317,7 @@ export const policyRoutes = new Elysia({
       if (!(await keyExists(params.siteKey))) return notFound(set);
       return (await getWebhooks(params.siteKey)).map(publicWebhook);
     },
-    { detail: { tags: ["Webhooks"] } },
+    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
   )
   .post(
     "/keys/:siteKey/webhooks",
@@ -385,7 +385,7 @@ export const policyRoutes = new Elysia({
       await db.del(`webhook:${params.id}:log`);
       return { success: true };
     },
-    { detail: { tags: ["Webhooks"] } },
+    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
   )
   .post(
     "/keys/:siteKey/webhooks/:id/test",
@@ -408,7 +408,7 @@ export const policyRoutes = new Elysia({
         },
       });
     },
-    { detail: { tags: ["Webhooks"] } },
+    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
   )
   .get(
     "/keys/:siteKey/webhooks/:id/deliveries",
@@ -419,7 +419,7 @@ export const policyRoutes = new Elysia({
       if (!hook) return notFound(set, "Webhook");
       return deliveryLog(params.id);
     },
-    { detail: { tags: ["Webhooks"] } },
+    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
   )
   .get(
     "/settings/analytics",
