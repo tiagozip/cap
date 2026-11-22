@@ -2124,9 +2124,9 @@
       const nav = navigator;
       const info = {
         v: WIDGET_VERSION,
-        from: location.href,
+        from: `${location.origin}${location.pathname}`,
         title: document.title.slice(0, 200),
-        referrer: document.referrer,
+        referrer: document.referrer.replace(/[?#].*$/, ""),
         endpoint,
         attrs,
         server: this.#lastServerFailure,
