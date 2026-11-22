@@ -159,6 +159,7 @@ export const capServer = new Elysia({
       const noWasm =
         query?.wasm === "0" &&
         keyConfig.sha256Fallback === true &&
+        keyConfig.instrumentation !== false &&
         resolveProtocol(keyConfig) === "hashwx";
       const protocol = noWasm ? "sha256-pow" : resolveProtocol(keyConfig);
       const base = {
@@ -265,10 +266,7 @@ export const capServer = new Elysia({
       if (noWasm) {
         challengeOpts = {
           format: 2,
-          protocols:
-            keyConfig.instrumentation !== false
-              ? ["sha256-pow", "instrumentation"]
-              : ["sha256-pow"],
+          protocols: ["sha256-pow", "instrumentation"],
           challengeCount: Math.min(
             500,
             Math.round((keyConfig.challengeCount ?? 80) * factor),
@@ -564,16 +562,31 @@ export const capServer = new Elysia({
       if (decision.action !== "allow") {
         const agentChecks =
           keyConfig.blockAgents === "all" ||
-          keyConfig.blockAgents === "identified";
-        if (agentChecks && result.riskFlags?.includes("host_unreachable")) {
+          keyConfig.blockAgents === "identified" ||
+          Object.values(keyConfig.agentActions ?? {}).includes("block");
+        const reduced = behavior
+          ? ["legacy_widget", "isolated_frame"].find((f) =>
+              result.riskFlags?.includes(f),
+            )
+          : null;
+        const instrReason = !agentChecks
+          ? null
+          : result.riskFlags?.includes("host_unreachable")
+            ? "instr_host_unreachable"
+            : reduced === "isolated_frame"
+              ? "instr_isolated"
+              : reduced
+                ? "instr_widget_outdated"
+                : null;
+        if (instrReason) {
           return deny(
             403,
             {
               instr_error: true,
               error: "Blocked by instrumentation",
-              reason: "instr_host_unreachable",
+              reason: instrReason,
             },
-            "instr_host_unreachable",
+            instrReason,
             { outcome: "block", flags },
           );
         }
