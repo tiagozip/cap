@@ -114,31 +114,48 @@
   }
 
   let _pakoPromise = null;
+  async function _decompress(format, bytes, trailerless) {
+    const ds = new DecompressionStream(format);
+    const writer = ds.writable.getWriter();
+    const reader = ds.readable.getReader();
+    writer
+      .write(bytes)
+      .then(() => writer.close())
+      .catch(() => {});
+    const chunks = [];
+    let len = 0;
+    while (true) {
+      let step;
+      try {
+        step = await reader.read();
+      } catch (e) {
+        if (trailerless && len) break;
+        throw e;
+      }
+      if (step.done) break;
+      chunks.push(step.value);
+      len += step.value.length;
+    }
+    const out = new Uint8Array(len);
+    let off = 0;
+    for (const c of chunks) {
+      out.set(c, off);
+      off += c.length;
+    }
+    return out;
+  }
+
   async function _inflateRaw(compressed) {
     if (typeof DecompressionStream !== "undefined") {
       try {
-        const ds = new DecompressionStream("deflate-raw");
-        const writer = ds.writable.getWriter();
-        const reader = ds.readable.getReader();
-        writer
-          .write(compressed)
-          .then(() => writer.close())
-          .catch(() => {});
-        const chunks = [];
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-        }
-        let len = 0;
-        for (const c of chunks) len += c.length;
-        const out = new Uint8Array(len);
-        let off = 0;
-        for (const c of chunks) {
-          out.set(c, off);
-          off += c.length;
-        }
-        return out;
+        return await _decompress("deflate-raw", compressed, false);
+      } catch {}
+      try {
+        const wrapped = new Uint8Array(compressed.length + 2);
+        wrapped[0] = 0x78;
+        wrapped[1] = 0x01;
+        wrapped.set(compressed, 2);
+        return await _decompress("deflate", wrapped, true);
       } catch {}
     }
     if (!_pakoPromise) {
