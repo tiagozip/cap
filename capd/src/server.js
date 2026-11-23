@@ -496,7 +496,7 @@ export const server = new Elysia({
         deleteList(keyBlocklistId(sk)),
         db.srem("keys", sk),
         deleteSharesForKey(sk),
-        getStore().deleteSite(sk),
+        getStore()?.deleteSite(sk),
       ]);
       invalidateRules(sk);
       invalidateKeyCache(params.siteKey);

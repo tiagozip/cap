@@ -20,7 +20,7 @@ if (!redisAvailable) {
   test.skip(`scoped keys skipped (no redis at ${REDIS_URL})`, () => {});
 } else {
   process.env.REDIS_URL = REDIS_URL;
-  process.env.ADMIN_KEY = "test-admin-key-1234567890";
+  process.env.ADMIN_KEY ||= "test-admin-key-1234567890";
   process.env.HIDE_RATELIMIT_IP_WARNING = "true";
 
   process.env.DUCKDB_PATH = `${tmpdir()}/cap-scoped-${process.pid}.duckdb`;
