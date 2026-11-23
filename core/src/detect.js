@@ -5,7 +5,7 @@ const MAX_FONT_WIDTHS = 64;
 const MAX_TAMPER_KEYS = 8;
 const MAX_TAMPER_KEY_LENGTH = 32;
 const MAX_DETAIL_FIELDS = 6;
-const OUTER_HEIGHT_SLACK = 16;
+const OUTER_HEIGHT_SLACK = 20;
 const BRAVE_SCREENS = new Set([
   "1280x800",
   "1366x768",
@@ -126,8 +126,13 @@ export function detectAutomation(S, opts = {}) {
     ((/\bCrOS\b/.test(ua) && Math.round(dpr) === dpr) ||
       (/\bLinux\b/.test(ua) &&
         !/\bAndroid\b/.test(ua) &&
-        (dpr <= 1 || (gecko && Math.round(dpr) === dpr))));
-  const quantized = !!geo && geo.count >= 5 && geo.distinct >= 3 && !hintedText;
+        (dpr <= 1 || (gecko && Math.round(dpr) === dpr))) ||
+      (/Windows NT/.test(ua) && chromium && !gecko));
+  const quantized =
+    !!geo &&
+    geo.count >= (gecko ? geo.n : 5) &&
+    geo.distinct >= 3 &&
+    !hintedText;
   add(
     "geometry_quantized",
     !quantized,
@@ -167,7 +172,13 @@ export function detectAutomation(S, opts = {}) {
   const singleMonitor = S.isExtended === false && !braveScreen;
   const outerTaller =
     isNum(ow[1]) && isNum(sc.height) && ow[1] > sc.height + OUTER_HEIGHT_SLACK;
-  const exceeds = !mobile && outerTaller && singleMonitor;
+  const desktopModePhone =
+    /\bX11; Linux\b/.test(ua) &&
+    isNum(S.maxTouchPoints) &&
+    S.maxTouchPoints > 0 &&
+    isNum(sc.width) &&
+    sc.width < 600;
+  const exceeds = !mobile && !desktopModePhone && outerTaller && singleMonitor;
   add(
     "window_exceeds_screen",
     !exceeds,
@@ -294,6 +305,12 @@ export function detectAutomation(S, opts = {}) {
         mn.hc === n || (n > 2 && mn.hc === n - 2) || (n > 4 && mn.hc === n - 4)
       );
     })();
+    const vivoCores =
+      /\bAndroid [\d.]+; V\d{4}[A-Z]{0,2}\b/.test(ua) &&
+      Number.isInteger(mn.hc) &&
+      Number.isInteger(wn.hc) &&
+      mn.hc <= 2 &&
+      wn.hc > mn.hc;
     for (const f of fields) {
       const a = mn[f];
       const b = wn[f];
@@ -303,7 +320,7 @@ export function detectAutomation(S, opts = {}) {
       if (f === "ua" && geckoDesktopMode) continue;
       if (
         f === "hc" &&
-        (noisedCores || (mn.ddg === true && (a === 4 || a === 8)))
+        (noisedCores || vivoCores || (mn.ddg === true && (a === 4 || a === 8)))
       )
         continue;
       if (f === "brands" && mn.ddg === true && withoutDdg(a) === withoutDdg(b))

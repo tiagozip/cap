@@ -367,9 +367,7 @@ describe("detectAutomation humans", () => {
   };
 
   test("Firefox for Android in desktop mode passes with an Android worker UA", () => {
-    expect(
-      detectAutomation(firefoxTabletDesktopMode()).blockedBy,
-    ).toEqual([]);
+    expect(detectAutomation(firefoxTabletDesktopMode()).blockedBy).toEqual([]);
   });
 
   test("Firefox desktop mode with a different worker version still blocks", () => {
@@ -406,6 +404,26 @@ describe("detectAutomation humans", () => {
       S.mainNav = nav({ hc: shown });
       S.workerNav = nav({ hc: real });
       expect(detectAutomation(S).blockedBy).not.toContain("worker_mismatch");
+    }
+  });
+
+  test("Vivo's lowered page core count passes, other phones still block", () => {
+    const vivo =
+      "Mozilla/5.0 (Linux; Android 16; V2307A Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36";
+    for (const [ua, shown, blocked] of [
+      [vivo, 1, false],
+      [vivo, 2, false],
+      [vivo, 3, true],
+      [vivo.replace("V2307A", "SM-S918B"), 1, true],
+    ]) {
+      const S = chromeHuman();
+      S.ua = ua;
+      S.mainNav = nav({ ua, hc: shown });
+      S.workerNav = nav({ ua, hc: 8 });
+      expect(
+        detectAutomation(S).checks.find((c) => c.id === "worker_mismatch")
+          .passed,
+      ).toBe(!blocked);
     }
   });
 
@@ -484,6 +502,34 @@ describe("detectAutomation humans", () => {
     expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
   });
 
+  test("device-pixel text in Chrome on Windows passes", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/158.0.0.0 Safari/537.36";
+    S.screen = { width: 1920, height: 1080, dpr: 1 };
+    S.fontWidths = ints(17);
+    expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
+    S.screen = { width: 1536, height: 864, dpr: 1.25 };
+    S.fontWidths = [
+      1212, 1145.6, 980, 1212, 1145.6, 1080, 1218.4, 1145.6, 1145.6, 1145.6,
+      1374.4, 1145.6, 1207.2, 1123.2, 1145.6, 1212, 1145.6,
+    ];
+    expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
+  });
+
+  test("Firefox on Windows with mostly whole widths passes", () => {
+    const S = firefoxHuman();
+    S.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0";
+    S.oscpu = "Windows NT 10.0; Win64; x64";
+    S.screen = { width: 1920, height: 1080, dpr: 1 };
+    S.fontWidths = [
+      1195, 1148, 1000, 1195, 1148, 1075, 1211, 1148, 1148, 1148, 1148, 1148,
+      1197.27, 1126, 1148, 1148, 1148,
+    ];
+    expect(detectAutomation(S).blockedBy).not.toContain("geometry_quantized");
+  });
+
   test("juggler flag on a non-gecko engine is ignored", () => {
     const S = safariHuman();
     S.juggler = true;
@@ -550,7 +596,34 @@ describe("detectAutomation bots", () => {
     S.isExtended = false;
     S.screen = { width: 384, height: 832, dpr: 2.8125 };
     S.outerWH = [384, 870];
-    expect(detectAutomation(S).blockedBy).not.toContain("window_exceeds_screen");
+    expect(detectAutomation(S).blockedBy).not.toContain(
+      "window_exceeds_screen",
+    );
+  });
+
+  test("a maximized Windows window overhanging the screen passes", () => {
+    const S = chromeHuman();
+    S.isExtended = false;
+    S.screen = { width: 1536, height: 864, dpr: 1.25 };
+    S.outerWH = [1554, 882];
+    expect(detectAutomation(S).blockedBy).not.toContain(
+      "window_exceeds_screen",
+    );
+  });
+
+  test("Samsung Internet in desktop mode on a phone passes", () => {
+    const S = chromeHuman();
+    S.ua =
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/31.0 Chrome/148.0.0.0 Safari/537.36";
+    S.maxTouchPoints = 5;
+    S.isExtended = false;
+    S.screen = { width: 360, height: 800, dpr: 4.21875 };
+    S.outerWH = [384, 832];
+    expect(detectAutomation(S).blockedBy).not.toContain(
+      "window_exceeds_screen",
+    );
+    S.maxTouchPoints = 0;
+    expect(detectAutomation(S).blockedBy).toContain("window_exceeds_screen");
   });
 
   test("a window taller than an odd screen still blocks outside Brave", () => {
