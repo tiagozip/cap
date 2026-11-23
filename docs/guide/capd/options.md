@@ -14,6 +14,7 @@ Most settings live in the dashboard, under **Instance settings** for the whole s
 | `VALKEY_URL` | Valkey connection string, `redis://localhost:6379` by default. Redis works too. |
 | `VALKEY_TLS_CA` | Path to a CA certificate in PEM format to trust for Valkey over TLS, for a server with a self-signed certificate. Use a `rediss://` URL. `VALKEY_TLS_CERT` and `VALKEY_TLS_KEY` add a client certificate when the server asks for one. |
 | `CLICKHOUSE_URL` | Stores events in ClickHouse instead of DuckDB, for example `http://cap:password@clickhouse:8123/cap`. Write the password without URL encoding. |
+| `ANALYTICS` | Where Cap keeps analytics: `duckdb`, `clickhouse`, `redis` or `off`. `redis` keeps hourly totals in Valkey and `off` stores nothing, see [totals only or no analytics](./index.md#analytics-off). When unset, Cap uses ClickHouse if `CLICKHOUSE_URL` is set and DuckDB otherwise. |
 | `WEBHOOK_ALLOW_PRIVATE` | Set to `true` to let webhooks post to private and loopback addresses, like an n8n on your LAN. |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Limits for DuckDB, `256MB` and `2` by default. |
 

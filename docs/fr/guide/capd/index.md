@@ -4,7 +4,7 @@ description: "capd est la façon la plus simple d'auto-héberger le backend du C
 
 # capd
 
-capd est le serveur Cap sous forme d'image Docker. Il sert des défis au widget, vérifie les jetons pour votre backend et dispose d'un tableau de bord pour les clés de site, les événements en direct, les règles, les listes et les réglages. Il tourne sur Bun, consomme environ 30 Mo de mémoire au repos et conserve ses données dans Valkey, avec les événements statistiques dans DuckDB ou ClickHouse.
+capd est le serveur Cap sous forme d'image Docker. Il sert des défis au widget, vérifie les jetons pour votre backend et dispose d'un tableau de bord pour les clés de site, les événements en direct, les règles, les listes et les réglages. Il tourne sur Bun, consomme environ 30 Mo de mémoire au repos et conserve ses données dans Valkey, avec les événements statistiques dans DuckDB ou ClickHouse. Si vous n'avez besoin que de totaux, ou d'aucune statistique, Valkey suffit.
 
 La démo ci-dessous est le vrai tableau de bord, qui tourne dans votre navigateur avec du trafic généré.
 
@@ -46,11 +46,12 @@ docker compose up -d
 
 Le fichier DuckDB lance Cap et Valkey, et Cap écrit les événements dans `/usr/src/app/data/events.duckdb` sur le volume `cap-data`. DuckDB utilise au plus 256 Mo de mémoire et 2 threads, ce que `DUCKDB_MEMORY_LIMIT` et `DUCKDB_THREADS` permettent de modifier. Le fichier ClickHouse lance Cap, Valkey et ClickHouse. ClickHouse utilise `ADMIN_KEY` comme mot de passe de son utilisateur `cap` et n'expose aucun port, il n'y a donc rien d'autre à régler. Sa configuration désactive ses propres tables de journaux système et limite sa mémoire à 1 Go.
 
-| | DuckDB | ClickHouse |
-| --- | --- | --- |
-| Conteneur supplémentaire | Non | Oui |
-| Mémoire du stockage | Jusqu'à 256 Mo pendant les requêtes du tableau de bord | Environ 150 Mo au repos |
-| Plusieurs conteneurs Cap | Chacun conserve son propre historique | Partagent un historique d'événements |
+| | DuckDB | ClickHouse | `ANALYTICS=redis` |
+| --- | --- | --- | --- |
+| Conteneur supplémentaire | Non | Oui | Non |
+| Mémoire du stockage | Jusqu'à 256 Mo pendant les requêtes du tableau de bord | Environ 150 Mo au repos | Quelques clés dans Valkey |
+| Plusieurs conteneurs Cap | Chacun conserve son propre historique | Partagent un historique d'événements | Partagent les mêmes totaux |
+| Liste des événements, lieux et analyses | Oui | Oui | Non |
 
 Si votre mot de passe contient des espaces, `#` ou `$`, entourez-le de guillemets simples dans `.env`.
 
@@ -63,6 +64,18 @@ CLICKHOUSE_URL=http://cap:password@clickhouse.internal:8123/cap
 ```
 
 Cap crée la base de données et les tables au premier démarrage. L'utilisateur doit avoir tous les privilèges sur cette base et `SELECT` sur `system.parts`. Si ClickHouse est inaccessible au démarrage, Cap stocke les événements dans DuckDB jusqu'à son prochain redémarrage et affiche l'erreur sous **Instance settings > Data and storage**.
+
+### Totaux seuls ou sans statistiques {#analytics-off}
+
+Si vous voulez seulement le nombre de résolutions et d'échecs par jour, ou si vous faites tourner plusieurs conteneurs Cap derrière un répartiteur de charge sans ClickHouse, définissez `ANALYTICS` dans `.env` et utilisez le fichier compose DuckDB :
+
+```dotenv
+ANALYTICS=redis
+```
+
+Avec `redis`, Cap compte les défis, résolutions, échecs, blocages et limitations de débit par clé de site et par heure dans Valkey. Tous les conteneurs Cap ajoutent aux mêmes compteurs, donc la vue d'ensemble les couvre tous. Cap ne garde pas les événements un par un dans ce mode : la page Événements, les lieux, les réseaux, les signaux de risque et les analyses restent vides, et le plus petit pas du graphique est d'une heure. Cap supprime les compteurs plus anciens que la durée choisie sous **Instance settings > Data and storage**. Les chiffres de la v3 restent visibles dans le graphique.
+
+`ANALYTICS=off` ne stocke aucune statistique. Dans les deux modes, Cap n'ouvre jamais DuckDB, et la vérification, les règles et les webhooks fonctionnent comme avant, car aucun d'eux ne lit les événements stockés.
 
 ### Mise à jour depuis une version antérieure {#upgrading-from-an-earlier-release}
 

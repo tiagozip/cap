@@ -96,15 +96,16 @@ export async function initEvents() {
     );
     store = await fallbackStore();
   }
-  queries = createQueries(store);
+  queries = store.queries ?? createQueries(store);
 
-  defer(
-    importLegacyCounters(store).catch((e) =>
-      console.warn(
-        `[cap] Couldn't import the analytics counters from Cap 3, so it will retry on the next start: ${e.message}`,
+  if (store.insertRollups)
+    defer(
+      importLegacyCounters(store).catch((e) =>
+        console.warn(
+          `[cap] Couldn't import the analytics counters from Cap 3, so it will retry on the next start: ${e.message}`,
+        ),
       ),
-    ),
-  );
+    );
 
   if (!bufferEvents) return;
   every(flush, FLUSH_MS);

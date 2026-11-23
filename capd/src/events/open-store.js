@@ -2,6 +2,7 @@ import { existsSync, renameSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { clickhouseConfig } from "../config.js";
 import { createClickhouseStore } from "./clickhouse.js";
+import { createOffStore, createRedisStore } from "./counters.js";
 
 const NEWEST_READABLE_STORAGE = 67;
 
@@ -73,20 +74,50 @@ const openDuckdb = async () => {
   return createDuckdbStore(options);
 };
 
-const [CLICKHOUSE, configError] = (() => {
+const MODES = {
+  duckdb: "duckdb",
+  clickhouse: "clickhouse",
+  redis: "redis",
+  valkey: "redis",
+  off: "off",
+};
+
+export function analyticsMode(env = process.env) {
+  const raw = String(env.ANALYTICS ?? "")
+    .trim()
+    .toLowerCase();
+  const mode = raw ? MODES[raw] : null;
+  if (raw && !mode)
+    return {
+      mode: "duckdb",
+      error: `ANALYTICS must be duckdb, clickhouse, redis or off, not "${env.ANALYTICS}"`,
+    };
+  if (mode && mode !== "clickhouse") return { mode };
   try {
-    return [clickhouseConfig(), null];
+    const clickhouse = clickhouseConfig(env);
+    if (clickhouse) return { mode: "clickhouse", clickhouse };
   } catch (e) {
-    return [null, e.message];
+    return { mode: "clickhouse", error: e.message };
   }
-})();
-export const BACKEND = CLICKHOUSE || configError ? "clickhouse" : "duckdb";
+  if (mode === "clickhouse")
+    return {
+      mode,
+      error: "ANALYTICS is clickhouse, so set CLICKHOUSE_URL too",
+    };
+  return { mode: "duckdb" };
+}
+
+const analytics = analyticsMode();
+const configError = analytics.error;
+export const BACKEND = analytics.mode;
 
 export async function openStore(s) {
   if (configError) throw new Error(configError);
+  if (BACKEND === "off") return createOffStore();
+  if (BACKEND === "redis") return createRedisStore();
   if (BACKEND === "clickhouse") {
     const ch = createClickhouseStore({
-      ...CLICKHOUSE,
+      ...analytics.clickhouse,
       retentionDays: s.retentionDays,
     });
     await ch.init();

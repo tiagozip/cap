@@ -499,6 +499,14 @@ const mapOf = (ins) => {
 </PageHeader>
 
 <div class="flex flex-col gap-4 px-4 pt-5 pb-12 md:px-5">
+  {#if data?.storage === "redis" || data?.storage === "off"}
+    <p class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-pretty text-muted-foreground">
+      {data.storage === "off"
+        ? "Analytics are off, so Cap isn't recording anything for this page."
+        : "Cap is only counting totals, so locations, networks, risk flags and insights stay empty."}
+      <Button size="sm" onclick={() => navigate({ view: "settings", section: "analytics" })}>Open storage settings</Button>
+    </p>
+  {/if}
   <Card variant="layered" role="region" aria-label="Traffic">
     <ToggleGroup
       type="single"

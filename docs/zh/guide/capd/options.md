@@ -14,6 +14,7 @@ description: "capd 这款自托管开源 CAPTCHA 的配置：环境变量、代�
 | `VALKEY_URL` | Valkey 连接字符串，默认值为 `redis://localhost:6379`。也可以使用 Redis。 |
 | `VALKEY_TLS_CA` | PEM 格式 CA 证书的路径，Cap 通过 TLS 连接 Valkey 时信任它，适用于使用自签名证书的服务器。请使用 `rediss://` URL。服务器要求客户端证书时，用 `VALKEY_TLS_CERT` 和 `VALKEY_TLS_KEY` 提供。 |
 | `CLICKHOUSE_URL` | 将事件存入 ClickHouse 而不是 DuckDB，例如 `http://cap:password@clickhouse:8123/cap`。密码按原样填写，不要进行 URL 编码。 |
+| `ANALYTICS` | Cap 保存数据分析的位置：`duckdb`、`clickhouse`、`redis` 或 `off`。`redis` 在 Valkey 中按小时保存总数，`off` 什么都不保存，见[只保留总数或关闭数据分析](./index.md#analytics-off)。不设置时，如果设置了 `CLICKHOUSE_URL` 就使用 ClickHouse，否则使用 DuckDB。 |
 | `WEBHOOK_ALLOW_PRIVATE` | 设为 `true` 后，Webhook 可以向私有地址和回环地址发送请求，例如局域网内的 n8n。 |
 | `DUCKDB_MEMORY_LIMIT`、`DUCKDB_THREADS` | DuckDB 的资源限制，默认值分别为 `256MB` 和 `2`。 |
 

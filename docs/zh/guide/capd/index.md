@@ -4,7 +4,7 @@ description: "capd 是自托管这款开源 CAPTCHA 后端的最简单方式：�
 
 # capd
 
-capd 是打包成 Docker 镜像的 Cap 服务端。它向验证组件提供质询，为你的后端验证令牌，并提供管理站点密钥、实时事件、规则、列表和设置的控制台。它运行在 Bun 上，空闲内存占用约 30 MB，数据保存在 Valkey 中，数据分析事件则保存在 DuckDB 或 ClickHouse 中。
+capd 是打包成 Docker 镜像的 Cap 服务端。它向验证组件提供质询，为你的后端验证令牌，并提供管理站点密钥、实时事件、规则、列表和设置的控制台。它运行在 Bun 上，空闲内存占用约 30 MB，数据保存在 Valkey 中，数据分析事件则保存在 DuckDB 或 ClickHouse 中。如果只需要总数，或者完全不需要数据分析，只用 Valkey 就够了。
 
 下面的演示就是真实的控制台，在你的浏览器里用生成的流量运行。
 
@@ -46,11 +46,12 @@ docker compose up -d
 
 DuckDB 文件会运行 Cap 和 Valkey，Cap 把事件写入 `cap-data` 卷上的 `/usr/src/app/data/events.duckdb`。DuckDB 最多使用 256 MB 内存和 2 个线程，可以通过 `DUCKDB_MEMORY_LIMIT` 和 `DUCKDB_THREADS` 修改。ClickHouse 文件会运行 Cap、Valkey 和 ClickHouse。ClickHouse 使用 `ADMIN_KEY` 作为其 `cap` 用户的密码，不向宿主机开放任何端口，因此不需要其他设置。它的配置关闭了 ClickHouse 自身的系统日志表，并将内存限制为 1 GB。
 
-| | DuckDB | ClickHouse |
-| --- | --- | --- |
-| 额外容器 | 无 | 有 |
-| 存储的内存占用 | 控制台查询时最多 256 MB | 空闲时约 150 MB |
-| 多个 Cap 容器 | 各自保留自己的历史 | 共享同一份事件历史 |
+| | DuckDB | ClickHouse | `ANALYTICS=redis` |
+| --- | --- | --- | --- |
+| 额外容器 | 无 | 有 | 无 |
+| 存储的内存占用 | 控制台查询时最多 256 MB | 空闲时约 150 MB | Valkey 中的少量键 |
+| 多个 Cap 容器 | 各自保留自己的历史 | 共享同一份事件历史 | 共享同一组总数 |
+| 事件列表、地区和洞察 | 有 | 有 | 无 |
 
 如果密码包含空格、`#` 或 `$`，请在 `.env` 中用单引号括起来。
 
@@ -63,6 +64,18 @@ CLICKHOUSE_URL=http://cap:password@clickhouse.internal:8123/cap
 ```
 
 Cap 会在首次启动时创建数据库和表。该用户需要对这个数据库拥有全部权限，并对 `system.parts` 拥有 `SELECT` 权限。如果启动时无法连接 ClickHouse，Cap 会把事件存入 DuckDB，直到下次重启，并在 **Instance settings > Data and storage** 下显示错误。
+
+### 只保留总数或关闭数据分析 {#analytics-off}
+
+如果你只想知道每天的通过数和失败数，或者在负载均衡器后面运行多个 Cap 容器但不想用 ClickHouse，可以在 `.env` 中设置 `ANALYTICS`，并使用 DuckDB compose 文件：
+
+```dotenv
+ANALYTICS=redis
+```
+
+设为 `redis` 时，Cap 在 Valkey 中按站点密钥和小时统计质询、通过、失败、拦截和限流次数。所有 Cap 容器都累加到同一组计数器，所以概览涵盖全部容器。这个模式下 Cap 不保存单条事件，因此事件页面、地区、网络、风险标记和洞察都是空的，图表的最小间隔是一小时。早于 **Instance settings > Data and storage** 中保留期限的计数器会被删除。v3 的统计数据仍会显示在图表中。
+
+`ANALYTICS=off` 完全不保存数据分析。两种模式下 Cap 都不会打开 DuckDB，验证、规则和 Webhook 照常工作，因为它们都不读取已保存的事件。
 
 ### 从旧版本升级
 

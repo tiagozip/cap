@@ -4,7 +4,7 @@ description: "capd is the easiest way to self-host the open-source CAPTCHA backe
 
 # capd
 
-capd is the Cap server as a Docker image. It serves challenges to the widget, verifies tokens for your backend, and has a dashboard for site keys, live events, rules, lists and settings. It runs on Bun, idles at about 30 MB of memory, and keeps its data in Valkey, with analytics events in DuckDB or ClickHouse.
+capd is the Cap server as a Docker image. It serves challenges to the widget, verifies tokens for your backend, and has a dashboard for site keys, live events, rules, lists and settings. It runs on Bun, idles at about 30 MB of memory, and keeps its data in Valkey, with analytics events in DuckDB or ClickHouse. If you only need totals, or no analytics at all, Valkey is enough.
 
 <DashboardDemo compact />
 
@@ -44,11 +44,12 @@ docker compose up -d
 
 The DuckDB file runs Cap and Valkey, and Cap writes events to `/usr/src/app/data/events.duckdb` on the `cap-data` volume. DuckDB uses at most 256 MB of memory and 2 threads, which `DUCKDB_MEMORY_LIMIT` and `DUCKDB_THREADS` change. The ClickHouse file runs Cap, Valkey and ClickHouse. ClickHouse uses `ADMIN_KEY` as the password of its `cap` user and isn't published on any port, so there is nothing else to set. Its config turns off ClickHouse's own system log tables and caps it at 1 GB of memory.
 
-| | DuckDB | ClickHouse |
-| --- | --- | --- |
-| Extra container | No | Yes |
-| Memory of the store | Up to 256 MB while the dashboard queries it | About 150 MB idle |
-| Several Cap containers | Each keeps its own history | Share one event history |
+| | DuckDB | ClickHouse | `ANALYTICS=redis` |
+| --- | --- | --- | --- |
+| Extra container | No | Yes | No |
+| Memory of the store | Up to 256 MB while the dashboard queries it | About 150 MB idle | A few keys in Valkey |
+| Several Cap containers | Each keeps its own history | Share one event history | Share the same totals |
+| Event list, locations and insights | Yes | Yes | No |
 
 If your password has spaces, `#` or `$`, wrap it in single quotes in `.env`.
 
@@ -61,6 +62,18 @@ CLICKHOUSE_URL=http://cap:password@clickhouse.internal:8123/cap
 ```
 
 Cap creates the database and tables on first start. The user needs every privilege on that database and `SELECT` on `system.parts`. If ClickHouse can't be reached at startup, Cap stores events in DuckDB until it restarts and shows the error under **Instance settings > Data and storage**.
+
+### Totals only, or no analytics {#analytics-off}
+
+If you only want the number of solves and failures per day, or run several Cap containers behind a load balancer without ClickHouse, set `ANALYTICS` in `.env` and use the DuckDB compose file:
+
+```dotenv
+ANALYTICS=redis
+```
+
+With `redis`, Cap counts challenges, solves, failures, blocks and rate limits for each site key per hour in Valkey. Every Cap container adds to the same counters, so the overview covers all of them. Cap doesn't keep single events in this mode, so the Events page, locations, networks, risk flags and insights stay empty, and the shortest step in the chart is one hour. Cap deletes counters older than the retention you pick under **Instance settings > Data and storage**. Counts from v3 still show in the chart.
+
+`ANALYTICS=off` stores no analytics at all. In both modes Cap never opens DuckDB, and verification, rules and webhooks work as before, since none of them read stored events.
 
 ### Upgrading from v3
 

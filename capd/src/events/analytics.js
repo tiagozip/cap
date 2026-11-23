@@ -1,4 +1,4 @@
-import { getPublicSettings, getQueries } from "./index.js";
+import { getPublicSettings, getQueries, getStore } from "./index.js";
 import { FILTER_FIELDS, TOP_DIMENSIONS } from "./schema.js";
 
 const MIN = 60_000;
@@ -150,6 +150,7 @@ export async function overview(
     previous,
     series: [...buckets.values()].sort((a, b) => a.b - b.b),
     legacy,
+    storage: getStore()?.kind,
   };
 }
 

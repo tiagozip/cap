@@ -14,6 +14,7 @@ description: "การตั้งค่า capd ซึ่งเป็น CAPTC
 | `VALKEY_URL` | สตริงเชื่อมต่อ Valkey ค่าเริ่มต้นคือ `redis://localhost:6379` ใช้ Redis แทนก็ได้ |
 | `VALKEY_TLS_CA` | พาธไปยังใบรับรอง CA แบบ PEM ที่ Cap จะเชื่อถือเมื่อเชื่อมต่อ Valkey ผ่าน TLS เช่นเซิร์ฟเวอร์ที่ใช้ใบรับรองแบบ self-signed ให้ใช้ URL แบบ `rediss://` ส่วน `VALKEY_TLS_CERT` และ `VALKEY_TLS_KEY` ใช้ส่งใบรับรองฝั่งไคลเอนต์เมื่อเซิร์ฟเวอร์ต้องการ |
 | `CLICKHOUSE_URL` | เก็บเหตุการณ์ใน ClickHouse แทน DuckDB เช่น `http://cap:password@clickhouse:8123/cap` เขียนรหัสผ่านตามจริงโดยไม่ต้องเข้ารหัส URL |
+| `ANALYTICS` | ที่ที่ Cap เก็บสถิติ: `duckdb`, `clickhouse`, `redis` หรือ `off` โดย `redis` เก็บยอดรวมรายชั่วโมงไว้ใน Valkey และ `off` ไม่เก็บอะไรเลย ดู[เก็บเฉพาะยอดรวมหรือปิดสถิติ](./index.md#analytics-off) ถ้าไม่ได้ตั้งค่า Cap จะใช้ ClickHouse เมื่อมี `CLICKHOUSE_URL` และใช้ DuckDB ในกรณีอื่น |
 | `WEBHOOK_ALLOW_PRIVATE` | ตั้งเป็น `true` เพื่อให้ webhook ส่งคำขอไปยังที่อยู่ส่วนตัวและ loopback ได้ เช่น n8n ที่อยู่บน LAN ของคุณ |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | ขีดจำกัดของ DuckDB ค่าเริ่มต้นคือ `256MB` และ `2` |
 

@@ -155,6 +155,7 @@ Boot environment variables:
 | `ADMIN_KEY` | none | Required dashboard password, at least 12 characters. Also encrypts stored site secrets. |
 | `VALKEY_URL` | `redis://localhost:6379` | Valkey connection string. Redis works too. |
 | `CLICKHOUSE_URL` | unset | Analytics in ClickHouse when configured, otherwise DuckDB. |
+| `ANALYTICS` | unset | `duckdb`, `clickhouse`, `redis` for hourly totals in Valkey that several Cap containers share, or `off` to store none. |
 
 Restrict which websites can use a key under **Access > Only allow these websites** on the key's **Settings** page. Widget hosting and versions live under **Instance settings > Widget files**. Configure the client IP header under **Instance settings > Visitor location > Your proxy or CDN**. Behind Cloudflare, select Cloudflare. Keep port 3000 closed to the internet so clients cannot bypass your proxy and forge the trusted header.
 

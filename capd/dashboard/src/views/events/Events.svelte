@@ -234,6 +234,10 @@ async function fetchPage(params, limit) {
   return { events: found, next: res.next ?? null };
 }
 
+const totalsOnly = $derived(
+  overview?.storage === "redis" || overview?.storage === "off",
+);
+
 async function load() {
   const my = ++seq;
   custom = null;
@@ -689,8 +693,10 @@ const rowClick = (id) => (node) => {
   <Skeleton data={loading && !rows.length ? null : solves} sample={sampleSolves} empty={!loading && !rows.length} preload={[...new Set(rows.map((r) => flagUrl(r.country)))]} label="Loading events">
     {#snippet emptyMessage()}
       <div class="border-t border-border px-4 md:px-5">
-        <Empty title={custom ? "Nothing in this slice" : narrowed ? "No events match" : "No events yet"}>
-          {#if custom}
+        <Empty title={totalsOnly ? "Cap isn't keeping single events" : custom ? "Nothing in this slice" : narrowed ? "No events match" : "No events yet"}>
+          {#if totalsOnly}
+            {overview?.storage === "off" ? "Cap was started with ANALYTICS=off, so it doesn't store events." : "Cap was started with ANALYTICS=redis, so it only counts totals for the overview."} Start it with ANALYTICS=duckdb or CLICKHOUSE_URL to see each event here.
+          {:else if custom}
             Go back to the full range to see the rest.
           {:else if narrowed}
             Nothing in {rangeInfo.long} matches this search. Remove a filter or pick a longer range.
@@ -698,7 +704,9 @@ const rowClick = (id) => (node) => {
             Events show up here as soon as the widget on your site asks for a challenge.
           {/if}
           {#snippet action()}
-            {#if custom}
+            {#if totalsOnly}
+              <Button size="sm" onclick={() => navigate({ view: "settings", section: "analytics" })}>Open storage settings</Button>
+            {:else if custom}
               <Button size="sm" onclick={load}>Back to {rangeInfo.long}</Button>
             {:else if narrowed}
               <Button size="sm" onclick={resetAll}>Clear search and filters</Button>
