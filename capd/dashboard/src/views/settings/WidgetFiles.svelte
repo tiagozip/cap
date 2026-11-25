@@ -11,6 +11,7 @@ import {
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { ago } from "../../lib/format.js";
+import { isManaged } from "../../lib/state.svelte.js";
 import { samples } from "../../lib/samples.js";
 import { toast } from "../../lib/ui.svelte.js";
 import { setWidgetFiles, widgetScript } from "../integration/embed.svelte.js";
@@ -32,6 +33,7 @@ let checking = $state(false);
 let latest = $state(null);
 let error = $state("");
 let usageOpen = $state(false);
+const locked = $derived(isManaged("assets"));
 
 const apply = (s) => {
   status = s;
@@ -133,6 +135,7 @@ const check = async () => {
       label="Serve widget files from this server"
       for="assets-enabled"
       help="Visitors load the widget and its WebAssembly from this server's /assets instead of jsDelivr. Each key's setup snippet follows this setting."
+      {locked}
     >
       <Switch id="assets-enabled" bind:checked={form.enabled} />
     </Row>
@@ -140,6 +143,7 @@ const check = async () => {
     <Row
       label="Versions"
       help="This Cap release was built with widget {status.builtWith.widget} and WebAssembly {status.builtWith.wasm}. An older widget can miss features this server expects."
+      {locked}
     >
       <div class="flex w-full flex-col gap-3 md:max-w-xs">
         <div class="grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-2">
