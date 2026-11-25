@@ -1,6 +1,18 @@
 import { db } from "#db";
 import { deprecated } from "./config.js";
 
+export const HEADERS_DEFAULT = Object.freeze({
+  ipHeader: "",
+  countryHeader: "",
+  asnHeader: "",
+});
+export const RATELIMIT_DEFAULT = Object.freeze({ max: 30, duration: 5000 });
+export const CORS_DEFAULT = Object.freeze({ origins: null });
+export const FILTERING_DEFAULT = Object.freeze({
+  blockNonBrowserUA: false,
+  requiredHeaders: Object.freeze([]),
+});
+
 let _headers = null;
 let _ratelimit = null;
 
@@ -26,9 +38,7 @@ export async function loadHeaders() {
     "Settings > Visitor location > Your proxy or CDN",
     (v) => ({ ipHeader: v.trim(), countryHeader: "", asnHeader: "" }),
   );
-  _headers = raw
-    ? JSON.parse(raw)
-    : { ipHeader: "", countryHeader: "", asnHeader: "" };
+  _headers = raw ? JSON.parse(raw) : HEADERS_DEFAULT;
   return _headers;
 }
 
@@ -42,12 +52,12 @@ export function setHeaders(settings) {
 
 export async function loadRatelimit() {
   const raw = await db.get("settings:ratelimit");
-  _ratelimit = raw ? JSON.parse(raw) : { max: 30, duration: 5000 };
+  _ratelimit = raw ? JSON.parse(raw) : RATELIMIT_DEFAULT;
   return _ratelimit;
 }
 
 export function getRatelimit() {
-  return _ratelimit || { max: 30, duration: 5000 };
+  return _ratelimit || RATELIMIT_DEFAULT;
 }
 
 export function setRatelimit(settings) {
@@ -69,12 +79,12 @@ export async function loadCorsDefault() {
       return { origins: origins.length ? origins : null };
     },
   );
-  _corsDefault = raw ? JSON.parse(raw) : { origins: null };
+  _corsDefault = raw ? JSON.parse(raw) : CORS_DEFAULT;
   return _corsDefault;
 }
 
 export function getCorsDefault() {
-  return _corsDefault || { origins: null };
+  return _corsDefault || CORS_DEFAULT;
 }
 
 export function setCorsDefault(settings) {
@@ -85,14 +95,12 @@ let _filtering = null;
 
 export async function loadFiltering() {
   const raw = await db.get("settings:filtering");
-  _filtering = raw
-    ? JSON.parse(raw)
-    : { blockNonBrowserUA: false, requiredHeaders: [] };
+  _filtering = raw ? JSON.parse(raw) : FILTERING_DEFAULT;
   return _filtering;
 }
 
 export function getFiltering() {
-  return _filtering || { blockNonBrowserUA: false, requiredHeaders: [] };
+  return _filtering || FILTERING_DEFAULT;
 }
 
 export function setFiltering(settings) {
