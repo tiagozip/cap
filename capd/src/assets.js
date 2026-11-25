@@ -33,6 +33,12 @@ let refreshing = null;
 
 export const validVersion = (v) => typeof v === "string" && VERSION.test(v);
 
+// The one rule for saved widget file versions, used by the API and CAP_CONFIG.
+export const assetVersionError = ({ widget, wasm }) =>
+  validVersion(widget) && validVersion(wasm)
+    ? null
+    : "widget and wasm must be version numbers such as 0.1.58";
+
 const fileUrl = (file, versions) =>
   `${ASSET_SOURCE}/npm/@cap.js/${file.pkg}@${versions[file.pkg]}${file.path}`;
 
@@ -101,8 +107,8 @@ export async function saveAssetSettings(patch) {
     widget: patch.widget ?? settings.widget,
     wasm: patch.wasm ?? settings.wasm,
   };
-  if (!validVersion(next.widget) || !validVersion(next.wasm))
-    return { error: "Use a version number such as 0.1.58" };
+  const error = assetVersionError(next);
+  if (error) return { error };
   settings = next;
   await db.set("settings:assets", JSON.stringify(next));
   defer(refreshAssets().catch(() => {}));

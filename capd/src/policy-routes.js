@@ -20,6 +20,7 @@ import {
   updateSettings,
 } from "./events/index.js";
 import { scopeGuard } from "./guards.js";
+import { sectionRoute } from "./managed-config.js";
 import {
   addItems,
   createList,
@@ -436,18 +437,5 @@ export const policyRoutes = new Elysia({
       if (!res.success) set.status = 400;
       return res;
     },
-    {
-      body: t.Object({
-        retentionDays: t.Optional(t.Number({ minimum: 1, maximum: 3650 })),
-        ipMode: t.Optional(
-          t.Union([
-            t.Literal("full"),
-            t.Literal("truncate"),
-            t.Literal("none"),
-          ]),
-        ),
-        logChallenges: t.Optional(t.Boolean()),
-      }),
-      detail: { tags: ["Settings"] },
-    },
+    sectionRoute("analytics"),
   );
