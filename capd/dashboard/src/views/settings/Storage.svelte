@@ -12,6 +12,7 @@ import {
 import { api } from "../../lib/api.js";
 import { bytes, compact } from "../../lib/format.js";
 import { samples } from "../../lib/samples.js";
+import { isManaged } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 
 const RETENTION = [1, 7, 14, 30, 90, 180, 365, 730];
@@ -35,6 +36,7 @@ let ready = $state(false);
 let customRetention = $state(false);
 let saving = $state(false);
 let error = $state("");
+const locked = $derived(isManaged("analytics"));
 
 const counters = $derived(status.backend === "redis");
 const off = $derived(status.backend === "off");
@@ -113,7 +115,7 @@ const save = async () => {
     </Row>
 
     {#if !off}
-      <Row label="Keep events for" for="retention" help="Cap deletes older events on its own.">
+      <Row label="Keep events for" for="retention" help="Cap deletes older events on its own." {locked}>
         <div class="flex flex-wrap items-center gap-2 md:justify-end">
           {#if customRetention}
             <label for="retention-custom" class="sr-only">Days to keep events</label>
@@ -144,7 +146,7 @@ const save = async () => {
       </Row>
 
       {#if !counters}
-        <Row label="Visitor IP addresses" help={IP_MODES[form.ipMode]}>
+        <Row label="Visitor IP addresses" help={IP_MODES[form.ipMode]} {locked}>
           <Segmented
             class="self-start md:self-auto"
             label="Visitor IP addresses"
@@ -158,7 +160,7 @@ const save = async () => {
         </Row>
       {/if}
 
-      <Row label="Record every challenge shown" for="log-challenges" help="When off, Cap keeps solves, blocks and rate limits only. That's about a third fewer events.">
+      <Row label="Record every challenge shown" for="log-challenges" help="When off, Cap keeps solves, blocks and rate limits only. That's about a third fewer events." {locked}>
         <Switch id="log-challenges" bind:checked={form.logChallenges} />
       </Row>
 
@@ -166,7 +168,7 @@ const save = async () => {
         {#if error}
           <p class="me-auto text-sm text-destructive" role="alert">{error}</p>
         {/if}
-        <Button variant="primary" disabled={saving} onclick={save}>{saving ? "Saving" : "Save storage settings"}</Button>
+        <Button variant="primary" disabled={saving || locked} onclick={save}>{saving ? "Saving" : "Save storage settings"}</Button>
       </div>
     {/if}
   </div>

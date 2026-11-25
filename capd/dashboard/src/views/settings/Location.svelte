@@ -7,7 +7,7 @@ import {
   Segmented,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
-import { app, refreshSettings } from "../../lib/state.svelte.js";
+import { app, isManaged, refreshSettings } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import IpDatabase from "./IpDatabase.svelte";
 
@@ -53,7 +53,7 @@ let source = $state(
   initial.countryHeader && !app.settings.ipdb?.mode ? "headers" : "ipdb",
 );
 let saving = $state(false);
-let editHeaders = $state(false);
+const locked = $derived(isManaged("headers"));
 
 const clean = $derived({
   ipHeader: form.ipHeader.trim(),
@@ -61,11 +61,12 @@ const clean = $derived({
   asnHeader: form.asnHeader.trim(),
 });
 const dirty = $derived(Object.keys(clean).some((k) => clean[k] !== saved[k]));
-const preset = $derived(
-  presets.find(([, , p]) =>
-    Object.keys(p).every((k) => p[k] === clean[k]),
-  )?.[0],
-);
+const matchPreset = (values) =>
+  presets.find(([, , p]) => Object.keys(p).every((k) => p[k] === values[k]))?.[0];
+const preset = $derived(matchPreset(clean));
+// The toggle is disabled when the config file sets the headers, so show
+// custom header names up front instead of hiding them behind it.
+let editHeaders = $state(isManaged("headers") && !matchPreset(initial));
 
 const save = async () => {
   saving = true;
@@ -82,7 +83,7 @@ const save = async () => {
 </script>
 
 <div class="flex flex-col divide-y divide-border">
-  <Row label="Your proxy or CDN" help="Pick the one in front of Cap so it sees each visitor's real address, not the proxy's.">
+  <Row label="Your proxy or CDN" help="Pick the one in front of Cap so it sees each visitor's real address, not the proxy's." {locked}>
     <Segmented
         class="self-start md:self-auto"
       label="Proxy or CDN"

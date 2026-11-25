@@ -8,7 +8,7 @@ import {
   Switch,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
-import { app, refreshSettings } from "../../lib/state.svelte.js";
+import { app, isManaged, refreshSettings } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 
 const HEADERS = [
@@ -149,7 +149,7 @@ const save = async () => {
 </script>
 
 <div class="flex flex-col divide-y divide-border">
-  <Row label="Challenges per visitor" help="A visitor who goes over this waits before they get another challenge.">
+  <Row label="Challenges per visitor" help="A visitor who goes over this waits before they get another challenge." locked={isManaged("ratelimit")}>
     <div class="flex flex-wrap items-center gap-2 text-sm">
       <label for="rl-max" class="sr-only">Challenges allowed</label>
       <div class="w-20"><Input id="rl-max" type="number" inputmode="numeric" min="1" max="10000" bind:value={max} /></div>
@@ -159,7 +159,7 @@ const save = async () => {
     </div>
   </Row>
 
-  <Row label="Only allow my websites" for="cors-on" help="Challenges load only on the sites you list, so nobody else can use your keys.">
+  <Row label="Only allow my websites" for="cors-on" help="Challenges load only on the sites you list, so nobody else can use your keys." locked={isManaged("cors")}>
     <Switch
       id="cors-on"
       bind:checked={corsOn}
@@ -212,11 +212,11 @@ const save = async () => {
     {/snippet}
   </Row>
 
-  <Row label="Block scripts and command-line tools" for="block-ua" help="Turns away clients like curl and python-requests before they get a challenge.">
+  <Row label="Block scripts and command-line tools" for="block-ua" help="Turns away clients like curl and python-requests before they get a challenge." locked={isManaged("filtering")}>
     <Switch id="block-ua" bind:checked={blockUA} />
   </Row>
 
-  <Row label="Block requests that don't look like a browser" for="req-headers" help="Every real browser sends certain headers. Requests missing any you check here are blocked.">
+  <Row label="Block requests that don't look like a browser" for="req-headers" help="Every real browser sends certain headers. Requests missing any you check here are blocked." locked={isManaged("filtering")}>
     <Switch
       id="req-headers"
       bind:checked={headersOn}

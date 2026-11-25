@@ -2,13 +2,21 @@ import { db } from "#db";
 import { stopLive } from "#live";
 import { createApp, startup } from "./app.js";
 import { closeEvents } from "./events/index.js";
+import { ConfigError } from "./managed-config.js";
 
 const serverPort = process.env.SERVER_PORT || 3000;
 const serverHostname = process.env.SERVER_HOSTNAME || "0.0.0.0";
 const SHUTDOWN_TIMEOUT_MS = 8_000;
 const MAX_BODY_BYTES = 1024 * 1024;
 
-await startup();
+try {
+  await startup();
+} catch (e) {
+  if (!(e instanceof ConfigError)) throw e;
+  console.error(`[cap] ${e.message}`);
+  db.close();
+  process.exit(1);
+}
 
 const app = createApp({
   serve: {

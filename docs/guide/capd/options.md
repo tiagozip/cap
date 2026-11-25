@@ -4,7 +4,7 @@ description: "Configuration for capd, the self-hosted open-source CAPTCHA: envir
 
 # Configuration
 
-Most settings live in the dashboard, under **Instance settings** for the whole server or on each site key's **Settings** page.
+Most settings live in the dashboard, under **Instance settings** for the whole server or on each site key's **Settings** page. You can also set instance settings from a [config file](#config-file).
 
 ## Environment variables
 
@@ -17,6 +17,53 @@ Most settings live in the dashboard, under **Instance settings** for the whole s
 | `ANALYTICS` | Where Cap keeps analytics: `duckdb`, `clickhouse`, `redis` or `off`. `redis` keeps hourly totals in Valkey and `off` stores nothing, see [totals only or no analytics](./index.md#analytics-off). When unset, Cap uses ClickHouse if `CLICKHOUSE_URL` is set and DuckDB otherwise. |
 | `WEBHOOK_ALLOW_PRIVATE` | Set to `true` to let webhooks post to private and loopback addresses, like an n8n on your LAN. |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Limits for DuckDB, `256MB` and `2` by default. |
+| `CAP_CONFIG` | Path to a JSON [config file](#config-file) with instance settings. |
+| `CAP_CONFIG_JSON` | The same config as inline JSON, for when mounting a file is awkward. Set this or `CAP_CONFIG`, not both. |
+
+## Config file {#config-file}
+
+To set up a new instance the same way every time, put instance settings in a JSON file and point `CAP_CONFIG` at it:
+
+```json
+{
+  "instance": {
+    "headers": { "ipHeader": "X-Forwarded-For" },
+    "ratelimit": { "max": 30, "duration": 5000 },
+    "cors": { "origins": ["https://example.com"] },
+    "filtering": { "blockNonBrowserUA": true, "requiredHeaders": ["accept-language"] },
+    "assets": { "enabled": true },
+    "analytics": { "retentionDays": 30, "ipMode": "truncate", "logChallenges": true }
+  }
+}
+```
+
+With Docker Compose, mount the file and set the variable in `.env`:
+
+```yaml
+services:
+  cap:
+    volumes:
+      - ./cap.config.json:/etc/cap/config.json:ro
+```
+
+```sh
+CAP_CONFIG=/etc/cap/config.json
+```
+
+Cap applies the file every time it starts. Each section you include is read-only in the dashboard and the API, which returns `409` if you try to change it, so the file stays the one place it's set. Sections you leave out stay editable in the dashboard, so you can manage some settings in the file and the rest by hand. A field you leave out of a section gets its default, the same as in the API. If you remove a section from the file, it keeps its last value and becomes editable again.
+
+| Section | Fields | Dashboard |
+| --- | --- | --- |
+| `headers` | `ipHeader`, `countryHeader`, `asnHeader` | Visitor location > Your proxy or CDN |
+| `ratelimit` | `max` (1 to 10,000), `duration` in milliseconds (1,000 to 3,600,000) | Default protection > Challenges per visitor |
+| `cors` | `origins`, a list of websites, or `null` to allow any | Default protection > Only allow my websites |
+| `filtering` | `blockNonBrowserUA`, `requiredHeaders` | Default protection > Block scripts, Block requests that don't look like a browser |
+| `assets` | `enabled`, `widget` and `wasm` versions such as `0.1.58` | Widget files |
+| `analytics` | `retentionDays` (1 to 3,650), `ipMode` (`full`, `truncate` or `none`), `logChallenges` | Storage |
+
+Cap won't start if the file has a mistake, such as an unknown section or field or a value out of range, and logs which field is wrong. `GET /server/settings/managed` lists the sections the file sets. Site keys can't be set from the file yet.
+
+When you run several Cap containers, give them all the same file. Each one writes the file's values to Valkey when it starts, so the last container to start wins if the files differ.
 
 ## Client IPs behind a proxy
 

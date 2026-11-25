@@ -18,6 +18,11 @@ import {
 import { authBeforeHandle } from "./auth.js";
 import { invalidateKeyCache, resolveProtocol } from "./cap.js";
 import {
+  managedSettings,
+  saveSection,
+  sectionRoute,
+} from "./managed-config.js";
+import {
   legacyGeoStats,
   legacyKeyStats,
   solvesByKey,
@@ -46,13 +51,7 @@ import {
 } from "./proxy-auth.js";
 import { openSecret, sealSecret } from "./secret-box.js";
 import { hashSecret, isCurrentHash } from "./secret-hash.js";
-import {
-  invalidateCorsCache,
-  setCorsDefault,
-  setFiltering,
-  setHeaders,
-  setRatelimit,
-} from "./settings-cache.js";
+import { invalidateCorsCache } from "./settings-cache.js";
 import {
   createShare,
   deleteSharesForKey,
@@ -911,27 +910,7 @@ export const server = new Elysia({
     },
     { detail: { tags: ["Settings"] } },
   )
-  .put(
-    "/settings/headers",
-    async ({ body }) => {
-      const newSettings = {
-        ipHeader: body.ipHeader || "",
-        countryHeader: body.countryHeader || "",
-        asnHeader: body.asnHeader || "",
-      };
-      await db.set("settings:headers", JSON.stringify(newSettings));
-      setHeaders(newSettings);
-      return { success: true };
-    },
-    {
-      body: t.Object({
-        ipHeader: t.Optional(t.String()),
-        countryHeader: t.Optional(t.String()),
-        asnHeader: t.Optional(t.String()),
-      }),
-      detail: { tags: ["Settings"] },
-    },
-  )
+  .put("/settings/headers", saveSection("headers"), sectionRoute("headers"))
   .get(
     "/settings/proxy-auth",
     async ({ request }) => {
@@ -1030,22 +1009,8 @@ export const server = new Elysia({
   )
   .put(
     "/settings/ratelimit",
-    async ({ body }) => {
-      const newSettings = {
-        max: body.max ?? 30,
-        duration: body.duration ?? 5000,
-      };
-      await db.set("settings:ratelimit", JSON.stringify(newSettings));
-      setRatelimit(newSettings);
-      return { success: true };
-    },
-    {
-      body: t.Object({
-        max: t.Optional(t.Number({ minimum: 1, maximum: 10000 })),
-        duration: t.Optional(t.Number({ minimum: 1000, maximum: 3600000 })),
-      }),
-      detail: { tags: ["Settings"] },
-    },
+    saveSection("ratelimit"),
+    sectionRoute("ratelimit"),
   )
   .get(
     "/settings/cors",
@@ -1060,24 +1025,7 @@ export const server = new Elysia({
     },
     { detail: { tags: ["Settings"] } },
   )
-  .put(
-    "/settings/cors",
-    async ({ body }) => {
-      const newSettings = {
-        origins: body.origins ?? null,
-      };
-      await db.set("settings:cors", JSON.stringify(newSettings));
-      setCorsDefault(newSettings);
-      invalidateCorsCache();
-      return { success: true };
-    },
-    {
-      body: t.Object({
-        origins: t.Union([t.Array(t.String()), t.Null()]),
-      }),
-      detail: { tags: ["Settings"] },
-    },
-  )
+  .put("/settings/cors", saveSection("cors"), sectionRoute("cors"))
   .get(
     "/settings/filtering",
     async () => {
@@ -1093,22 +1041,8 @@ export const server = new Elysia({
   )
   .put(
     "/settings/filtering",
-    async ({ body }) => {
-      const newSettings = {
-        blockNonBrowserUA: body.blockNonBrowserUA ?? false,
-        requiredHeaders: body.requiredHeaders ?? [],
-      };
-      await db.set("settings:filtering", JSON.stringify(newSettings));
-      setFiltering(newSettings);
-      return { success: true };
-    },
-    {
-      body: t.Object({
-        blockNonBrowserUA: t.Optional(t.Boolean()),
-        requiredHeaders: t.Optional(t.Array(t.String())),
-      }),
-      detail: { tags: ["Settings"] },
-    },
+    saveSection("filtering"),
+    sectionRoute("filtering"),
   )
   .get(
     "/settings/ipdb",
@@ -1192,15 +1126,15 @@ export const server = new Elysia({
       }
       return { success: true, status: await assetStatus() };
     },
-    {
-      body: t.Object({
-        enabled: t.Optional(t.Boolean()),
-        widget: t.Optional(t.String({ maxLength: 40 })),
-        wasm: t.Optional(t.String({ maxLength: 40 })),
-      }),
-      detail: { tags: ["Settings"] },
-    },
+    sectionRoute("assets"),
   )
+  .get("/settings/managed", () => managedSettings(), {
+    detail: {
+      tags: ["Settings"],
+      description:
+        "Instance settings sections set by the config file (CAP_CONFIG or CAP_CONFIG_JSON). They can't be changed through the API.",
+    },
+  })
   .post(
     "/settings/assets/refresh",
     async () => {

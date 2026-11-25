@@ -13,6 +13,7 @@ export const app = $state({
     cors: null,
     filtering: null,
     ipdb: null,
+    managed: [],
   },
   eventsPreset: null,
   createKeyOpen: false,
@@ -99,11 +100,12 @@ export async function loadKey(siteKey, duration) {
 }
 
 export async function refreshSettings() {
-  const [headers, ratelimit, cors, filtering, ipdb] = await Promise.all(
-    ["headers", "ratelimit", "cors", "filtering", "ipdb"].map((s) =>
-      api("GET", `/settings/${s}`),
-    ),
-  );
+  const [headers, ratelimit, cors, filtering, ipdb, managed] =
+    await Promise.all(
+      ["headers", "ratelimit", "cors", "filtering", "ipdb", "managed"].map(
+        (s) => api("GET", `/settings/${s}`),
+      ),
+    );
   const ok = (r) => (r?.error ? null : r);
   app.settings = {
     headers: ok(headers),
@@ -111,8 +113,13 @@ export async function refreshSettings() {
     cors: ok(cors),
     filtering: ok(filtering),
     ipdb: ok(ipdb),
+    managed: ok(managed)?.sections ?? [],
   };
 }
+
+// Instance settings sections set by the server's config file (CAP_CONFIG).
+// The API refuses to change them, so the dashboard shows them read-only.
+export const isManaged = (section) => app.settings.managed.includes(section);
 
 export async function init() {
   if (!hasAuth()) {

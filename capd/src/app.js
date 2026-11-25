@@ -11,6 +11,7 @@ import { capServer } from "./cap.js";
 import { initEvents } from "./events/index.js";
 import { migrateOldHashes } from "./hash-migration.js";
 import { healthServer } from "./health.js";
+import { applyManagedConfig } from "./managed-config.js";
 import { migrateLegacyBlocks } from "./policy/rules.js";
 import { startWebhooks } from "./policy/webhooks.js";
 import { policyRoutes } from "./policy-routes.js";
@@ -27,6 +28,7 @@ import { shareServer } from "./share.js";
 import { siteverifyServer } from "./siteverify.js";
 
 export async function startup() {
+  await applyManagedConfig();
   await initEvents();
   await migrateLegacyBlocks().catch((e) =>
     console.warn("[cap] blocklist migration:", e.message),
