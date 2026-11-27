@@ -8,6 +8,7 @@ import { db } from "#db";
 import { authBeforeHandle } from "./auth.js";
 import {
   eventDetail,
+  expandRange,
   insights,
   listEvents,
   overview,
@@ -43,17 +44,25 @@ import {
   SIGNAL_GROUPS,
   SIGNED_AGENTS,
 } from "./policy/signals.js";
+import { WEBHOOK_SERVICES } from "./policy/webhook-services.js";
 import {
   deliver,
   deliveryLog,
   getWebhooks,
+  INSTANCE,
+  INSTANCE_TRIGGERS,
   newWebhookId,
   newWebhookSecret,
   publicWebhook,
+  resendEvent,
   saveWebhooks,
+  testPayload,
   validateWebhook,
+  WEBHOOK_DIGESTS,
+  WEBHOOK_MIN_COUNTS,
   WEBHOOK_TRIGGERS,
 } from "./policy/webhooks.js";
+import { settingsSchemas } from "./settings-schemas.js";
 
 const keyExists = async (siteKey) => !!(await db.exists(`key:${siteKey}`));
 
@@ -79,6 +88,8 @@ const rangeQuery = t.Object({
       t.Literal("7d"),
       t.Literal("30d"),
       t.Literal("90d"),
+      t.Literal("1y"),
+      t.Literal("all"),
     ]),
   ),
   from: t.Optional(t.Numeric()),
@@ -90,10 +101,8 @@ const rangeQuery = t.Object({
   cursor: t.Optional(t.String({ maxLength: 80 })),
 });
 
-const queryOpts = (query) => ({
-  range: query.range,
-  from: query.from,
-  to: query.to,
+const queryOpts = async (siteKey, query) => ({
+  ...(await expandRange(siteKey, query)),
   filters: parseFilters(query.f),
   q: query.q?.trim() || undefined,
 });
@@ -105,6 +114,152 @@ const itemSchema = t.Object({
   note: t.Optional(t.String({ maxLength: 200 })),
 });
 
+const keyScope = async ({ siteKey }) =>
+  (await keyExists(siteKey)) ? siteKey : null;
+
+const webhookRoutes = (base, scopeOf, tag) => (app) =>
+  app
+    .get(
+      base,
+      async ({ params, set }) => {
+        const scope = await scopeOf(params);
+        if (!scope) return notFound(set);
+        return (await getWebhooks(scope)).map(publicWebhook);
+      },
+      { beforeHandle: unscopedOnly, detail: { tags: [tag] } },
+    )
+    .post(
+      base,
+      async ({ params, body, set }) => {
+        const scope = await scopeOf(params);
+        if (!scope) return notFound(set);
+        const { hook, error, field } = validateWebhook(body, null, scope);
+        if (error) {
+          set.status = 400;
+          return { success: false, error, field };
+        }
+        const hooks = await getWebhooks(scope);
+        const secret = newWebhookSecret();
+        const created = {
+          ...hook,
+          id: newWebhookId(),
+          secret,
+          created: Date.now(),
+        };
+        if (!(await saveWebhooks(scope, [...hooks, created]))) {
+          set.status = 400;
+          return {
+            success: false,
+            error: "You can add at most 10 webhooks here",
+          };
+        }
+        return {
+          success: true,
+          webhook: publicWebhook(created),
+          ...(hook.service === "generic" && { secret }),
+        };
+      },
+      {
+        body: t.Any(),
+        beforeHandle: unscopedOnly,
+        detail: { tags: [tag] },
+      },
+    )
+    .put(
+      `${base}/:id`,
+      async ({ params, body, set }) => {
+        const scope = await scopeOf(params);
+        if (!scope) return notFound(set);
+        const hooks = await getWebhooks(scope);
+        const current = hooks.find((h) => h.id === params.id);
+        if (!current) return notFound(set, "Webhook");
+        const { hook, error, field } = validateWebhook(
+          { ...current, ...body },
+          current,
+          scope,
+        );
+        if (error) {
+          set.status = 400;
+          return { success: false, error, field };
+        }
+        const { paused, ...rest } = current;
+        const next = {
+          ...rest,
+          ...hook,
+          ...(!hook.enabled && paused && { paused }),
+        };
+        if (next.service !== "generic") delete next.headers;
+        else delete next.config;
+        await saveWebhooks(
+          scope,
+          hooks.map((h) => (h.id === params.id ? next : h)),
+        );
+        return { success: true, webhook: publicWebhook(next) };
+      },
+      {
+        body: t.Any(),
+        beforeHandle: unscopedOnly,
+        detail: { tags: [tag] },
+      },
+    )
+    .delete(
+      `${base}/:id`,
+      async ({ params, set }) => {
+        const scope = await scopeOf(params);
+        if (!scope) return notFound(set);
+        const hooks = await getWebhooks(scope);
+        if (!hooks.some((h) => h.id === params.id))
+          return notFound(set, "Webhook");
+        await saveWebhooks(
+          scope,
+          hooks.filter((h) => h.id !== params.id),
+        );
+        await db.del(`webhook:${params.id}:log`);
+        return { success: true };
+      },
+      { beforeHandle: unscopedOnly, detail: { tags: [tag] } },
+    )
+    .post(
+      `${base}/:id/test`,
+      async ({ params, set }) => {
+        const scope = await scopeOf(params);
+        const hook =
+          scope && (await getWebhooks(scope)).find((h) => h.id === params.id);
+        if (!hook) return notFound(set, "Webhook");
+        return deliver(hook, testPayload(scope, hook));
+      },
+      { beforeHandle: unscopedOnly, detail: { tags: [tag] } },
+    )
+    .post(
+      `${base}/:id/rotate`,
+      async ({ params, set }) => {
+        const scope = await scopeOf(params);
+        if (!scope) return notFound(set);
+        const hooks = await getWebhooks(scope);
+        const current = hooks.find((h) => h.id === params.id);
+        if (!current) return notFound(set, "Webhook");
+        const secret = newWebhookSecret();
+        const next = { ...current, secret };
+        await saveWebhooks(
+          scope,
+          hooks.map((h) => (h.id === params.id ? next : h)),
+        );
+        return { success: true, webhook: publicWebhook(next), secret };
+      },
+      { beforeHandle: unscopedOnly, detail: { tags: [tag] } },
+    )
+    .get(
+      `${base}/:id/deliveries`,
+      async ({ params, set }) => {
+        const scope = await scopeOf(params);
+        const hook =
+          scope && (await getWebhooks(scope)).find((h) => h.id === params.id);
+        if (!hook) return notFound(set, "Webhook");
+        return deliveryLog(params.id);
+      },
+      { beforeHandle: unscopedOnly, detail: { tags: [tag] } },
+    );
+
 export const policyRoutes = new Elysia({
   prefix: "/server",
   detail: { security: [{ apiKey: [] }] },
@@ -115,7 +270,7 @@ export const policyRoutes = new Elysia({
     "/keys/:siteKey/analytics",
     async ({ params, query, set }) => {
       if (!(await keyExists(params.siteKey))) return notFound(set);
-      return overview(params.siteKey, queryOpts(query));
+      return overview(params.siteKey, await queryOpts(params.siteKey, query));
     },
     { query: rangeQuery, detail: { tags: ["Analytics"] } },
   )
@@ -123,7 +278,7 @@ export const policyRoutes = new Elysia({
     "/keys/:siteKey/analytics/insights",
     async ({ params, query, set }) => {
       if (!(await keyExists(params.siteKey))) return notFound(set);
-      return insights(params.siteKey, queryOpts(query));
+      return insights(params.siteKey, await queryOpts(params.siteKey, query));
     },
     { query: rangeQuery, detail: { tags: ["Analytics"] } },
   )
@@ -132,7 +287,7 @@ export const policyRoutes = new Elysia({
     async ({ params, query, set }) => {
       if (!(await keyExists(params.siteKey))) return notFound(set);
       return topDimensions(params.siteKey, {
-        ...queryOpts(query),
+        ...(await queryOpts(params.siteKey, query)),
         dims: (
           query.dims ?? "country,asn_org,flag,agent,reason,browser,os"
         ).split(","),
@@ -146,7 +301,7 @@ export const policyRoutes = new Elysia({
     async ({ params, query, set }) => {
       if (!(await keyExists(params.siteKey))) return notFound(set);
       return listEvents(params.siteKey, {
-        ...queryOpts(query),
+        ...(await queryOpts(params.siteKey, query)),
         cursor: query.cursor,
         limit: Number(query.limit) || 50,
       });
@@ -220,6 +375,12 @@ export const policyRoutes = new Elysia({
       },
       listKinds: ENTRY_KINDS,
       webhookTriggers: WEBHOOK_TRIGGERS,
+      webhookInstanceTriggers: INSTANCE_TRIGGERS,
+      webhookDigests: WEBHOOK_DIGESTS,
+      webhookMinCounts: WEBHOOK_MIN_COUNTS,
+      webhookServices: Object.entries(WEBHOOK_SERVICES).map(
+        ([id, { name, blurb, fields }]) => ({ id, name, blurb, fields }),
+      ),
     }),
     { detail: { tags: ["Rules"] } },
   )
@@ -311,116 +472,31 @@ export const policyRoutes = new Elysia({
       detail: { tags: ["Lists"] },
     },
   )
-  .get(
-    "/keys/:siteKey/webhooks",
-    async ({ params, set }) => {
-      if (!(await keyExists(params.siteKey))) return notFound(set);
-      return (await getWebhooks(params.siteKey)).map(publicWebhook);
-    },
-    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
-  )
+  .use(webhookRoutes("/keys/:siteKey/webhooks", keyScope, "Webhooks"))
   .post(
-    "/keys/:siteKey/webhooks",
+    "/keys/:siteKey/webhooks/:id/resend",
     async ({ params, body, set }) => {
-      if (!(await keyExists(params.siteKey))) return notFound(set);
-      const { hook, error } = validateWebhook(body);
-      if (error) {
-        set.status = 400;
-        return { success: false, error };
+      const scope = await keyScope(params);
+      const hook =
+        scope && (await getWebhooks(scope)).find((h) => h.id === params.id);
+      if (!hook) return notFound(set, "Webhook");
+      const sent = await resendEvent(scope, hook, String(body?.event ?? ""));
+      if (!sent) {
+        set.status = 404;
+        return {
+          success: false,
+          error: "Cap doesn't have this event anymore, so it can't resend it",
+        };
       }
-      const hooks = await getWebhooks(params.siteKey);
-      const secret = newWebhookSecret();
-      const created = {
-        ...hook,
-        id: newWebhookId(),
-        secret,
-        created: Date.now(),
-      };
-      if (!(await saveWebhooks(params.siteKey, [...hooks, created]))) {
-        set.status = 400;
-        return { success: false, error: "A key can have at most 10 webhooks" };
-      }
-      return { success: true, webhook: publicWebhook(created), secret };
+      return { success: sent.ok, ...sent };
     },
     {
-      body: t.Any(),
+      body: t.Object({ event: t.String({ maxLength: 64 }) }),
       beforeHandle: unscopedOnly,
       detail: { tags: ["Webhooks"] },
     },
   )
-  .put(
-    "/keys/:siteKey/webhooks/:id",
-    async ({ params, body, set }) => {
-      const hooks = await getWebhooks(params.siteKey);
-      const current = hooks.find((h) => h.id === params.id);
-      if (!current) return notFound(set, "Webhook");
-      const { hook, error } = validateWebhook({ ...current, ...body });
-      if (error) {
-        set.status = 400;
-        return { success: false, error };
-      }
-      const next = { ...current, ...hook };
-      await saveWebhooks(
-        params.siteKey,
-        hooks.map((h) => (h.id === params.id ? next : h)),
-      );
-      return { success: true, webhook: publicWebhook(next) };
-    },
-    {
-      body: t.Any(),
-      beforeHandle: unscopedOnly,
-      detail: { tags: ["Webhooks"] },
-    },
-  )
-  .delete(
-    "/keys/:siteKey/webhooks/:id",
-    async ({ params, set }) => {
-      const hooks = await getWebhooks(params.siteKey);
-      if (!hooks.some((h) => h.id === params.id))
-        return notFound(set, "Webhook");
-      await saveWebhooks(
-        params.siteKey,
-        hooks.filter((h) => h.id !== params.id),
-      );
-      await db.del(`webhook:${params.id}:log`);
-      return { success: true };
-    },
-    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
-  )
-  .post(
-    "/keys/:siteKey/webhooks/:id/test",
-    async ({ params, set }) => {
-      const hook = (await getWebhooks(params.siteKey)).find(
-        (h) => h.id === params.id,
-      );
-      if (!hook) return notFound(set, "Webhook");
-      return deliver(hook, {
-        type: "cap.test",
-        site_key: params.siteKey,
-        event: {
-          id: "test",
-          ts: Date.now(),
-          site_key: params.siteKey,
-          type: "redeem",
-          outcome: "block",
-          reason: "rule:test",
-          flags: ["bh_linear_path"],
-        },
-      });
-    },
-    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
-  )
-  .get(
-    "/keys/:siteKey/webhooks/:id/deliveries",
-    async ({ params, set }) => {
-      const hook = (await getWebhooks(params.siteKey)).find(
-        (h) => h.id === params.id,
-      );
-      if (!hook) return notFound(set, "Webhook");
-      return deliveryLog(params.id);
-    },
-    { beforeHandle: unscopedOnly, detail: { tags: ["Webhooks"] } },
-  )
+  .use(webhookRoutes("/settings/webhooks", () => INSTANCE, "Instance webhooks"))
   .get(
     "/settings/analytics",
     async () => ({
@@ -437,17 +513,7 @@ export const policyRoutes = new Elysia({
       return res;
     },
     {
-      body: t.Object({
-        retentionDays: t.Optional(t.Number({ minimum: 1, maximum: 3650 })),
-        ipMode: t.Optional(
-          t.Union([
-            t.Literal("full"),
-            t.Literal("truncate"),
-            t.Literal("none"),
-          ]),
-        ),
-        logChallenges: t.Optional(t.Boolean()),
-      }),
+      body: settingsSchemas.analytics,
       detail: { tags: ["Settings"] },
     },
   );

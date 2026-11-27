@@ -153,7 +153,7 @@ export const CATALOG = {
   ],
   "POST /server/keys/:siteKey/webhooks": [
     "create_webhook",
-    "Create a webhook. The response holds its signing secret, shown only once.",
+    "Create a webhook. Set service to generic for signed JSON to your own URL, or to a service like discord, slack, telegram or ntfy with its config fields. GET /server/policy/catalog lists the services and their fields. triggers takes the ids in webhookTriggers from the catalog, and filters narrows them: rules, flags, agents and reasons take lists of ids, score takes 0.05 to 1, countries with exceptCountries limits by country. Set digest to a number of seconds to group events into one message, and min to skip summaries with fewer events. For generic webhooks the response holds the signing secret, shown only once.",
   ],
   "PUT /server/keys/:siteKey/webhooks/:id": [
     "update_webhook",
@@ -167,9 +167,45 @@ export const CATALOG = {
     "test_webhook",
     "Send a test delivery to a webhook.",
   ],
+  "POST /server/keys/:siteKey/webhooks/:id/rotate": [
+    "rotate_webhook_secret",
+    "Give a generic webhook a new signing secret. The response holds it, shown only once.",
+  ],
+  "POST /server/keys/:siteKey/webhooks/:id/resend": [
+    "resend_webhook_event",
+    "Send a stored event to a webhook again, by event ID.",
+  ],
   "GET /server/keys/:siteKey/webhooks/:id/deliveries": [
     "list_webhook_deliveries",
     "List a webhook's recent deliveries and their responses.",
+  ],
+  "GET /server/settings/webhooks": [
+    "list_server_webhooks",
+    "List server webhooks, which post about sign-ins, changes and updates instead of traffic.",
+  ],
+  "POST /server/settings/webhooks": [
+    "create_server_webhook",
+    "Create a server webhook. Takes the same body as create_webhook, with triggers from webhookInstanceTriggers in the catalog. digest and filters are ignored.",
+  ],
+  "PUT /server/settings/webhooks/:id": [
+    "update_server_webhook",
+    "Change a server webhook. Pass only the fields to change.",
+  ],
+  "DELETE /server/settings/webhooks/:id": [
+    "delete_server_webhook",
+    "Delete a server webhook.",
+  ],
+  "POST /server/settings/webhooks/:id/test": [
+    "test_server_webhook",
+    "Send a test delivery to a server webhook.",
+  ],
+  "POST /server/settings/webhooks/:id/rotate": [
+    "rotate_server_webhook_secret",
+    "Give a generic server webhook a new signing secret. The response holds it, shown only once.",
+  ],
+  "GET /server/settings/webhooks/:id/deliveries": [
+    "list_server_webhook_deliveries",
+    "List a server webhook's recent deliveries and their responses.",
   ],
   "GET /server/settings/sessions": [
     "list_sessions",
@@ -301,7 +337,7 @@ const QUERY = {
   to: "End as a Unix time in milliseconds, instead of range",
   f: "Filters as field:value, for example outcome:blocked or country:US",
   q: "Free-text search over IP, user agent and reason",
-  dims: "Comma-separated dimensions: country, asn_org, flag, agent, reason, browser, os",
+  dims: "Comma-separated dimensions: country, city, asn_org, flag, agent, reason, browser, os",
   limit: "How many rows to return",
   cursor: "Cursor from the previous page",
   chartDuration:
@@ -489,7 +525,7 @@ export function apiDocs(app, base) {
 }
 
 const INSTRUCTIONS =
-  "These tools manage this capd server: site keys, their settings and secrets, analytics, events, rules, shared lists, webhooks, API keys and instance settings. Site keys are short hex IDs, so call list_site_keys first. Ask before deleting anything or rotating secrets.";
+  "These tools manage this capd server: site keys, their settings and secrets, analytics, events, rules, shared lists, webhooks, API keys and instance settings. Site keys are short hex IDs, so call list_site_keys first. Ask before deleting anything or rotating secrets. If you need to know how a setting, rule field, signal or error code behaves and the tool descriptions don't say, clone the source with `git clone --depth 1 https://github.com/tiagozip/cap` and search capd/src and core/src with rg instead of guessing. The code is always current.";
 
 const ok = (id, result) => ({ jsonrpc: "2.0", id, result });
 const fail = (id, code, message) => ({

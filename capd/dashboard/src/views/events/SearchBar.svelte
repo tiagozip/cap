@@ -31,6 +31,7 @@ const FIELDS = [
   ["outcome", "pass, flagged, fail, block or limit"],
   ["ip", "203.0.113.7"],
   ["country", "Two-letter code, like US"],
+  ["city", "City name, like Lisbon"],
   ["asn_org", "Network name, like Hetzner"],
   ["asn", "Network number, like 24940"],
   ["browser", "Chrome, Safari, Firefox"],

@@ -1,6 +1,8 @@
 <script>
 import {
+  Button,
   CodeBlock,
+  Dialog as ConfirmDialog,
   Icon,
   Select,
   Switch,
@@ -14,6 +16,7 @@ import {
 } from "../../components/ui/index.js";
 import { api } from "../../lib/api.js";
 import { ago, until } from "../../lib/format.js";
+import { app, navigate } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
 import Health from "../../polish/settings-c/Health.svelte";
 import { highlight } from "../integration/highlight.js";
@@ -32,6 +35,10 @@ let open = $state(false);
 let saving = $state(false);
 let details = $state(false);
 let interval = $state("daily");
+let choice = $state("daily");
+let never = $state(false);
+let slide = $state(0);
+let stopped = false;
 
 const loadNotices = () =>
   api("GET", "/settings/updates").then((r) => {
@@ -42,6 +49,7 @@ api("GET", "/settings/update-check").then((r) => {
   if (!r?.report) return;
   status = r;
   interval = r.interval ?? "daily";
+  choice = r.enabled ? interval : "never";
 });
 loadNotices();
 
@@ -81,12 +89,78 @@ const save = async (body) => {
   if (!r?.success) {
     status = { ...status };
     interval = status.interval ?? "daily";
+    choice = status.enabled ? interval : "never";
     toast(r?.error || "Couldn't save the setting", "error");
     return;
   }
   status = r;
   interval = r.interval ?? interval;
+  choice = r.enabled ? interval : "never";
   setTimeout(loadNotices, 1500);
+};
+
+const pick = () => {
+  if (choice === "never") {
+    slide = 0;
+    stopped = false;
+    never = true;
+    return;
+  }
+  interval = choice;
+  save(status.enabled ? { interval } : { enabled: true, interval });
+};
+
+let noticeHooks = $state(null);
+
+$effect(() => {
+  if (!open) return;
+  api("GET", "/settings/webhooks").then((h) => {
+    noticeHooks = Array.isArray(h)
+      ? h.filter(
+          (x) =>
+            x.enabled &&
+            x.triggers.some((t) => t === "update" || t === "security"),
+        ).length
+      : null;
+  });
+});
+
+const createHook = () => {
+  open = false;
+  if (!noticeHooks)
+    app.webhookPreset = { scope: "instance", triggers: ["update", "security"] };
+  navigate({ view: "settings", section: "webhooks" });
+};
+
+const keepChecking = () => {
+  never = false;
+  choice = status.enabled ? interval : "never";
+};
+
+const springBack = () => {
+  const from = slide;
+  if (!from) return;
+  if (!matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+    slide = 0;
+    return;
+  }
+  const start = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - start) / 280);
+    slide = Math.round(from * (1 - p) ** 3);
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+};
+
+const release = () => {
+  if (slide < 95) {
+    springBack();
+    return;
+  }
+  stopped = true;
+  never = false;
+  save({ enabled: false });
 };
 </script>
 
@@ -179,30 +253,41 @@ const save = async (body) => {
           </ul>
         {/if}
 
-        <div class="flex flex-col gap-3 border-t border-border pt-5">
-          <div class="flex items-center justify-between gap-4">
-            <label for="update-check" class="text-sm font-medium">Check for updates and security notices</label>
-            <Switch
-              id="update-check"
-              checked={status.enabled}
-              disabled={saving || status.lockedByEnv}
-              onchange={(enabled) => save({ enabled })}
-            />
-          </div>
-          {#if status.lockedByEnv}
-            <p class="text-sm text-pretty text-muted-foreground">Turned off by CAP_UPDATE_CHECK in this server's environment.</p>
-          {/if}
-          <div class="flex items-center justify-between gap-4">
-            <label for="usage-interval" class="text-sm font-medium {status.enabled ? '' : 'text-muted-foreground'}">How often</label>
+        <div class="flex flex-col gap-4 border-t border-border pt-5">
+          <div class="flex min-h-8 items-center justify-between gap-4">
+            <label for="usage-interval" class="text-sm font-medium">How often</label>
             <Select
               id="usage-interval"
               size="sm"
               class="w-36"
-              options={INTERVALS.map(([v, l]) => [v, l])}
-              bind:value={interval}
-              disabled={saving || !status.enabled}
-              onchange={() => save({ interval })}
+              options={[...INTERVALS.map(([v, l]) => [v, l]), ["never", "Never"]]}
+              bind:value={choice}
+              disabled={saving || status.lockedByEnv}
+              onchange={pick}
             />
+          </div>
+          {#if status.lockedByEnv}
+            <p class="-mt-2 text-sm text-pretty text-muted-foreground">Turned off by CAP_UPDATE_CHECK in this server's environment.</p>
+          {/if}
+          <div class="flex min-h-8 items-center justify-between gap-4">
+            <label for="update-sidebar" class="text-sm font-medium {status.enabled ? '' : 'text-muted-foreground'}">Show pending updates and<br class="max-sm:hidden" /> security notices in the sidebar</label>
+            <span class="flex w-36 shrink-0 justify-end">
+              <Switch
+                id="update-sidebar"
+                checked={status.sidebar}
+                disabled={saving || !status.enabled}
+                onchange={(sidebar) => save({ sidebar })}
+              />
+            </span>
+          </div>
+          <div class="flex min-h-8 items-center justify-between gap-4">
+            <span class="text-sm font-medium {status.enabled ? '' : 'text-muted-foreground'}">
+              {noticeHooks ? `Also sent to ${noticeHooks} ${noticeHooks === 1 ? "webhook" : "webhooks"}` : "Send them to a webhook too"}
+            </span>
+            <Button size="sm" class="w-36 shrink-0" disabled={!status.enabled} onclick={createHook}>
+              {#if !noticeHooks}<Icon name="plus" size={14} />{/if}
+              {noticeHooks ? "Manage webhooks" : "Add webhook"}
+            </Button>
           </div>
         </div>
 
@@ -226,9 +311,82 @@ const save = async (body) => {
       </div>
     </DialogContent>
   </Dialog>
+
+  <ConfirmDialog
+    bind:open={never}
+    title="Stop checking for security fixes?"
+    dim
+    onclose={() => !stopped && keepChecking()}
+  >
+    <ul class="flex flex-col gap-4 pt-1">
+      {#each [["shield", "You won't hear about security holes", "If a flaw lets bots past your captcha or into this dashboard, capd stays silent about it."], ["bot", "Bots keep getting smarter", "New solvers and scrapers appear all the time. Fixes for them only reach servers that update."], ["clock", "Nothing will remind you", "This server stays on its current version until someone checks by hand."]] as [icon, head, body] (icon)}
+        <li class="flex gap-3">
+          <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-destructive/12 text-destructive" aria-hidden="true"><Icon name={icon} size={16} /></span>
+          <span class="flex flex-col gap-0.5">
+            <span class="text-sm font-medium text-foreground">{head}</span>
+            <span class="text-sm text-pretty text-muted-foreground">{body}</span>
+          </span>
+        </li>
+      {/each}
+    </ul>
+    <p class="text-[13px] text-pretty text-muted-foreground">Checks send no IPs, hostnames, keys or visitor data.</p>
+    {#snippet footer()}
+      <div class="flex w-full flex-col gap-3">
+        <Button variant="primary" class="w-full" onclick={keepChecking}>Keep checking for updates</Button>
+        <div class="slide relative h-9 overflow-hidden rounded-lg ring-1 ring-destructive/25 ring-inset" style:--slide={slide / 100}>
+          <div class="slide-fill pointer-events-none absolute inset-y-[3px] start-[3px] rounded-[7px] bg-destructive/15"></div>
+          <span class="pointer-events-none absolute inset-0 grid place-items-center ps-9 text-sm font-medium text-destructive" style:opacity={1 - slide / 80}>Slide to stop checking</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            aria-label="Slide to the end to stop checking for updates"
+            class="slide-input absolute inset-[3px] cursor-grab appearance-none bg-transparent active:cursor-grabbing"
+            bind:value={slide}
+            onpointerup={release}
+            onkeyup={() => slide === 100 && release()}
+            onblur={() => slide < 95 && springBack()}
+          />
+          <span class="slide-arrow pointer-events-none absolute inset-y-[3px] z-10 grid w-[30px] place-items-center text-white">
+            <Icon name="right" size={16} />
+          </span>
+        </div>
+      </div>
+    {/snippet}
+  </ConfirmDialog>
 {/if}
 
 <style>
+  .slide-fill {
+    width: calc(var(--slide) * (100% - 36px) + 30px);
+  }
+
+  .slide-arrow {
+    inset-inline-start: calc(var(--slide) * (100% - 36px) + 3px);
+  }
+
+  .slide-input::-webkit-slider-thumb {
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    border-radius: calc(var(--radius-lg) - 3px);
+    background: var(--destructive);
+  }
+
+  .slide-input::-moz-range-thumb {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: calc(var(--radius-lg) - 3px);
+    background: var(--destructive);
+  }
+
+  .slide-input:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
 
 

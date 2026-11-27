@@ -370,9 +370,9 @@ describe("analytics ranges", async () => {
   if (!redisAvailable) return;
   const { resolveRange } = await import("../src/events/analytics.js");
 
-  test("clamps from to the retention window and caps buckets", () => {
+  test("caps buckets when events are kept forever", () => {
     const r = resolveRange({ from: -1e14, to: Date.now() });
-    expect(r.from).toBeGreaterThan(Date.now() - 31 * 86_400_000);
+    expect(r.from).toBeGreaterThan(Date.now() - 2000 * 7 * 86_400_000);
     expect((r.to - r.from) / r.bucket).toBeLessThanOrEqual(2000);
     const inverted = resolveRange({ from: Date.now(), to: -1e14 });
     expect(inverted.to).toBeGreaterThanOrEqual(inverted.from);

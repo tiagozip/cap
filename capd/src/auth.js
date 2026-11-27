@@ -4,6 +4,7 @@ import { db, incrWithTtl } from "#db";
 import { getClientIp, requestContext } from "./events/context.js";
 import { OLD_API_KEY_ERROR } from "./hash-migration.js";
 import { verifyAccessToken } from "./oauth-tokens.js";
+import { notifyInstance } from "./policy/webhooks.js";
 import { proxyAuthPasses, proxyAuthSettings } from "./proxy-auth.js";
 import valkeyRateLimit, { rateLimitBucket } from "./ratelimit.js";
 import {
@@ -90,11 +91,19 @@ export const auth = new Elysia({
       !timingSafeEqual(hash(admin_key), hash(ADMIN_KEY))
     ) {
       if (client) await recordLoginFailure(client);
+      const from = await signedInFrom(request, srv);
+      notifyInstance({
+        trigger: "login_failed",
+        summary: "A dashboard sign-in failed",
+        ip,
+        ua: [from.browser, from.os].filter(Boolean).join(" on "),
+        country: from.country,
+      }).catch(() => {});
       set.status = 401;
       return { success: false };
     }
 
-    return createSession(cookie, request, srv);
+    return createSession(cookie, request, srv, "Admin key");
   })
   .post("/proxy", async ({ set, cookie, request, server: srv }) => {
     const { mode } = await proxyAuthSettings();
@@ -115,7 +124,7 @@ export const auth = new Elysia({
       set.status = 401;
       return { success: false, mode };
     }
-    return createSession(cookie, request, srv);
+    return createSession(cookie, request, srv, "Sign-in proxy");
   });
 
 async function signedInFrom(request, srv) {
@@ -133,7 +142,7 @@ async function signedInFrom(request, srv) {
   }
 }
 
-async function createSession(cookie, request, srv) {
+async function createSession(cookie, request, srv, method) {
   const session_token = randomBytes(30).toString("hex");
   const created = Date.now();
   const expires = created + 30 * 24 * 60 * 60 * 1000;
@@ -147,6 +156,14 @@ async function createSession(cookie, request, srv) {
   );
   await db.expire(`session:${hashedToken}`, ttlSeconds);
   await db.sadd("sessions", hashedToken);
+  notifyInstance({
+    trigger: "login",
+    summary: "Someone signed in to the dashboard",
+    actor: { type: "dashboard", name: method },
+    ip: request && srv ? getClientIp(request, srv) : "",
+    ua: [from.browser, from.os].filter(Boolean).join(" on "),
+    country: from.country,
+  }).catch(() => {});
 
   cookie.cap_authed.set({
     value: "yes",
@@ -174,6 +191,7 @@ export const authBeforeHandle = async (ctx) => {
       };
     }
     ctx.scope = scope;
+    ctx.actor = { type: "mcp", grant: scope.grant };
     return;
   }
 
@@ -215,6 +233,7 @@ export const authBeforeHandle = async (ctx) => {
       siteKeys: fields[1] ? JSON.parse(fields[1]) : null,
       readonly: fields[2] === "true",
     };
+    ctx.actor = { type: "api", id };
     return;
   }
 
@@ -279,6 +298,7 @@ export const authBeforeHandle = async (ctx) => {
     };
   }
 
+  ctx.actor = { type: "dashboard" };
   const now = Date.now();
   const slot = Math.floor(now / SEEN_EVERY_MS);
   if (seenSlots.get(hash) !== slot) {

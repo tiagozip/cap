@@ -7,6 +7,7 @@ import {
   Select,
   Skeleton,
   Spinner,
+  Switch,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { ago, bytes } from "../../lib/format.js";
@@ -33,6 +34,7 @@ let provider = $state("dbip");
 let accountId = $state("");
 let licenseKey = $state("");
 let token = $state("");
+let cities = $state(false);
 let timer = null;
 
 const active = $derived(!!data?.mode);
@@ -53,6 +55,7 @@ const load = async () => {
   loadError = "";
   data = r;
   accountId = r.maxmindAccountId || accountId;
+  cities = !!r.cities;
   if (r.progress?.active && !timer) watch();
 };
 
@@ -81,7 +84,7 @@ load();
 
 const start = async () => {
   actionError = "";
-  const body = { mode };
+  const body = { mode, cities };
   if (mode === "maxmind") {
     body.maxmindAccountId = accountId.trim();
     body.maxmindKey = licenseKey.trim();
@@ -145,6 +148,23 @@ const remove = async () => {
   {/if}
 {/snippet}
 
+{#snippet cityRow(m)}
+  {#if m !== "ipinfo"}
+    <Row label="Look up cities" for="ipdb-cities" help="Adds the city to each event and puts city dots on the map. The city database takes 127 MB on disk and about as much memory.">
+      <Switch
+        id="ipdb-cities"
+        bind:checked={cities}
+        disabled={!!progress || starting}
+        onchange={() => {
+          if (!active) return;
+          if (data.mode === "dbip") start();
+          else updateOpen = true;
+        }}
+      />
+    </Row>
+  {/if}
+{/snippet}
+
 {#snippet status()}
   {#if actionError || serverError || loadError}
     <p class="text-sm text-destructive md:text-end" role="alert">{actionError || serverError || loadError}</p>
@@ -172,7 +192,7 @@ const remove = async () => {
       label={PROVIDERS[data.mode]?.[0] ?? data.mode}
       help={[
         data.lastUpdated && `Updated ${ago(Date.parse(data.lastUpdated))}.`,
-        data.country?.exists && `Countries ${bytes(data.country.size)}${data.loaded?.country ? "" : ", not loaded"}.`,
+        data.country?.exists && `${data.country.city ? "Cities" : "Countries"} ${bytes(data.country.size)}${data.loaded?.country ? "" : ", not loaded"}.`,
         data.asn?.exists && `Networks ${bytes(data.asn.size)}${data.loaded?.asn ? "" : ", not loaded"}.`,
       ]
         .filter(Boolean)
@@ -204,6 +224,7 @@ const remove = async () => {
         {@render status()}
       {/snippet}
     </Row>
+    {@render cityRow(data.mode)}
   {:else}
     <Row label="Location database" for="ipdb-provider" help={PROVIDERS[provider][1]}>
       <Select
@@ -222,6 +243,7 @@ const remove = async () => {
         {@render status()}
       {/snippet}
     </Row>
+    {@render cityRow(provider)}
 {/if}
 </Skeleton>
 

@@ -213,6 +213,37 @@ if (!redisAvailable) {
       expect(top.origin[0].value).toBe("shop.example");
     });
 
+    test("city dimension carries country and coordinates", async () => {
+      for (const lat of [38.7, 38.74])
+        events.recordEvent({
+          site_key: SITE_KEY,
+          type: "siteverify",
+          outcome: "pass",
+          reason: "ok",
+          country: "PT",
+          city: "Lisbon",
+          lat,
+          lon: -9.14,
+        });
+      await events.flush();
+      const top = await analytics.topDimensions(SITE_KEY, {
+        range: "1h",
+        dims: ["city"],
+      });
+      const lisbon = top.city.find((r) => r.value === "Lisbon");
+      expect(lisbon.n).toBe(2);
+      expect(lisbon.label).toBe("PT");
+      expect(lisbon.lat).toBeCloseTo(38.72, 1);
+      expect(lisbon.lon).toBeCloseTo(-9.14, 1);
+      expect(top.city.some((r) => r.value === "")).toBe(false);
+      const only = await analytics.listEvents(SITE_KEY, {
+        range: "1h",
+        filters: analytics.parseFilters(["city:Lisbon"]),
+      });
+      expect(only.events).toHaveLength(2);
+      expect(only.events.every((e) => e.city === "Lisbon")).toBe(true);
+    });
+
     test("filters and text search narrow the list", async () => {
       await fullSolve({ ip: "192.0.2.44" });
       await events.flush();
@@ -658,6 +689,265 @@ if (!redisAvailable) {
       expect(received.slice(before).filter((p) => p === "/old")).toEqual([]);
       await webhooks.saveWebhooks(SITE_KEY, []);
       await db.del("webhook:wh_retry:log");
+      delete process.env.WEBHOOK_ALLOW_PRIVATE;
+    });
+
+    test("conditions and filters pick the right events", () => {
+      const hook = (triggers, filters = {}) => {
+        const r = webhooks.validateWebhook({
+          url: "https://example.com/hook",
+          triggers,
+          filters,
+        });
+        expect(r.error).toBeUndefined();
+        return { ...r.hook, enabled: true };
+      };
+      const ev = (e) => ({
+        type: "redeem",
+        outcome: "pass",
+        flags: [],
+        country: "DE",
+        ...e,
+      });
+      const score = hook(["score"], { score: 0.6 });
+      expect(score.filters.score).toBe(0.6);
+      expect(webhooks.matches(score, ev({ score: 0.61 }))).toBe(true);
+      expect(webhooks.matches(score, ev({ score: 0.4 }))).toBe(false);
+      expect(webhooks.matches(score, ev({}))).toBe(false);
+      const rules = hook(["rule"], { rules: ["r_one"] });
+      expect(webhooks.matches(rules, ev({ rule: "r_one" }))).toBe(true);
+      expect(webhooks.matches(rules, ev({ rule: "r_two" }))).toBe(false);
+      const anyRule = hook(["rule"]);
+      expect(webhooks.matches(anyRule, ev({ rule: "r_two" }))).toBe(true);
+      const reason = hook(["reason"], { reasons: ["rate_limited"] });
+      expect(
+        webhooks.matches(
+          reason,
+          ev({ outcome: "limit", reason: "rate_limited" }),
+        ),
+      ).toBe(true);
+      expect(
+        webhooks.matches(reason, ev({ outcome: "fail", reason: "expired" })),
+      ).toBe(false);
+      const solve = hook(["solve"]);
+      expect(webhooks.matches(solve, ev({}))).toBe(true);
+      expect(webhooks.matches(solve, ev({ type: "challenge" }))).toBe(false);
+      const flagged = hook(["flagged"]);
+      expect(webhooks.matches(flagged, ev({ flags: undefined }))).toBe(false);
+      const away = hook(["all"], { countries: ["de"], exceptCountries: true });
+      expect(away.filters.countries).toEqual(["DE"]);
+      expect(webhooks.matches(away, ev({ country: "DE" }))).toBe(false);
+      expect(webhooks.matches(away, ev({ country: "US" }))).toBe(true);
+      expect(
+        webhooks.validateWebhook({
+          url: "https://example.com/hook",
+          triggers: ["score"],
+          filters: { score: 2 },
+        }).field,
+      ).toBe("score");
+    });
+
+    test("services, digests, auto-pause, resend and update notices", async () => {
+      process.env.WEBHOOK_ALLOW_PRIVATE = "true";
+      const received = [];
+      let status = 200;
+      const server = Bun.serve({
+        port: 0,
+        async fetch(req) {
+          received.push({
+            path: new URL(req.url).pathname,
+            auth: req.headers.get("x-token"),
+            body: await req.json().catch(() => null),
+          });
+          return new Response("", { status });
+        },
+      });
+      const base = `http://127.0.0.1:${server.port}`;
+      const mm = webhooks.validateWebhook({
+        service: "mattermost",
+        config: { url: `${base}/hooks/abc` },
+        triggers: ["all"],
+      });
+      expect(mm.error).toBeUndefined();
+      const generic = webhooks.validateWebhook({
+        url: `${base}/generic`,
+        headers: [{ name: "X-Token", value: "s3cret" }],
+        triggers: ["block"],
+        digest: 60,
+      });
+      expect(
+        webhooks.validateWebhook({
+          url: `${base}/g`,
+          headers: [{ name: "Host", value: "x" }],
+          triggers: ["all"],
+        }).error,
+      ).toBe("Cap sets the Host header itself");
+      const shown = webhooks.publicWebhook({
+        ...generic.hook,
+        id: "wh_g",
+        secret: "whsec_x",
+      });
+      expect(shown.headers).toEqual([{ name: "X-Token", value: "" }]);
+      const kept = webhooks.validateWebhook(
+        { ...generic.hook, headers: shown.headers },
+        generic.hook,
+      );
+      expect(kept.hook.headers[0].value).toBe("s3cret");
+      await webhooks.saveWebhooks(SITE_KEY, [
+        { ...mm.hook, id: "wh_mm", secret: "whsec_a", enabled: true },
+        {
+          ...generic.hook,
+          id: "wh_gen",
+          secret: "whsec_b",
+          enabled: true,
+          digest: 0,
+        },
+      ]);
+      expect(
+        webhooks.validateWebhook({
+          service: "gotify",
+          config: { server: base, token: "tok" },
+          triggers: ["update"],
+        }).error,
+      ).toBe("Pick at least one trigger");
+      const notices = webhooks.validateWebhook(
+        {
+          service: "gotify",
+          config: { server: base, token: "tok" },
+          triggers: ["update", "security", "login_failed", "automation"],
+          digest: 60,
+        },
+        null,
+        webhooks.INSTANCE,
+      );
+      expect(notices.hook.digest).toBe(0);
+      await webhooks.saveWebhooks(webhooks.INSTANCE, [
+        { ...notices.hook, id: "wh_up", secret: "whsec_c", enabled: true },
+      ]);
+      await fullSolve();
+      for (
+        let i = 0;
+        i < 100 && !received.some((r) => r.path === "/hooks/abc");
+        i++
+      )
+        await Bun.sleep(20);
+      const chat = received.find((r) => r.path === "/hooks/abc");
+      expect(chat.body.username).toBe("Cap");
+      expect(chat.body.text).toContain("####");
+      expect(received.some((r) => r.path === "/message")).toBe(false);
+
+      received.length = 0;
+      const sent = await webhooks.notifyUpdates({
+        current: "4.0.0",
+        latest: { version: "4.0.1", url: "https://github.com/x" },
+        advisories: [],
+      });
+      expect(sent).toBe(1);
+      const update = () => received.find((r) => r.path === "/message");
+      for (let i = 0; i < 100 && !update(); i++) await Bun.sleep(20);
+      expect(update().body.title).toBe("capd 4.0.1 is out");
+
+      received.length = 0;
+      expect(
+        await webhooks.notifyInstance({
+          trigger: "keys",
+          summary: 'Changed the rules of "Shop"',
+          actor: { type: "dashboard", name: "Dashboard" },
+        }),
+      ).toBe(0);
+      expect(
+        await webhooks.notifyInstance({
+          trigger: "keys",
+          summary: 'Changed the rules of "Shop"',
+          actor: { type: "mcp", name: "Claude" },
+        }),
+      ).toBe(1);
+      expect(
+        await webhooks.notifyInstance({
+          trigger: "login_failed",
+          summary: "A dashboard sign-in failed",
+          ip: "198.51.100.9",
+        }),
+      ).toBe(1);
+      for (let i = 0; i < 100 && received.length < 2; i++) await Bun.sleep(20);
+      expect(received.map((r) => r.body.title).sort()).toEqual([
+        "A dashboard sign-in failed",
+        'Changed the rules of "Shop"',
+      ]);
+      expect(
+        received.find((r) => r.body.title.startsWith("Changed")).body.message,
+      ).toContain("By: MCP app Claude");
+      await Bun.sleep(200);
+
+      const [eventId] = (await webhooks.deliveryLog("wh_mm"))
+        .map((d) => d.event)
+        .filter(Boolean);
+      await events.flush();
+      received.length = 0;
+      const hooks = await webhooks.getWebhooks(SITE_KEY);
+      const resent = await webhooks.resendEvent(
+        SITE_KEY,
+        hooks.find((h) => h.id === "wh_mm"),
+        eventId,
+      );
+      expect(resent.ok).toBe(true);
+      expect(received.some((r) => r.path === "/hooks/abc")).toBe(true);
+      expect(
+        await webhooks.resendEvent(
+          SITE_KEY,
+          hooks.find((h) => h.id === "wh_mm"),
+          "missing",
+        ),
+      ).toBe(null);
+
+      await webhooks.saveWebhooks(SITE_KEY, [
+        {
+          ...generic.hook,
+          id: "wh_gen",
+          secret: "whsec_b",
+          enabled: true,
+          digest: 1,
+        },
+      ]);
+      received.length = 0;
+      for (let i = 0; i < 3; i++)
+        events.recordEvent({
+          site_key: SITE_KEY,
+          type: "redeem",
+          outcome: "block",
+          reason: "rule:x",
+        });
+      await events.flush();
+      await Bun.sleep(1_300);
+      expect(received).toHaveLength(1);
+      expect(received[0].auth).toBe("s3cret");
+      expect(received[0].body.type).toBe("cap.digest");
+      expect(received[0].body.count).toBe(3);
+
+      status = 400;
+      await webhooks.saveWebhooks(SITE_KEY, [
+        { ...mm.hook, id: "wh_mm", secret: "whsec_a", enabled: true },
+      ]);
+      for (let i = 0; i < 20; i++)
+        events.recordEvent({
+          site_key: SITE_KEY,
+          type: "siteverify",
+          outcome: "fail",
+          reason: "x",
+        });
+      await events.flush();
+      let paused = null;
+      for (let i = 0; i < 100 && !paused; i++) {
+        await Bun.sleep(30);
+        paused = (await webhooks.getWebhooks(SITE_KEY))[0]?.paused;
+      }
+      expect(paused.fails).toBe(20);
+      expect((await webhooks.getWebhooks(SITE_KEY))[0].enabled).toBe(false);
+
+      server.stop(true);
+      await webhooks.saveWebhooks(SITE_KEY, []);
+      for (const id of ["wh_mm", "wh_gen", "wh_up"])
+        await db.del(`webhook:${id}:log`);
       delete process.env.WEBHOOK_ALLOW_PRIVATE;
     });
   });

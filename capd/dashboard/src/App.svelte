@@ -249,7 +249,9 @@ const grab = (e) => {
 <NotchFilter />
 
 {#if app.route.view === "oauth"}
-  {#await Consent() then { default: View }}<View id={app.route.id} />{/await}
+  {#key app.route.id}
+    {#await Consent() then { default: View }}<View id={app.route.id} />{/await}
+  {/key}
 {:else}
 <SidebarProvider class="h-dvh min-h-0 text-foreground" style="--sidebar-width: 15rem;">
   <KSidebar variant="inset" label="Main">

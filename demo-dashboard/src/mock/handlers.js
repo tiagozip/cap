@@ -1,6 +1,7 @@
 import {
   ACTIONS,
   ENTRY_KINDS,
+  INSTANCE_TRIGGERS,
   OPS,
   RULE_FIELDS,
   risk,
@@ -14,6 +15,12 @@ import {
   SIGNAL_GROUPS,
   SIGNED_AGENTS,
 } from "../../../capd/src/policy/signals.js";
+import {
+  cleanServiceConfig,
+  publicServiceConfig,
+  serviceLabel,
+  WEBHOOK_SERVICES,
+} from "../../../capd/src/policy/webhook-services.js";
 import {
   eventDetail,
   insights,
@@ -38,7 +45,7 @@ import {
 
 const fail = (error) => ({ success: false, error });
 const findKey = (sk) => state.keys.find((k) => k.siteKey === sk);
-const retention = () => state.settings.analytics.retentionDays;
+const retention = () => state.settings.analytics.retentionDays || 365;
 
 const slug = (s) =>
   String(s)
@@ -121,38 +128,117 @@ function addItems(list, items) {
   return { success: true, added, rejected };
 }
 
-const publicWebhook = ({ secret, ...hook }) => ({
-  ...hook,
-  secretHint: `${secret.slice(0, 8)}…`,
-});
+const publicWebhook = ({ secret, config, headers, ...hook }) => {
+  const service = hook.service ?? "generic";
+  const generic = service === "generic";
+  return {
+    ...hook,
+    service,
+    digest: hook.digest ?? 0,
+    label: generic
+      ? hook.url.replace(/^https?:\/\//, "")
+      : serviceLabel(service, config),
+    ...(generic
+      ? {
+          secretHint: `${secret.slice(0, 8)}…`,
+          headers: (headers ?? []).map(({ name }) => ({ name, value: "" })),
+        }
+      : publicServiceConfig(service, config)),
+  };
+};
 
-function validateWebhook(input) {
-  let parsed;
-  try {
-    parsed = new URL(String(input?.url ?? ""));
-  } catch {
-    return { error: "Enter a valid URL" };
-  }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:")
-    return { error: "Webhooks must use http or https" };
-  if (parsed.username || parsed.password)
-    return { error: "Put credentials in the webhook secret, not the URL" };
-  if (/^(localhost|127\.|10\.|192\.168\.|\[?::1)/.test(parsed.hostname))
-    return { error: "Webhooks can't point at private or local addresses" };
+const PRIVATE_HOST = /^(localhost|127\.|10\.|192\.168\.|\[?::1)/;
+
+const INSTANCE = "@instance";
+
+function validateWebhook(input, current, scope) {
+  const instance = scope === INSTANCE;
+  const service = String(input?.service ?? current?.service ?? "generic");
+  if (!WEBHOOK_SERVICES[service]) return { error: "Pick a service" };
   const triggers = (Array.isArray(input.triggers) ? input.triggers : []).filter(
-    (t) => WEBHOOK_TRIGGERS.includes(t),
+    (t) => (instance ? INSTANCE_TRIGGERS : WEBHOOK_TRIGGERS).includes(t),
   );
   if (!triggers.length) return { error: "Pick at least one trigger" };
-  return {
-    hook: {
-      url: parsed.toString(),
-      triggers: [...new Set(triggers)],
-      enabled: input.enabled !== false,
-      name: String(input.name ?? "")
-        .trim()
-        .slice(0, 60),
-    },
+  const digest = instance ? 0 : Number(input.digest ?? current?.digest ?? 0);
+  const hook = {
+    service,
+    triggers: [...new Set(triggers)],
+    enabled: input.enabled !== false,
+    name: String(input.name ?? "")
+      .trim()
+      .slice(0, 60),
+    digest,
+    min: digest ? Number(input.min ?? current?.min ?? 0) : 0,
+    filters: Object.fromEntries(
+      Object.entries(
+        instance ? {} : (input.filters ?? current?.filters ?? {}),
+      ).filter(
+        ([k, v]) =>
+          k === "exceptCountries" ||
+          (Array.isArray(v) &&
+            v.length &&
+            (k === "countries" ||
+              triggers.includes(
+                {
+                  rules: "rule",
+                  flags: "flagged",
+                  agents: "agent",
+                  reasons: "reason",
+                }[k],
+              ))),
+      ),
+    ),
   };
+  const same = current && (current.service ?? "generic") === service;
+  if (service === "generic") {
+    let parsed;
+    try {
+      parsed = new URL(String(input?.url ?? ""));
+    } catch {
+      return { error: "Enter a valid URL", field: "url" };
+    }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:")
+      return { error: "Webhooks must use http or https", field: "url" };
+    if (parsed.username || parsed.password)
+      return {
+        error: "Put credentials in a header, not the URL",
+        field: "url",
+      };
+    if (PRIVATE_HOST.test(parsed.hostname))
+      return {
+        error: "Webhooks can't point at private or local addresses",
+        field: "url",
+      };
+    const previous = same ? (current.headers ?? []) : [];
+    const headers = (input.headers ?? previous)
+      .filter((h) => h?.name || h?.value)
+      .map((h) => ({
+        name: String(h.name).trim(),
+        value:
+          String(h.value ?? "") ||
+          previous.find((p) => p.name === h.name)?.value ||
+          "",
+      }));
+    if (headers.some((h) => !h.name || !h.value))
+      return {
+        error: "Fill in each header's name and value",
+        field: "headers",
+      };
+    return { hook: { ...hook, url: parsed.toString(), headers } };
+  }
+  const merged = same
+    ? {
+        ...publicServiceConfig(service, current.config).config,
+        ...input.config,
+      }
+    : input.config;
+  const { config, error, field } = cleanServiceConfig(
+    service,
+    merged,
+    same ? current.config : {},
+  );
+  if (error) return { error, field };
+  return { hook: { ...hook, url: "", config } };
 }
 
 function deliveries(sk, hook) {
@@ -330,10 +416,14 @@ const ipdbProgress = () => {
       ? [["ipinfo-lite.mmdb", 31_204_331]]
       : [
           [
-            d.mode === "maxmind"
-              ? "GeoLite2-Country.mmdb"
-              : "dbip-country-lite.mmdb",
-            7_342_118,
+            d.cities
+              ? d.mode === "maxmind"
+                ? "GeoLite2-City.mmdb"
+                : "dbip-city-lite.mmdb"
+              : d.mode === "maxmind"
+                ? "GeoLite2-Country.mmdb"
+                : "dbip-country-lite.mmdb",
+            d.cities ? 126_873_350 : 7_342_118,
           ],
           [
             d.mode === "maxmind" ? "GeoLite2-ASN.mmdb" : "dbip-asn-lite.mmdb",
@@ -348,11 +438,12 @@ const ipdbProgress = () => {
     state.settings.ipdb = {
       ...s,
       mode: d.mode,
+      cities: !!d.cities,
       maxmindAccountId: d.maxmindAccountId ?? "",
       maxmindKey: d.maxmindKey ? `••••${d.maxmindKey.slice(-4)}` : "",
       ipinfoToken: d.ipinfoToken ? `••••${d.ipinfoToken.slice(-4)}` : "",
       lastUpdated: new Date().toISOString(),
-      country: { exists: true, size: files[0][1] },
+      country: { exists: true, city: !!d.cities, size: files[0][1] },
       asn: { exists: true, size: files.at(-1)[1] },
       loaded: { country: true, asn: true },
       error: null,
@@ -712,6 +803,7 @@ const EXPORT_COLUMNS = [
   "country",
   "asn",
   "asn_org",
+  "city",
   "ua",
   "browser",
   "os",
@@ -1462,6 +1554,12 @@ route("GET", "/policy/catalog", () => ({
   risk,
   listKinds: ENTRY_KINDS,
   webhookTriggers: WEBHOOK_TRIGGERS,
+  webhookInstanceTriggers: INSTANCE_TRIGGERS,
+  webhookDigests: [0, 60, 300, 900, 3600],
+  webhookMinCounts: [0, 5, 10, 25, 50, 100, 500],
+  webhookServices: Object.entries(WEBHOOK_SERVICES).map(
+    ([id, { name, blurb, fields }]) => ({ id, name, blurb, fields }),
+  ),
 }));
 
 route("GET", "/lists", () =>
@@ -1552,21 +1650,34 @@ route(
   }),
 );
 
-route(
-  "GET",
-  "/keys/:siteKey/webhooks",
-  withKey(({ key }) => (state.webhooks[key.siteKey] ?? []).map(publicWebhook)),
-);
+for (const [base, scopeOf] of [
+  ["/keys/:siteKey/webhooks", (ctx) => ctx.params.siteKey],
+  ["/settings/webhooks", () => INSTANCE],
+]) {
+  const known = (ctx) => scopeOf(ctx) === INSTANCE || findKey(scopeOf(ctx));
+  const withHook = (fn) => (ctx) => {
+    const scope = scopeOf(ctx);
+    const hook = (state.webhooks[scope] ?? []).find(
+      (h) => h.id === ctx.params.id,
+    );
+    if (!hook) return fail("Webhook not found");
+    return fn({ ...ctx, scope, hook });
+  };
 
-route(
-  "POST",
-  "/keys/:siteKey/webhooks",
-  withKey(({ key, body }) => {
-    const { hook, error } = validateWebhook(body);
-    if (error) return fail(error);
-    state.webhooks[key.siteKey] ??= [];
-    const hooks = state.webhooks[key.siteKey];
-    if (hooks.length >= 10) return fail("A key can have at most 10 webhooks");
+  route("GET", base, (ctx) =>
+    known(ctx)
+      ? (state.webhooks[scopeOf(ctx)] ?? []).map(publicWebhook)
+      : fail("Key not found"),
+  );
+
+  route("POST", base, (ctx) => {
+    if (!known(ctx)) return fail("Key not found");
+    const scope = scopeOf(ctx);
+    const { hook, error, field } = validateWebhook(ctx.body, null, scope);
+    if (error) return { ...fail(error), field };
+    state.webhooks[scope] ??= [];
+    const hooks = state.webhooks[scope];
+    if (hooks.length >= 10) return fail("You can add at most 10 webhooks here");
     const secret = `whsec_${newBase64Url(24)}`;
     const created = {
       ...hook,
@@ -1576,86 +1687,128 @@ route(
     };
     hooks.push(created);
     save();
-    return { success: true, webhook: publicWebhook(created), secret };
-  }),
-);
-
-const withHook = (fn) => (ctx) => {
-  const hook = (state.webhooks[ctx.params.siteKey] ?? []).find(
-    (h) => h.id === ctx.params.id,
-  );
-  if (!hook) return fail("Webhook not found");
-  return fn({ ...ctx, hook });
-};
-
-route(
-  "PUT",
-  "/keys/:siteKey/webhooks/:id",
-  withHook(({ hook, body }) => {
-    const { hook: next, error } = validateWebhook({ ...hook, ...body });
-    if (error) return fail(error);
-    Object.assign(hook, next);
-    save();
-    return { success: true, webhook: publicWebhook(hook) };
-  }),
-);
-
-route(
-  "DELETE",
-  "/keys/:siteKey/webhooks/:id",
-  withHook(({ params, hook }) => {
-    state.webhooks[params.siteKey] = state.webhooks[params.siteKey].filter(
-      (h) => h !== hook,
-    );
-    delete state.deliveries[hook.id];
-    save();
-    return { success: true };
-  }),
-);
-
-route(
-  "POST",
-  "/keys/:siteKey/webhooks/:id/test",
-  withHook(({ hook }) => {
-    const entry = {
-      at: Date.now(),
-      ms: 60 + Math.floor(Math.random() * 180),
-      status: 200,
-      ok: true,
-      error: null,
-      attempt: 0,
-      event: "test",
-      kind: "cap.test",
+    return {
+      success: true,
+      webhook: publicWebhook(created),
+      ...(hook.service === "generic" && { secret }),
     };
-    state.deliveries[hook.id] = [
-      entry,
-      ...(state.deliveries[hook.id] ?? []),
-    ].slice(0, 20);
-    save();
-    return { ok: true, status: 200, error: null };
-  }),
-);
+  });
 
-route(
-  "GET",
-  "/keys/:siteKey/webhooks/:id/deliveries",
-  withHook(({ params, hook }) => deliveries(params.siteKey, hook)),
-);
+  route(
+    "PUT",
+    `${base}/:id`,
+    withHook(({ hook, body, scope }) => {
+      const {
+        hook: next,
+        error,
+        field,
+      } = validateWebhook({ ...hook, ...body }, hook, scope);
+      if (error) return { ...fail(error), field };
+      if (next.enabled) delete hook.paused;
+      if (next.service === "generic") delete hook.config;
+      else delete hook.headers;
+      Object.assign(hook, next);
+      save();
+      return { success: true, webhook: publicWebhook(hook) };
+    }),
+  );
+
+  route(
+    "DELETE",
+    `${base}/:id`,
+    withHook(({ scope, hook }) => {
+      state.webhooks[scope] = state.webhooks[scope].filter((h) => h !== hook);
+      delete state.deliveries[hook.id];
+      save();
+      return { success: true };
+    }),
+  );
+
+  route(
+    "POST",
+    `${base}/:id/test`,
+    withHook(({ hook, scope }) => {
+      const entry = {
+        at: Date.now(),
+        ms: 60 + Math.floor(Math.random() * 180),
+        status: 200,
+        ok: true,
+        error: null,
+        attempt: 0,
+        event: "test",
+        kind: scope === INSTANCE ? "cap.instance" : "cap.test",
+      };
+      state.deliveries[hook.id] = [
+        entry,
+        ...(state.deliveries[hook.id] ?? []),
+      ].slice(0, 20);
+      save();
+      return { ok: true, status: 200, error: null };
+    }),
+  );
+
+  route(
+    "POST",
+    `${base}/:id/rotate`,
+    withHook(({ hook }) => {
+      hook.secret = `whsec_${newBase64Url(24)}`;
+      save();
+      return {
+        success: true,
+        webhook: publicWebhook(hook),
+        secret: hook.secret,
+      };
+    }),
+  );
+
+  route(
+    "POST",
+    `${base}/:id/resend`,
+    withHook(({ hook, body }) => {
+      const entry = {
+        at: Date.now(),
+        ms: 80 + Math.floor(Math.random() * 160),
+        status: 200,
+        ok: true,
+        error: null,
+        attempt: 0,
+        event: String(body?.event ?? ""),
+        kind: "cap.event",
+      };
+      state.deliveries[hook.id] = [
+        entry,
+        ...(state.deliveries[hook.id] ?? []),
+      ].slice(0, 20);
+      save();
+      return { success: true, ok: true, status: 200, error: null };
+    }),
+  );
+
+  route(
+    "GET",
+    `${base}/:id/deliveries`,
+    withHook(({ scope, hook }) => deliveries(scope, hook)),
+  );
+}
 
 route("GET", "/settings/analytics", () => ({
-  settings: { ...state.settings.analytics },
+  settings: { anonymizeDays: 60, ...state.settings.analytics },
   status: storageStatus(),
 }));
 
 route("PUT", "/settings/analytics", ({ body }) => {
   const s = state.settings.analytics;
   const days = body?.retentionDays ?? s.retentionDays;
-  if (!Number.isFinite(days) || days < 1 || days > 3650)
-    return fail("Keep events for 1 to 3650 days");
+  const anonymize = body?.anonymizeDays ?? s.anonymizeDays ?? 60;
+  if (!Number.isInteger(days) || days < 0 || days > 3650)
+    return fail("Keep events for 0 to 3650 days");
+  if (!Number.isInteger(anonymize) || anonymize < 0 || anonymize > 3650)
+    return fail("Anonymize IP addresses after 0 to 3650 days");
   if (body?.ipMode && !["full", "truncate", "none"].includes(body.ipMode))
     return fail("Unknown IP mode");
   state.settings.analytics = {
-    retentionDays: Math.round(days),
+    retentionDays: days,
+    anonymizeDays: anonymize,
     ipMode: body?.ipMode ?? s.ipMode,
     logChallenges: body?.logChallenges ?? s.logChallenges,
   };
@@ -1842,6 +1995,7 @@ route("POST", "/settings/ipdb/download", ({ body }) => {
     maxmindAccountId: body.maxmindAccountId,
     maxmindKey: body.maxmindKey,
     ipinfoToken: body.ipinfoToken,
+    cities: !!body.cities,
   };
   save();
   return { success: true };
@@ -1909,13 +2063,14 @@ const updateCheck = () => {
 const UPDATE_INTERVALS = { daily: 1, "4d": 4, weekly: 7, monthly: 30 };
 
 const updateCheckStatus = () => {
-  const { enabled, interval, lastSent } = updateCheck();
+  const { enabled, sidebar = true, interval, lastSent } = updateCheck();
   const solves = state.keys
     .map((k) => solvesByKey(k.siteKey).current)
     .reduce((a, b) => a + b, 0);
   const bucket = (n) => (n > 0 ? 10 ** Math.floor(Math.log10(n)) : 0);
   return {
     enabled,
+    sidebar,
     lockedByEnv: false,
     interval,
     lastSent,
@@ -1941,14 +2096,16 @@ route("PUT", "/settings/update-check", ({ body }) => {
     if (body.enabled) s.lastSent = Date.now();
   }
   if (UPDATE_INTERVALS[body?.interval]) s.interval = body.interval;
+  if (typeof body?.sidebar === "boolean") s.sidebar = body.sidebar;
   save();
   return { success: true, ...updateCheckStatus() };
 });
 
 route("GET", "/settings/updates", () => {
-  const { enabled, interval, lastSent } = updateCheck();
+  const { enabled, sidebar = true, interval, lastSent } = updateCheck();
   return {
     enabled,
+    sidebar,
     interval,
     nextCheck: enabled
       ? lastSent + UPDATE_INTERVALS[interval] * 86_400_000
@@ -2028,6 +2185,16 @@ const grants = () => {
 };
 
 route("GET", "/oauth/grants", () => grants().map(({ log, ...g }) => g));
+
+route("GET", "/oauth/requests/:id", () => ({
+  clientName: "Claude Code",
+  redirectTo: "localhost:33418",
+  readOnly: false,
+}));
+
+route("POST", "/oauth/requests/:id", () => ({
+  redirect: "#/keys/c4f1a9e27b/activity",
+}));
 
 route("GET", "/oauth/grants/:id/log", ({ params }) => {
   const g = grants().find((x) => x.id === params.id);

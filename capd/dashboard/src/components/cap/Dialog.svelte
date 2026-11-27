@@ -15,10 +15,13 @@ let {
   size = "sm",
   onclose,
   footer,
+  bare = false,
+  overlay,
+  dim = false,
+  guard = false,
   children,
 } = $props();
 
-let edited = $state(false);
 let dismissed = false;
 
 const widths = {
@@ -33,7 +36,6 @@ const widths = {
   bind:open
   onOpenChange={(v) => {
     if (v) return;
-    edited = false;
     dismissed = true;
   }}
   onOpenChangeComplete={(v) => {
@@ -43,12 +45,11 @@ const widths = {
   }}
 >
   <DialogContent
-    class="flex max-h-[calc(100dvh-2rem)] flex-col {widths[size]}"
-    interactOutsideBehavior={edited ? "ignore" : "close"}
-    oninput={() => (edited = true)}
-    onchange={() => (edited = true)}
+    class="flex max-h-[calc(100dvh-2rem)] flex-col {widths[size]} {dim ? 'z-[93]' : ''}"
+    overlayClass={dim ? "z-[92] bg-black/60 backdrop-blur-[3px] dark:bg-black/75" : undefined}
+    interactOutsideBehavior={guard ? "ignore" : "close"}
   >
-    <DialogHeader class="pe-8">
+    <DialogHeader class={bare ? "sr-only" : "pe-8"}>
       <DialogTitle class="text-balance">{title}</DialogTitle>
       {#if description}
         <DialogDescription class="text-pretty">{description}</DialogDescription>
@@ -60,7 +61,8 @@ const widths = {
       </div>
     {/if}
     {#if footer}
-      <DialogFooter>{@render footer()}</DialogFooter>
+      <DialogFooter class={bare ? "sm:grid sm:grid-cols-2" : ""}>{@render footer()}</DialogFooter>
     {/if}
+    {@render overlay?.()}
   </DialogContent>
 </Dialog>

@@ -11,7 +11,7 @@ try {
 } catch {}
 
 api("GET", "/settings/updates").then((r) => {
-  if (r && "advisories" in r) notices = r;
+  if (r && "advisories" in r && r.sidebar !== false) notices = r;
 });
 
 const advisory = $derived(notices?.advisories?.[0] ?? null);

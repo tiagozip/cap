@@ -18,6 +18,28 @@ Most settings live in the dashboard, under **Instance settings** for the whole s
 | `WEBHOOK_ALLOW_PRIVATE` | Set to `true` to let webhooks post to private and loopback addresses, like an n8n on your LAN. |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Limits for DuckDB, `256MB` and `2` by default. |
 | `CAP_UPDATE_CHECK` | Set to `0` to turn off the [update checks](./update-checks.md). |
+| `CAP_SETTINGS_FILE` | Path to a settings file that Cap applies every time it starts, see [settings file](#settings-file). |
+
+## Settings file {#settings-file}
+
+To set up a server without clicking through the dashboard, export a settings file from **Instance settings > Backup > Settings file** on a server you've already set up, mount it into the container and point `CAP_SETTINGS_FILE` at it. Cap applies it every time it starts, before it takes any requests.
+
+```json
+{
+  "cap": "settings",
+  "version": 1,
+  "settings": {
+    "ratelimit": { "max": 30, "duration": 5000 },
+    "cors": { "origins": ["https://example.com"] },
+    "headers": { "ipHeader": "CF-Connecting-IP" },
+    "analytics": { "retentionDays": 365, "anonymizeDays": 30 }
+  }
+}
+```
+
+The file can hold `ratelimit`, `cors`, `filtering`, `headers`, `analytics`, `assets` and `updateCheck`, with the same fields and limits as the matching `/server/settings/...` API routes. Leave out a section or a field and Cap keeps what the server already has. The file wins on restart, so a change you make in the dashboard to a setting the file lists goes back to the file's value the next time Cap starts.
+
+If the file has a typo or a value out of range, Cap logs which field is wrong and doesn't start. Site keys, API keys, rules and lists aren't part of the file, so create those in the dashboard or through the API.
 
 ## Client IPs behind a proxy
 

@@ -249,7 +249,12 @@ export const samples = {
       dropped: 0,
       info: { events: 136_000, bytes: 56_000_000 },
     },
-    form: { retentionDays: 30, ipMode: "full", logChallenges: true },
+    form: {
+      retentionDays: 0,
+      anonymizeDays: 60,
+      ipMode: "full",
+      logChallenges: true,
+    },
   },
   widgetFiles: {
     enabled: false,

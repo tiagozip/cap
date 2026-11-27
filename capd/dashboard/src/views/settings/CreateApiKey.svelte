@@ -77,6 +77,7 @@ const submit = async (e) => {
 <Dialog
   bind:open
   title={created ? "API key created" : "Create API key"}
+  guard={!!created}
   description={created ? "Copy it now. Cap won't show this key again." : "Your scripts send this key to manage Cap without signing in."}
   {onclose}
 >

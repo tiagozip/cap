@@ -30,6 +30,9 @@ export function requestGeo(request) {
     country: typeof cf.country === "string" ? cf.country : null,
     asn: cf.asn ? `AS${cf.asn}` : null,
     org: typeof cf.asOrganization === "string" ? cf.asOrganization : null,
+    city: typeof cf.city === "string" ? cf.city : null,
+    lat: cf.latitude ?? null,
+    lon: cf.longitude ?? null,
   };
 }
 

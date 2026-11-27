@@ -75,6 +75,15 @@ const store = {
     return res.meta.changes ?? 0;
   },
   async setRetention() {},
+  async replaceIps(pairs, from, to) {
+    await run(
+      pairs.map(([a, b]) =>
+        env.DB.prepare(
+          "UPDATE events SET ip = ? WHERE ip = ? AND ts >= ? AND ts < ?",
+        ).bind(b, a, from, to),
+      ),
+    );
+  },
   async info() {
     const res = await env.DB.prepare("SELECT count(*) AS n FROM events").run();
     return {

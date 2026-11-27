@@ -58,6 +58,7 @@ import {
   setRatelimit,
   sniffImageType,
 } from "./settings-cache.js";
+import { settingsSchemas } from "./settings-schemas.js";
 import {
   createShare,
   deleteSharesForKey,
@@ -949,11 +950,7 @@ export const server = new Elysia({
       return { success: true };
     },
     {
-      body: t.Object({
-        ipHeader: t.Optional(t.String()),
-        countryHeader: t.Optional(t.String()),
-        asnHeader: t.Optional(t.String()),
-      }),
+      body: settingsSchemas.headers,
       detail: { tags: ["Settings"] },
     },
   )
@@ -1065,10 +1062,7 @@ export const server = new Elysia({
       return { success: true };
     },
     {
-      body: t.Object({
-        max: t.Optional(t.Number({ minimum: 1, maximum: 10000 })),
-        duration: t.Optional(t.Number({ minimum: 1000, maximum: 3600000 })),
-      }),
+      body: settingsSchemas.ratelimit,
       detail: { tags: ["Settings"] },
     },
   )
@@ -1097,9 +1091,7 @@ export const server = new Elysia({
       return { success: true };
     },
     {
-      body: t.Object({
-        origins: t.Union([t.Array(t.String()), t.Null()]),
-      }),
+      body: settingsSchemas.cors,
       detail: { tags: ["Settings"] },
     },
   )
@@ -1128,10 +1120,7 @@ export const server = new Elysia({
       return { success: true };
     },
     {
-      body: t.Object({
-        blockNonBrowserUA: t.Optional(t.Boolean()),
-        requiredHeaders: t.Optional(t.Array(t.String())),
-      }),
+      body: settingsSchemas.filtering,
       detail: { tags: ["Settings"] },
     },
   )
@@ -1174,6 +1163,7 @@ export const server = new Elysia({
         maxmindAccountId: body.maxmindAccountId,
         maxmindKey: body.maxmindKey,
         ipinfoToken: body.ipinfoToken,
+        cities: !!body.cities,
       }).catch((e) => {
         console.error("[cap] IP DB download failed:", e.message);
       });
@@ -1185,6 +1175,7 @@ export const server = new Elysia({
         maxmindAccountId: t.Optional(t.String()),
         maxmindKey: t.Optional(t.String()),
         ipinfoToken: t.Optional(t.String()),
+        cities: t.Optional(t.Boolean()),
       }),
       detail: { tags: ["Settings"] },
     },
@@ -1218,11 +1209,7 @@ export const server = new Elysia({
       return { success: true, status: await assetStatus() };
     },
     {
-      body: t.Object({
-        enabled: t.Optional(t.Boolean()),
-        widget: t.Optional(t.String({ maxLength: 40 })),
-        wasm: t.Optional(t.String({ maxLength: 40 })),
-      }),
+      body: settingsSchemas.assets,
       detail: { tags: ["Settings"] },
     },
   )
@@ -1263,17 +1250,7 @@ export const server = new Elysia({
       return { success: true, ...(await updateCheckStatus()) };
     },
     {
-      body: t.Object({
-        enabled: t.Optional(t.Boolean()),
-        interval: t.Optional(
-          t.Union([
-            t.Literal("daily"),
-            t.Literal("4d"),
-            t.Literal("weekly"),
-            t.Literal("monthly"),
-          ]),
-        ),
-      }),
+      body: settingsSchemas.updateCheck,
       detail: { tags: ["Settings"] },
     },
   )

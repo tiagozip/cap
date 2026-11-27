@@ -38,6 +38,7 @@ const RANGES = {
   "7d": [7 * DAY, HOUR],
   "30d": [30 * DAY, 6 * HOUR],
   "90d": [90 * DAY, DAY],
+  "1y": [365 * DAY, DAY],
 };
 const BUCKETS = [
   MIN,
@@ -53,6 +54,7 @@ const MAX_BUCKETS = 2000;
 const CLIENT_FIELDS = new Set([
   "ip",
   "country",
+  "city",
   "asn",
   "asn_org",
   "browser",
@@ -68,6 +70,10 @@ export function resolveRange(
   retentionDays = 90,
 ) {
   const now = Date.now();
+  if (range === "all" && from == null) {
+    from = now - retentionDays * DAY;
+    to = now + MIN;
+  }
   const f0 = Number(from);
   const t0 = Number(to);
   if (from != null && to && Number.isFinite(f0) && Number.isFinite(t0)) {
@@ -403,6 +409,19 @@ function analyticSeries(plan, from, to, bucket) {
     let other = 0;
     for (let p = 0; p < P; p++) other += vol[i * P + p] * u[p].other;
     row.other = dither(other, k, Math.floor(b / MIN), 9);
+    let solveSum = 0;
+    let solveN = 0;
+    for (let p = 0; p < P; p++) {
+      solveSum += vol[i * P + p] * u[p].solveSum;
+      solveN += vol[i * P + p] * u[p].solveN;
+    }
+    row.avg_solve =
+      solveN > 0.5
+        ? Math.round(
+            (solveSum / solveN) *
+              (0.9 + 0.2 * unit(h3(k, 0x61, Math.floor(b / HOUR)))),
+          )
+        : 0;
     series.push(row);
   }
   return { series, u };
@@ -577,6 +596,9 @@ function seriesRows(rows, from, to, bucket) {
     limited: 0,
     verified: 0,
     flagged: 0,
+    avg_solve: 0,
+    solveSum: 0,
+    solveN: 0,
   }));
   for (const r of rows) {
     const row = series[Math.floor((r.ts - from) / bucket)];
@@ -584,8 +606,15 @@ function seriesRows(rows, from, to, bucket) {
     const cat = categoryOf(r.type, r.outcome);
     if (cat !== "other") row[cat]++;
     if (isFlaggedRow(r)) row.flagged++;
+    if (r.type === "redeem" && r.outcome === "pass" && r.solve_ms != null) {
+      row.solveSum += r.solve_ms;
+      row.solveN++;
+    }
   }
-  return series;
+  return series.map(({ solveSum, solveN, ...row }) => ({
+    ...row,
+    avg_solve: solveN ? Math.round(solveSum / solveN) : 0,
+  }));
 }
 
 const rowValues = (r, dim) => {
@@ -605,6 +634,8 @@ function topRows(rows, dim, limit) {
       if (isFlaggedRow(r)) cur.flagged++;
       if (dim === "asn") cur.label = r.asn_org;
       if (dim === "asn_org") cur.label = r.asn;
+      if (dim === "city")
+        Object.assign(cur, { label: r.country, lat: r.lat, lon: r.lon });
       map.set(v, cur);
     }
   }
@@ -706,6 +737,11 @@ function analyticTop(plan, dims, limit, vol) {
           cur.flagged += w;
         if (dim === "asn") cur.label = tp.cohort.org;
         if (dim === "asn_org") cur.label = tp.cohort.asn;
+        if (dim === "city") {
+          cur.label = tp.cohort.country;
+          cur.lat = tp.cohort.lat;
+          cur.lon = tp.cohort.lon;
+        }
         map.set(v, cur);
       }
     });
@@ -749,6 +785,7 @@ function analyticTop(plan, dims, limit, vol) {
           ? {
               value: r.value,
               label,
+              ...(r.lat != null && { lat: r.lat, lon: r.lon }),
               n: r.n,
               blocked: r.blocked,
               flagged: r.flagged,

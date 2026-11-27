@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "#db";
 import { authBeforeHandle } from "./auth.js";
-import { parseFilters } from "./events/analytics.js";
+import { expandRange, parseFilters } from "./events/analytics.js";
 import { checkActivity } from "./events/checks.js";
 import { exportEvents } from "./events/export.js";
 import { movers } from "./events/movers.js";
@@ -198,9 +198,7 @@ export const exportRoutes = new Elysia({
         return fail(set, 404, "Key not found");
       return exportEvents(params.siteKey, {
         format: query.format,
-        range: query.range,
-        from: query.from,
-        to: query.to,
+        ...(await expandRange(params.siteKey, query)),
         filters: parseFilters(query.f),
         q: query.q?.trim() || undefined,
       });
@@ -215,6 +213,8 @@ export const exportRoutes = new Elysia({
             t.Literal("7d"),
             t.Literal("30d"),
             t.Literal("90d"),
+            t.Literal("1y"),
+            t.Literal("all"),
           ]),
         ),
         from: t.Optional(t.Numeric()),

@@ -20,13 +20,13 @@ const loadWorld = () => {
 </script>
 
 <script>
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { createResolver } from "../../components/ui/chart/colors.js";
   import { compact } from "../../lib/format.js";
   import CountryCard from "../../polish/geo/CountryCard.svelte";
   import { countryCentroids, countryName, flagUrl, numericToAlpha2 } from "../../lib/geo.js";
 
-  let { values = {}, color = "var(--chart-3)", diverging = false, describe, onpick, countries, highlight = null } = $props();
+  let { values = {}, color = "var(--chart-3)", diverging = false, describe, onpick, countries, highlight = null, points = [], onpoint } = $props();
 
   const LAT_MIN = -60;
   const LAT_MAX = 85;
@@ -46,6 +46,21 @@ const loadWorld = () => {
   let drag = $state(null);
   let dragged = $state(false);
   const MAX_ZOOM = 8;
+  let grow = 1;
+
+  const project = (lat, lon) => [((lon + 180) / 360) * size.w, ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * size.h];
+
+  const dots = $derived.by(() => {
+    if (!size.w || !size.h) return [];
+    const list = points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lon) && p.n > 0);
+    const top = Math.max(1, ...list.map((p) => p.n));
+    return list
+      .map((p) => {
+        const [x, y] = project(p.lat, p.lon);
+        return { ...p, key: `${p.country}:${p.name}`, x, y, r: 2 + Math.sqrt(p.n / top) * 7 };
+      })
+      .sort((a, b) => a.n - b.n);
+  });
 
   const fit = (v) => {
     const { w, h } = size;
@@ -244,6 +259,8 @@ const loadWorld = () => {
       lift: parse(resolver.resolve(diverging ? "var(--foreground)" : color)),
       amount: diverging ? 0.12 : 0.28,
       edge: resolver.resolve("color-mix(in oklab, var(--foreground) 45%, transparent)"),
+      dot: resolver.resolve("color-mix(in oklab, var(--foreground) 80%, transparent)"),
+      dotHover: resolver.resolve("var(--chart-1)"),
     };
     resolver.dispose();
     return out;
@@ -271,18 +288,30 @@ const loadWorld = () => {
       ctx.fill(s.path);
       ctx.stroke(s.path);
     });
-    if (lifted == null) return;
-    const c = shown[lifted];
-    ctx.fillStyle = css(c.map((v, k) => (k < 3 ? v + (palette.lift[k] - v) * palette.amount : v)));
-    ctx.fill(shapes[lifted].path);
-    ctx.strokeStyle = palette.edge;
-    ctx.lineWidth = 1 / view.k;
-    ctx.stroke(shapes[lifted].path);
+    if (lifted != null && !hover?.dot) {
+      const c = shown[lifted];
+      ctx.fillStyle = css(c.map((v, k) => (k < 3 ? v + (palette.lift[k] - v) * palette.amount : v)));
+      ctx.fill(shapes[lifted].path);
+      ctx.strokeStyle = palette.edge;
+      ctx.lineWidth = 1 / view.k;
+      ctx.stroke(shapes[lifted].path);
+    }
+    if (!dots.length || !grow) return;
+    ctx.lineWidth = 1.25 / view.k;
+    ctx.strokeStyle = palette.stroke;
+    for (const d of dots) {
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, (d.r * grow) / view.k, 0, Math.PI * 2);
+      ctx.fillStyle = hover?.dot?.key === d.key ? palette.dotHover : palette.dot;
+      ctx.fill();
+      ctx.stroke();
+    }
   };
 
   const step = (now) => {
     const t = Math.min(1, (now - started) / 520);
     const e = 1 - (1 - t) ** 3;
+    grow = Math.min(1, Math.max(0, (t - 0.25) / 0.75)) ** 0.5;
     shown = palette.fills.map((to, i) => to.map((v, k) => from[i][k] + (v - from[i][k]) * e));
     draw();
     frame = t < 1 ? requestAnimationFrame(step) : 0;
@@ -298,13 +327,14 @@ const loadWorld = () => {
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const resized = shown.length !== palette.fills.length;
     if (still || (resized && shown.length)) {
+      grow = 1;
       shown = palette.fills;
       draw();
       return;
     }
     from = resized ? palette.fills.map(() => palette.muted) : shown;
     started = performance.now();
-    step(started);
+    untrack(() => step(started));
     return () => {
       cancelAnimationFrame(frame);
       frame = 0;
@@ -314,6 +344,7 @@ const loadWorld = () => {
   $effect(() => {
     hover;
     highlight;
+    dots;
     if (!frame && shown.length) draw();
   });
 
@@ -342,7 +373,7 @@ const loadWorld = () => {
           canvas.setPointerCapture(e.pointerId);
         }
         if (e.pointerType === "mouse") return;
-        tapped = hover?.touch ? hover.code : null;
+        tapped = hover?.touch ? (hover.dot?.key ?? hover.code) : null;
         onmove(e);
       },
       pointerup: () => {
@@ -363,8 +394,9 @@ const loadWorld = () => {
           dragged = false;
           return;
         }
-        if (!hover || (hover.touch && tapped !== hover.code)) return;
-        onpick?.(hover.code);
+        if (!hover || (hover.touch && tapped !== (hover.dot?.key ?? hover.code))) return;
+        if (hover.dot) onpoint?.(hover.dot);
+        else onpick?.(hover.code);
       },
     };
     for (const [type, fn] of Object.entries(listeners)) canvas.addEventListener(type, fn, { passive: type !== "wheel" });
@@ -379,6 +411,20 @@ const loadWorld = () => {
     const rect = canvas.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
+    const touch = e.pointerType === "touch";
+    let near = null;
+    let gap = Infinity;
+    for (const d of dots) {
+      const dist = Math.hypot(view.x + view.k * d.x - px, view.y + view.k * d.y - py);
+      if (dist <= d.r + (touch ? 10 : 2) && dist - d.r < gap) {
+        gap = dist - d.r;
+        near = d;
+      }
+    }
+    if (near) {
+      hover = { code: near.country, dot: near, x: e.clientX, y: e.clientY, touch };
+      return;
+    }
     const ctx = canvas.getContext("2d");
     const dpr = window.devicePixelRatio || 1;
     ctx.setTransform(dpr * view.k, 0, 0, dpr * view.k, dpr * view.x, dpr * view.y);
@@ -446,13 +492,18 @@ const loadWorld = () => {
     <div
       bind:offsetWidth={tipSize.w}
       bind:offsetHeight={tipSize.h}
-      class="map-tip pointer-events-none fixed z-50 rounded-lg border border-border/50 bg-popover/85 text-xs text-popover-foreground shadow-xl backdrop-blur-md {rich ? 'w-60 p-2.5' : 'flex items-center gap-1.5 px-2.5 py-1.5 whitespace-nowrap'}"
+      class="map-tip pointer-events-none fixed z-50 rounded-lg border border-border/50 bg-popover/85 text-xs text-popover-foreground shadow-xl backdrop-blur-md {rich && !hover.dot ? 'w-60 p-2.5' : 'flex items-center gap-1.5 px-2.5 py-1.5 whitespace-nowrap'}"
       style:left="{tipPos.left}px"
       style:top="{tipPos.top}px"
       style:transform-origin={tipPos.origin}
       aria-hidden="true"
     >
-      {#if rich}
+      {#if hover.dot}
+        {#if hover.code && flagUrl(hover.code)}<img src={flagUrl(hover.code)} alt="" class="h-3.5 w-[18px] rounded-[2px] object-contain" width="18" height="14" />{/if}
+        <span class="font-medium">{hover.dot.name}</span>
+        <span class="text-muted-foreground tabular-nums">{compact(hover.dot.n)} events</span>
+        {#if hover.touch && onpoint}<span class="text-muted-foreground">Tap again to open</span>{/if}
+      {:else if rich}
         <CountryCard code={hover.code} {countries} hint={hover.touch && onpick ? "Tap again to see events" : ""} />
       {:else}
         {#if flagUrl(hover.code)}<img src={flagUrl(hover.code)} alt="" class="h-3.5 w-[18px] rounded-[2px] object-contain" width="18" height="14" />{/if}

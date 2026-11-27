@@ -18,6 +18,19 @@ const KIND = {
   languages: "Language",
 };
 
+const GLYPH = {
+  flags: "flag",
+  agents: "bot",
+  reasons: "ban",
+  networks: "server",
+  browsers: "globe",
+  devices: "monitor",
+  origins: "link",
+  languages: "globe",
+  countries: "globe",
+  os: "monitor",
+};
+
 const movers = $derived.by(() => {
   if (!now || !before) return null;
   const [nowTotal, prevTotal] = totals;
@@ -57,10 +70,6 @@ const movers = $derived.by(() => {
   return out.sort((a, b) => b.score - a.score).slice(0, SHOWN);
 });
 
-const peak = $derived(
-  Math.max(1, ...(movers ?? []).map((m) => Math.max(m.cur, m.was))),
-);
-
 const change = (m) => {
   if (!m.was) return "New";
   if (!m.cur) return "Gone";
@@ -72,43 +81,45 @@ const change = (m) => {
 {#if movers && !movers.length}
   <p class="m-auto py-8 text-center text-sm text-balance text-muted-foreground">Nothing moved much since the previous period.</p>
 {:else if movers}
-  <ul class="grid grid-cols-1 gap-x-6 gap-y-0.5 lg:grid-cols-2">
+  <ul class="grid grid-cols-1 gap-x-8 lg:grid-cols-2">
     {#each movers as m (`${m.tab.id}:${m.r.value}`)}
       {@const up = m.cur > m.was}
       {@const risky = m.tab.id === "flags" || m.tab.id === "agents" || m.tab.id === "reasons"}
-      <li class="min-w-0">
+      {@const tone = up && risky ? "danger" : up ? "up" : "down"}
+      {@const now = tone === "danger" ? "stroke-destructive" : up ? "stroke-(--chart-1)" : "stroke-muted-foreground"}
+      {@const ratio = m.was ? Math.abs(m.cur - m.was) / m.was : 10}
+      {@const moved = Math.min(100, Math.max(4, up ? (Math.log10(1 + ratio) / Math.log10(11)) * 100 : ratio * 100))}
+      <li class="min-w-0 border-b border-border/60 last:border-b-0 lg:[&:nth-last-child(2):nth-child(odd)]:border-b-0">
         <button
           type="button"
-          class="group relative flex h-10 w-full cursor-pointer items-center gap-2 sm:gap-3 rounded-md px-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)]:hover:bg-nav-hover"
+          class="mover grid w-full cursor-pointer grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-x-3 rounded-lg px-2 py-3 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[1.25rem_minmax(0,1fr)_auto_1.75rem] [@media(hover:hover)]:hover:bg-nav-hover"
           title="Show events where {m.tab.column.toLowerCase()} is {m.tab.name(m.r)}"
           onclick={() => onpick([`${m.tab.field}:${m.r.value}`])}
         >
-          {#if m.tab.icon}{@render m.tab.icon(m.r)}{/if}
-          <span class="flex min-w-0 flex-1 flex-col">
+          <span class="flex size-5 items-center justify-center text-muted-foreground">
+            {#if m.tab.icon}{@render m.tab.icon(m.r)}{:else}<Icon name={GLYPH[m.tab.id] ?? "activity"} size={15} />{/if}
+          </span>
+          <span class="flex min-w-0 flex-col gap-0.5">
             <span class="truncate leading-5">{m.tab.name(m.r)}</span>
             <span class="truncate text-xs leading-4 text-muted-foreground">{KIND[m.tab.id] ?? m.tab.column}</span>
           </span>
-          <span class="relative h-1.5 w-16 shrink-0 rounded-full bg-muted max-sm:hidden" aria-hidden="true">
-            <span
-              class="absolute inset-y-0 left-0 rounded-full {up && risky ? 'bg-destructive/70' : 'bg-(--chart-1)'}"
-              style:width="{(m.cur / peak) * 100}%"
-            ></span>
-            <span
-              class="absolute -inset-y-0.5 w-0.5 -translate-x-1/2 rounded-full bg-foreground/70"
-              style:left="{(m.was / peak) * 100}%"
-            ></span>
+          <span class="flex min-w-[6.5rem] flex-col items-end gap-0.5">
+            <span class="inline-flex items-center gap-1 leading-5 font-medium tabular-nums">
+              {compact(m.cur)}
+              <span class="inline-flex items-center gap-0.5 text-xs font-normal {tone === 'danger' ? 'text-destructive' : 'text-muted-foreground'}">
+                {#if m.was && m.cur}
+                  <Icon name={up ? "trendUp" : "trendDown"} size={12} stroke={2.25} />
+                  <span class="sr-only">{up ? "Up" : "Down"}</span>
+                {/if}
+                {change(m)}
+              </span>
+            </span>
+            <span class="text-xs leading-4 text-muted-foreground tabular-nums">{m.was ? `from ${compact(m.was)}` : "None before"}</span>
           </span>
-          <span class="flex w-16 shrink-0 flex-col items-end sm:w-20">
-            <span class="font-medium tabular-nums leading-5">{compact(m.cur)}</span>
-            {#if m.was}<span class="text-xs leading-4 text-muted-foreground tabular-nums">from {compact(m.was)}</span>{/if}
-          </span>
-          <span class="inline-flex w-13 shrink-0 items-center justify-end sm:w-14 gap-0.5 text-xs tabular-nums {up && risky ? 'text-destructive' : 'text-muted-foreground'}">
-            {#if m.was && m.cur}
-              <Icon name={up ? "trendUp" : "trendDown"} size={12} stroke={2.25} />
-              <span class="sr-only">{up ? "Up" : "Down"}</span>
-            {/if}
-            {change(m)}
-          </span>
+          <svg class="size-7 -rotate-90 max-sm:hidden {up ? '' : '-scale-y-100'}" viewBox="0 0 28 28" aria-hidden="true">
+            <circle cx="14" cy="14" r="11" fill="none" stroke-width="3" class="stroke-muted" />
+            <circle cx="14" cy="14" r="11" fill="none" stroke-width="3" stroke-linecap="round" pathLength="100" stroke-dasharray="{moved} 100" class={now} />
+          </svg>
         </button>
       </li>
     {/each}

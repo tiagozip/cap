@@ -11,6 +11,7 @@ const RANGES = {
   "7d": [7 * DAY, HOUR],
   "30d": [30 * DAY, 6 * HOUR],
   "90d": [90 * DAY, DAY],
+  "1y": [365 * DAY, DAY],
 };
 
 const BUCKETS = [
@@ -26,13 +27,20 @@ const BUCKETS = [
 
 const MAX_BUCKETS = 2000;
 
+export async function expandRange(siteKey, { range, from, to }) {
+  if (range !== "all" || from != null) return { range, from, to };
+  const now = Date.now();
+  const first = await getQueries().firstEventTs(siteKey);
+  return { from: Math.floor((first ?? now - DAY) / DAY) * DAY, to: now + MIN };
+}
+
 export function resolveRange({ range = "24h", from, to, bucket: forced } = {}) {
   const now = Date.now();
   const f0 = Number(from);
   const t0 = Number(to);
   if (from != null && to && Number.isFinite(f0) && Number.isFinite(t0)) {
-    const floor = now - (getPublicSettings().retentionDays || 30) * DAY;
-    const f = forced ? f0 : Math.max(f0, floor);
+    const days = getPublicSettings().retentionDays;
+    const f = forced || !days ? f0 : Math.max(f0, now - days * DAY);
     const t = Math.max(f, Math.min(t0, now + MIN));
     const span = Math.max(MIN, t - f);
     let bucket = forced ?? BUCKETS.find((b) => span / b <= 200) ?? 7 * DAY;
@@ -76,7 +84,15 @@ const emptyBucket = (b) => ({
   limited: 0,
   verified: 0,
   flagged: 0,
+  avg_solve: 0,
+  solve_sum: 0,
+  solve_n: 0,
 });
+
+const sorted = (buckets) =>
+  [...buckets.values()]
+    .sort((a, b) => a.b - b.b)
+    .map(({ solve_sum, solve_n, ...b }) => b);
 
 const addRow = (buckets, row, b = row.b) => {
   const bucket = buckets.get(b) ?? buckets.set(b, emptyBucket(b)).get(b);
@@ -91,6 +107,11 @@ const addRow = (buckets, row, b = row.b) => {
   else if (row.type === "siteverify" && row.outcome === "pass")
     bucket.verified += row.n;
   bucket.flagged += row.flagged;
+  if (row.solve_n) {
+    bucket.solve_sum += row.solve_sum;
+    bucket.solve_n += row.solve_n;
+    bucket.avg_solve = Math.round(bucket.solve_sum / bucket.solve_n);
+  }
 };
 
 export async function overview(
@@ -166,10 +187,8 @@ export async function overview(
     range: { from: r.from, to: r.to, bucket: r.bucket },
     summary,
     previous,
-    series: [...buckets.values()].sort((a, b) => a.b - b.b),
-    ...(compare && {
-      previousSeries: [...prevBuckets.values()].sort((a, b) => a.b - b.b),
-    }),
+    series: sorted(buckets),
+    ...(compare && { previousSeries: sorted(prevBuckets) }),
     legacy,
     storage: getStore()?.kind,
   };

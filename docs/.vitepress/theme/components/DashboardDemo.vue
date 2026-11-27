@@ -236,8 +236,17 @@ watch(scheme, (next) => {
   if (src.value) src.value = `/demo/index.html?theme=${next}${risen ? "" : "&hold"}#/keys/c4f1a9e27b/activity`;
 });
 
+let relock = 0;
 const away = (e) => {
-  if (unlocked.value && !demo.value?.contains(e.target)) lock();
+  if (!unlocked.value || relock || demo.value?.contains(e.target)) return;
+  relock = setTimeout(() => {
+    relock = 0;
+    lock();
+  }, 1500);
+};
+const stay = () => {
+  clearTimeout(relock);
+  relock = 0;
 };
 
 let io;
@@ -266,6 +275,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener("pointermove", away);
+  clearTimeout(relock);
   io?.disconnect();
   seen?.disconnect();
   clearInterval(cycle);
@@ -282,6 +292,7 @@ onBeforeUnmount(() => {
       :class="{ unlocked }"
       :style="{ cursor: unlocked ? null : cursor }"
       @pointermove="arm"
+      @pointerenter="stay"
       @pointerleave="!unlocked && lock()"
       @wheel.passive="hold"
       @click="pass"

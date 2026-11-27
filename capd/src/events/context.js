@@ -84,6 +84,13 @@ const asnNumber = (asn) => {
   return Number.isFinite(n) && n >= 0 && n <= 4294967295 ? Math.trunc(n) : 0;
 };
 
+const coord = (v) => {
+  const n = Number(v);
+  return v == null || v === "" || !Number.isFinite(n)
+    ? null
+    : Math.round(n * 100) / 100;
+};
+
 let salt = null;
 export function setVisitorSalt(value) {
   salt = value;
@@ -96,19 +103,23 @@ export async function requestContext(request, srv) {
   let country = hs.countryHeader ? request.headers.get(hs.countryHeader) : null;
   let asnRaw = hs.asnHeader ? request.headers.get(hs.asnHeader) : null;
   let asnOrg = null;
+  let place = null;
   const geo = requestGeo(request);
   if (geo) {
     if (!country && geo.country) country = geo.country;
+    if (geo.city) place = geo;
     if (!asnRaw && geo.asn) {
       asnRaw = geo.asn;
       asnOrg = geo.org;
     }
   }
 
-  if (ip && (!country || !asnRaw) && ipdbIsLoaded()) {
+  if (ip && (!country || !asnRaw || !place) && ipdbIsLoaded()) {
     try {
       const geo = await ipLookup(ip);
       if (!country && geo?.country) country = geo.country;
+      if (!place && geo?.city && (!country || geo.country === country))
+        place = geo;
       if (!asnRaw && geo?.asn) {
         asnRaw = geo.asn;
         asnOrg = geo.org || null;
@@ -146,6 +157,9 @@ export async function requestContext(request, srv) {
     origin,
     lang,
     fp,
+    city: place?.city ? String(place.city).slice(0, 96) : "",
+    lat: coord(place?.lat),
+    lon: coord(place?.lon),
     headers: request.headers,
     ...parseUA(ua),
   };

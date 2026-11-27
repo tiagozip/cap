@@ -277,7 +277,7 @@ const drop = (e) => {
   {/if}
 {/snippet}
 
-<Row label="Sign-in background" help="Shown behind the sign-in card." wide>
+<Row label="Sign-in background" help="Also shows behind the page where you approve MCP agents." wide>
   <Segmented
     class="self-start"
     label="Sign-in background"

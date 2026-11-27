@@ -44,6 +44,8 @@ const RANGES = [
   { id: "7d", short: "7d", label: "Past 7 days", long: "the last 7 days" },
   { id: "30d", short: "30d", label: "Past 30 days", long: "the last 30 days" },
   { id: "90d", short: "90d", label: "Past 90 days", long: "the last 90 days" },
+  { id: "1y", short: "1y", label: "Past year", long: "the last year" },
+  { id: "all", short: "All", label: "All time", long: "the full history" },
 ];
 
 const METRICS = [
@@ -90,6 +92,16 @@ const METRICS = [
     view: "View failed events",
     filters: ["outcome:fail"],
   },
+  {
+    id: "avg_solve",
+    label: "Avg. solve time",
+    color: "var(--violet)",
+    chart: true,
+    slow: true,
+    format: latency,
+    view: "View passed solves",
+    filters: ["type:redeem", "outcome:pass"],
+  },
 ];
 
 const onboarding = import("./Onboarding.svelte");
@@ -111,6 +123,7 @@ const stored = (() => {
 })();
 
 let range = $state(RANGES.some((r) => r.id === stored) ? stored : "7d");
+let custom = $state(null);
 let metric = $state("challenges");
 let compare = $state(
   (() => {
@@ -165,9 +178,37 @@ let seq = 0;
 
 loadCatalog();
 
-const rangeInfo = $derived(RANGES.find((r) => r.id === range));
+const rangeInfo = $derived(
+  custom
+    ? { label: "Custom range", long: "this range", noun: "period" }
+    : {
+        ...RANGES.find((r) => r.id === range),
+        noun: RANGES.find((r) => r.id === range).label.replace("Past ", ""),
+      },
+);
+const where = () => (custom ? { from: custom.from, to: custom.to } : { range });
 const summary = $derived(data?.summary);
 const previous = $derived(data?.previous);
+let retention = $state(null);
+api("GET", "/settings/analytics").then((r) => {
+  retention = r?.settings?.retentionDays ?? null;
+});
+const partial = $derived.by(() => {
+  if (range === "all" && !custom) return "all";
+  const r = data?.range;
+  if (
+    retention &&
+    r &&
+    r.from - (r.to - r.from) < Date.now() - retention * 86_400_000 - r.bucket
+  )
+    return "retention";
+  const s = data?.previousSeries;
+  if (!s?.length || !previous?.total) return false;
+  const first = s.findIndex((b) =>
+    Object.entries(b).some(([k, v]) => k !== "b" && v > 0),
+  );
+  return first > s.length * 0.1 && "new";
+});
 const geo = $derived(hasGeoSource());
 const total = $derived(summary?.total ?? 0);
 
@@ -185,15 +226,15 @@ const delta = (cur, prev) => {
 const nf = new Intl.NumberFormat();
 const n = (v) => nf.format(v ?? 0);
 
-async function load(next = range) {
+async function load() {
   const id = ++seq;
   loading = true;
-  const params = qs({ range: next });
+  const params = qs(where());
   const [overview, dims, extra] = await Promise.all([
     api("GET", `/keys/${siteKey}/analytics${params}`),
     api(
       "GET",
-      `/keys/${siteKey}/analytics/top${qs({ range: next, dims: DIMS, limit: 60 })}`,
+      `/keys/${siteKey}/analytics/top${qs({ ...where(), dims: DIMS, limit: 60 })}`,
     ),
     api("GET", `/keys/${siteKey}/analytics/insights${params}`),
   ]);
@@ -204,7 +245,7 @@ async function load(next = range) {
   if (!dims?.error) top = dims;
   if (!extra?.error) insights = extra;
   const r = overview?.range;
-  if (!r || !overview.previous || dims?.error) {
+  if (!r || !overview.previous || dims?.error || partial === "all") {
     pair = null;
     return;
   }
@@ -224,19 +265,27 @@ async function load(next = range) {
       };
 }
 
-const QUIET = { "24h": 10_000, "7d": 30_000, "30d": 60_000, "90d": 120_000 };
+const QUIET = {
+  "24h": 10_000,
+  "7d": 30_000,
+  "30d": 60_000,
+  "90d": 120_000,
+  "1y": 300_000,
+  all: 300_000,
+};
 let lastQuiet = Date.now();
 let quietRuns = 0;
 async function refresh() {
-  if (loading || Date.now() - lastQuiet < QUIET[range]) return;
+  if (loading || Date.now() - lastQuiet < (custom ? 300_000 : QUIET[range]))
+    return;
   lastQuiet = Date.now();
   const id = seq;
-  const res = await api("GET", `/keys/${siteKey}/analytics${qs({ range })}`);
+  const res = await api("GET", `/keys/${siteKey}/analytics${qs(where())}`);
   if (id === seq && !loading && !res?.error) data = res;
   if (++quietRuns % 3) return;
   const more = await api(
     "GET",
-    `/keys/${siteKey}/analytics/insights${qs({ range })}`,
+    `/keys/${siteKey}/analytics/insights${qs(where())}`,
   );
   if (id === seq && !loading && !more?.error) insights = more;
 }
@@ -261,15 +310,25 @@ async function pulse() {
   refresh();
 }
 
-const drill = (filters) => openEvents([...filters, `range:${range}`]);
+const drill = (filters) =>
+  openEvents([
+    ...filters,
+    custom ? `window:${custom.from}-${custom.to}` : `range:${range}`,
+  ]);
 
 const setRange = (id) => {
-  if (id === range) return;
+  if (id === range && !custom) return;
   range = id;
+  custom = null;
   try {
     localStorage.setItem("cap_overview_range", id);
   } catch {}
-  load(id);
+  load();
+};
+
+const setCustom = (next) => {
+  custom = next;
+  load();
 };
 
 onMount(() => {
@@ -543,7 +602,7 @@ const mapOf = (ins) => {
 {/snippet}
 
 {#snippet moversAside()}
-  <span class="pe-2 text-sm text-muted-foreground">Compared with the previous {rangeInfo.label.replace("Past ", "")}</span>
+  <span class="pe-2 text-sm text-muted-foreground">Compared with the previous {rangeInfo.noun}</span>
 {/snippet}
 
 {#snippet moversSkeleton()}
@@ -579,7 +638,7 @@ const mapOf = (ins) => {
           ? d.up
             ? 'text-destructive'
             : 'text-success'
-          : m.id === 'avg'
+          : m.slow
             ? d.up
               ? 'text-warning'
               : 'text-success'
@@ -594,8 +653,8 @@ const mapOf = (ins) => {
     </span>
     <span aria-hidden="true" class="col-start-1 row-start-1 translate-y-1 text-muted-foreground opacity-0 motion-safe:transition-[opacity,translate] motion-safe:duration-200 motion-safe:ease-(--ease-out) [@media(hover:hover)]:group-hover/tile:translate-y-0 [@media(hover:hover)]:group-hover/tile:opacity-100">from {format(prev)}</span>
     </span>
-  {:else}
-    <span class="text-xs text-muted-foreground">No earlier data</span>
+  {:else if partial !== "all"}
+    <span class="text-xs text-muted-foreground">{partial ? "Not enough earlier data" : "No earlier data"}</span>
   {/if}
 {/snippet}
 
@@ -614,7 +673,7 @@ const mapOf = (ins) => {
         <span><Odometer class="font-medium text-foreground" value={live} format={n} /><span class="ms-1 max-sm:sr-only">in the last hour</span></span>
       </button>
     {/if}
-    <RangePicker class="rounded-[calc(var(--radius)-4px)]" value={range} ranges={RANGES} onchange={setRange} />
+    <RangePicker class="rounded-[calc(var(--radius)-4px)]" value={range} ranges={RANGES} {custom} onchange={setRange} oncustom={setCustom} />
   {/snippet}
 </PageHeader>
 
@@ -661,24 +720,13 @@ const mapOf = (ins) => {
           <Skeleton data={summary} skeleton={metricSkeleton}>
             {#snippet children(s)}
               <span class="flex flex-col items-start gap-0.5">
-                <Odometer class="text-2xl font-semibold" value={s[m.id]} format={compact} />
-                {@render change(m, s[m.id], previous?.[m.id], compact)}
+                <Odometer class="text-2xl font-semibold" value={s[m.id]} format={m.format ?? compact} />
+                {@render change(m, s[m.id], partial ? null : previous?.[m.id], m.format ?? compact)}
               </span>
             {/snippet}
           </Skeleton>
         </ToggleGroupItem>
       {/each}
-      <div class="flex min-w-0 flex-col items-start gap-0.5 px-3 py-2.5 sm:px-4 sm:py-3">
-        <span class="text-sm text-muted-foreground">Avg. solve time</span>
-        <Skeleton data={summary} skeleton={metricSkeleton}>
-          {#snippet children(s)}
-            <span class="flex flex-col items-start gap-0.5">
-              <Odometer class="text-2xl font-semibold" value={s.avg_solve} format={latency} />
-              {@render change({ id: "avg" }, s.avg_solve, previous?.avg_solve, latency)}
-            </span>
-          {/snippet}
-        </Skeleton>
-      </div>
     </ToggleGroup>
 
     <CardContent class="gap-2 pt-5 pb-3 transition-opacity duration-200 {loading && data ? 'opacity-60' : ''}">
@@ -700,7 +748,7 @@ const mapOf = (ins) => {
           {/snippet}
         </Skeleton>
         <div class="flex items-center gap-1 max-sm:-ms-2 sm:-me-2">
-          {#if data?.previousSeries?.length}
+          {#if data?.previousSeries?.length && range !== "all"}
             <Button
               variant="ghost"
               size="sm"
@@ -727,9 +775,17 @@ const mapOf = (ins) => {
   </div>
 
   <div class="grid">
-    <Panel title="Biggest changes" aside={moversAside} stale={(loading || pairing) && !!pair}>
-      {#if summary && !previous?.total}
-        <p class="m-auto py-8 text-sm text-muted-foreground">No earlier period to compare yet.</p>
+    <Panel title="Biggest changes" aside={partial || !previous?.total ? null : moversAside} stale={(loading || pairing) && !!pair}>
+      {#if summary && (!previous?.total || partial)}
+        <p class="m-auto max-w-sm py-8 text-center text-sm text-balance text-muted-foreground">
+          {partial === "all"
+            ? "All time has no earlier period to compare against. Pick a shorter range to see what changed."
+            : partial === "retention"
+            ? `Cap keeps events for ${retention} days, so most of the previous ${rangeInfo.noun} is already gone. Pick a shorter range to compare.`
+            : partial
+              ? `Cap only recorded part of the previous ${rangeInfo.noun}, so there's nothing fair to compare against yet. Pick a shorter range.`
+              : "No earlier period to compare yet."}
+        </p>
       {:else}
         <Skeleton class="skeleton-fill" data={pair} skeleton={moversSkeleton} label="Loading changes">
           {#snippet children(p)}{#await moversView then { default: Movers }}<Movers now={p.now} before={p.before} totals={p.totals} onpick={drill} />{/await}{/snippet}

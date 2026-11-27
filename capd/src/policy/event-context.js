@@ -33,7 +33,7 @@ export async function eventContextDetail(siteKey, id, { scoped = false } = {}) {
   const event = await queries.get(siteKey, id);
   if (!event) return null;
   const to = Date.now() + 60_000;
-  const from = to - (getPublicSettings().retentionDays || 30) * DAY;
+  const from = to - (getPublicSettings().retentionDays || 90) * DAY;
   const week = to - 7 * DAY;
   const ctx = eventContext(event);
   const stage = event.type === "challenge" ? "challenge" : "redeem";

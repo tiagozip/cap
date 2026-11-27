@@ -69,6 +69,13 @@ export const homeV2Strings = {
       ["Share links", "Give someone a read-only view of a key's stats without a dashboard login."],
     ],
 
+    mcpTitle: "Let your agent run it",
+    mcpBody:
+      "Every dashboard action is also an MCP tool. You approve each agent and pick what it can touch.",
+    mcpPrompt: "Copy agent prompt",
+    mcpClientLabel: "Agent",
+    mcpAlt: "The capd consent page connecting an AI agent, looping through Claude Code, Cursor and Codex",
+
     gridTitle: "The rest of the toolbox",
     gridBody: "Everything here ships in the open-source release. There is no paid tier holding features back.",
     cellModesTitle: "Checkbox, floating or invisible",
@@ -110,7 +117,7 @@ export const homeV2Strings = {
       " Yes. Cap blocks the automated browsers most AI agents browse with, and plain HTTP scrapers can't run the challenge, so they never get a token. ",
     faqGdprQ: "Is it GDPR-friendly?",
     faqGdprA:
-      " Yes. Cap doesn't phone home, doesn't set cookies, and doesn't fingerprint users. Your server sees the verification, no one else does. ",
+      " Yes. Cap's widget doesn't phone home, doesn't set cookies, and doesn't fingerprint users. Your server sees the verification, no one else does. ",
     faqMigrateQ: "Can I migrate from reCAPTCHA or hCaptcha?",
     faqMigrateA:
       " Yes. Cap's siteverify API is compatible with reCAPTCHA and hCaptcha, but you'll need to swap your client-side code to use Cap's widget. ",
@@ -216,6 +223,13 @@ export const homeV2Strings = {
       ["共享列表", "把 IP、网段和网络放进列表，所有站点密钥的规则都能使用。"],
       ["分享链接", "让别人只读查看某个密钥的统计，无需登录仪表盘。"],
     ],
+    mcpTitle: "交给你的智能体来管理",
+    mcpBody:
+      "控制台的每个操作也都是一个 MCP 工具。每个智能体都要你批准，能碰什么由你决定。",
+    mcpPrompt: "复制智能体提示词",
+    mcpClientLabel: "智能体",
+    mcpAlt: "capd 授权页面连接 AI 智能体，依次演示 Claude Code、Cursor 和 Codex",
+
     gridTitle: "其余的工具",
     gridBody: "这里的一切都包含在开源版本里，没有付费档位藏着功能。",
     cellModesTitle: "复选框、浮动或隐形",
@@ -248,7 +262,7 @@ export const homeV2Strings = {
     faqAgentsQ: "它能挡住 AI 爬虫吗？",
     faqAgentsA: "能。Cap 会拦下大多数 AI 智能体所用的自动化浏览器，纯 HTTP 爬虫无法运行题目，所以永远拿不到令牌。",
     faqGdprQ: "它符合 GDPR 吗？",
-    faqGdprA: "符合。Cap 不回传数据、不设 Cookie、不做用户指纹。验证只有你的服务器看得到，别人一概看不到。",
+    faqGdprA: "符合。Cap 的组件不回传数据、不设 Cookie、不做用户指纹。验证只有你的服务器看得到，别人一概看不到。",
     faqMigrateQ: "能从 reCAPTCHA / hCaptcha 迁移吗？",
     faqMigrateA: "能。Cap 的 siteverify API 兼容 reCAPTCHA 和 hCaptcha，只需把客户端代码换成 Cap 的验证组件。",
     faqCostQ: "自托管要花多少钱？",
@@ -348,6 +362,13 @@ export const homeV2Strings = {
       ["Geteilte Listen", "Leg IPs, Bereiche und Netze in Listen ab, die Regeln auf jedem Site-Key nutzen können."],
       ["Freigabelinks", "Gib jemandem eine schreibgeschützte Ansicht der Statistiken eines Keys, ohne Dashboard-Login."],
     ],
+    mcpTitle: "Lass deinen Agenten ran",
+    mcpBody:
+      "Jede Dashboard-Aktion ist auch ein MCP-Tool. Du gibst jeden Agenten frei und bestimmst, worauf er zugreift.",
+    mcpPrompt: "Agent-Prompt kopieren",
+    mcpClientLabel: "Agent",
+    mcpAlt: "Die capd-Freigabeseite verbindet einen KI-Agenten, nacheinander Claude Code, Cursor und Codex",
+
     gridTitle: "Der Rest des Werkzeugkastens",
     gridBody: "Alles hier steckt im Open-Source-Release. Es gibt keinen bezahlten Tarif, der Funktionen zurückhält.",
     cellModesTitle: "Checkbox, schwebend oder unsichtbar",
@@ -380,7 +401,7 @@ export const homeV2Strings = {
     faqAgentsQ: "Stoppt es KI-Scraper?",
     faqAgentsA: "Ja. Cap blockiert die automatisierten Browser, mit denen die meisten KI-Agenten surfen, und reine HTTP-Scraper können die Aufgabe nicht ausführen und bekommen deshalb nie ein Token.",
     faqGdprQ: "Ist es DSGVO-freundlich?",
-    faqGdprA: "Ja. Cap funkt nicht nach Hause, setzt keine Cookies und erstellt keine Fingerprints. Nur dein Server sieht die Verifizierung, sonst niemand.",
+    faqGdprA: "Ja. Das Cap-Widget funkt nicht nach Hause, setzt keine Cookies und erstellt keine Fingerprints. Nur dein Server sieht die Verifizierung, sonst niemand.",
     faqMigrateQ: "Kann ich von reCAPTCHA / hCaptcha migrieren?",
     faqMigrateA: "Ja. Caps siteverify-API ist zu reCAPTCHA und hCaptcha kompatibel, du musst nur den Client-Code auf Caps Widget umstellen.",
     faqCostQ: "Was kostet das Selbst-Hosten?",
@@ -480,6 +501,13 @@ export const homeV2Strings = {
       ["Listes partagées", "Rangez des IP, des plages et des réseaux dans des listes que les règles de chaque clé peuvent utiliser."],
       ["Liens de partage", "Donnez à quelqu'un une vue en lecture seule des statistiques d'une clé, sans connexion au tableau de bord."],
     ],
+    mcpTitle: "Confiez-le à votre agent",
+    mcpBody:
+      "Chaque action du tableau de bord est aussi un outil MCP. Vous approuvez chaque agent et choisissez ce qu'il peut toucher.",
+    mcpPrompt: "Copier le prompt de l'agent",
+    mcpClientLabel: "Agent",
+    mcpAlt: "La page d'autorisation de capd connecte un agent IA, tour à tour Claude Code, Cursor et Codex",
+
     gridTitle: "Le reste de la boîte à outils",
     gridBody: "Tout ce qui suit est dans la version open source. Aucune offre payante ne garde de fonctionnalités pour elle.",
     cellModesTitle: "Case à cocher, flottant ou invisible",
@@ -512,7 +540,7 @@ export const homeV2Strings = {
     faqAgentsQ: "Est-ce que ça arrête les scrapers IA ?",
     faqAgentsA: "Oui. Cap bloque les navigateurs automatisés qu'utilisent la plupart des agents IA, et les scrapers HTTP simples ne peuvent pas exécuter le défi, donc ils n'obtiennent jamais de jeton.",
     faqGdprQ: "Est-ce compatible avec le RGPD ?",
-    faqGdprA: "Oui. Cap ne renvoie rien vers l'extérieur, ne pose pas de cookies et ne prend pas d'empreinte des utilisateurs. Seul votre serveur voit la vérification.",
+    faqGdprA: "Oui. Le widget Cap ne renvoie rien vers l'extérieur, ne pose pas de cookies et ne prend pas d'empreinte des utilisateurs. Seul votre serveur voit la vérification.",
     faqMigrateQ: "Puis-je migrer depuis reCAPTCHA / hCaptcha ?",
     faqMigrateA: "Oui. L'API siteverify de Cap est compatible avec reCAPTCHA et hCaptcha, il vous suffit de remplacer votre code client par le widget Cap.",
     faqCostQ: "Combien coûte l'auto-hébergement ?",
@@ -612,6 +640,13 @@ export const homeV2Strings = {
       ["รายการที่ใช้ร่วมกัน", "เก็บ IP ช่วง IP และเครือข่ายไว้ในรายการที่กฎของทุกคีย์ไซต์ใช้ได้"],
       ["ลิงก์แชร์", "ให้ผู้อื่นดูสถิติของคีย์แบบอ่านอย่างเดียว โดยไม่ต้องล็อกอินแดชบอร์ด"],
     ],
+    mcpTitle: "ให้เอเจนต์ของคุณจัดการแทน",
+    mcpBody:
+      "ทุกการทำงานในแดชบอร์ดยังเป็นเครื่องมือ MCP ด้วย คุณอนุมัติเอเจนต์ทีละตัวและเลือกได้ว่าเข้าถึงอะไรได้บ้าง",
+    mcpPrompt: "คัดลอกพรอมต์สำหรับเอเจนต์",
+    mcpClientLabel: "เอเจนต์",
+    mcpAlt: "หน้ายืนยันสิทธิ์ของ capd กำลังเชื่อมต่อเอเจนต์ AI สลับระหว่าง Claude Code, Cursor และ Codex",
+
     gridTitle: "เครื่องมือที่เหลือ",
     gridBody: "ทุกอย่างในส่วนนี้อยู่ในรุ่นโอเพนซอร์ส ไม่มีแพ็กเกจเสียเงินที่กั๊กฟีเจอร์ไว้",
     cellModesTitle: "แบบช่องติ๊ก ลอย หรือมองไม่เห็น",
@@ -644,7 +679,7 @@ export const homeV2Strings = {
     faqAgentsQ: "มันหยุดสเครเปอร์ AI ได้ไหม",
     faqAgentsA: "ได้ Cap บล็อกเบราว์เซอร์อัตโนมัติที่เอเจนต์ AI ส่วนใหญ่ใช้ท่องเว็บ ส่วนสเครเปอร์ HTTP ล้วนรันโจทย์ไม่ได้ จึงไม่มีทางได้โทเค็น",
     faqGdprQ: "รองรับ GDPR หรือไม่?",
-    faqGdprA: "รองรับ Cap ไม่ส่งข้อมูลกลับ ไม่ตั้งคุกกี้ และไม่เก็บลายนิ้วมือผู้ใช้ มีแค่เซิร์ฟเวอร์ของคุณที่เห็นผลการยืนยัน ไม่มีใครอื่นเห็น",
+    faqGdprA: "รองรับ วิดเจ็ตของ Cap ไม่ส่งข้อมูลกลับ ไม่ตั้งคุกกี้ และไม่เก็บลายนิ้วมือผู้ใช้ มีแค่เซิร์ฟเวอร์ของคุณที่เห็นผลการยืนยัน ไม่มีใครอื่นเห็น",
     faqMigrateQ: "ย้ายจาก reCAPTCHA / hCaptcha ได้ไหม?",
     faqMigrateA: "ได้ API siteverify ของ Cap เข้ากันได้กับ reCAPTCHA และ hCaptcha เพียงเปลี่ยนโค้ดฝั่งไคลเอนต์มาใช้วิดเจ็ตของ Cap",
     faqCostQ: "โฮสต์เองมีค่าใช้จ่ายเท่าไร?",

@@ -26,6 +26,9 @@ export const COLUMNS = [
   ["flags", "array"],
   ["rule", "string"],
   ["token_id", "string"],
+  ["city", "string"],
+  ["lat", "nfloat"],
+  ["lon", "nfloat"],
 ];
 
 export const COLUMN_NAMES = COLUMNS.map(([name]) => name);
@@ -39,6 +42,7 @@ export const FILTER_FIELDS = new Set([
   "reason",
   "ip",
   "country",
+  "city",
   "asn",
   "asn_org",
   "browser",
@@ -58,6 +62,7 @@ export const FILTER_FIELDS = new Set([
 
 export const TOP_DIMENSIONS = new Set([
   "country",
+  "city",
   "asn",
   "asn_org",
   "ip",

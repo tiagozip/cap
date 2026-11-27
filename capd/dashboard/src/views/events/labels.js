@@ -20,6 +20,7 @@ export const FILTER_LABELS = {
   reason: "Reason",
   ip: "IP",
   country: "Country",
+  city: "City",
   asn: "Network number",
   asn_org: "Network",
   browser: "Browser",

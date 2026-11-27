@@ -79,6 +79,14 @@ const view = $derived.by(() => {
 const zoomed = $derived(view !== series);
 
 const current = $derived(metrics.find((m) => m.id === metric));
+const plain = (v) => v.toLocaleString();
+const show = $derived(current?.format ?? plain);
+const mean = (list) => {
+  const kept = list.filter((v) => v > 0);
+  return kept.length
+    ? Math.round(kept.reduce((a, b) => a + b, 0) / kept.length)
+    : 0;
+};
 const color = (id) => metrics.find((m) => m.id === id)?.color;
 const parts = $derived(
   view.map((s) =>
@@ -164,13 +172,13 @@ const share = (v) => (v > 0 && v < 0.01 ? "<1%" : pct(v));
 const scale = $derived.by(() => {
   const peak = Math.max(...values, ...(before ?? []).map((v) => v ?? 0), 0);
   if (!peak) return { max: 4, ticks: [0, 1, 2, 3, 4] };
-  const raw = peak / 4;
-  const mag = 10 ** Math.floor(Math.log10(raw));
-  const step = Math.max(
-    1,
-    [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw),
-  );
-  const count = Math.max(2, Math.ceil(peak / step));
+  const top = peak * 1.04;
+  const mag = 10 ** Math.floor(Math.log10(top / 5));
+  const [step, count] = [1, 2, 2.5, 5, 10, 20]
+    .map((m) => Math.max(1, m * mag))
+    .map((st) => [st, Math.max(2, Math.ceil(top / st))])
+    .filter(([, n]) => n <= 6)
+    .reduce((best, c) => (c[0] * c[1] < best[0] * best[1] ? c : best));
   return {
     max: step * count,
     ticks: Array.from({ length: count + 1 }, (_, i) => i * step),
@@ -303,9 +311,11 @@ const span = $derived(
     ? [Math.min(brush.from, brush.to), Math.max(brush.from, brush.to)]
     : null,
 );
-const spanTotal = $derived(
-  span ? values.slice(span[0], span[1] + 1).reduce((a, b) => a + b, 0) : 0,
-);
+const spanTotal = $derived.by(() => {
+  if (!span) return 0;
+  const part = values.slice(span[0], span[1] + 1);
+  return current?.format ? mean(part) : part.reduce((a, b) => a + b, 0);
+});
 const spanBad = $derived.by(() => {
   if (!span) return null;
   let all = 0;
@@ -421,20 +431,20 @@ const key = (e) => {
 
 const readout = $derived.by(() => {
   if (span)
-    return `Selected ${rangeLabel(view[span[0]].b, view[span[1]].b)}, ${spanTotal.toLocaleString()} ${current?.label.toLowerCase()}`;
+    return `Selected ${rangeLabel(view[span[0]].b, view[span[1]].b)}, ${current?.label.toLowerCase()} ${show(spanTotal)}`;
   const s = view[hover ?? -1];
   if (!s) return "Use arrow keys to read each interval";
   const k = spikes.get(hover);
   const counts = metrics
     .filter((m) => m.chart)
-    .map((m) => `${m.label} ${(s[m.id] ?? 0).toLocaleString()}`)
+    .map((m) => `${m.label} ${(m.format ?? plain)(s[m.id] ?? 0)}`)
     .join(", ");
   const was = beforeRaw?.[hover];
-  return `${spanLabel(s.b)}: ${counts}${was != null ? `, previous period ${was.toLocaleString()}` : ""}${k ? `, ${pct(k.rate)} flagged or blocked, usually ${pct(k.usual)}` : ""}`;
+  return `${spanLabel(s.b)}: ${counts}${was != null ? `, previous period ${show(was)}` : ""}${k ? `, ${pct(k.rate)} flagged or blocked, usually ${pct(k.usual)}` : ""}`;
 });
 
 const summary = $derived(
-  `${current?.label}: ${values.reduce((a, b) => a + b, 0).toLocaleString()} in ${view.length} intervals, peaking at ${Math.max(0, ...values).toLocaleString()}.${spikes.size ? ` Unusually many flagged or blocked: ${[...spikes.keys()].map((i) => spanLabel(view[i].b)).join("; ")}.` : ""} Use arrow keys to read each interval, Shift with arrows to select a range and Enter to zoom into it${onpick ? ", or Enter on one interval to view its events" : ""}.`,
+  `${current?.label}: ${current?.format ? `${show(mean(values))} on average` : plain(values.reduce((a, b) => a + b, 0))} in ${view.length} intervals, peaking at ${show(Math.max(0, ...values))}.${spikes.size ? ` Unusually many flagged or blocked: ${[...spikes.keys()].map((i) => spanLabel(view[i].b)).join("; ")}.` : ""} Use arrow keys to read each interval, Shift with arrows to select a range and Enter to zoom into it${onpick ? ", or Enter on one interval to view its events" : ""}.`,
 );
 </script>
 
@@ -442,7 +452,7 @@ const summary = $derived(
   <div class="relative h-56 w-8 text-right text-[11px] text-muted-foreground tabular-nums" aria-hidden="true">
     {#each scale.ticks as t (t)}
       <span class="tick level absolute inset-0" style:translate="0 {(-t / scale.max) * 100}%">
-        <span class="absolute right-0 bottom-0 translate-y-1/2 leading-none">{compact(t)}</span>
+        <span class="absolute right-0 bottom-0 translate-y-1/2 leading-none">{(current?.format ?? compact)(t)}</span>
       </span>
     {/each}
   </div>
@@ -549,7 +559,7 @@ const summary = $derived(
         style:left="{Math.min(Math.max(left + width / 2, 14), 86)}%"
         style:translate="-50% 0"
       >
-        <p class="font-medium tabular-nums">{spanTotal.toLocaleString()} {current?.label.toLowerCase()}</p>
+        <p class="font-medium tabular-nums">{#if current?.format}{current.label} {show(spanTotal)}{:else}{plain(spanTotal)} {current?.label.toLowerCase()}{/if}</p>
         <p class="mt-0.5 text-muted-foreground">{rangeLabel(view[span[0]].b, view[span[1]].b)}</p>
         {#if spanBad != null}<p class="mt-0.5 text-muted-foreground"><span class="text-foreground tabular-nums">{share(spanBad)}</span> flagged or blocked</p>{/if}
       </div>
@@ -572,8 +582,8 @@ const summary = $derived(
               <li class="grid grid-cols-[auto_1fr_auto_auto] items-center gap-x-2 {m.id === metric ? 'font-medium text-foreground' : 'text-muted-foreground'}">
                 <span class="size-2 shrink-0 rounded-full" style:background={m.color}></span>
                 {m.label}
-                <span class="text-right font-normal text-faint-foreground tabular-nums">{m.id !== "challenges" && s.challenges ? share((s[m.id] ?? 0) / s.challenges) : ""}</span>
-                <span class="min-w-11 text-right tabular-nums {m.id === metric ? 'text-foreground' : ''}">{(s[m.id] ?? 0).toLocaleString()}</span>
+                <span class="text-right font-normal text-faint-foreground tabular-nums">{m.id !== "challenges" && !m.format && s.challenges ? share((s[m.id] ?? 0) / s.challenges) : ""}</span>
+                <span class="min-w-11 text-right tabular-nums {m.id === metric ? 'text-foreground' : ''}">{(m.format ?? plain)(s[m.id] ?? 0)}</span>
               </li>
             {/each}
           </ul>
@@ -584,7 +594,7 @@ const summary = $derived(
               <span class="h-[1.5px] w-2 shrink-0 rounded-full bg-foreground/70"></span>
               Previous period
               <span class="text-right text-faint-foreground tabular-nums">{was && d ? `${d > 0 ? "+" : "−"}${share(Math.abs(d))}` : ""}</span>
-              <span class="min-w-11 text-right tabular-nums">{was.toLocaleString()}</span>
+              <span class="min-w-11 text-right tabular-nums">{show(was)}</span>
             </p>
           {/if}
           {#if spikes.has(tipAt)}

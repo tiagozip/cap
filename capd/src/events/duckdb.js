@@ -66,6 +66,10 @@ export async function createDuckdbStore({
   await writer.run(
     `CREATE TABLE IF NOT EXISTS events (${COLUMNS.map(([n, k]) => `${n} ${TYPES[k]}`).join(", ")})`,
   );
+  for (const [n, k] of COLUMNS.slice(COLUMNS.findIndex(([n]) => n === "city")))
+    await writer.run(
+      `ALTER TABLE events ADD COLUMN IF NOT EXISTS ${n} ${TYPES[k].replace(" NOT NULL", "")}`,
+    );
   await writer.run(`CREATE TABLE IF NOT EXISTS rollup (
     site_key VARCHAR NOT NULL,
     hour BIGINT NOT NULL,
@@ -154,6 +158,21 @@ export async function createDuckdbStore({
       });
     },
     async setRetention() {},
+    replaceIps(pairs, from, to) {
+      return serial(async () => {
+        const params = { f: BigInt(from), t: BigInt(to) };
+        const values = pairs.map(([a, b], i) => {
+          params[`a${i}`] = a;
+          params[`b${i}`] = b;
+          return `($a${i}, $b${i})`;
+        });
+        const result = await writer.run(
+          `UPDATE events SET ip = m.b FROM (VALUES ${values.join(", ")}) AS m(a, b) WHERE events.ip = m.a AND ts >= $f AND ts < $t`,
+          params,
+        );
+        return Number(result.rowsChanged);
+      });
+    },
     async info() {
       const result = await read((conn) =>
         conn.runAndReadAll("SELECT count(*) AS n FROM events"),

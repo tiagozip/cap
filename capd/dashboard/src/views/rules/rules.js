@@ -89,14 +89,133 @@ export const TEMPLATES = [
   },
 ];
 
-export const TRIGGER_LABELS = {
-  block: "Blocked requests",
-  fail: "Failed solves",
-  flagged: "Solves with risk flags",
-  agent: "AI agents",
-  rule: "Rule matches",
-  all: "Every event",
+export const WEBHOOK_CONDITIONS = {
+  all: [
+    "Every event",
+    "Each challenge, solve and token check",
+    "Traffic",
+    "activity",
+  ],
+  challenge: [
+    "Every challenge",
+    "A visitor's browser asked for a puzzle",
+    "Traffic",
+    "radar",
+  ],
+  solve: [
+    "Every passed solve",
+    "A visitor solved the puzzle and got a token",
+    "Traffic",
+    "check",
+  ],
+  siteverify: [
+    "Every token check",
+    "Your backend called siteverify",
+    "Traffic",
+    "eye",
+  ],
+  block: [
+    "Blocked requests",
+    "Rules, lists or detection blocked the request",
+    "Problems",
+    "ban",
+  ],
+  fail: [
+    "Failed solves",
+    "Wrong answers, expired or reused challenges",
+    "Problems",
+    "x",
+  ],
+  limit: [
+    "Rate-limited requests",
+    "A visitor went over the rate limit",
+    "Problems",
+    "clock",
+  ],
+  siteverify_fail: [
+    "Failed token checks",
+    "Your backend sent a token that didn't verify",
+    "Problems",
+    "x",
+  ],
+  flagged: [
+    "Solves with risk flags",
+    "Passed, but a detection signal fired",
+    "Detection",
+    "flag",
+  ],
+  score: [
+    "Risk score over a value",
+    "Behavior scoring rated the solve as risky",
+    "Detection",
+    "trendUp",
+  ],
+  agent: [
+    "AI agents",
+    "A known AI agent or browser solved",
+    "Detection",
+    "bot",
+  ],
+  reason: [
+    "Specific reasons",
+    "Pick the block and failure reasons you care about",
+    "Detection",
+    "info",
+  ],
+  rule: [
+    "Rule matches",
+    "Any rule, or only the ones you pick",
+    "Rules",
+    "rules",
+  ],
+  login: [
+    "Dashboard sign-ins",
+    "Someone signed in with the admin key or the sign-in proxy",
+    "Access",
+    "key",
+  ],
+  login_failed: [
+    "Failed sign-in attempts",
+    "Someone tried a wrong admin key",
+    "Access",
+    "shield",
+  ],
+  access: [
+    "API keys, MCP apps and share links",
+    "Created, revoked or reset",
+    "Access",
+    "share",
+  ],
+  keys: [
+    "Site key, rule and list changes",
+    "Keys created or deleted, settings, rules, lists and blocks",
+    "Changes",
+    "rules",
+  ],
+  settings: [
+    "Server setting changes",
+    "Rate limits, CORS, IP database, analytics and more",
+    "Changes",
+    "settings",
+  ],
+  automation: [
+    "Anything MCP apps or API keys change",
+    "Every change that didn't come from the dashboard",
+    "Changes",
+    "bot",
+  ],
+  update: ["New capd versions", "A newer release is out", "Updates", "refresh"],
+  security: [
+    "Security advisories",
+    "A published advisory affects this version",
+    "Updates",
+    "shield",
+  ],
 };
+
+export const TRIGGER_LABELS = Object.fromEntries(
+  Object.entries(WEBHOOK_CONDITIONS).map(([id, [label]]) => [id, label]),
+);
 
 export const VERDICTS = [
   "ok",

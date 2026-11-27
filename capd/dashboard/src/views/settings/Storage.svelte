@@ -15,7 +15,18 @@ import { samples } from "../../lib/samples.js";
 import SaveBar from "../../polish/instance-settings/SaveBar.svelte";
 import Health from "../../polish/settings-c/Health.svelte";
 
-const RETENTION = [1, 7, 14, 30, 90, 180, 365, 730];
+const RETENTION = [0, 1, 7, 14, 30, 90, 180, 365, 730];
+const ANONYMIZE = [7, 30, 60, 90, 180, 365];
+const days = (d) =>
+  d === 0
+    ? "Forever"
+    : d === 1
+      ? "1 day"
+      : d === 365
+        ? "1 year"
+        : d === 730
+          ? "2 years"
+          : `${d} days`;
 const IP_MODES = {
   full: "Exact addresses, so you can block and look up visitors.",
   truncate: "Drops the last part. Still enough for country and network.",
@@ -60,6 +71,7 @@ const load = async () => {
   const s = r.settings;
   form = {
     retentionDays: s.retentionDays,
+    anonymizeDays: s.anonymizeDays ?? 60,
     ipMode: s.ipMode,
     logChallenges: !!s.logChallenges,
   };
@@ -82,6 +94,7 @@ $effect(() => {
 
 const dirty = $derived(
   Number(form.retentionDays) !== stored.retentionDays ||
+    form.anonymizeDays !== stored.anonymizeDays ||
     form.ipMode !== stored.ipMode ||
     form.logChallenges !== stored.logChallenges,
 );
@@ -94,15 +107,20 @@ const discard = () => {
 
 const save = async () => {
   error = "";
-  const days = Number(form.retentionDays);
-  if (!Number.isInteger(days) || days < 1 || days > 3650) {
+  const keep = Number(form.retentionDays);
+  if (
+    !Number.isInteger(keep) ||
+    keep < (customRetention ? 1 : 0) ||
+    keep > 3650
+  ) {
     error = "Keep events for between 1 and 3,650 days.";
     document.getElementById("retention-custom")?.focus();
     return false;
   }
   saving = true;
   const res = await api("PUT", "/settings/analytics", {
-    retentionDays: days,
+    retentionDays: keep,
+    anonymizeDays: form.anonymizeDays,
     ipMode: form.ipMode,
     logChallenges: form.logChallenges,
   });
@@ -172,7 +190,7 @@ const save = async () => {
           {/if}
           <Select
             id="retention"
-            options={[...RETENTION.map((d) => [String(d), d === 1 ? "1 day" : d === 365 ? "1 year" : d === 730 ? "2 years" : `${d} days`]), ["other", "Other"]]}
+            options={[...RETENTION.map((d) => [String(d), days(d)]), ["other", "Other"]]}
             bind:value={
               () => (customRetention ? "other" : String(form.retentionDays)),
               (v) => {
@@ -183,8 +201,8 @@ const save = async () => {
           />
         </div>
         {#snippet below()}
-          {#if Number(form.retentionDays) >= 1 && Number(form.retentionDays) < stored.retentionDays}
-            <p class="text-sm text-pretty text-warning md:text-end" role="status">Saving deletes events older than {Number(form.retentionDays) === 1 ? "1 day" : `${Number(form.retentionDays)} days`}.</p>
+          {#if Number(form.retentionDays) >= 1 && (!stored.retentionDays || Number(form.retentionDays) < stored.retentionDays)}
+            <p class="text-sm text-pretty text-warning md:text-end" role="status">Saving deletes events older than {days(Number(form.retentionDays))}.</p>
           {/if}
         {/snippet}
       </Row>
@@ -202,6 +220,22 @@ const save = async () => {
             ]}
           />
         </Row>
+
+        {#if form.ipMode === "full"}
+          <Row label="Anonymize IP addresses after" for="anonymize" help="Older events keep only the shortened address, so country and network still work.">
+            <Select
+              id="anonymize"
+              options={[
+                ...[...new Set([...ANONYMIZE, stored.anonymizeDays])]
+                  .filter(Boolean)
+                  .sort((a, b) => a - b)
+                  .map((d) => [String(d), days(d)]),
+                ["0", "Never"],
+              ]}
+              bind:value={() => String(form.anonymizeDays), (v) => (form.anonymizeDays = Number(v))}
+            />
+          </Row>
+        {/if}
       {/if}
 
       <Row label="Record every challenge shown" for="log-challenges" help="When off, only solves, blocks and rate limits are kept. About a third fewer events.">

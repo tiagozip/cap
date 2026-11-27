@@ -16,7 +16,16 @@ import {
 } from "../../components/ui/index.js";
 import { ago, fullFmt, latency } from "../../lib/format.js";
 
-let { rows, testing = false, highlight = null, ontest, onevent } = $props();
+let {
+  rows,
+  testing = false,
+  highlight = null,
+  ontest,
+  onevent,
+  onresend,
+} = $props();
+
+let resending = $state(null);
 
 let show = $state("all");
 
@@ -99,6 +108,10 @@ const stats = $derived.by(() => {
               <TableCell class="max-w-40 max-sm:hidden">
                 {#if d.kind === "cap.test" || d.event === "test"}
                   <Tag>Test</Tag>
+                {:else if d.kind === "cap.digest"}
+                  <span class="text-xs text-muted-foreground tabular-nums">Summary of {nf.format(d.count ?? 0)}</span>
+                {:else if d.kind === "cap.update" || d.kind === "cap.security"}
+                  <Tag>{d.kind === "cap.security" ? "Security notice" : "Update"}</Tag>
                 {:else if d.event}
                   {#if onevent}
                     <button
@@ -114,6 +127,18 @@ const stats = $derived.by(() => {
               </TableCell>
               <TableCell class="text-end">
                 <span class="flex items-center justify-end gap-2">
+                  {#if onresend && !d.ok && d.event && d.event !== "test"}
+                    <button
+                      type="button"
+                      class="cursor-pointer rounded-sm text-xs text-muted-foreground underline decoration-border underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 [@media(hover:hover)]:hover:text-foreground"
+                      disabled={resending === d.event}
+                      onclick={async () => {
+                        resending = d.event;
+                        await onresend(d.event);
+                        resending = null;
+                      }}
+                    >{resending === d.event ? "Sending" : "Resend"}</button>
+                  {/if}
                   <span class="h-1 w-10 overflow-hidden rounded-full bg-foreground/8 max-sm:hidden" aria-hidden="true">
                     <span class="block h-full origin-left rounded-full {d.ok ? 'bg-foreground/35' : 'bg-destructive/70'}" style:transform="scaleX({Math.min(1, (d.ms ?? 0) / stats.scale)})"></span>
                   </span>

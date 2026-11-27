@@ -40,6 +40,7 @@ let {
   size = "default",
   showCloseButton = true,
   portalProps,
+  overlayClass,
   ref = $bindable(null),
   children,
   ...rest
@@ -59,7 +60,7 @@ $effect(() => {
 </script>
 
 <Dialog.Portal {...portalProps}>
-  <DialogOverlay />
+  <DialogOverlay class={overlayClass} />
   <Dialog.Content bind:ref data-slot="dialog-content" class={dialogContentVariants({ size, class: className })} {...rest}>
     {@render children?.()}
     {#if showCloseButton}

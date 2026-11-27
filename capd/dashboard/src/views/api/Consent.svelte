@@ -1,6 +1,8 @@
 <script>
 import { untrack } from "svelte";
+import { slide } from "svelte/transition";
 import AgentIcon from "../../components/cap/AgentIcon.svelte";
+import ConnectSplash from "../../components/cap/ConnectSplash.svelte";
 import {
   Button,
   Checkbox,
@@ -25,6 +27,11 @@ let busy = $state(false);
 let done = $state(null);
 let invalid = $state(false);
 let tools = $state([]);
+let linkedAt = $state(0);
+let linked = $state(false);
+let charged = $state(0);
+let card = $state();
+let press = null;
 
 loadTools().then((t) => {
   tools = t;
@@ -40,12 +47,17 @@ api("GET", `/oauth/requests/${untrack(() => id)}`).then((r) => {
   access = r.readOnly ? "read" : "full";
 });
 
-const answer = async (allow) => {
+const answer = async (allow, button) => {
   if (allow && reach === "some" && !siteKeys.length) {
     invalid = true;
     return;
   }
   busy = true;
+  const cb = card.getBoundingClientRect();
+  const bb = button?.getBoundingClientRect();
+  press = bb
+    ? [bb.left - cb.left + bb.width / 2, bb.top - cb.top + bb.height / 2]
+    : null;
   const r = await api("POST", `/oauth/requests/${id}`, {
     allow,
     access,
@@ -57,34 +69,34 @@ const answer = async (allow) => {
     return;
   }
   done = allow ? "allowed" : "denied";
-  location.href = r.redirect;
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!allow || still) {
+    location.href = r.redirect;
+    return;
+  }
+  linkedAt = performance.now();
+  setTimeout(() => {
+    location.href = r.redirect;
+  }, 4000);
 };
 
 const phase = $derived(
-  done === "allowed"
+  done === "allowed" && !linkedAt
     ? "allowed"
     : error || done === "denied"
       ? "denied"
       : "pending",
 );
-const target = $derived.by(() => {
-  try {
-    const u = new URL(request?.redirectTo);
-    return { origin: u.origin, rest: u.href.slice(u.origin.length) };
-  } catch {
-    return { origin: request?.redirectTo ?? "", rest: "" };
-  }
-});
 </script>
 
 <main class="relative isolate grid min-h-dvh place-items-center bg-sidebar px-4 py-12">
   <LoginBackdrop />
-  <div class="consent-card flex w-full max-w-sm flex-col gap-6 rounded-3xl bg-background px-6 pt-8 pb-6 ring-1 ring-border">
+  <div bind:this={card} class="consent-card relative flex w-full max-w-sm flex-col gap-6 rounded-3xl bg-background px-6 pt-8 pb-6 ring-1 ring-border">
     <div class="flex items-center justify-center gap-2" aria-hidden="true">
-      <span class="consent-tile from-start grid size-14 place-items-center rounded-2xl bg-muted ring-1 ring-foreground/10">
+      <span class:joined={linked} style:--join="{charged - 100}ms" class="consent-tile from-start grid size-14 place-items-center rounded-2xl bg-muted ring-1 ring-foreground/10">
         {#if request}<AgentIcon id={agentIconId(request.clientName)} size={28} />{/if}
       </span>
-      <span class="flex items-center gap-2 {phase === 'allowed' ? 'text-success' : 'text-faint-foreground'} transition-colors duration-300">
+      <span class:opacity-0={linked} style:transition-delay={linked ? `${charged + 200}ms` : null} class="consent-link flex items-center gap-2 transition-[color,opacity] {phase === 'allowed' ? 'text-success' : 'text-faint-foreground'} duration-300">
         <span class="consent-wire origin-left w-4 border-t border-current {phase === 'allowed' ? '' : 'border-dashed'}"></span>
         <span class="grid size-6 place-items-center">
           {#key phase}
@@ -95,7 +107,7 @@ const target = $derived.by(() => {
         </span>
         <span class="consent-wire origin-right w-4 border-t border-current {phase === 'allowed' ? '' : 'border-dashed'}"></span>
       </span>
-      <span class="consent-tile from-end grid size-14 place-items-center rounded-2xl bg-muted ring-1 ring-foreground/10">
+      <span class:joined={linked} style:--join="{charged - 100}ms" class="consent-tile from-end grid size-14 place-items-center rounded-2xl bg-muted ring-1 ring-foreground/10">
         <img src="./public/logo-small.webp" alt="" width="30" height="30" />
       </span>
     </div>
@@ -105,17 +117,20 @@ const target = $derived.by(() => {
         <h1 class="text-lg font-semibold text-balance">Couldn't connect</h1>
         <p class="text-sm text-pretty text-muted-foreground">{error}</p>
       </div>
-    {:else if done}
-      <div class="flex flex-col gap-1 text-center" role="status">
-        <h1 class="text-lg font-semibold text-balance">{done === "allowed" ? `${request.clientName} is connected` : "Access denied"}</h1>
-        <p class="text-sm text-muted-foreground">You can close this tab.</p>
-      </div>
     {:else if request}
-      <div class="flex flex-col gap-1 text-center">
-        <h1 class="text-lg font-semibold text-balance">Connect {request.clientName} to Cap</h1>
-        <p class="text-[13px] [overflow-wrap:anywhere] text-pretty text-muted-foreground" title={request.redirectTo}>Returns to <span class="font-medium text-foreground">{target.origin}</span>{target.rest}</p>
-      </div>
+      {#if done}
+        <div class="flex flex-col gap-1 text-center" role="status">
+          <h1 class="consent-done text-lg font-semibold text-balance" style:--d="{linkedAt ? charged + 900 : 0}ms">{done === "allowed" ? `${request.clientName} is connected` : "Access denied"}</h1>
+        </div>
+      {:else}
+        <div class="flex flex-col gap-1 text-center">
+          <h1 class="text-lg font-semibold text-balance">Connect {request.clientName} to Cap</h1>
+          <p class="text-[13px] [overflow-wrap:anywhere] text-pretty text-muted-foreground" title={request.redirectTo}>Returns to <span class="font-medium text-foreground">{request.redirectTo}</span></p>
+        </div>
+      {/if}
 
+      {#if !done}
+      <div out:slide={{ duration: 280 }} class="-mt-6 flex flex-col gap-6 pt-6">
       <div class="flex flex-col rounded-2xl bg-muted/50 ring-1 ring-foreground/5">
         <div class="flex items-center justify-between gap-3 px-4 py-3">
           <div class="flex min-w-0 flex-col gap-0.5">
@@ -178,13 +193,25 @@ const target = $derived.by(() => {
 
       <div class="grid grid-cols-2 gap-2">
         <Button disabled={busy} onclick={() => answer(false)}>Deny</Button>
-        <Button variant="primary" disabled={busy} onclick={() => answer(true)}>
+        <Button variant="primary" disabled={busy} onclick={(e) => answer(true, e.currentTarget)}>
           {#if busy}<Spinner label="Connecting" />{/if}
           Allow
         </Button>
       </div>
+      </div>
+      {/if}
     {:else}
       <div class="grid place-items-center py-4"><Spinner label="Loading the sign-in request" /></div>
+    {/if}
+    {#if linkedAt}
+      <ConnectSplash
+        origin={linkedAt}
+        {press}
+        onready={(t) => {
+          charged = t;
+          linked = true;
+        }}
+      />
     {/if}
   </div>
 </main>
@@ -215,6 +242,22 @@ const target = $derived.by(() => {
     .consent-keys {
       animation: consent-keys 200ms var(--ease-out);
     }
+
+    .consent-tile.joined {
+      animation: consent-join 1100ms var(--ease-out) var(--join, 0ms);
+    }
+
+    .consent-tile.joined.from-start {
+      --pull: -10px;
+    }
+
+    .consent-tile.joined.from-end {
+      --pull: 10px;
+    }
+
+    .consent-done {
+      animation: consent-done 460ms var(--ease-out) var(--d, 0ms) backwards;
+    }
   }
 
   @keyframes consent-tile {
@@ -235,6 +278,24 @@ const target = $derived.by(() => {
       opacity: 0;
       filter: blur(4px);
       transform: scale(0.25);
+    }
+  }
+
+  @keyframes consent-join {
+    30% {
+      translate: var(--pull) 0;
+    }
+
+    62% {
+      translate: calc(var(--pull) * -0.35) 0;
+    }
+  }
+
+  @keyframes consent-done {
+    from {
+      opacity: 0;
+      filter: blur(4px);
+      translate: 0 4px;
     }
   }
 

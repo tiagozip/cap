@@ -1,4 +1,5 @@
 import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import llmstxt from "vitepress-plugin-llms";
@@ -423,6 +424,7 @@ const mainSidebar = (loc) => {
         { text: "capd", link: `${p}/guide/capd/index.md` },
         { text: t.options, link: `${p}/guide/capd/options.md` },
         { text: "Workers", link: `${p}/guide/capd/workers.md` },
+        { text: "Webhooks", link: `${p}/guide/capd/webhooks.md` },
         { text: t.core, link: `${p}/guide/capjs-core.md` },
       ],
     },
@@ -680,13 +682,49 @@ export default withMermaid({
         },
       },
       llmstxt({
+        customLLMsTxtTemplate: readFileSync(new URL("./llms.md", import.meta.url), "utf8"),
         ignoreFiles: [
           ...LOCALES.map((l) => `${l}/**`),
-          "guide/capd/installation.md",
-          "guide/capd/usage.md",
-          "guide/capd/migrate-v3-v4.md",
           "guide/effectiveness.md",
           "guide/solver.md",
+          "guide/server.md",
+          "guide/demo.md",
+          "guide/benchmark.md",
+          "guide/troubleshooting/**",
+        ],
+        sidebar: [
+          {
+            text: "Cap",
+            items: [
+              "guide/index",
+              "guide/workings",
+              "guide/widget",
+              "guide/invisible",
+              "guide/floating",
+              "guide/capd/index",
+              "guide/capd/options",
+              "guide/capd/workers",
+              "guide/capd/webhooks",
+              "guide/capd/update-checks",
+              "guide/capd/migrate-v3-v4",
+              "guide/capjs-core",
+              "guide/instrumentation",
+              "guide/hashwx",
+              "guide/error-codes",
+              "guide/compliance",
+              "guide/community",
+              "guide/alternatives/migrate-from-recaptcha",
+              "guide/alternatives",
+              "guide/alternatives/recaptcha",
+              "guide/alternatives/hcaptcha",
+              "guide/alternatives/turnstile",
+              "guide/alternatives/altcha",
+              "guide/alternatives/friendlycaptcha",
+              "guide/alternatives/silentshield",
+              "guide/alternatives/anubis",
+              "about",
+            ].map((page) => ({ text: page, link: `/${page}.md` })),
+          },
         ],
       }),
     ],

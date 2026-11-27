@@ -201,6 +201,7 @@ function revoke(share) {
 
 <Dialog
   bind:open={showCreated}
+  guard
   title="Share link created"
   description="Copy it now, Cap won't show it again. Anyone with it can see this key's stats."
 >

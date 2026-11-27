@@ -5,7 +5,7 @@
   "scripts": {
     "build": "node scripts/build-dashboard.mjs",
     "dev": "npm run build && wrangler d1 migrations apply DB --local && wrangler dev",
-    "deploy": "npm run build && wrangler deploy && wrangler d1 migrations apply DB --remote",
+    "deploy": "npm run build && wrangler d1 migrations apply DB --remote && wrangler deploy",
     "lint": "biome check scripts"
   },
   "devDependencies": {

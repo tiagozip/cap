@@ -5,6 +5,7 @@ import VPNavBarSearch from "vitepress/dist/client/theme-default/components/VPNav
 import VPNavBarTranslations from "vitepress/dist/client/theme-default/components/VPNavBarTranslations.vue";
 import DashboardDemo from "./DashboardDemo.vue";
 import HomeDemo from "./HomeDemo.vue";
+import HomeMcp from "./HomeMcp.vue";
 import HomeOdometer from "./HomeOdometer.vue";
 import HomeToolbox from "./HomeToolbox.vue";
 import { demoInstrumentation, judgeDemo, onDemoError } from "../demoCheck.js";
@@ -667,6 +668,14 @@ onBeforeUnmount(() => {
                 <span>{{ t.quoteRole }}</span>
               </figcaption>
             </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="mcp" class="band">
+        <div class="wrap">
+          <div class="frame section mcp">
+            <HomeMcp :t="t" :lp="lp" />
           </div>
         </div>
       </section>
@@ -2122,6 +2131,27 @@ html.home-v2-active main.main {
   font-size: 0.9375rem;
   color: var(--text-secondary);
 }
+#homev2 .mcp {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 56px;
+  align-items: center;
+}
+#homev2 .mcp-copy {
+  display: grid;
+  gap: 20px;
+  justify-items: start;
+}
+#homev2 .mcp-copy h2 {
+  font-size: clamp(1.75rem, 1.2rem + 1.4vw, 2.375rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+#homev2 .mcp-copy > p {
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
 #homev2 .quote-wrap {
   display: grid;
   justify-items: center;
@@ -2513,6 +2543,10 @@ html.home-v2-active main.main {
   }
   #homev2 .facts {
     grid-template-columns: minmax(0, 1fr);
+  }
+  #homev2 .mcp {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
   }
   #homev2 .section {
     padding-block: 72px;

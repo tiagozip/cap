@@ -17,6 +17,7 @@ import Appearance from "./Appearance.svelte";
 import Location from "./Location.svelte";
 import Protection from "./Protection.svelte";
 import ProxySignIn from "./ProxySignIn.svelte";
+import ServerWebhooks from "./ServerWebhooks.svelte";
 import Sessions from "./Sessions.svelte";
 import SharedLists from "./SharedLists.svelte";
 import Storage from "./Storage.svelte";
@@ -82,6 +83,18 @@ const SECTIONS = [
     title: "Shared lists",
     view: SharedLists,
     items: [["Shared lists", "ip list allowlist blocklist cidr networks"]],
+  },
+  {
+    id: "webhooks",
+    title: "Webhooks",
+    view: ServerWebhooks,
+    bare: true,
+    items: [
+      [
+        "Webhooks",
+        "notifications alerts discord slack telegram sign-in login mcp changes audit",
+      ],
+    ],
   },
   {
     id: "proxy",
@@ -295,6 +308,9 @@ onMount(() => {
   <div class="flex max-w-3xl min-w-0 flex-1 flex-col gap-6 max-lg:w-full">
     {#each SECTIONS as s (s.id)}
       <div id="settings-{s.id}" class="scroll-mt-16">
+        {#if s.bare}
+          <s.view />
+        {:else}
         <Group id="settings-{s.id}-title" title={s.title} description={s.text} action={s.id === "sessions" ? signOutAction : undefined}>
           {#if s.view}
             {#key s.id === "transfer" ? 0 : generation}
@@ -314,6 +330,7 @@ onMount(() => {
             </Skeleton>
           {/if}
         </Group>
+        {/if}
       </div>
     {/each}
   </div>

@@ -60,6 +60,7 @@ const demoApi = {
       ACTIONS: constant("policy/rules.js", "ACTIONS"),
       ENTRY_KINDS: constant("policy/lists.js", "ENTRY_KINDS"),
       WEBHOOK_TRIGGERS: constant("policy/webhooks.js", "WEBHOOK_TRIGGERS"),
+      INSTANCE_TRIGGERS: constant("policy/webhooks.js", "INSTANCE_TRIGGERS"),
       risk: {
         weights: BEHAVIOR_WEIGHTS,
         weakCap: WEAK_CAP,

@@ -18,6 +18,7 @@ import {
 import { ago } from "../../lib/format.js";
 import { app, openEvents } from "../../lib/state.svelte.js";
 import { provideCommands, toast } from "../../lib/ui.svelte.js";
+import { aiPrompt } from "../../polish/first-run/prompt.js";
 import {
   currentSecret,
   loadSecret,
@@ -141,52 +142,7 @@ const pickStack = (id) => {
 };
 const server = $derived(stackCode(stack, `${endpoint}siteverify`));
 
-const aiPrompt = `Implement Cap (self-hosted CAPTCHA) in this codebase, or migrate from the existing CAPTCHA solution if one is present.
-
-## Configuration
-
-- Site key: \`${sk}\`
-- Server URL: \`${origin}\`
-- API endpoint: \`${endpoint}\`
-
-## Step 1: Read the docs
-
-Fetch these first:
-- https://trycap.dev/llms.txt
-- https://trycap.dev/agent.md
-
-## Step 2: Plan before coding
-
-Before writing code, output a short plan covering:
-1. What CAPTCHA solution (if any) exists today and every place it's used (frontend mounts, backend verification, env vars, config files)
-2. Which Cap mode fits best: standard widget, invisible, or floating (check the docs for tradeoffs)
-3. File-by-file change list
-4. How you'll verify it works end-to-end
-
-Don't wait for approval, proceed once the plan is written.
-
-## Step 3: Migration rules (if replacing an existing solution)
-
-- Remove the old library, scripts, env vars, and verification calls completely. No dead code.
-- Match the old solution's UX placement (same forms, same trigger points).
-- Preserve existing error handling and failure UX.
-- Update any tests, mocks, or fixtures that referenced the old CAPTCHA.
-
-## Step 4: Implement
-
-- Secrets go in env vars, never hardcoded.
-- Token must be verified server-side on every protected route. Frontend-only checks don't count.
-- Handle: missing token, invalid token, network failure to the Cap server, expired token.
-
-## Step 5: Test it
-
-Execute a basic test to make sure everything works. Check valid token, missing token, and invalid token cases.
-
-If anything fails and you are sure it's Cap's issue:
-
-1. Double-check that you're using the latest widget and capd version.
-2. Double-check your secret, endpoint, and that you're sending the token in the right field. Consult the docs.
-3. Instruct the user to open an issue on GitHub: https://github.com/tiagozip/cap`;
+const aiPromptText = aiPrompt(sk, location.origin, endpoint);
 
 const progress = watchProgress(sk);
 onDestroy(progress.stop);
@@ -268,7 +224,7 @@ $effect(() =>
         id: "copy-ai-prompt",
         label: "Copy prompt for an AI assistant",
         icon: "copy",
-        run: () => copy(aiPrompt, "Prompt copied"),
+        run: () => copy(aiPromptText, "Prompt copied"),
       },
     ]),
   ),
@@ -277,9 +233,8 @@ let revealArmed = $state(false);
 </script>
 
 {#snippet status(st)}
-  <p class="flex min-h-5 items-start gap-2 pt-1 text-[13px] leading-5 text-pretty {st?.tone === 'warn' ? 'text-warning' : st?.tone === 'fail' ? 'text-destructive' : 'text-muted-foreground'}">
+  <p class="flex min-h-5 items-start pt-1 text-[13px] leading-5 text-pretty {st?.tone === 'warn' ? 'text-warning' : st?.tone === 'fail' ? 'text-destructive' : st?.tone === 'done' ? 'text-foreground/85' : 'text-muted-foreground'}">
     {#if st}
-      <span class="status-dot mt-[7px]" data-tone={st.tone} aria-hidden="true"></span>
       <span class="min-w-0">
         {st.text}
         {#if st.events}
@@ -299,7 +254,7 @@ let revealArmed = $state(false);
       size="sm"
       onclick={async () => {
         try {
-          await navigator.clipboard.writeText(aiPrompt);
+          await navigator.clipboard.writeText(aiPromptText);
         } catch {
           return;
         }
@@ -367,12 +322,11 @@ let revealArmed = $state(false);
             <h3 class="text-sm font-medium">Add the widget to your form</h3>
             <p class="text-sm text-pretty text-muted-foreground">
               {framework === "html" ? "Paste this into your page." : "Install the widget, then add it to your form."}
-              Invisible mode and other frameworks are in the
               <a
                 class="text-foreground underline underline-offset-2 [@media(hover:hover)]:hover:text-primary"
                 href="https://trycap.dev/guide/widget.html#usage"
                 target="_blank"
-                rel="noreferrer">widget guide</a>.
+                rel="noreferrer">More details...</a>
             </p>
             {@render status(solveStatus)}
           </div>
@@ -492,8 +446,6 @@ let revealArmed = $state(false);
   }
 
   .step-marker[data-done="true"] {
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-success) 35%, transparent);
-    background: color-mix(in oklab, var(--color-success) 14%, transparent);
     color: var(--color-success);
   }
 
@@ -502,22 +454,6 @@ let revealArmed = $state(false);
     place-items: center;
   }
 
-  .status-dot {
-    position: relative;
-    flex-shrink: 0;
-    width: 0.375rem;
-    height: 0.375rem;
-    border-radius: 9999px;
-    background: currentColor;
-  }
-
-  .status-dot[data-tone="done"] {
-    background: var(--color-success);
-  }
-
-  .status-dot[data-tone="waiting"] {
-    background: var(--color-muted-foreground);
-  }
 
   @media (max-width: 40rem) {
     .step {
@@ -543,10 +479,6 @@ let revealArmed = $state(false);
     .glyph-swap {
       animation: glyph-in 320ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-
-    .status-dot[data-tone="waiting"] {
-      animation: waiting 1.6s ease-in-out infinite;
-    }
   }
 
   @keyframes glyph-in {
@@ -557,11 +489,6 @@ let revealArmed = $state(false);
     }
   }
 
-  @keyframes waiting {
-    50% {
-      opacity: 0.3;
-    }
-  }
 
   @keyframes secret-in {
     from {

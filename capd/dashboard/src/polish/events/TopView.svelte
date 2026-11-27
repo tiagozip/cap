@@ -10,6 +10,7 @@ export const TOP_DIMS = [
   ["ip", "IP addresses"],
   ["fp", "Visitors"],
   ["asn_org", "Networks"],
+  ["city", "Cities"],
   ["origin", "Websites"],
   ["browser", "Browsers"],
   ["os", "Systems"],
@@ -24,6 +25,7 @@ export const TOP_SAMPLE = Object.fromEntries(
 
 <script>
 import { compact } from "../../lib/format.js";
+import { flagUrl } from "../../lib/geo.js";
 import AsnIcon from "../../views/activity/AsnIcon.svelte";
 import { FILTER_LABELS, filterValueLabel } from "../../views/events/labels.js";
 
@@ -54,7 +56,7 @@ const sections = $derived(
         <span class="w-12 text-end">Events</span>
       </h2>
       <ul class="flex flex-col gap-0.5">
-        {#each s.list.slice(0, 8) as r (r.value)}
+        {#each s.list.slice(0, 8) as r (`${r.value}|${r.label ?? ""}`)}
           {@const label = filterValueLabel(s.field, String(r.value))}
           {@const blocked = pct(r.blocked ?? 0, r.n)}
           <li>
@@ -68,6 +70,9 @@ const sections = $derived(
                 <span class="h-full flex-1 bg-foreground/[0.06]"></span>
                 {#if blocked}<span class="h-full bg-destructive/15" style:width="{blocked}%"></span>{/if}
               </span>
+              {#if s.field === "city" && flagUrl(r.label)}
+                <img src={flagUrl(r.label)} alt="" class="relative h-3.5 w-[18px] shrink-0 rounded-[2px] object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10" width="18" height="14" />
+              {/if}
               {#if s.field === "asn_org" && r.label}
                 <span class="relative flex size-4 shrink-0 items-center justify-center"><AsnIcon asn={r.label} /></span>
               {/if}

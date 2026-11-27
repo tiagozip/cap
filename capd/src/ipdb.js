@@ -12,6 +12,7 @@ import { db } from "#db";
 const DATA_DIR = process.env.DATA_DIR || join(import.meta.dir, "..", "data");
 const COUNTRY_PATH = join(DATA_DIR, "dbip-country.mmdb");
 const ASN_PATH = join(DATA_DIR, "dbip-asn.mmdb");
+const CITY_PATH = join(DATA_DIR, "dbip-city.mmdb");
 
 let countryReader = null;
 let asnReader = null;
@@ -50,7 +51,9 @@ export async function loadIPDB() {
 
   if (!ipdbSettings?.mode || ipdbSettings.mode === "ipinfo") return;
 
-  const filesExist = existsSync(COUNTRY_PATH) || existsSync(ASN_PATH);
+  const filesExist =
+    existsSync(ipdbSettings.cities ? CITY_PATH : COUNTRY_PATH) ||
+    existsSync(ASN_PATH);
 
   if (!filesExist) {
     const writeError = checkDataDirWritable();
@@ -64,6 +67,7 @@ export async function loadIPDB() {
         maxmindAccountId: ipdbSettings.maxmindAccountId || "",
         maxmindKey: ipdbSettings.maxmindKey || "",
         ipinfoToken: ipdbSettings.ipinfoToken || "",
+        cities: !!ipdbSettings.cities,
       });
       return;
     } catch (e) {
@@ -85,8 +89,9 @@ export async function loadIPDB() {
 
 async function openReaders() {
   try {
-    if (existsSync(COUNTRY_PATH)) {
-      countryReader = await maxmind.open(COUNTRY_PATH);
+    const geoPath = existsSync(CITY_PATH) ? CITY_PATH : COUNTRY_PATH;
+    if (existsSync(geoPath)) {
+      countryReader = await maxmind.open(geoPath);
     }
     if (existsSync(ASN_PATH)) {
       asnReader = await maxmind.open(ASN_PATH);
@@ -112,6 +117,7 @@ export async function downloadDB(mode, credentials) {
     if (mode === "ipinfo") {
       ipdbSettings = {
         mode: "ipinfo",
+        cities: true,
         maxmindKey: "",
         ipinfoToken: credentials?.ipinfoToken || "",
         lastUpdated: new Date().toISOString(),
@@ -130,16 +136,17 @@ export async function downloadDB(mode, credentials) {
       });
     }
 
+    const cities = !!credentials?.cities;
     let files;
     if (mode === "dbip") {
       files = [
         {
           urls: dbipMonths.map(
             ({ year, month }) =>
-              `https://download.db-ip.com/free/dbip-country-lite-${year}-${month}.mmdb.gz`,
+              `https://download.db-ip.com/free/dbip-${cities ? "city" : "country"}-lite-${year}-${month}.mmdb.gz`,
           ),
-          path: COUNTRY_PATH,
-          name: "country",
+          path: cities ? CITY_PATH : COUNTRY_PATH,
+          name: cities ? "city" : "country",
         },
         {
           urls: dbipMonths.map(
@@ -159,10 +166,10 @@ export async function downloadDB(mode, credentials) {
       files = [
         {
           urls: [
-            "https://download.maxmind.com/geoip/databases/GeoLite2-Country/download?suffix=tar.gz",
+            `https://download.maxmind.com/geoip/databases/GeoLite2-${cities ? "City" : "Country"}/download?suffix=tar.gz`,
           ],
-          path: COUNTRY_PATH,
-          name: "country",
+          path: cities ? CITY_PATH : COUNTRY_PATH,
+          name: cities ? "city" : "country",
           isTarGz: true,
           headers: { Authorization: auth },
         },
@@ -248,8 +255,14 @@ export async function downloadDB(mode, credentials) {
       }
     }
 
+    try {
+      const stale = cities ? COUNTRY_PATH : CITY_PATH;
+      if (existsSync(stale)) unlinkSync(stale);
+    } catch {}
+
     ipdbSettings = {
       mode,
+      cities,
       maxmindAccountId: credentials?.maxmindAccountId || "",
       maxmindKey: credentials?.maxmindKey || "",
       ipinfoToken: credentials?.ipinfoToken || "",
@@ -314,10 +327,12 @@ export function clearDownloadError() {
 }
 
 export function getStatus() {
-  const countryExists = existsSync(COUNTRY_PATH);
+  const cityExists = existsSync(CITY_PATH);
+  const countryExists = cityExists || existsSync(COUNTRY_PATH);
   const asnExists = existsSync(ASN_PATH);
   return {
     mode: ipdbSettings?.mode || "",
+    cities: !!ipdbSettings?.cities,
     maxmindAccountId: ipdbSettings?.maxmindAccountId || "",
     maxmindKey: ipdbSettings?.maxmindKey
       ? `••••${ipdbSettings.maxmindKey.slice(-4)}`
@@ -327,7 +342,11 @@ export function getStatus() {
       : "",
     lastUpdated: ipdbSettings?.lastUpdated || "",
     country: countryExists
-      ? { exists: true, size: statSync(COUNTRY_PATH).size }
+      ? {
+          exists: true,
+          city: cityExists,
+          size: statSync(cityExists ? CITY_PATH : COUNTRY_PATH).size,
+        }
       : { exists: false },
     asn: asnExists
       ? { exists: true, size: statSync(ASN_PATH).size }
@@ -352,6 +371,9 @@ export async function deleteDB() {
   } catch {}
   try {
     if (existsSync(ASN_PATH)) unlinkSync(ASN_PATH);
+  } catch {}
+  try {
+    if (existsSync(CITY_PATH)) unlinkSync(CITY_PATH);
   } catch {}
   await db.del("settings:ipdb");
 }
@@ -385,6 +407,11 @@ export async function lookup(ip) {
       if (c?.country?.iso_code) {
         result.country = c.country.iso_code;
         gotResult = true;
+      }
+      if (c?.city?.names?.en) {
+        result.city = c.city.names.en;
+        result.lat = c.location?.latitude ?? null;
+        result.lon = c.location?.longitude ?? null;
       }
     } catch {}
   }
@@ -432,6 +459,14 @@ async function ipinfoLookup(ip) {
     if (res.ok) {
       const data = await res.json();
       if (data.country) result.country = data.country;
+      if (data.city) {
+        const [lat, lon] = String(data.loc ?? "")
+          .split(",")
+          .map(Number);
+        result.city = data.city;
+        result.lat = Number.isFinite(lat) ? lat : null;
+        result.lon = Number.isFinite(lon) ? lon : null;
+      }
       if (data.org) {
         const parts = data.org.split(" ");
         if (parts[0]?.startsWith("AS")) {

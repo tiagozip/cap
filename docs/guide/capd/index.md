@@ -63,6 +63,10 @@ CLICKHOUSE_URL=http://cap:password@clickhouse.internal:8123/cap
 
 Cap creates the database and tables on first start. The user needs every privilege on that database and `SELECT` on `system.parts`. If ClickHouse can't be reached at startup, Cap stores events in DuckDB until it restarts and shows the error under **Instance settings > Data and storage**.
 
+### How long Cap keeps events {#retention}
+
+Cap keeps events forever unless you pick a limit under **Instance settings > Data and storage**. After 60 days it shortens each stored IP address to its /24 for IPv4 or /48 for IPv6, so old events still show the country and network but no longer point at one visitor. You can change that delay or turn it off on the same page. With **Visitor IP addresses** set to **Shortened** or **Don't keep**, Cap never stores full addresses in the first place.
+
 ### Totals only, or no analytics {#analytics-off}
 
 If you only want the number of solves and failures per day, or run several Cap containers behind a load balancer without ClickHouse, set `ANALYTICS` in `.env` and use the DuckDB compose file:
@@ -71,7 +75,7 @@ If you only want the number of solves and failures per day, or run several Cap c
 ANALYTICS=redis
 ```
 
-With `redis`, Cap counts challenges, solves, failures, blocks and rate limits for each site key per hour in Valkey. Every Cap container adds to the same counters, so the overview covers all of them. Cap doesn't keep single events in this mode, so the Events page, locations, networks, risk flags and insights stay empty, and the shortest step in the chart is one hour. Cap deletes counters older than the retention you pick under **Instance settings > Data and storage**. Counts from v3 still show in the chart.
+With `redis`, Cap counts challenges, solves, failures, blocks and rate limits for each site key per hour in Valkey. Every Cap container adds to the same counters, so the overview covers all of them. Cap doesn't keep single events in this mode, so the Events page, locations, networks, risk flags and insights stay empty, and the shortest step in the chart is one hour. If you pick a retention limit under **Instance settings > Data and storage**, Cap deletes counters older than that. Counts from v3 still show in the chart.
 
 `ANALYTICS=off` stores no analytics at all. In both modes Cap never opens DuckDB, and verification, rules and webhooks work as before, since none of them read stored events.
 

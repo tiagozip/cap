@@ -17,6 +17,7 @@ export const app = $state({
   },
   eventsPreset: null,
   createKeyOpen: false,
+  webhookPreset: null,
 });
 
 export const hasGeoSource = () =>

@@ -1,4 +1,5 @@
 import { SIGNED_AGENTS } from "../../../capd/src/policy/signals.js";
+import { cityFor } from "./cities.js";
 
 export const MIN = 60_000;
 export const HOUR = 3_600_000;
@@ -769,6 +770,7 @@ function buildKey(def, k) {
       ...parseUA(ua),
       U: Math.max(1, Math.min(POOL, Math.round(U))),
       ...prefix(),
+      ...cityFor(attrs.country, cohorts.length),
     };
     cohorts.push(cohort);
     return cohort;
@@ -1343,6 +1345,49 @@ export const cohortsByPrefix = () => {
 };
 
 const BURST_PROFILE = { scraper: 1, stealth: 2, agent: 3, solver: 4 };
+const NOW_HOUR = Math.floor(Date.now() / HOUR);
+
+const SPIKES = [
+  [334, 2.6, 1.5],
+  [301, 1.2, 3],
+  [262, 3.4, 2],
+  [214, 6.5, 2.5],
+  [176, 1.6, 4],
+  [139, 4.2, 1.5],
+  [97, 2.4, 3],
+  [61, 3.1, 2],
+  [33, 1.5, 1],
+  [12, 2.2, 1.5],
+];
+const STEPS = [
+  [365, 0.018],
+  [334, 0.03],
+  [262, 0.045],
+  [214, 0.11],
+  [176, 0.15],
+  [139, 0.24],
+  [97, 0.36],
+  [61, 0.55],
+  [33, 0.78],
+  [12, 1],
+];
+
+const growth = (k, h) => {
+  const age = (NOW_HOUR - h) / 24;
+  if (age <= 0) return 1;
+  const at = STEPS.findLastIndex(([from]) => age <= from);
+  if (at < 0) return 0.012;
+  const [from, level] = STEPS[at];
+  const next = STEPS[at + 1];
+  const t = next ? (from - age) / (from - next[0]) : 1;
+  let g = level * (next ? (next[1] / level) ** (t * t * 0.6) : 1);
+  for (const [day, amp, tau] of SPIKES) {
+    const since = day - age;
+    if (since >= 0 && since < tau * 6) g *= 1 + amp * Math.exp(-since / tau);
+  }
+  const d = Math.floor(age);
+  return g * (0.78 + 0.44 * unit(h3(k, 0x5a, d)));
+};
 
 export function hourRate(model, p, h) {
   const key = h * 8 + p;
@@ -1409,7 +1454,7 @@ export function hourRate(model, p, h) {
       }
     }
   }
-  const value = model.base[p] * rate * outage;
+  const value = model.base[p] * rate * outage * growth(k, h);
   model.hours.set(key, value);
   return value;
 }
@@ -1471,6 +1516,9 @@ export function materialize(v, e) {
     country: client ? cohort.country || null : null,
     asn: client ? cohort.asn || null : null,
     asn_org: client ? cohort.org || null : null,
+    city: client ? cohort.city || null : null,
+    lat: client ? (cohort.lat ?? null) : null,
+    lon: client ? (cohort.lon ?? null) : null,
     ua: client ? cohort.ua || null : null,
     browser: client ? cohort.browser || null : null,
     os: client ? cohort.os || null : null,

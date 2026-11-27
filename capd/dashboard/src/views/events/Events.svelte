@@ -8,6 +8,8 @@ import {
   Icon,
   Menu,
   MenuItem,
+  MenuLabel,
+  MenuSeparator,
   PageHeader,
   RangePicker,
   Skeleton,
@@ -15,13 +17,15 @@ import {
   Tabs,
 } from "../../components/cap/index.js";
 import {
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   Kbd,
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationNext,
   PaginationPrevious,
-  SlidingTabs,
   TableBody,
   TableCell,
   TableHead,
@@ -60,6 +64,8 @@ const RANGES = [
   { id: "7d", short: "7d", label: "Past 7 days", long: "the last 7 days" },
   { id: "30d", short: "30d", label: "Past 30 days", long: "the last 30 days" },
   { id: "90d", short: "90d", label: "Past 90 days", long: "the last 90 days" },
+  { id: "1y", short: "1y", label: "Past year", long: "the last year" },
+  { id: "all", short: "All", label: "All time", long: "the full history" },
 ];
 const DECISIONS = {
   issued: ["Issued", "text-muted-foreground"],
@@ -308,7 +314,7 @@ async function loadWhere() {
   const top = view === "top";
   const res = await api(
     "GET",
-    `/keys/${sk}/analytics/top${qs({ ...(custom ? { from: custom.from, to: custom.to } : { range }), f: queryFilters, q, dims: top ? TOP_DIMS.map(([d]) => d).join(",") : "country,asn_org", limit: top ? 8 : 100 })}`,
+    `/keys/${sk}/analytics/top${qs({ ...(custom ? { from: custom.from, to: custom.to } : { range }), f: queryFilters, q, dims: top ? TOP_DIMS.map(([d]) => d).join(",") : "country,asn_org,city", limit: top ? 8 : 100 })}`,
   );
   if (my !== whereSeq) return;
   if (top) tops = res?.error ? {} : res;
@@ -339,6 +345,8 @@ const suggestValues = () => {
   return values;
 };
 
+const VIEWS = { list: "List", map: "Map", top: "Top" };
+
 const setView = (v) => {
   view = v;
   try {
@@ -350,6 +358,14 @@ const setView = (v) => {
 const pickCountry = (code) => {
   setView("list");
   addFilter(`country:${code}`);
+};
+
+const pickCity = ({ name, country }) => {
+  setView("list");
+  const next = [`city:${name}`, country && `country:${country}`].filter(
+    (f) => f && !filters.includes(f),
+  );
+  if (next.length) setFilters([...filters, ...next]);
 };
 
 const rangeInfo = $derived(RANGES.find((r) => r.id === range));
@@ -1083,10 +1099,12 @@ const rowClick = (id) => (node) => {
         class="rounded-s-none rounded-e-[calc(var(--radius)-4px)]"
         value={range}
         ranges={RANGES}
+        {custom}
         onchange={(id) => {
           range = id;
           load();
         }}
+        oncustom={(c) => pickBucket(c.from, c.to)}
       />
     </div>
   {/snippet}
@@ -1152,42 +1170,32 @@ const rowClick = (id) => (node) => {
   ]}
 >
   {#snippet aside()}
-    <Menu width="w-52">
+    <Menu width="w-40">
       {#snippet trigger(props)}
-        <Button {...props} variant="ghost" size="sm" icon class="size-7! max-sm:hidden" aria-label="Export events" title="Export what's shown" disabled={exporting || totalsOnly}>
-          {#if exporting}
-            <Icon name="loader" size={15} />
-          {:else}
-            <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M8 2.75v7.5M4.75 7 8 10.25 11.25 7M3 13.25h10" />
-            </svg>
-          {/if}
+        <Button {...props} variant="ghost" size="sm" class="gap-1.5 pe-1.5" aria-label="View by {VIEWS[view]}">
+          <span class="text-muted-foreground max-sm:sr-only">View by</span>
+          {VIEWS[view]}
+          <Icon name="selector" size={13} class="text-muted-foreground" />
         </Button>
       {/snippet}
-      <MenuItem onselect={() => exportEvents("csv")} hint="CSV">For spreadsheets</MenuItem>
-      <MenuItem onselect={() => exportEvents("ndjson")} hint="NDJSON">One event per line</MenuItem>
+      <DropdownMenuRadioGroup bind:value={() => view, setView}>
+        {#each Object.entries(VIEWS) as [id, label] (id)}
+          <DropdownMenuRadioItem value={id}>{label}</DropdownMenuRadioItem>
+        {/each}
+      </DropdownMenuRadioGroup>
     </Menu>
-    <Toggle
-      size="sm"
-      class="me-2 max-sm:hidden"
-      bind:pressed={dense}
-      aria-label="Compact rows"
-      title={dense ? "Show two lines per event" : "Show one line per event"}
-    >
-      <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-        <path d="M2.75 3.25h10.5M2.75 6.42h10.5M2.75 9.58h10.5M2.75 12.75h10.5" />
-      </svg>
-    </Toggle>
-    <span class="me-2 text-sm text-muted-foreground max-sm:sr-only">View by</span>
-    <SlidingTabs
-      tabs={[{ id: "list", label: "List" }, { id: "map", label: "Map" }, { id: "top", label: "Top" }]}
-      bind:value={() => view, setView}
-      flat
-      class="rounded-lg bg-foreground/6 p-0.5"
-      pillClass="rounded-md bg-background shadow-[0_0_0_1px_var(--border)]"
-      activeTabClass="text-foreground"
-      tabClass="rounded-md px-2.5 py-1 text-sm"
-    />
+    <Menu width="w-56">
+      {#snippet trigger(props)}
+        <Button {...props} variant="ghost" size="sm" icon class="size-7! max-sm:hidden" aria-label="More options">
+          <Icon name={exporting ? "loader" : "more"} size={15} />
+        </Button>
+      {/snippet}
+      <DropdownMenuCheckboxItem bind:checked={dense} closeOnSelect={false}>Compact rows</DropdownMenuCheckboxItem>
+      <MenuSeparator />
+      <MenuLabel>Export what's shown</MenuLabel>
+      <MenuItem onselect={() => exportEvents("csv")} hint="CSV" disabled={exporting || totalsOnly}>For spreadsheets</MenuItem>
+      <MenuItem onselect={() => exportEvents("ndjson")} hint="NDJSON" disabled={exporting || totalsOnly}>One event per line</MenuItem>
+    </Menu>
   {/snippet}
 </Tabs>
 </div>
@@ -1254,24 +1262,29 @@ const rowClick = (id) => (node) => {
               return r ? `${n(r.n)} events` : "";
             }}
             onpick={pickCountry}
+            points={(w.city ?? []).map((r) => ({ name: r.value, country: r.label, lat: r.lat, lon: r.lon, n: r.n }))}
+            onpoint={pickCity}
           />
-          <div class="grid gap-6 md:grid-cols-2">
-            {#each [["Countries", countries, "country"], ["Networks", w.asn_org ?? [], "asn_org"]] as [title, list, field] (field)}
+          <div class="grid gap-6 md:grid-cols-2 {w.city?.length ? 'lg:grid-cols-3' : ''}">
+            {#each [["Countries", countries, "country"], ["Cities", w.city ?? [], "city"], ["Networks", w.asn_org ?? [], "asn_org"]].filter(([, list, field]) => field !== "city" || list.length) as [title, list, field] (field)}
               {@const top = Math.max(1, ...list.map((r) => r.n))}
               <section aria-label={title}>
                 <h2 class="mb-1.5 flex px-2 text-xs font-medium text-muted-foreground">
                   <span class="me-auto">{title}</span><span>Events</span>
                 </h2>
                 <ul class="flex flex-col gap-0.5">
-                  {#each list.slice(0, 10) as r (r.value)}
+                  {#each list.slice(0, 10) as r (`${r.value}|${r.label ?? ""}`)}
                     <li>
                       <button
                         type="button"
                         class="relative flex h-8 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)]:hover:bg-nav-hover"
-                        onclick={() => (field === "country" ? pickCountry(r.value) : (setView("list"), addFilter(`asn_org:${r.value}`)))}
+                        onclick={() => (field === "country" ? pickCountry(r.value) : field === "city" ? pickCity({ name: r.value, country: r.label }) : (setView("list"), addFilter(`asn_org:${r.value}`)))}
                       >
                         <span class="absolute inset-y-0 start-0 rounded-md bg-foreground/[0.06]" style:width="{Math.max(1.5, (r.n / top) * 100)}%"></span>
-                        {#if field === "country"}
+                        {#if field === "city"}
+                          {#if flagUrl(r.label)}<img src={flagUrl(r.label)} alt="" class="relative h-3.5 w-[18px] rounded-[2px] object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10" width="18" height="14" />{/if}
+                          <span class="relative truncate">{r.value}</span>
+                        {:else if field === "country"}
                           {#if flagUrl(r.value)}<img src={flagUrl(r.value)} alt="" class="relative h-3.5 w-[18px] rounded-[2px] object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10" width="18" height="14" />{/if}
                           <span class="relative truncate">{countryName(r.value) || r.value}</span>
                         {:else}

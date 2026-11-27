@@ -1,7 +1,7 @@
 import pkg from "../../../capd/package.json";
 import { DATACENTER_ASNS, DAY, HOUR, ipOf, models, RULE_IDS } from "./model.js";
 
-const VERSION = 2;
+const VERSION = 3;
 
 export const keyDefaults = {
   difficulty: 4,
@@ -199,9 +199,14 @@ function seed() {
     c4f1a9e27b: [
       {
         id: "wh_3f9a1c2b7d4e",
-        name: "Security alerts",
-        url: "https://hooks.example.com/cap/security",
+        name: "#security on Discord",
+        service: "discord",
+        url: "",
+        config: {
+          url: "https://discord.com/api/webhooks/1187263511/demo-token-not-real",
+        },
         triggers: ["block", "flagged"],
+        digest: 300,
         enabled: true,
         created: day - 41 * DAY,
         secret: `whsec_${newBase64Url(24)}`,
@@ -224,6 +229,20 @@ function seed() {
         triggers: ["agent"],
         enabled: true,
         created: day - 18 * DAY,
+        secret: `whsec_${newBase64Url(24)}`,
+      },
+    ],
+    "@instance": [
+      {
+        id: "wh_0b7e44c1d9a2",
+        name: "Ops alerts",
+        service: "telegram",
+        url: "",
+        config: { token: "123456:demo-token-not-real", chats: "-1001234567" },
+        triggers: ["login_failed", "automation", "security"],
+        digest: 0,
+        enabled: true,
+        created: day - 9 * DAY,
         secret: `whsec_${newBase64Url(24)}`,
       },
     ],
@@ -315,7 +334,12 @@ function seed() {
       ratelimit: { max: 30, duration: 5000 },
       cors: { origins: null },
       filtering: { blockNonBrowserUA: false, requiredHeaders: [] },
-      analytics: { retentionDays: 90, ipMode: "full", logChallenges: true },
+      analytics: {
+        retentionDays: 0,
+        anonymizeDays: 60,
+        ipMode: "full",
+        logChallenges: true,
+      },
       assets: {
         enabled: false,
         widget: pkg.capAssets.widget,
@@ -324,11 +348,12 @@ function seed() {
       assetsCachedAt: null,
       ipdb: {
         mode: "dbip",
+        cities: true,
         maxmindAccountId: "",
         maxmindKey: "",
         ipinfoToken: "",
         lastUpdated: new Date(now - 3 * DAY - 5 * HOUR).toISOString(),
-        country: { exists: true, size: 7_342_118 },
+        country: { exists: true, city: true, size: 126_873_350 },
         asn: { exists: true, size: 9_871_204 },
         loaded: { country: true, asn: true },
         error: null,

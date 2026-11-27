@@ -2,15 +2,19 @@
 import { tick } from "svelte";
 import {
   Button,
-  CopyText,
   Dialog,
   Field,
-  Icon,
   Input,
   Segmented,
   Switch,
 } from "../components/cap/index.js";
-import { CopyCheck, createReceipt } from "../components/ui/index.js";
+import Splash from "../components/cap/Splash.svelte";
+import SuccessMark from "../components/cap/SuccessMark.svelte";
+import {
+  CopyButton,
+  CopyCheck,
+  createReceipt,
+} from "../components/ui/index.js";
 import { api } from "../lib/api.js";
 import { app, loadKeys, navigate } from "../lib/state.svelte.js";
 import OriginList from "./config/OriginList.svelte";
@@ -29,6 +33,7 @@ let submitting = $state(false);
 let created = $state(null);
 let setUpButton = $state(null);
 
+const LAND = 520;
 const envCopy = createReceipt(2000);
 const copyEnv = async () => {
   try {
@@ -107,6 +112,7 @@ async function submit() {
   });
   created = {
     ...res,
+    at: performance.now(),
     name: finalName,
     summary: hosts.length
       ? `${preset.name} protection, ${hosts.length === 1 ? hosts[0] : `${hosts.length} websites`} only`
@@ -125,30 +131,36 @@ async function submit() {
 }
 </script>
 
+{#snippet trace()}<Splash land={LAND} origin={created?.at} />{/snippet}
+
 <Dialog
   title={created ? "Your site key is ready" : "Create site key"}
-  description={created ? "Your server uses the secret key to check tokens." : "One key per website."}
+  description={created ? "Your server uses the secret key to check tokens." : "Each key has its own settings and analytics."}
+  bare={!!created}
+  guard={!!created}
+  overlay={created ? trace : undefined}
   onclose={close}
 >
   {#if created}
-    <div class="flex items-center gap-3">
-      <span class="grid size-9 shrink-0 place-items-center rounded-full bg-success/15 text-success">
-        <Icon name="check" size={18} />
-      </span>
-      <div class="flex min-w-0 flex-col">
-        <span class="truncate text-sm font-medium" title={created.name}>{created.name}</span>
-        <span class="truncate text-xs text-muted-foreground">{created.summary}</span>
-      </div>
+    <div class="flex flex-col items-center text-center">
+      <SuccessMark class="-mx-7 w-[calc(100%+3.5rem)]!" height={176} delay={LAND} origin={created.at} />
+      <h2 class="ck-in -mt-2 text-lg font-semibold text-balance" style:--d="{LAND + 40}ms">Your site key is ready</h2>
+      <p class="ck-in mt-1 max-w-full truncate text-sm text-muted-foreground" style:--d="{LAND + 110}ms" title="{created.name}, {created.summary}">
+        <span class="font-medium text-foreground">{created.name}</span>, {created.summary.charAt(0).toLowerCase()}{created.summary.slice(1)}
+      </p>
     </div>
-    <div>
-      <Field label="Site key">
-        <CopyText value={created.siteKey} label="Copy site key" />
-      </Field>
-    </div>
-    <div>
-      <Field label="Secret key">
-        <CopyText value={created.secretKey} label="Copy secret key" />
-      </Field>
+    <div class="ck-in mt-2" style:--d="{LAND + 180}ms">
+      <dl class="divide-y divide-border overflow-hidden rounded-xl border border-border">
+        {#each [["Site key", created.siteKey, created.siteKey], ["Secret key", created.secretKey, `${created.secretKey.slice(0, 9)}${"•".repeat(12)}`]] as [label, value, shown] (label)}
+          <div class="flex min-w-0 items-center gap-3 py-1.5 ps-3.5 pe-1.5">
+            <dt class="w-20 shrink-0 text-sm text-muted-foreground">{label}</dt>
+            <dd class="flex min-w-0 flex-1 items-center gap-1">
+              <code class="min-w-0 flex-1 truncate font-mono text-[13px]" aria-label={shown === value ? undefined : `${label}, hidden`}>{shown}</code>
+              <CopyButton text={value} label="Copy {label.toLowerCase()}" />
+            </dd>
+          </div>
+        {/each}
+      </dl>
     </div>
   {:else}
     <form
@@ -214,12 +226,12 @@ async function submit() {
   {/if}
   {#snippet footer()}
     {#if created}
-      <Button onclick={copyEnv}>
+      <Button class="ck-in" style="--d: {LAND + 240}ms" onclick={copyEnv}>
         <CopyCheck copied={envCopy.copied} size={15} />
         Copy as .env
         <span class="sr-only" role="status">{envCopy.copied ? "Copied" : ""}</span>
       </Button>
-      <Button variant="primary" bind:ref={setUpButton} onclick={setUp}>Set up the widget</Button>
+      <Button class="ck-in" style="--d: {LAND + 290}ms" variant="primary" bind:ref={setUpButton} onclick={setUp}>Set up the widget</Button>
     {:else}
       <Button variant="ghost" onclick={close}>Cancel</Button>
       <Button variant="primary" type="submit" form="createKeyForm" disabled={submitting}>
@@ -228,3 +240,19 @@ async function submit() {
     {/if}
   {/snippet}
 </Dialog>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.ck-in) {
+      animation: ck-in 460ms cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms) both;
+    }
+  }
+
+  @keyframes ck-in {
+    from {
+      opacity: 0;
+      filter: blur(4px);
+      translate: 0 4px;
+    }
+  }
+</style>

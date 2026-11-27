@@ -54,14 +54,21 @@ const FIELDS = [
     "analytics",
     "retentionDays",
     "Keep events for",
-    (v) => `${v} day${v === 1 ? "" : "s"}`,
+    (v) => (v ? `${v} day${v === 1 ? "" : "s"}` : "Forever"),
   ],
   ["analytics", "ipMode", "Visitor IP addresses", (v) => IP_MODES[v] ?? v],
+  [
+    "analytics",
+    "anonymizeDays",
+    "Anonymize IP addresses after",
+    (v) => (v ? `${v} day${v === 1 ? "" : "s"}` : "Never"),
+  ],
   ["analytics", "logChallenges", "Record every challenge shown", onOff],
   ["assets", "enabled", "Serve widget files from this server", onOff],
   ["assets", "widget", "Widget version", String],
   ["assets", "wasm", "WebAssembly version", String],
   ["updateCheck", "enabled", "Check for updates", onOff],
+  ["updateCheck", "sidebar", "Show update notices in the sidebar", onOff],
   ["updateCheck", "interval", "How often", (v) => INTERVALS[v] ?? v],
 ];
 
@@ -182,7 +189,7 @@ const apply = async () => {
 };
 </script>
 
-<Row label="Settings file" help="Copy these settings to another server. Secrets stay here.">
+<Row label="Settings file" help="Secrets won't get exported.">
   <div class="flex flex-wrap items-center gap-2">
     <Button disabled={busy === "export"} onclick={exportFile}>{busy === "export" ? "Exporting" : "Export"}</Button>
     <Button disabled={busy === "import"} onclick={() => picker?.click()}>{busy === "import" ? "Reading" : "Import"}</Button>

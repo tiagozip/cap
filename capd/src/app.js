@@ -13,6 +13,7 @@ import { initEvents } from "./events/index.js";
 import { migrateOldHashes } from "./hash-migration.js";
 import { healthServer } from "./health.js";
 import { exportRoutes, insightRoutes } from "./insight-routes.js";
+import { instanceEvents } from "./instance-events.js";
 import { mcpServer } from "./mcp.js";
 import { oauthServer } from "./oauth.js";
 import { migrateLegacyBlocks } from "./policy/rules.js";
@@ -32,6 +33,7 @@ import {
   loginBackgroundImageKey,
   publicLoginBackground,
 } from "./settings-cache.js";
+import { applySettingsFile } from "./settings-file.js";
 import { shareServer } from "./share.js";
 import { siteverifyServer } from "./siteverify.js";
 import { startUpdateCheck } from "./update-check.js";
@@ -48,6 +50,7 @@ export async function startup() {
   await startLive();
   startAssets();
   await loadSettingsCaches();
+  await applySettingsFile();
   loadIPDB().catch((e) => console.warn("[cap] IP DB load:", e.message));
   startUpdateCheck();
 }
@@ -252,6 +255,7 @@ export function createApp(options = {}, { docs = true } = {}) {
             : undefined,
       });
     })
+    .use(instanceEvents)
     .use(auth)
     .use(oauthServer)
     .use(mcpServer(() => app))

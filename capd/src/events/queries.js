@@ -95,7 +95,9 @@ export function createQueries(store) {
         (
           ps,
         ) => `SELECT ${d.bucket(ps.add(bucketMs, "Int64"))} AS b, type, outcome, count(*) AS n,
-          ${when(`type = 'redeem' AND outcome = 'pass' AND ${d.flagged}`)} AS flagged
+          ${when(`type = 'redeem' AND outcome = 'pass' AND ${d.flagged}`)} AS flagged,
+          sum(CASE WHEN type = 'redeem' AND outcome = 'pass' AND solve_ms IS NOT NULL THEN solve_ms ELSE 0 END) AS solve_sum,
+          ${when("type = 'redeem' AND outcome = 'pass' AND solve_ms IS NOT NULL")} AS solve_n
         FROM events ${buildWhere(d, ps, ctx)}
         GROUP BY b, type, outcome`,
       );
@@ -105,6 +107,8 @@ export function createQueries(store) {
         outcome: r.outcome,
         n: Number(r.n),
         flagged: Number(r.flagged),
+        solve_sum: Number(r.solve_sum) || 0,
+        solve_n: Number(r.solve_n) || 0,
       }));
     },
 
@@ -129,15 +133,19 @@ export function createQueries(store) {
         return `SELECT ${dim} AS v, count(*) AS n,
           ${when("outcome = 'block'")} AS blocked,
           ${when(`type = 'redeem' AND outcome = 'pass' AND ${d.flagged}`)} AS flagged
-          ${dim === "asn" ? ", max(asn_org) AS label" : dim === "asn_org" ? ", max(asn) AS label" : ""}
+          ${dim === "asn" ? ", max(asn_org) AS label" : dim === "asn_org" ? ", max(asn) AS label" : dim === "city" ? ", country AS label, avg(lat) AS lat, avg(lon) AS lon" : ""}
         FROM events ${where ? `${where} AND ${empty}` : `WHERE ${empty}`}
-        GROUP BY v ORDER BY n DESC LIMIT ${ps.add(limit, "UInt32")}`;
+        GROUP BY v${dim === "city" ? ", country" : ""} ORDER BY n DESC LIMIT ${ps.add(limit, "UInt32")}`;
       });
       return rows.map((r) => ({
         value: dim === "asn" ? Number(r.v) : r.v,
         ...(r.label != null &&
           r.label !== "" &&
           r.label !== 0 && { label: r.label }),
+        ...(r.lat != null && {
+          lat: Math.round(Number(r.lat) * 100) / 100,
+          lon: Math.round(Number(r.lon) * 100) / 100,
+        }),
         n: Number(r.n),
         blocked: Number(r.blocked),
         flagged: Number(r.flagged),

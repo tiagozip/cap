@@ -67,7 +67,28 @@ export function createClickhouseStore({
   };
 
   const ttl = (days) =>
-    `toDateTime(intDiv(ts, 1000)) + INTERVAL ${Math.max(1, Math.trunc(days))} DAY`;
+    days > 0
+      ? `TTL toDateTime(intDiv(ts, 1000)) + INTERVAL ${Math.trunc(days)} DAY`
+      : "";
+
+  const list = (values) =>
+    `[${values.map((v) => `'${v.replace(/[\\']/g, "\\$&")}'`).join(",")}]`;
+
+  const syncRetention = async (days) => {
+    const text = await request(
+      "SELECT create_table_query AS q FROM system.tables WHERE database = {db:String} AND name = 'events'",
+      { params: { db }, format: "JSON" },
+    );
+    const current = JSON.parse(text).data[0]?.q.match(
+      /\bTTL\b.*?(?:INTERVAL (\d+) DAY|toIntervalDay\((\d+)\))/,
+    );
+    if ((Number(current?.[1] ?? current?.[2]) || 0) === (days || 0)) return;
+    await request(
+      days > 0
+        ? `ALTER TABLE events MODIFY ${ttl(days)}`
+        : "ALTER TABLE events REMOVE TTL",
+    );
+  };
 
   return {
     kind: "clickhouse",
@@ -102,12 +123,18 @@ export function createClickhouseStore({
         flags Array(LowCardinality(String)),
         rule String,
         token_id String,
+        city LowCardinality(String),
+        lat Nullable(Float32),
+        lon Nullable(Float32),
         INDEX ip_idx ip TYPE bloom_filter GRANULARITY 4,
         INDEX id_idx id TYPE bloom_filter GRANULARITY 4
       ) ENGINE = MergeTree
       PARTITION BY toYYYYMM(toDateTime(intDiv(ts, 1000)))
       ORDER BY (site_key, ts)
-      TTL ${ttl(retentionDays ?? 30)}`);
+      ${ttl(retentionDays)}`);
+      await request(
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS city LowCardinality(String), ADD COLUMN IF NOT EXISTS lat Nullable(Float32), ADD COLUMN IF NOT EXISTS lon Nullable(Float32)",
+      );
       await request(`CREATE TABLE IF NOT EXISTS rollup (
         site_key LowCardinality(String),
         hour Int64,
@@ -115,6 +142,11 @@ export function createClickhouseStore({
         failed UInt64,
         ratelimited UInt64
       ) ENGINE = ReplacingMergeTree ORDER BY (site_key, hour)`);
+      await syncRetention(retentionDays).catch((e) =>
+        console.warn(
+          `[cap] Couldn't update the ClickHouse retention: ${e.message}`,
+        ),
+      );
     },
     async insert(rows) {
       if (!rows.length) return;
@@ -147,8 +179,19 @@ export function createClickhouseStore({
     async prune() {
       return 0;
     },
-    async setRetention(days) {
-      await request(`ALTER TABLE events MODIFY TTL ${ttl(days)}`);
+    setRetention: syncRetention,
+    async replaceIps(pairs, from, to) {
+      await request(
+        "ALTER TABLE events UPDATE ip = transform(ip, {a:Array(String)}, {b:Array(String)}, ip) WHERE ts >= {f:Int64} AND ts < {t:Int64} AND has({a:Array(String)}, ip)",
+        {
+          params: {
+            a: list(pairs.map(([a]) => a)),
+            b: list(pairs.map(([, b]) => b)),
+            f: from,
+            t: to,
+          },
+        },
+      );
     },
     async info() {
       const text = await request(

@@ -196,7 +196,7 @@ async function save() {
   }}
 />
 
-<Dialog title={editing ? "Edit rule" : "New rule"} size="md" {onclose}>
+<Dialog title={editing ? "Edit rule" : "New rule"} size="md" guard {onclose}>
   <div class="flex flex-col gap-2">
     <div class="flex flex-wrap items-center gap-1.5 text-sm">
       <label for="ruleMatch">When</label>

@@ -9,7 +9,7 @@ import { assetStatus } from "./assets.js";
 import { solvesByKey } from "./events/analytics.js";
 import { listLists } from "./policy/lists.js";
 import { getRules } from "./policy/rules.js";
-import { getWebhooks } from "./policy/webhooks.js";
+import { getWebhooks, notifyUpdates } from "./policy/webhooks.js";
 import { proxyAuthSettings } from "./proxy-auth.js";
 
 const KEY = "settings:update-check";
@@ -79,6 +79,7 @@ async function load() {
   }
   return {
     enabled: saved.enabled !== false,
+    sidebar: saved.sidebar !== false,
     id: saved.id,
     lastSent: saved.lastSent ?? 0,
     sentVersion: saved.sentVersion ?? null,
@@ -151,9 +152,10 @@ export async function usageReport() {
 }
 
 export async function updateCheckStatus() {
-  const { enabled, lastSent, interval } = await load();
+  const { enabled, sidebar, lastSent, interval } = await load();
   return {
     enabled: enabled && !envDisabled(),
+    sidebar,
     lockedByEnv: envDisabled(),
     interval,
     lastSent: lastSent || null,
@@ -162,9 +164,10 @@ export async function updateCheckStatus() {
   };
 }
 
-export async function setUpdateCheck({ enabled, interval }) {
+export async function setUpdateCheck({ enabled, interval, sidebar }) {
   await save({
     ...(enabled !== undefined && { enabled }),
+    ...(sidebar !== undefined && { sidebar }),
     ...(INTERVALS[interval] && { interval }),
   });
   if (enabled === false) await db.send("DEL", [NOTICES]).catch(() => {});
@@ -199,7 +202,7 @@ const cleanNotices = (body) => {
 };
 
 export async function updateNotices() {
-  const { enabled, interval, lastSent } = await load();
+  const { enabled, sidebar, interval, lastSent } = await load();
   const off = envDisabled() || !enabled;
   let saved = null;
   if (!off) {
@@ -210,6 +213,7 @@ export async function updateNotices() {
   const current = saved?.forVersion === pkg.version;
   return {
     enabled: !off,
+    sidebar,
     interval,
     nextCheck: !off && lastSent ? lastSent + INTERVALS[interval] * DAY : null,
     version: pkg.version,
@@ -245,14 +249,35 @@ export async function sendUpdateCheck({ force = false } = {}) {
     if (!r.ok)
       throw new Error(`update check endpoint responded with ${r.status}`);
     const body = await r.json().catch(() => null);
+    let before = null;
+    try {
+      before = JSON.parse((await db.get(NOTICES)) || "null");
+    } catch {}
+    const notices = cleanNotices(body);
     await db.set(
       NOTICES,
       JSON.stringify({
-        ...cleanNotices(body),
+        ...notices,
         forVersion: pkg.version,
         checkedAt: Date.now(),
       }),
     );
+    const known =
+      before?.forVersion === pkg.version
+        ? new Set(before.advisories.map((a) => a.id || a.url))
+        : new Set();
+    const fresh = notices.advisories.filter((a) => !known.has(a.id || a.url));
+    const latest =
+      notices.latest &&
+      newer(notices.latest.version, pkg.version) &&
+      notices.latest.version !== before?.latest?.version
+        ? notices.latest
+        : null;
+    await notifyUpdates({
+      current: pkg.version,
+      latest: fresh.length ? notices.latest : latest,
+      advisories: fresh,
+    }).catch(() => {});
     await save({ lastSent: Date.now(), sentVersion: pkg.version });
     return true;
   } catch {

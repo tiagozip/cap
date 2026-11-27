@@ -12,7 +12,7 @@ let { title, description, id, action, children, flush = false } = $props();
 </script>
 
 <Card variant="layered" class="cap-card" role="region" aria-labelledby={id}>
-  <CardHeader class={[action && "grid-cols-[1fr_auto]", description && "grid-rows-[auto_auto]"]}>
+  <CardHeader class={[action && "grid-cols-[1fr_auto]", description ? "grid-rows-[auto_auto]" : action && "items-center"]}>
     <CardTitle><h2 {id} class="scroll-mt-24">{title}</h2></CardTitle>
     {#if description}<CardDescription class="max-w-xl text-pretty">{description}</CardDescription>{/if}
     {#if action}<CardAction class={description ? "" : "row-span-1"}>{@render action()}</CardAction>{/if}

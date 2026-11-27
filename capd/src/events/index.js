@@ -10,9 +10,13 @@ const FLUSH_MS = 1000;
 const FLUSH_AT = 1000;
 const BUFFER_MAX = 100_000;
 const SPLIT_AFTER = 3;
+const DAY = 86_400_000;
+const ANONYMIZE_WINDOWS = 30;
+const ANONYMIZE_CHUNK = 500;
 
 export const analyticsDefaults = {
-  retentionDays: 30,
+  retentionDays: 0,
+  anonymizeDays: 60,
   ipMode: "full",
   logChallenges: true,
 };
@@ -69,10 +73,12 @@ export async function initEvents() {
   try {
     const raw = await db.get("settings:analytics");
     if (raw) {
-      const { retentionDays, ipMode, logChallenges } = JSON.parse(raw);
+      const { retentionDays, anonymizeDays, ipMode, logChallenges } =
+        JSON.parse(raw);
       settings = {
         ...settings,
-        ...(retentionDays && { retentionDays }),
+        ...(retentionDays != null && { retentionDays }),
+        ...(anonymizeDays != null && { anonymizeDays }),
         ...(ipMode && { ipMode }),
         ...(logChallenges != null && { logChallenges }),
       };
@@ -113,10 +119,48 @@ export async function initEvents() {
   every(pruneEvents, 3_600_000);
 }
 
+async function anonymizeIps() {
+  if (!store?.replaceIps || !settings.anonymizeDays) return 0;
+  if (settings.ipMode === "none") return 0;
+  const p = store.dialect.param;
+  const cutoff = Date.now() - settings.anonymizeDays * DAY;
+  const range = `ts >= ${p("p0", "Int64")} AND ts < ${p("p1", "Int64")}`;
+  let from = Number(await db.get("analytics:anonymized")) || 0;
+  let changed = 0;
+  for (let i = 0; i < ANONYMIZE_WINDOWS && from < cutoff; i++) {
+    const [next] = await store.query(
+      `SELECT min(ts) AS t FROM events WHERE ${range} AND ip <> ''`,
+      { p0: from, p1: cutoff },
+    );
+    const first = Number(next?.t);
+    if (next?.t == null || first < from) {
+      from = cutoff;
+      break;
+    }
+    from = first;
+    const to = Math.min(from + DAY, cutoff);
+    const rows = await store.query(
+      `SELECT DISTINCT ip FROM events WHERE ${range} AND ip <> ''`,
+      { p0: from, p1: to },
+    );
+    const pairs = rows
+      .map(({ ip }) => [ip, maskIp(ip, "truncate")])
+      .filter(([a, b]) => a !== b);
+    for (let j = 0; j < pairs.length; j += ANONYMIZE_CHUNK)
+      await store.replaceIps(pairs.slice(j, j + ANONYMIZE_CHUNK), from, to);
+    changed += pairs.length;
+    from = to;
+    await db.set("analytics:anonymized", String(from));
+  }
+  await db.set("analytics:anonymized", String(from));
+  return changed;
+}
+
 export const pruneEvents = () =>
-  store
-    ?.prune(settings.retentionDays)
-    .catch((e) => console.warn("[cap] event prune:", e.message));
+  Promise.all([
+    settings.retentionDays > 0 && store?.prune(settings.retentionDays),
+    anonymizeIps(),
+  ]).catch((e) => console.warn("[cap] event prune:", e.message));
 
 export async function flush() {
   if (flushing || !buffer.length || !store) return flushing;
@@ -266,6 +310,7 @@ export const getPublicSettings = () => ({ ...settings });
 export async function updateSettings(patch) {
   const next = {
     retentionDays: patch.retentionDays ?? settings.retentionDays,
+    anonymizeDays: patch.anonymizeDays ?? settings.anonymizeDays,
     ipMode: patch.ipMode ?? settings.ipMode,
     logChallenges: patch.logChallenges ?? settings.logChallenges,
   };

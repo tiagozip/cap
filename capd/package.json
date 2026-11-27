@@ -1,6 +1,6 @@
 {
   "name": "capd",
-  "version": "4.0.19",
+  "version": "4.0.20",
   "imports": {
     "#platform": {
       "workerd": "./src/workers/platform.js",
@@ -78,7 +78,7 @@
     "docker:up": "docker compose up -d",
     "docker:up:duckdb": "docker compose -f docker-compose.duckdb.yml up -d",
     "docker:dev": "docker compose -f docker-compose.dev.yml up --build --watch",
-    "docker:publish": "cd .. && docker buildx build --platform linux/amd64,linux/arm64 --build-arg CAPD_VERSION=$npm_package_version --build-arg CAPD_REVISION=$(git rev-parse HEAD) --build-arg CAPD_CREATED=$(date -u +%Y-%m-%dT%H:%M:%SZ) -t tiago2/cap:4.0.19 -t tiago2/cap:4.0 -t tiago2/cap:4 -t tiago2/cap:latest -f capd/Dockerfile . --push"
+    "docker:publish": "cd .. && docker buildx build --platform linux/amd64,linux/arm64 --build-arg CAPD_VERSION=$npm_package_version --build-arg CAPD_REVISION=$(git rev-parse HEAD) --build-arg CAPD_CREATED=$(date -u +%Y-%m-%dT%H:%M:%SZ) -t tiago2/cap:4.0.20 -t tiago2/cap:4.0 -t tiago2/cap:4 -t tiago2/cap:latest -f capd/Dockerfile . --push"
   },
   "dependencies": {
     "@duckdb/node-api": "1.4.5-r.1",
@@ -91,6 +91,7 @@
   },
   "devDependencies": {
     "@fontsource-variable/inter": "^5.3.0",
+    "@internationalized/date": "3.12.4",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@tailwindcss/vite": "4.3.5",
     "bits-ui": "2.20.6",
