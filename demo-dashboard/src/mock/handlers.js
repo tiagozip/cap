@@ -2008,6 +2008,21 @@ const grants = () => {
         call(26 * 60 + 3, "get_site_key", 200, shop),
       ],
     },
+    {
+      id: newHex(12),
+      clientName: "Codex",
+      access: "full",
+      siteKeys: [shop, docs].filter(Boolean),
+      created: now - 6 * 86_400_000,
+      lastUsed: now - 2 * 24 * 60 * MIN,
+      log: [
+        call(2 * 24 * 60, "list_webhooks", 200, shop),
+        call(2 * 24 * 60 + 1, "create_webhook", 200, shop),
+        call(2 * 24 * 60 + 3, "get_site_key", 200, docs),
+        call(2 * 24 * 60 + 4, "update_site_key", 200, docs),
+        call(5 * 24 * 60, "list_site_keys"),
+      ],
+    },
   ];
   return state.grants;
 };

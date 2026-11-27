@@ -1,7 +1,7 @@
 import pkg from "../../../capd/package.json";
 import { DATACENTER_ASNS, DAY, HOUR, ipOf, models, RULE_IDS } from "./model.js";
 
-const VERSION = 1;
+const VERSION = 2;
 
 export const keyDefaults = {
   difficulty: 4,
