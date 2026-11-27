@@ -623,22 +623,28 @@ export const capServer = new Elysia({
         decision.action === "allow"
           ? decision.rule.id
           : (decision.matched[0] ?? "");
-      const record =
-        behavior || flags.length || agent?.detected || decision.matched.length
-          ? JSON.stringify({
-              e: tokenExpires,
-              f: flags,
-              ...(behavior && { s: behavior.score, v: behavior.verdict }),
-              ...(agent?.detected && {
-                a: {
-                  name: agent.name,
-                  confidence: agent.confidence,
-                  verified: agent.verified,
-                },
-              }),
-              ...(decision.matched.length && { r: decision.matched }),
-            })
-          : String(tokenExpires);
+      const record = JSON.stringify({
+        e: tokenExpires,
+        f: flags,
+        ...(behavior && { s: behavior.score, v: behavior.verdict }),
+        ...(agent?.detected && {
+          a: {
+            name: agent.name,
+            confidence: agent.confidence,
+            verified: agent.verified,
+          },
+        }),
+        ...(decision.matched.length && { r: decision.matched }),
+        c: {
+          ip: ctx.ip,
+          country: ctx.country,
+          city: ctx.city,
+          lat: ctx.lat,
+          lon: ctx.lon,
+          asn: ctx.asn,
+          asn_org: ctx.asn_org,
+        },
+      });
       await db.send("SET", [
         `token:${redeemToken}`,
         record,

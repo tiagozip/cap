@@ -169,9 +169,10 @@ if (!redisAvailable) {
       const r = await fullSolve();
       expect(r.status).toBe(200);
       const verify = await call("siteverify", {
+        ip: "203.0.113.250",
         body: { secret: SECRET_KEY, response: r.body.token },
       });
-      expect((await verify.json()).success).toBe(true);
+      expect(await verify.json()).toEqual({ success: true });
       await events.flush();
 
       const { events: rows } = await analytics.listEvents(SITE_KEY, {
@@ -188,6 +189,8 @@ if (!redisAvailable) {
       expect(redeem.browser).toBe("Chrome");
       expect(redeem.solve_ms).toBeGreaterThanOrEqual(0);
       expect(redeem.token_id).toBe(r.body.token.split(":")[1]);
+      const check = rows.find((e) => e.type === "siteverify");
+      expect(check.ip).toBe("198.51.100.7");
 
       const detail = await analytics.eventDetail(SITE_KEY, redeem.id);
       expect(detail.related.chain.some((e) => e.type === "siteverify")).toBe(
