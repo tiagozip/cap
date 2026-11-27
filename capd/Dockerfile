@@ -9,6 +9,7 @@ COPY capd/package.json capd/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY capd/vite.config.mjs ./
 COPY capd/dashboard dashboard
+COPY capd/src/policy src/policy
 RUN bun run build
 
 FROM base AS deps
