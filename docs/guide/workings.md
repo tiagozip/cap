@@ -33,4 +33,4 @@ Each layer covers the other's gap. Proof of work alone can be solved by a script
 
 ## Privacy
 
-Cap sets no cookies and collects no telemetry. Challenges, tokens and stats stay on your server. With behavior scoring on, the widget sends your server the visitor's pointer movement and key timing, but never which keys were pressed or what was typed. The widget calls the endpoint you give it, and jsDelivr for its WASM files unless you [self-host them](./widget.md#self-hosting-the-widget). See [compliance](./compliance.md) for GDPR, CCPA and accessibility.
+Cap sets no cookies and collects no client-side telemetry. Challenges, tokens and stats stay on your server. With behavior scoring on, the widget sends your server the visitor's pointer movement and key timing, but never which keys were pressed or what was typed. The widget calls the endpoint you give it, and jsDelivr for its WASM files unless you [self-host them](./widget.md#self-hosting-the-widget). See [compliance](./compliance.md) for GDPR, CCPA and accessibility.
