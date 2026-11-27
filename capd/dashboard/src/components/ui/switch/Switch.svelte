@@ -36,3 +36,18 @@ let {
     class="t-toggle-thumb pointer-events-none ms-px block h-3.5 rounded-full bg-background rtl:-scale-x-100 dark:group-data-[on=false]/switch:bg-foreground dark:group-data-[on=true]/switch:bg-primary-foreground"
   ></span>
 </button>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .t-toggle:active:not(:disabled) .t-toggle-thumb {
+      clip-path: inset(
+        0 calc(var(--toggle-travel) - var(--toggle-grow) - 2px) 0 0 round 999px
+      );
+    }
+    .t-toggle[data-on="true"]:active:not(:disabled) .t-toggle-thumb {
+      clip-path: inset(
+        0 0 0 calc(var(--toggle-travel) - var(--toggle-grow) - 2px) round 999px
+      );
+    }
+  }
+</style>

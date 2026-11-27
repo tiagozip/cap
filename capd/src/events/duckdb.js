@@ -12,7 +12,8 @@ const dialect = {
   flagHas: (p) => `list_contains(flags, ${p})`,
   flagged: "len(flags) > 0",
   explodeSelect: "fj.v",
-  explodeFrom: ", unnest(events.flags) AS fj(v)",
+  explode: (where) =>
+    `(SELECT * FROM events ${where}) AS events, unnest(events.flags) AS fj(v)`,
   ilike: (col, p) => `${col} ILIKE ${p}`,
   final: "",
 };

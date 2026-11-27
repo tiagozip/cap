@@ -44,7 +44,7 @@ description: "How to upgrade a self-hosted Cap server from v3 (standalone) to v4
 
 5. **Reset each site key's secret.** Until you do, `/siteverify` returns 403 for that key. Open the key's **Settings > Danger zone**, reset the secret and put the new one in your backend. The key list marks each one that still needs this with a "Reset secret" tag, and Cap logs their ids when it starts.
 
-6. **Replace your API keys.** v3 API keys return 401. Create new ones under **Instance settings > API keys** and delete the old ones.
+6. **Replace your API keys.** v3 API keys return 401. Create new ones under **API and MCP** and delete the old ones.
 
 That's it. Analytics are written to DuckDB inside the container unless you set up ClickHouse, which [Analytics storage](./index.md#analytics-storage) explains. To keep v3's simple counters in Valkey instead, or turn analytics off, set `ANALYTICS=redis` or `ANALYTICS=off` as [totals only or no analytics](./index.md#analytics-off) shows.
 

@@ -7,12 +7,13 @@ import {
   Row,
   Skeleton,
   Switch,
-  Tag,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { ago } from "../../lib/format.js";
 import { samples } from "../../lib/samples.js";
 import { toast } from "../../lib/ui.svelte.js";
+import SaveBar from "../../polish/instance-settings/SaveBar.svelte";
+import Health from "../../polish/settings-c/Health.svelte";
 import { setWidgetFiles, widgetScript } from "../integration/embed.svelte.js";
 import { highlight } from "../integration/highlight.js";
 
@@ -85,7 +86,10 @@ const save = async () => {
   const wasm = form.wasm.trim();
   if (!VERSION.test(widget) || !VERSION.test(wasm)) {
     error = "Use version numbers such as 0.1.58.";
-    return;
+    document
+      .getElementById(VERSION.test(widget) ? "assets-wasm" : "assets-widget")
+      ?.focus();
+    return false;
   }
   saving = true;
   const r = await api("PUT", "/settings/assets", {
@@ -96,10 +100,9 @@ const save = async () => {
   saving = false;
   if (!r?.success) {
     error = r?.error || "Couldn't save widget file settings";
-    return;
+    return false;
   }
   if (r.status) apply(r.status);
-  toast("Widget file settings saved");
   if (form.enabled) setTimeout(load, 3000);
 };
 
@@ -132,14 +135,14 @@ const check = async () => {
     <Row
       label="Serve widget files from this server"
       for="assets-enabled"
-      help="Visitors load the widget and its WebAssembly from this server's /assets instead of jsDelivr. Each key's setup snippet follows this setting."
+      help="Instead of jsDelivr."
     >
       <Switch id="assets-enabled" bind:checked={form.enabled} />
     </Row>
 
     <Row
       label="Versions"
-      help="This Cap release was built with widget {status.builtWith.widget} and WebAssembly {status.builtWith.wasm}. An older widget can miss features this server expects."
+      help="Built with widget {status.builtWith.widget} and WebAssembly {status.builtWith.wasm}."
     >
       <div class="flex w-full flex-col gap-3 md:max-w-xs">
         <div class="grid grid-cols-[7rem_1fr] items-center gap-x-3 gap-y-2">
@@ -152,6 +155,7 @@ const check = async () => {
           {#if !builtIn}
             <Button
               variant="link"
+              class="px-0"
               onclick={() => {
                 form.widget = status.builtWith.widget;
                 form.wasm = status.builtWith.wasm;
@@ -160,42 +164,48 @@ const check = async () => {
               Use built-in versions
             </Button>
           {/if}
-          <Button variant="link" disabled={checking} onclick={check}>
+          <Button variant="link" class="px-0" disabled={checking} onclick={check}>
             {checking ? "Checking" : "Check for newer versions"}
           </Button>
         </div>
-        {#if newer}
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm md:justify-end">
-            <span class="text-muted-foreground">Newest on npm: widget {newer.widget}, WebAssembly {newer.wasm}</span>
-            <Button
-              variant="link"
-              onclick={() => {
-                form.widget = newer.widget;
-                form.wasm = newer.wasm;
-              }}
-            >
-              Use these
-            </Button>
+        <div
+          class="reveal -mt-3 grid {newer ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}"
+          inert={!newer}
+        >
+          <div class="min-h-0 overflow-hidden">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 text-sm md:justify-end">
+              <span class="text-muted-foreground tabular-nums">Newest on npm: widget {(newer ?? latest)?.widget}, WebAssembly {(newer ?? latest)?.wasm}</span>
+              <Button
+                variant="link"
+                class="px-0"
+                onclick={() => {
+                  form.widget = newer.widget;
+                  form.wasm = newer.wasm;
+                }}
+              >
+                Use these
+              </Button>
+            </div>
           </div>
-        {/if}
+        </div>
       </div>
     </Row>
 
     {#if status.enabled}
       <Row
         label="Downloaded files"
-        help="Cap downloads the files from {host} into Valkey when you save new versions, and checks every hour that they're there."
+        help="From {host}, checked every hour."
       >
         <div class="flex flex-col gap-2 md:items-end">
           {#if status.cached}
-            <Tag tone={status.cached.widget === status.widget && status.cached.wasm === status.wasm ? "success" : "warning"} dot>
+            <Health tone={status.error ? "bad" : status.cached.widget === status.widget && status.cached.wasm === status.wasm ? "ok" : "warn"} class="min-h-6 tabular-nums">
               Widget {status.cached.widget}, WebAssembly {status.cached.wasm}
-            </Tag>
+            </Health>
             <p class="text-sm text-muted-foreground md:text-end">
               Downloaded {ago(status.cached.at)} from {host}.{status.cached.hashwx ? "" : " This WebAssembly version has no HashWX file, so HashWX keys load it from jsDelivr."}
             </p>
           {:else}
-            <p class="text-sm text-muted-foreground md:text-end">{status.updating ? "Downloading now." : "Nothing downloaded yet."}</p>
+            <Health tone={status.error ? "bad" : status.updating ? "warn" : "off"} class="min-h-6">{status.updating ? "Downloading" : "Nothing downloaded yet"}</Health>
           {/if}
           {#if status.error}
             <p class="text-sm text-destructive md:text-end" role="alert">The last download failed: {status.error}</p>
@@ -238,11 +248,26 @@ const check = async () => {
       </div>
     {/if}
 
-    <div class="flex flex-wrap items-center justify-end gap-3 py-5">
-      {#if error}
-        <p class="me-auto text-sm text-destructive" role="alert">{error}</p>
-      {/if}
-      <Button variant="primary" disabled={saving || !dirty} onclick={save}>{saving ? "Saving" : "Save widget file settings"}</Button>
-    </div>
+    <SaveBar
+      {dirty}
+      {saving}
+      {error}
+      label="Save widget file settings"
+      onsave={save}
+      ondiscard={() => {
+        error = "";
+        form = { enabled: status.enabled, widget: status.widget, wasm: status.wasm };
+      }}
+    />
   </div>
 </Skeleton>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      transition:
+        grid-template-rows 320ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 220ms ease-out;
+    }
+  }
+</style>

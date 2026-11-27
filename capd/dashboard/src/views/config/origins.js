@@ -13,7 +13,8 @@ export function normalizeOrigin(value) {
     if (
       !["http:", "https:"].includes(parsed.protocol) ||
       parsed.username ||
-      parsed.password
+      parsed.password ||
+      !/^(\[[\da-f:.]+\]|[\w*.-]+)$/.test(parsed.hostname)
     )
       return "";
     if (!parsed.hostname.includes("*")) return parsed.origin;

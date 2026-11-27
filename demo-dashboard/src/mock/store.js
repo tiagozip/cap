@@ -263,9 +263,32 @@ function seed() {
         token: newHex(7),
         created: now - 2 * HOUR,
         expires: now + 7 * DAY - 2 * HOUR,
+        seen: now - 4 * 60_000,
+        ua: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+        browser: "Chrome",
+        os: "macOS",
+        country: "PT",
       },
-      { token: newHex(7), created: now - 3 * DAY, expires: now + 4 * DAY },
-      { token: newHex(7), created: now - 6 * DAY, expires: now + DAY },
+      {
+        token: newHex(7),
+        created: now - 3 * DAY,
+        expires: now + 4 * DAY,
+        seen: now - 5 * HOUR,
+        ua: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+        browser: "Safari",
+        os: "iOS",
+        country: "GB",
+      },
+      {
+        token: newHex(7),
+        created: now - 6 * DAY,
+        expires: now + DAY,
+        seen: now - 2 * DAY,
+        ua: "Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0",
+        browser: "Firefox",
+        os: "Linux",
+        country: "DE",
+      },
     ],
     shares: {
       c4f1a9e27b: [
@@ -321,6 +344,7 @@ const load = () => {
 };
 
 export const state = load();
+if (globalThis.demoEmpty) state.keys = [];
 
 export const save = () => postMessage({ save: state });
 

@@ -18,6 +18,17 @@
     </script>
   </head>
   <body>
+    <noscript>
+      <style>
+        @media (prefers-color-scheme: dark) {
+          .no-script {
+            background: #18181b;
+            color: #a1a1aa;
+          }
+        }
+      </style>
+      <p class="no-script grid min-h-dvh place-items-center bg-sidebar p-6 text-sm text-muted-foreground">Turn on JavaScript to sign in to Cap.</p>
+    </noscript>
     <div id="app"></div>
     <script type="module" src="./src/login.js"></script>
   </body>

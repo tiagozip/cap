@@ -44,13 +44,15 @@ const at = $derived.by(() => {
   let caught = 0;
   let through = 0;
   let total = 0;
+  let now = 0;
   for (const r of rows) {
     total += r.n;
+    if (r.b >= current) now += r.n;
     if (r.b < t) continue;
     caught += r.n;
     if (r.outcome !== "block") through += r.n;
   }
-  return { caught, through, total };
+  return { caught, through, total, change: caught - now };
 });
 
 const nf = new Intl.NumberFormat();
@@ -113,7 +115,7 @@ const apply = async () => {
     </div>
   {/if}
   <div data-bone="ignore"
-    class="absolute inset-y-0 -ms-2.5 flex w-5 cursor-ew-resize justify-center outline-none transition-[left] duration-150 ease-(--ease-out) motion-reduce:transition-none focus-visible:[&>span]:ring-2 focus-visible:[&>span]:ring-ring {dragging ? 'duration-0' : ''}"
+    class="absolute inset-y-0 -ms-2.5 flex w-5 cursor-ew-resize justify-center outline-none transition-[left] duration-150 ease-(--ease-out) motion-reduce:transition-none focus-visible:[&>.grip]:ring-2 focus-visible:[&>.grip]:ring-ring focus-visible:[&>.grip]:ring-offset-2 focus-visible:[&>.grip]:ring-offset-card {dragging ? 'duration-0' : ''}"
     style:left="{t}%"
     role="slider"
     tabindex="0"
@@ -125,7 +127,7 @@ const apply = async () => {
     onkeydown={key}
   >
     <span class="h-full w-0.5 rounded-full bg-destructive"></span>
-    <span class="absolute -top-1 rounded-[5px] bg-destructive px-1 text-[11px] leading-4 font-medium text-background tabular-nums">{t}%</span>
+    <span class="grip absolute -top-1 rounded-[5px] bg-destructive px-1 text-[11px] leading-4 font-medium text-background tabular-nums" class:held={dragging}>{t}%</span>
   </div>
 {/snippet}
 
@@ -142,13 +144,14 @@ const apply = async () => {
   onpointerup={up}
   onpointercancel={up}
   {overlay}
+  empty="No scored solves in this period"
 />
 
-<div class="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4">
+<div class="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-4" class:hidden={!at.total && t === current}>
   <p class="max-w-md text-sm text-pretty text-muted-foreground" role="status">
-    {#if !at.total}
-      No scored solves in this period.
-    {:else}
+    {#if at.total && t !== current}
+      At {t}%, Cap would act on <span class="font-medium text-foreground tabular-nums">{nf.format(at.caught)}</span> solves ({pct(at.caught)}){#if at.change}, <span class="font-medium text-foreground tabular-nums">{nf.format(Math.abs(at.change))}</span> {at.change > 0 ? "more" : "fewer"} than at {current}%{/if}.
+    {:else if at.total}
       <span class="font-medium text-foreground tabular-nums">{nf.format(at.caught)}</span> solves scored {t}% or more ({pct(at.caught)}).
       {#if at.through}
         <span class="font-medium text-foreground tabular-nums">{nf.format(at.through)}</span> of them got through{blocking ? "" : " because behavior checks only report right now"}.
@@ -163,3 +166,19 @@ const apply = async () => {
     {/if}
   </div>
 </div>
+
+<style>
+  .grip {
+    transform-origin: bottom center;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .grip {
+      transition: scale 160ms var(--ease-out);
+    }
+  }
+
+  .grip.held {
+    scale: 1.08;
+  }
+</style>

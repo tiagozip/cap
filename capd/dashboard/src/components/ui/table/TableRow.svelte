@@ -7,7 +7,7 @@ let { class: className, ref = $bindable(null), children, ...rest } = $props();
 <tr
   bind:this={ref}
   data-slot="table-row"
-  class={cn("border-b hover:bg-muted/50 [&:has([aria-expanded=true])]:bg-muted/50 data-[state=selected]:bg-muted", className)}
+  class={cn("border-b [@media(hover:hover)]:hover:bg-muted/50 [&:has([aria-expanded=true])]:bg-muted/50 data-[state=selected]:bg-muted", className)}
   {...rest}
 >
   {@render children?.()}

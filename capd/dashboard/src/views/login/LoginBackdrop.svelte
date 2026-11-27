@@ -1,15 +1,50 @@
 <script>
-const lines = Array.from({ length: 30 }, (_, n) => {
-  const i = n < 15 ? n - 15 : n - 14;
-  const d = i * 30;
-  const pts = [];
-  for (let x = -40; x <= 1640; x += 20) {
-    const g = Math.exp(-(((x - 800) / 340) ** 2));
-    const y =
-      425 + Math.sign(i) * Math.sqrt(d * d + (i < 0 ? 215 : 300) ** 2 * g);
-    pts.push(`${x} ${y.toFixed(1)}`);
+import { url } from "../../lib/api.js";
+import { fieldLines as lines } from "../../polish/login/field.js";
+import { inkForColor, inkOver } from "../../polish/login/ink.js";
+
+let {
+  custom = $bindable(false),
+  ink = $bindable(null),
+  photo = $bindable(false),
+} = $props();
+
+let backdrop = $state(null);
+
+(window.CAP_PAGE?.loginBackground
+  ? Promise.resolve(window.CAP_PAGE.loginBackground)
+  : fetch(url("login-background.json"))
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null)
+).then((meta) => {
+  if (meta?.mode === "color" && /^#[0-9a-f]{6}$/i.test(meta.color ?? "")) {
+    backdrop = meta;
+    custom = true;
+    ink = inkForColor(meta.color);
+    return;
   }
-  return `M${pts.join("L")}`;
+  if (meta?.mode !== "image" || !meta.version) {
+    backdrop = { mode: "default" };
+    return;
+  }
+  const src = url(`login-background?v=${encodeURIComponent(meta.version)}`);
+  const image = new Image();
+  const focus =
+    Array.isArray(meta.focus) &&
+    meta.focus.length === 2 &&
+    meta.focus.every((n) => Number.isFinite(n) && n >= 0 && n <= 100)
+      ? meta.focus
+      : [50, 50];
+  image.onload = () => {
+    backdrop = { mode: "image", src, focus };
+    custom = true;
+    photo = true;
+    ink = inkOver(image, innerWidth, innerHeight, focus);
+  };
+  image.onerror = () => {
+    backdrop = { mode: "default" };
+  };
+  image.src = src;
 });
 
 const packets = [
@@ -25,6 +60,14 @@ const packets = [
 ];
 </script>
 
+{#if backdrop?.mode === "image"}
+  <div class="custom pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
+    <div class="photo absolute inset-0 bg-cover" style:background-image="url({JSON.stringify(backdrop.src)})" style:background-position="{backdrop.focus[0]}% {backdrop.focus[1]}%"></div>
+    <div class="scrim absolute inset-0"></div>
+  </div>
+{:else if backdrop?.mode === "color"}
+  <div class="custom pointer-events-none fixed inset-0 -z-10" aria-hidden="true" style:background-color={backdrop.color}></div>
+{:else if backdrop}
 <div class="backdrop pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
   <svg class="size-full" viewBox="0 0 1600 960" preserveAspectRatio="xMidYMid slice" fill="none">
     {#each lines as d, i}
@@ -38,8 +81,40 @@ const packets = [
     {/each}
   </svg>
 </div>
+{/if}
 
 <style>
+  .scrim {
+    background: radial-gradient(
+      ellipse 42rem 36rem at 50% 46%,
+      color-mix(in oklab, var(--sidebar) 60%, transparent),
+      color-mix(in oklab, var(--sidebar) 16%, transparent)
+    );
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .custom,
+    .backdrop {
+      animation: backdrop-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .photo {
+      animation: photo-settle 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+
+  @keyframes backdrop-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes photo-settle {
+    from {
+      transform: scale(1.03);
+    }
+  }
+
   .backdrop {
     mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, #000 25%, transparent 100%);
   }

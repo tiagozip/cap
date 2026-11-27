@@ -1,20 +1,33 @@
 export const compact = (n) => {
   const v = Number(n) || 0;
-  if (v >= 1e6)
-    return `${(v / 1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/, "")}M`;
-  if (v >= 1e4) return `${Math.round(v / 1e3)}k`;
-  if (v >= 1e3) return `${(v / 1e3).toFixed(1).replace(/\.0$/, "")}k`;
-  return String(v);
+  const sign = v < 0 ? "-" : "";
+  const a = Math.abs(v);
+  if (Math.round(a * 10) / 10 < 1000)
+    return `${sign}${Math.round(a * 10) / 10}`;
+  for (const [size, unit] of [
+    [1e3, "k"],
+    [1e6, "M"],
+    [1e9, "B"],
+  ]) {
+    const x = a / size;
+    const r = Number(x.toFixed(x < 10 ? 1 : 0));
+    if (r < 1000 || unit === "B") return `${sign}${r}${unit}`;
+  }
 };
 
 export const latency = (ms) => {
-  if (!ms) return "0ms";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
+  if (!ms || ms < 0) return "0ms";
+  if (Math.round(ms) < 1000) return `${Math.round(ms)}ms`;
+  const s = ms / 1000;
+  if (s < 9.95) return `${s.toFixed(1)}s`;
+  const secs = Math.round(s);
+  if (secs < 60) return `${secs}s`;
+  const rest = secs % 60;
+  return `${Math.floor(secs / 60)}m${rest ? ` ${rest}s` : ""}`;
 };
 
 export const timeFmt = new Intl.DateTimeFormat(undefined, {
-  hour: "2-digit",
+  hour: "numeric",
   minute: "2-digit",
   second: "2-digit",
 });
@@ -34,27 +47,45 @@ export const when = (ts) => {
     : `${dateFmt.format(d)} ${timeFmt.format(d)}`;
 };
 
-export const ago = (ts) => {
-  const s = Math.round((Date.now() - ts) / 1000);
-  if (s < 60) return `${Math.max(s, 0)}s ago`;
-  if (s < 3600) return `${Math.round(s / 60)}m ago`;
-  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
-  return `${Math.round(s / 86400)}d ago`;
+const span = (s) => {
+  for (const [limit, unit, size] of [
+    [60, "s", 1],
+    [60, "m", 60],
+    [24, "h", 3600],
+    [31, "d", 86400],
+    [12, "mo", 2629800],
+    [Number.POSITIVE_INFINITY, "y", 31557600],
+  ]) {
+    const n = Math.round(s / size);
+    if (n < limit) return `${n}${unit}`;
+  }
 };
 
-export const until = (ts) => ago(2 * Date.now() - ts).replace(" ago", "");
+export const ago = (ts) => {
+  const s = (Date.now() - ts) / 1000;
+  return s < 5 ? "just now" : `${span(s)} ago`;
+};
+
+export const until = (ts) => span(Math.max((ts - Date.now()) / 1000, 0));
 
 export const trend = (current, previous) => {
   if (previous == null || (!current && !previous)) return null;
   if (!previous) return { dir: "up", text: "New" };
   const pct = Math.round(((current - previous) / previous) * 100);
   if (pct === 0) return { dir: "flat", text: "0%" };
-  return { dir: pct > 0 ? "up" : "down", text: `${Math.abs(pct)}%` };
+  return { dir: pct > 0 ? "up" : "down", text: `${compact(Math.abs(pct))}%` };
 };
 
-export const bytes = (n) =>
-  n > 1e9
-    ? `${(n / 1e9).toFixed(1)} GB`
-    : n > 1e6
-      ? `${(n / 1e6).toFixed(1)} MB`
-      : `${Math.round((n ?? 0) / 1e3)} kB`;
+export const bytes = (n) => {
+  const v = Math.max(Number(n) || 0, 0);
+  for (const [size, unit, digits] of [
+    [1, "B", 0],
+    [1e3, "kB", 0],
+    [1e6, "MB", 1],
+    [1e9, "GB", 1],
+    [1e12, "TB", 1],
+  ]) {
+    const r = (v / size).toFixed(digits);
+    if (Number(r) < 1000 || unit === "TB") return `${r} ${unit}`;
+  }
+};

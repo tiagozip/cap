@@ -1,7 +1,6 @@
 <script>
 import {
   Button,
-  CopyText,
   Dialog,
   Empty,
   Field,
@@ -23,7 +22,8 @@ import { api, url } from "../../lib/api.js";
 import { ago, fullFmt, until } from "../../lib/format.js";
 import { samples } from "../../lib/samples.js";
 import { app } from "../../lib/state.svelte.js";
-import { confirm, toast } from "../../lib/ui.svelte.js";
+import { undoable } from "../../lib/ui.svelte.js";
+import RevealedValue from "../../polish/config-misc/RevealedValue.svelte";
 
 const sk = app.key.siteKey;
 
@@ -36,6 +36,7 @@ let submitting = $state(false);
 let createError = $state("");
 let created = $state(null);
 let showCreated = $state(false);
+let stale = $state(false);
 
 async function load() {
   const data = await api("GET", `/keys/${sk}/shares`);
@@ -67,21 +68,28 @@ async function submit() {
   expiresIn = "0";
   created = `${url("share")}#${res.token}`;
   showCreated = true;
-  await load();
+  stale = true;
 }
 
-async function revoke(share) {
-  const ok = await confirm({
-    title: "Revoke share link?",
-    message: "Anyone using this link loses access right away.",
-    confirmText: "Revoke link",
-    danger: true,
+$effect(() => {
+  if (showCreated || !stale) return;
+  stale = false;
+  load();
+});
+
+function revoke(share) {
+  const at = shares.indexOf(share);
+  shares = shares.filter((x) => x.id !== share.id);
+  undoable({
+    message: "Share link revoked",
+    commit: async () => {
+      const res = await api("DELETE", `/keys/${sk}/shares/${share.id}`);
+      return res?.error ? res.error : null;
+    },
+    undo: () => {
+      shares = shares.toSpliced(at, 0, share);
+    },
   });
-  if (!ok) return;
-  const res = await api("DELETE", `/keys/${sk}/shares/${share.id}`);
-  if (res?.error) toast(res.error, "error");
-  else toast("Share link revoked");
-  await load();
 }
 </script>
 
@@ -116,7 +124,7 @@ async function revoke(share) {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Created</TableHead>
+            <TableHead class="max-sm:hidden">Created</TableHead>
             <TableHead>Expires</TableHead>
             <TableHead class="w-0"><span class="sr-only">Actions</span></TableHead>
           </TableRow>
@@ -124,15 +132,15 @@ async function revoke(share) {
         <TableBody>
           {#each rows as share (share.id)}
             <TableRow>
-              <TableCell class="max-w-64 truncate font-medium">
+              <TableCell class="max-w-64 truncate font-medium max-sm:max-w-40">
                 {#if share.name}{share.name}{:else}<span class="text-muted-foreground">Untitled link</span>{/if}
               </TableCell>
-              <TableCell class="whitespace-nowrap text-muted-foreground tabular-nums">
+              <TableCell class="whitespace-nowrap text-muted-foreground tabular-nums max-sm:hidden">
                 <span title={fullFmt.format(new Date(share.created))}>{ago(share.created)}</span>
               </TableCell>
               <TableCell class="whitespace-nowrap text-muted-foreground tabular-nums">
                 {#if share.expires}
-                  <span title={fullFmt.format(new Date(share.expires))}>In {until(share.expires)}</span>
+                  <span class={share.expires - Date.now() < 259_200_000 ? "text-warning" : ""} title={fullFmt.format(new Date(share.expires))}>In {until(share.expires)}</span>
                 {:else}
                   Never
                 {/if}
@@ -155,11 +163,7 @@ async function revoke(share) {
   </Skeleton>
 </Group>
 
-<Dialog
-  bind:open={creating}
-  title="Create share link"
-  description="The link shows challenge, verification and location stats for this key only."
->
+<Dialog bind:open={creating} title="Create share link">
   <form
     id="shareForm"
     class="flex flex-col gap-4"
@@ -169,7 +173,7 @@ async function revoke(share) {
       submit();
     }}
   >
-    <Field label="Name" for="shareName" optional help="Helps you tell links apart when you revoke one.">
+    <Field label="Name" for="shareName" optional>
       <Input id="shareName" type="text" maxlength="64" autocomplete="off" placeholder="Marketing team" bind:value={label} />
     </Field>
     <Field label="Expires" for="shareExpiry">
@@ -198,9 +202,9 @@ async function revoke(share) {
 <Dialog
   bind:open={showCreated}
   title="Share link created"
-  description="Copy it now, Cap won't show it again. Anyone with this link can see the stats until it expires or you revoke it."
+  description="Copy it now, Cap won't show it again. Anyone with it can see this key's stats."
 >
-  <CopyText value={created ?? ""} label="Copy link" />
+  <RevealedValue value={created ?? ""} label="Copy link" />
   {#snippet footer()}
     <Button variant="primary" onclick={() => (showCreated = false)}>Done</Button>
   {/snippet}

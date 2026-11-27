@@ -3,6 +3,7 @@ let handlers;
 self.onmessage = async ({ data }) => {
   if (data.init) {
     globalThis.demoSaved = data.saved;
+    globalThis.demoEmpty = data.empty;
     handlers = await import("./handlers.js");
     postMessage({ ready: true });
     return;

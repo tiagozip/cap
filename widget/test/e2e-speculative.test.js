@@ -121,6 +121,32 @@ w.addEventListener("error", (e) => { document.getElementById("err").textContent 
     }
   }, 25_000);
 
+  test("a solved widget fetches no new challenge until it resets", async () => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(baseUrl);
+      await page.evaluate(() => document.getElementById("cap").solve());
+      await page.waitForFunction(
+        () => document.getElementById("ok").textContent,
+        null,
+        { timeout: 10_000 },
+      );
+      const before = challenges;
+      for (let i = 0; i < 6; i++) await page.mouse.move(20 + i * 30, 20 + i * 10);
+      await page.keyboard.press("Shift");
+      await Bun.sleep(2500);
+      expect(challenges).toBe(before);
+      await page.evaluate(() => document.getElementById("cap").reset());
+      await page.mouse.move(5, 5);
+      await page.mouse.move(60, 40);
+      const until = Date.now() + 5000;
+      while (challenges === before && Date.now() < until) await Bun.sleep(100);
+      expect(challenges).toBe(before + 1);
+    } finally {
+      await page.close();
+    }
+  }, 25_000);
+
   test("a reset during a speculative solve leaves the new state clean", async () => {
     slow = true;
     redeems = [];

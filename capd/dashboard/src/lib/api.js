@@ -1,7 +1,7 @@
 export const url = (p) =>
   new URL(String(p).replace(/^\/+/, ""), document.baseURI).toString();
 
-const authHeader = () => {
+export const authHeader = () => {
   try {
     const auth = JSON.parse(localStorage.getItem("cap_auth"));
     return auth
@@ -38,6 +38,10 @@ export async function api(method, path, body) {
       opts.headers["Content-Type"] = "application/json";
       opts.body = JSON.stringify(body);
     }
+    opts.keepalive =
+      method !== "GET" &&
+      document.visibilityState === "hidden" &&
+      (opts.body?.length ?? 0) < 20_000;
     const res = await fetch(url(`server${path}`), opts);
     const data = await res.json();
     if (res.status === 401) signOut();

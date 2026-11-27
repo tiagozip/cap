@@ -35,15 +35,9 @@ import {
 } from "../../lib/state.svelte.js";
 import AsnIcon from "./AsnIcon.svelte";
 import Breakdown from "./Breakdown.svelte";
-import Flow from "./Flow.svelte";
 import OsIcon from "./OsIcon.svelte";
 import Panel from "./Panel.svelte";
-import ScoreChart from "./ScoreChart.svelte";
-import SharedClients from "./SharedClients.svelte";
-import SolveChart from "./SolveChart.svelte";
 import TrafficChart from "./TrafficChart.svelte";
-import WeekHeatmap from "./WeekHeatmap.svelte";
-import WorldMap from "./WorldMap.svelte";
 
 const RANGES = [
   { id: "24h", short: "1d", label: "Past day", long: "the last 24 hours" },
@@ -58,6 +52,7 @@ const METRICS = [
     label: "Challenges",
     color: "var(--chart-1)",
     chart: true,
+    view: "View challenges",
     filters: ["type:challenge"],
   },
   {
@@ -65,6 +60,7 @@ const METRICS = [
     label: "Passed",
     color: "var(--success)",
     chart: true,
+    view: "View passed solves",
     filters: ["type:redeem", "outcome:pass"],
   },
   {
@@ -73,7 +69,8 @@ const METRICS = [
     color: "var(--warning)",
     chart: true,
     bad: true,
-    filters: ["type:redeem", "outcome:pass"],
+    view: "View flagged solves",
+    filters: ["outcome:flagged"],
   },
   {
     id: "blocked",
@@ -81,6 +78,7 @@ const METRICS = [
     color: "var(--destructive)",
     chart: true,
     bad: true,
+    view: "View blocked events",
     filters: ["outcome:block"],
   },
   {
@@ -89,9 +87,16 @@ const METRICS = [
     color: "var(--faint-foreground)",
     chart: true,
     bad: true,
+    view: "View failed events",
     filters: ["outcome:fail"],
   },
 ];
+
+const onboarding = import("./Onboarding.svelte");
+const worldMap = import("./WorldMap.svelte");
+const moversView = import("../../polish/overview/Movers.svelte");
+const sharedView = import("./SharedClients.svelte");
+const panels = import("../../polish/overview/panels.js");
 
 const DIMS =
   "country,asn_org,flag,agent,reason,browser,os,platform,origin,lang";
@@ -107,6 +112,21 @@ const stored = (() => {
 
 let range = $state(RANGES.some((r) => r.id === stored) ? stored : "7d");
 let metric = $state("challenges");
+let compare = $state(
+  (() => {
+    try {
+      return localStorage.getItem("cap_overview_compare") === "1";
+    } catch {
+      return false;
+    }
+  })(),
+);
+const toggleCompare = () => {
+  compare = !compare;
+  try {
+    localStorage.setItem("cap_overview_compare", compare ? "1" : "0");
+  } catch {}
+};
 let metricGroup = $state(null);
 let pill = $state(null);
 
@@ -133,8 +153,11 @@ $effect(() => {
 });
 let data = $state(null);
 let top = $state(null);
+let pair = $state(null);
+let pairing = $state(false);
 let insights = $state(null);
 let mapMetric = $state("volume");
+let peek = $state(null);
 let heatMode = $state("all");
 let live = $state(null);
 let loading = $state(true);
@@ -152,7 +175,11 @@ const delta = (cur, prev) => {
   if (prev == null || (!cur && !prev)) return null;
   if (!prev) return { up: true, text: "New" };
   const pct = Math.round(((cur - prev) / prev) * 100);
-  return { up: pct > 0, flat: pct === 0, text: `${Math.abs(pct)}%` };
+  return {
+    up: pct > 0,
+    flat: pct === 0,
+    text: pct ? `${Math.abs(pct)}%` : "No change",
+  };
 };
 
 const nf = new Intl.NumberFormat();
@@ -172,9 +199,46 @@ async function load(next = range) {
   ]);
   if (id !== seq) return;
   loading = false;
+  lastQuiet = Date.now();
   if (!overview?.error) data = overview;
   if (!dims?.error) top = dims;
   if (!extra?.error) insights = extra;
+  const r = overview?.range;
+  if (!r || !overview.previous || dims?.error) {
+    pair = null;
+    return;
+  }
+  pairing = true;
+  const before = await api(
+    "GET",
+    `/keys/${siteKey}/analytics/top${qs({ from: r.from - (r.to - r.from), to: r.from, dims: DIMS, limit: 60 })}`,
+  );
+  if (id !== seq) return;
+  pairing = false;
+  pair = before?.error
+    ? null
+    : {
+        now: flat(tabsFor(dims)),
+        before: flat(tabsFor(before)),
+        totals: [overview.summary?.total ?? 0, overview.previous.total ?? 0],
+      };
+}
+
+const QUIET = { "24h": 10_000, "7d": 30_000, "30d": 60_000, "90d": 120_000 };
+let lastQuiet = Date.now();
+let quietRuns = 0;
+async function refresh() {
+  if (loading || Date.now() - lastQuiet < QUIET[range]) return;
+  lastQuiet = Date.now();
+  const id = seq;
+  const res = await api("GET", `/keys/${siteKey}/analytics${qs({ range })}`);
+  if (id === seq && !loading && !res?.error) data = res;
+  if (++quietRuns % 3) return;
+  const more = await api(
+    "GET",
+    `/keys/${siteKey}/analytics/insights${qs({ range })}`,
+  );
+  if (id === seq && !loading && !more?.error) insights = more;
 }
 
 let pulsing = false;
@@ -188,11 +252,16 @@ async function pulse() {
       "GET",
       `/keys/${siteKey}/analytics${qs({ range: "1h" })}`,
     );
-    if (!res?.error) live = res.summary?.challenges ?? 0;
+    if (!res?.error) {
+      live = res.summary?.challenges ?? 0;
+    }
   } finally {
     pulsing = false;
   }
+  refresh();
 }
+
+const drill = (filters) => openEvents([...filters, `range:${range}`]);
 
 const setRange = (id) => {
   if (id === range) return;
@@ -213,6 +282,35 @@ onMount(() => {
     stopLive();
   };
 });
+
+const onKeydown = (e) => {
+  if (
+    e.defaultPrevented ||
+    e.metaKey ||
+    e.ctrlKey ||
+    e.altKey ||
+    e.isComposing ||
+    e.target.closest?.(
+      "input, textarea, select, [contenteditable]:not([contenteditable=false])",
+    ) ||
+    document.querySelector(
+      "[role=dialog][data-state=open], [role=alertdialog][data-state=open], [role=menu][data-state=open], [role=listbox]:not([hidden])",
+    )
+  )
+    return;
+  const pick = METRICS[Number(e.key) - 1];
+  if (pick) {
+    e.preventDefault();
+    metric = pick.id;
+    return;
+  }
+  const step = { "[": -1, "]": 1 }[e.key];
+  if (!step) return;
+  const at = RANGES.findIndex((r) => r.id === range) + step;
+  if (!RANGES[at]) return;
+  e.preventDefault();
+  setRange(RANGES[at].id);
+};
 
 const named = (fn) => (r) => fn(r.value) || r.value;
 
@@ -348,6 +446,7 @@ const tabsFor = (t) => ({
 });
 
 const tabs = $derived(tabsFor(top));
+const flat = (t) => Object.values(t).flat();
 
 const MAP_METRICS = [
   { id: "volume", label: "Traffic" },
@@ -416,7 +515,7 @@ const mapOf = (ins) => {
 
 {#snippet geoOff()}
   <div class="m-auto flex max-w-64 flex-col items-center gap-3 text-center">
-    <p class="text-sm text-balance text-muted-foreground">Visitor location is off. Turn it on to see which countries and networks traffic comes from.</p>
+    <p class="text-sm text-balance text-muted-foreground">Turn on visitor location to see countries and networks.</p>
     <Button size="sm" onclick={() => navigate({ view: "settings", section: "ipdata" })}>Set up visitor location</Button>
   </div>
 {/snippet}
@@ -443,6 +542,21 @@ const mapOf = (ins) => {
   />
 {/snippet}
 
+{#snippet moversAside()}
+  <span class="pe-2 text-sm text-muted-foreground">Compared with the previous {rangeInfo.label.replace("Past ", "")}</span>
+{/snippet}
+
+{#snippet moversSkeleton()}
+  <span class="grid gap-x-6 gap-y-0.5 lg:grid-cols-2">
+    {#each Array(6) as _, k (k)}
+      <span class="flex h-10 items-center gap-3 px-2">
+        <span class="flex flex-1 flex-col gap-1.5"><Bone height="0.625rem" width="{40 + ((k * 23) % 35)}%" radius="4px" /><Bone height="0.5rem" width="4rem" radius="4px" /></span>
+        <Bone height="0.625rem" width="3rem" radius="4px" />
+      </span>
+    {/each}
+  </span>
+{/snippet}
+
 {#snippet metricSkeleton()}
   <span class="flex flex-col items-start gap-0.5">
     <span class="flex h-8 items-center"><Bone height="1.375rem" width="3rem" radius="6px" /></span>
@@ -454,11 +568,12 @@ const mapOf = (ins) => {
   <span class="flex h-5 items-center"><Bone height="0.625rem" width="12rem" radius="4px" /></span>
 {/snippet}
 
-{#snippet change(m, cur, prev)}
+{#snippet change(m, cur, prev, format)}
   {@const d = delta(cur, prev)}
   {#if d}
+    <span class="grid text-xs tabular-nums">
     <span
-      class="inline-flex items-center gap-0.5 text-xs tabular-nums {d.flat
+      class="col-start-1 row-start-1 inline-flex items-center gap-0.5 motion-safe:transition-[opacity,translate] motion-safe:duration-200 motion-safe:ease-(--ease-out) [@media(hover:hover)]:group-hover/tile:-translate-y-1 [@media(hover:hover)]:group-hover/tile:opacity-0 {d.flat
         ? 'text-muted-foreground'
         : m.bad
           ? d.up
@@ -475,30 +590,36 @@ const mapOf = (ins) => {
         <span class="sr-only">{d.up ? "Up" : "Down"}</span>
       {/if}
       {d.text}
+      <span class="sr-only">from {format(prev)} in the previous period</span>
+    </span>
+    <span aria-hidden="true" class="col-start-1 row-start-1 translate-y-1 text-muted-foreground opacity-0 motion-safe:transition-[opacity,translate] motion-safe:duration-200 motion-safe:ease-(--ease-out) [@media(hover:hover)]:group-hover/tile:translate-y-0 [@media(hover:hover)]:group-hover/tile:opacity-100">from {format(prev)}</span>
     </span>
   {:else}
     <span class="text-xs text-muted-foreground">No earlier data</span>
   {/if}
 {/snippet}
 
+<svelte:window onkeydown={onKeydown} />
+
 <PageHeader title="Overview">
   {#snippet actions()}
     {#if live != null}
-      <span class="flex h-8 items-center gap-2 px-1 text-sm text-muted-foreground">
-        <span class="relative flex size-2" aria-hidden="true">
-          {#if live > 0}
-            <span class="absolute inset-0 rounded-full bg-success opacity-60 motion-safe:animate-ping"></span>
-          {/if}
-          <span class="relative size-2 rounded-full {live > 0 ? 'bg-success' : 'bg-faint-foreground'}"></span>
-        </span>
+      <button
+        type="button"
+        class="flex h-8 cursor-pointer items-center gap-2 rounded-[calc(var(--radius)-4px)] px-2 text-sm text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)]:hover:bg-nav-hover"
+        title="Show events from the last hour"
+        onclick={() => openEvents(["range:1h"])}
+      >
+        <span class="size-2 rounded-full {live > 0 ? 'bg-success' : 'bg-faint-foreground'}" aria-hidden="true"></span>
         <span><Odometer class="font-medium text-foreground" value={live} format={n} /><span class="ms-1 max-sm:sr-only">in the last hour</span></span>
-      </span>
+      </button>
     {/if}
     <RangePicker class="rounded-[calc(var(--radius)-4px)]" value={range} ranges={RANGES} onchange={setRange} />
   {/snippet}
 </PageHeader>
 
 <div class="flex flex-col gap-4 px-4 pt-5 pb-12 md:px-5">
+  {#await onboarding then { default: Onboarding }}<Onboarding />{/await}
   {#if data?.storage === "redis" || data?.storage === "off"}
     <p class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm text-pretty text-muted-foreground">
       {data.storage === "off"
@@ -507,6 +628,7 @@ const mapOf = (ins) => {
       <Button size="sm" onclick={() => navigate({ view: "settings", section: "analytics" })}>Open storage settings</Button>
     </p>
   {/if}
+  <div>
   <Card variant="layered" role="region" aria-label="Traffic">
     <ToggleGroup
       type="single"
@@ -525,11 +647,12 @@ const mapOf = (ins) => {
           style:height="{pill.h}px"
         ></span>
       {/if}
-      {#each METRICS as m (m.id)}
+      {#each METRICS as m, k (m.id)}
         {@const on = metric === m.id}
         <ToggleGroupItem
           value={m.id}
-          class="relative h-auto min-w-0 cursor-pointer flex-col items-start justify-start gap-0.5 rounded-lg px-4 py-3 text-left font-normal whitespace-normal transition-none! [&_svg:not([class*='size-'])]:size-3 hover:bg-background/50 data-[state=on]:bg-transparent data-[state=on]:hover:bg-transparent"
+          aria-keyshortcuts={String(k + 1)}
+          class="group/tile relative h-auto min-w-0 cursor-pointer flex-col items-start justify-start gap-0.5 rounded-lg px-3 py-2.5 text-left sm:px-4 sm:py-3 font-normal whitespace-normal transition-none! [&_svg:not([class*='size-'])]:size-3 [@media(hover:hover)]:hover:bg-background/50 data-[state=on]:bg-transparent data-[state=on]:hover:bg-transparent"
         >
           <span class="flex items-center gap-1.5 text-sm {on ? 'text-foreground' : 'text-muted-foreground'}">
             <span class="size-2 rounded-full" style:background={m.color}></span>
@@ -538,20 +661,20 @@ const mapOf = (ins) => {
           <Skeleton data={summary} skeleton={metricSkeleton}>
             {#snippet children(s)}
               <span class="flex flex-col items-start gap-0.5">
-                <span class="text-2xl font-semibold tabular-nums">{compact(s[m.id])}</span>
-                {@render change(m, s[m.id], previous?.[m.id])}
+                <Odometer class="text-2xl font-semibold" value={s[m.id]} format={compact} />
+                {@render change(m, s[m.id], previous?.[m.id], compact)}
               </span>
             {/snippet}
           </Skeleton>
         </ToggleGroupItem>
       {/each}
-      <div class="flex min-w-0 flex-col items-start gap-0.5 px-4 py-3">
+      <div class="flex min-w-0 flex-col items-start gap-0.5 px-3 py-2.5 sm:px-4 sm:py-3">
         <span class="text-sm text-muted-foreground">Avg. solve time</span>
         <Skeleton data={summary} skeleton={metricSkeleton}>
           {#snippet children(s)}
             <span class="flex flex-col items-start gap-0.5">
-              <span class="text-2xl font-semibold tabular-nums">{latency(s.avg_solve)}</span>
-              {@render change({ id: "avg" }, s.avg_solve, previous?.avg_solve)}
+              <Odometer class="text-2xl font-semibold" value={s.avg_solve} format={latency} />
+              {@render change({ id: "avg" }, s.avg_solve, previous?.avg_solve, latency)}
             </span>
           {/snippet}
         </Skeleton>
@@ -564,65 +687,99 @@ const mapOf = (ins) => {
           {#if !d.series?.length || !d.summary?.total}
             <p class="flex h-[15rem] items-center justify-center text-sm text-muted-foreground">No traffic in {rangeInfo.long}</p>
           {:else}
-            <TrafficChart series={d.series} bucket={d.range.bucket} {metric} metrics={METRICS} />
+            <TrafficChart series={d.series} bucket={d.range.bucket} {metric} metrics={METRICS} previous={compare ? d.previousSeries : null} onpick={(from, to) => openEvents([...METRICS.find((m) => m.id === metric).filters, `window:${from}-${to}`])} />
           {/if}
         {/snippet}
       </Skeleton>
-      <div class="flex items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <Skeleton data={summary} skeleton={visitorsSkeleton}>
           {#snippet children(s)}
             <p class="text-sm text-pretty text-muted-foreground">
-              <span class="font-medium text-foreground tabular-nums">{n(s.clients)}</span> visitors{#if s.agents}, <span class="font-medium text-foreground tabular-nums">{n(s.agents)}</span> of them AI agents{/if}
+              <Odometer class="font-medium text-foreground" value={s.clients} format={n} /> visitors{#if s.agents}, <Odometer class="font-medium text-foreground" value={s.agents} format={n} /> of them AI agents{/if}
             </p>
           {/snippet}
         </Skeleton>
-        <Button
-          variant="ghost"
-          size="sm"
-          onclick={() => openEvents(METRICS.find((m) => m.id === metric).filters)}
-        >
-          View these events
-          <Icon name="right" size={13} />
-        </Button>
+        <div class="flex items-center gap-1 max-sm:-ms-2 sm:-me-2">
+          {#if data?.previousSeries?.length}
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-pressed={compare}
+              class={compare ? "bg-nav-hover text-foreground" : "text-muted-foreground"}
+              onclick={toggleCompare}
+            >
+              <span class="h-0.5 w-3 rounded-full bg-current" aria-hidden="true"></span>
+              Compare with previous
+            </Button>
+          {/if}
+          <Button
+            variant="ghost"
+            size="sm"
+            onclick={() => drill(METRICS.find((m) => m.id === metric).filters)}
+          >
+            {METRICS.find((m) => m.id === metric).view}
+            <Icon name="right" size={13} />
+          </Button>
+        </div>
       </div>
     </CardContent>
   </Card>
+  </div>
 
+  <div class="grid">
+    <Panel title="Biggest changes" aside={moversAside} stale={(loading || pairing) && !!pair}>
+      {#if summary && !previous?.total}
+        <p class="m-auto py-8 text-sm text-muted-foreground">No earlier period to compare yet.</p>
+      {:else}
+        <Skeleton class="skeleton-fill" data={pair} skeleton={moversSkeleton} label="Loading changes">
+          {#snippet children(p)}{#await moversView then { default: Movers }}<Movers now={p.now} before={p.before} totals={p.totals} onpick={drill} />{/await}{/snippet}
+        </Skeleton>
+      {/if}
+    </Panel>
+  </div>
   <div class="grid gap-4 lg:grid-cols-2">
     <Panel title="Risk scores" stale={loading && !!insights}>
       <Skeleton class="skeleton-fill" data={insights} sample={samples.insights} label="Loading chart">
-        {#snippet children(i)}<ScoreChart rows={i.scores} />{/snippet}
+        {#snippet children(i)}{#await panels then { ScoreChart }}<ScoreChart rows={i.scores} />{/await}{/snippet}
       </Skeleton>
     </Panel>
     <Panel title="Solve times" stale={loading && !!insights}>
       <Skeleton class="skeleton-fill" data={insights} sample={samples.insights} label="Loading chart">
-        {#snippet children(i)}<SolveChart solve={i.solve} />{/snippet}
+        {#snippet children(i)}{#await panels then { SolveChart }}<SolveChart solve={i.solve} />{/await}{/snippet}
       </Skeleton>
     </Panel>
+  </div>
+  <div class="grid gap-4 lg:grid-cols-2">
     <Panel title="Where challenges end up" stale={loading && !!insights}>
       <Skeleton class="skeleton-fill" data={insights} sample={samples.insights} label="Loading chart">
-        {#snippet children(i)}<Flow flow={i.flow} />{/snippet}
+        {#snippet children(i)}{#await panels then { Flow }}<Flow onpick={drill} flow={i.flow} previous={i.previousFlow} />{/await}{/snippet}
       </Skeleton>
     </Panel>
     <Panel title="When traffic arrives" aside={heatTabs} stale={loading && !!insights}>
       <Skeleton class="skeleton-fill" data={insights} sample={samples.insights} label="Loading chart">
-        {#snippet children(i)}<WeekHeatmap hours={i.hours} mode={heatMode} />{/snippet}
+        {#snippet children(i)}{#await panels then { WeekHeatmap }}<WeekHeatmap hours={i.hours} mode={heatMode} onpick={openEvents} />{/await}{/snippet}
       </Skeleton>
     </Panel>
-    <Panel title="Where traffic comes from" aside={mapTabs} class="lg:col-span-2" stale={loading && !!insights}>
+  </div>
+  <div class="grid">
+    <Panel title="Where traffic comes from" aside={mapTabs} stale={loading && !!insights}>
       <Skeleton class="skeleton-fill" data={insights} sample={samples.insights} label="Loading map">
         {#snippet children(i)}
           {@const map = mapOf(i)}
           {#if map.empty}
             {#if !geo}{@render geoOff()}{:else}<p class="m-auto py-10 text-sm text-muted-foreground">No location data in this period</p>{/if}
           {:else}
+            {#await worldMap then { default: WorldMap }}
             <WorldMap
               values={map.values}
               color={mapMetric === "blocked" ? "var(--destructive)" : "var(--chart-3)"}
               diverging={mapMetric === "change"}
               describe={map.describe}
-              onpick={(code) => openEvents([`country:${code}`])}
+              countries={i.countries}
+              highlight={peek}
+              onpick={(code) => drill([`country:${code}`])}
             />
+            {/await}
             <p class="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
               {#if mapMetric === "change"}
                 <span class="me-1 inline-block size-2 rounded-full bg-info"></span>More than the previous period
@@ -637,14 +794,21 @@ const mapOf = (ins) => {
         {/snippet}
       </Skeleton>
     </Panel>
-    <Breakdown tabs={tabs.threats} stale={loading && !!top} onpick={openEvents} />
-    <Breakdown tabs={tabs.locations} stale={loading && !!top} onpick={openEvents} />
-    <Breakdown tabs={tabs.clients} stale={loading && !!top} onpick={openEvents} />
-    <Breakdown tabs={tabs.sources} stale={loading && !!top} onpick={openEvents} />
-    <Panel title="Browsers behind many addresses" class="lg:col-span-2" stale={loading && !!insights}>
+  </div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <Breakdown tabs={tabs.threats} stale={loading && !!top} onpick={drill} />
+    <Breakdown tabs={tabs.locations} stale={loading && !!top} onpick={drill} onpeek={(field, v) => (peek = field === "country" ? v : null)} />
+  </div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <Breakdown tabs={tabs.clients} stale={loading && !!top} onpick={drill} />
+    <Breakdown tabs={tabs.sources} stale={loading && !!top} onpick={drill} />
+  </div>
+  <div class="grid">
+    <Panel title="Browsers behind many addresses" stale={loading && !!insights}>
       <Skeleton class="skeleton-fill" data={insights} sample={samples.insights} label="Loading browsers">
-        {#snippet children(i)}<SharedClients rows={i.shared} />{/snippet}
+        {#snippet children(i)}{#await sharedView then { default: SharedClients }}<SharedClients rows={i.shared} onpick={drill} />{/await}{/snippet}
       </Skeleton>
     </Panel>
   </div>
 </div>
+

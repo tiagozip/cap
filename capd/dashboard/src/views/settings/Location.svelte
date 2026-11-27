@@ -8,7 +8,7 @@ import {
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { app, refreshSettings } from "../../lib/state.svelte.js";
-import { toast } from "../../lib/ui.svelte.js";
+import SaveBar from "../../polish/instance-settings/SaveBar.svelte";
 import IpDatabase from "./IpDatabase.svelte";
 
 const presets = [
@@ -53,6 +53,7 @@ let source = $state(
   initial.countryHeader && !app.settings.ipdb?.mode ? "headers" : "ipdb",
 );
 let saving = $state(false);
+let error = $state("");
 let editHeaders = $state(false);
 
 const clean = $derived({
@@ -68,23 +69,23 @@ const preset = $derived(
 );
 
 const save = async () => {
+  error = "";
   saving = true;
   const res = await api("PUT", "/settings/headers", clean);
   saving = false;
   if (!res?.success) {
-    toast(res?.error || "Couldn't save proxy settings", "error");
-    return;
+    error = res?.error || "Couldn't save proxy settings";
+    return false;
   }
   saved = { ...clean };
   await refreshSettings();
-  toast("Proxy settings saved");
 };
 </script>
 
 <div class="flex flex-col divide-y divide-border">
-  <Row label="Your proxy or CDN" help="Pick the one in front of Cap so it sees each visitor's real address, not the proxy's.">
+  <Row label="Your proxy or CDN" help="So Cap sees each visitor's real IP.">
     <Segmented
-        class="self-start md:self-auto"
+      class="self-start md:self-auto"
       label="Proxy or CDN"
       value={preset}
       options={presets.map(([id, label]) => [id, label])}
@@ -96,40 +97,46 @@ const save = async () => {
     {#snippet below()}
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2 md:justify-end">
         {#if !preset}<span class="text-sm text-muted-foreground">Using your own header names</span>{/if}
-        <Button variant="link" aria-expanded={editHeaders} onclick={() => (editHeaders = !editHeaders)}>
+        <Button variant="link" class="px-0" aria-expanded={editHeaders} onclick={() => (editHeaders = !editHeaders)}>
           {editHeaders ? "Hide header names" : "Edit header names"}
         </Button>
       </div>
       {#if editHeaders}
         <div class="flex w-full flex-col gap-4 md:max-w-sm">
-          <Field label="Visitor IP header" for="ip-header" help="Used for rate limits, IP lists and location lookups.">
+          <Field label="Visitor IP header" for="ip-header">
             <Input id="ip-header" mono placeholder="CF-Connecting-IP" bind:value={form.ipHeader} />
           </Field>
-          <Field label="Country header" for="country-header" help="Holds a two-letter country code.">
+          <Field label="Country header" for="country-header" help="A two-letter country code.">
             <Input id="country-header" mono placeholder="CF-IPCountry" bind:value={form.countryHeader} />
           </Field>
-          <Field label="Network header" for="asn-header" help="Holds the network number or name.">
+          <Field label="Network header" for="asn-header" help="The network number or name.">
             <Input id="asn-header" mono placeholder="CF-IPOrg" bind:value={form.asnHeader} />
           </Field>
         </div>
       {/if}
-      {#if dirty}
-        <div class="flex items-center gap-3">
-          <span class="text-sm text-muted-foreground" role="status">Unsaved changes</span>
-          <Button variant="primary" disabled={saving} onclick={save}>{saving ? "Saving" : "Save proxy settings"}</Button>
-        </div>
-      {/if}
+      <SaveBar
+        compact
+        {dirty}
+        {saving}
+        {error}
+        label="Save proxy settings"
+        onsave={save}
+        ondiscard={() => {
+          error = "";
+          form = { ...saved };
+        }}
+      />
     {/snippet}
   </Row>
 
   <Row
     label="Where location comes from"
     help={source === "ipdb"
-      ? "Cap downloads a free database and looks each visitor up itself."
-      : "Cap reads the country your proxy already sends with each request."}
+      ? "Cap looks visitors up in a free database."
+      : "Uses the country your proxy sends."}
   >
     <Segmented
-        class="self-start md:self-auto"
+      class="self-start md:self-auto"
       label="Location source"
       bind:value={source}
       options={[
@@ -151,6 +158,8 @@ const save = async () => {
   </Row>
 
   {#if source === "ipdb"}
-    <IpDatabase />
+    <div>
+      <IpDatabase />
+    </div>
   {/if}
 </div>

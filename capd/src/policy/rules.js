@@ -225,6 +225,12 @@ export async function getRules(siteKey) {
   try {
     rules = JSON.parse((await db.get(`rules:${siteKey}`)) || "[]");
   } catch {}
+  const compiled = compileRules(rules);
+  cache.set(siteKey, { compiled, ts: Date.now() });
+  return compiled;
+}
+
+export function compileRules(rules) {
   const compiled = rules.map((r) => ({
     ...r,
     requestOnly: r.conditions.every(
@@ -247,7 +253,6 @@ export async function getRules(siteKey) {
   compiled.needsVelocity = compiled.some(
     (r) => r.enabled && r.conditions.some((c) => c.field.endsWith("_velocity")),
   );
-  cache.set(siteKey, { compiled, ts: Date.now() });
   return compiled;
 }
 
@@ -267,7 +272,7 @@ const fieldValue = (c, ctx) => {
   return ctx[c.field];
 };
 
-async function test(c, ctx) {
+export async function testCondition(c, ctx) {
   const v = fieldValue(c, ctx);
   switch (c.op) {
     case "exists":
@@ -323,24 +328,21 @@ async function test(c, ctx) {
   return false;
 }
 
+export async function ruleHits(rule, ctx) {
+  for (const c of rule.conditions) {
+    const ok = await testCondition(c, ctx);
+    if (rule.match === "all" && !ok) return false;
+    if (rule.match === "any" && ok) return true;
+  }
+  return rule.match === "all";
+}
+
 export async function evaluateRules(rules, ctx, stage) {
   const out = { action: null, rule: null, flags: [], factor: 1, matched: [] };
   for (const rule of rules) {
     if (!rule.enabled) continue;
     if (stage === "challenge" && !rule.requestOnly) continue;
-    let hit = rule.match === "all";
-    for (const c of rule.conditions) {
-      const ok = await test(c, ctx);
-      if (rule.match === "all" && !ok) {
-        hit = false;
-        break;
-      }
-      if (rule.match === "any" && ok) {
-        hit = true;
-        break;
-      }
-    }
-    if (!hit) continue;
+    if (!(await ruleHits(rule, ctx))) continue;
     out.matched.push(rule.id);
     if (rule.action === "flag") {
       out.flags.push(`rule:${rule.id}`);

@@ -6,6 +6,7 @@ export const app = $state({
   keysError: null,
   key: null,
   loadingKey: false,
+  focusHeading: false,
   route: { view: "home" },
   settings: {
     headers: null,
@@ -22,14 +23,23 @@ export const hasGeoSource = () =>
   !!(app.settings.headers?.countryHeader || app.settings.ipdb?.mode);
 
 const parseHash = () => {
-  const [view, a, b] = location.hash.replace(/^#\/?/, "").split("/");
+  const [view, a, b] = location.hash
+    .replace(/^#\/?/, "")
+    .split("?")[0]
+    .split("/");
   if (view === "keys" && a)
     return { view: "key", siteKey: a, tab: b || "activity" };
   if (view === "lists") {
     history.replaceState(null, "", "#/settings/lists");
     return { view: "settings", section: "lists" };
   }
+  if (view === "settings" && a === "apikeys") {
+    history.replaceState(null, "", "#/api");
+    return { view: "api" };
+  }
   if (view === "settings") return { view: "settings", section: a || null };
+  if (view === "api") return { view: "api" };
+  if (view === "oauth" && a) return { view: "oauth", id: a };
   return { view: "home" };
 };
 
@@ -39,8 +49,11 @@ export function navigate(route) {
       ? `#/keys/${route.siteKey}/${route.tab || "activity"}`
       : route.view === "settings"
         ? `#/settings${route.section ? `/${route.section}` : ""}`
-        : "#/";
+        : route.view === "api"
+          ? "#/api"
+          : "#/";
   if (location.hash !== hash) history.pushState(null, "", hash);
+  app.focusHeading = true;
   applyRoute(parseHash());
 }
 
@@ -75,16 +88,24 @@ export async function loadKeys() {
   app.keys = keys;
 }
 
+let keyRequest = 0;
+
 export async function loadKey(siteKey, duration) {
+  const request = ++keyRequest;
   app.loadingKey = true;
   const data = await api(
     "GET",
     `/keys/${siteKey}${duration ? `?chartDuration=${duration}` : ""}`,
   );
+  if (request !== keyRequest) return;
   app.loadingKey = false;
-  if (data.error) {
+  if (!data || data.error) {
     app.key = null;
-    app.route = { view: "home", error: data.error };
+    if (app.route.view === "key" && app.route.siteKey === siteKey)
+      app.route = {
+        view: "home",
+        error: data?.error || "Couldn't load this key",
+      };
     return;
   }
   try {
@@ -119,7 +140,10 @@ export async function init() {
     signOut();
     return;
   }
-  window.addEventListener("popstate", () => applyRoute(parseHash()));
+  window.addEventListener("popstate", () => {
+    app.focusHeading = true;
+    applyRoute(parseHash());
+  });
   await Promise.all([refreshSettings(), loadKeys()]);
   await applyRoute(parseHash());
   app.ready = true;

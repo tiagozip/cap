@@ -114,7 +114,7 @@ export function createQueries(store) {
           (
             ps,
           ) => `SELECT ${d.explodeSelect} AS v, count(*) AS n, ${when("outcome = 'block'")} AS blocked
-          FROM events ${d.explodeFrom} ${buildWhere(d, ps, ctx)}
+          FROM ${d.explode(buildWhere(d, ps, ctx))}
           GROUP BY v ORDER BY n DESC LIMIT ${ps.add(limit, "UInt32")}`,
         );
         return rows.map((r) => ({
@@ -225,6 +225,97 @@ export function createQueries(store) {
           WHERE site_key = ${ps.add(siteKey)} AND id = ${ps.add(id)} LIMIT 1`,
       );
       return rows[0] ? presentEvent(rows[0]) : null;
+    },
+
+    async dimensionSeries(ctx, dim, bucketMs) {
+      const rows = await run((ps) => {
+        const where = buildWhere(d, ps, ctx);
+        if (dim === "flag")
+          return `SELECT ${d.bucket(ps.add(bucketMs, "Int64"))} AS b, ${d.explodeSelect} AS v, count(*) AS n, ${when("outcome = 'block'")} AS blocked
+          FROM ${d.explode(where)}
+          GROUP BY b, v`;
+        return `SELECT ${d.bucket(ps.add(bucketMs, "Int64"))} AS b, ${dim} AS v, count(*) AS n, ${when("outcome = 'block'")} AS blocked
+          FROM events ${where ? `${where} AND ${dim} != ''` : `WHERE ${dim} != ''`}
+          GROUP BY b, v`;
+      });
+      return rows.map((r) => ({
+        b: Number(r.b),
+        value: r.v,
+        n: Number(r.n),
+        blocked: Number(r.blocked),
+      }));
+    },
+
+    async bounds(ctx) {
+      const [row] = await run(
+        (
+          ps,
+        ) => `SELECT min(ts) AS first, max(ts) AS last, count(DISTINCT site_key) AS site_keys
+        FROM events ${buildWhere(d, ps, ctx)}`,
+      );
+      const first = Number(row?.first);
+      const last = Number(row?.last);
+      return {
+        first: first > 0 ? first : null,
+        last: last > 0 ? last : null,
+        keys: Number(row?.site_keys) || 0,
+      };
+    },
+
+    async ruleActivity(ctx, bucketMs) {
+      const [series, totals, flagSeries, flagTotals] = await Promise.all([
+        run((ps) => {
+          const where = buildWhere(d, ps, ctx);
+          return `SELECT ${d.bucket(ps.add(bucketMs, "Int64"))} AS b, rule AS r, outcome, count(*) AS n
+          FROM events ${where ? `${where} AND rule != ''` : "WHERE rule != ''"}
+          GROUP BY b, r, outcome`;
+        }),
+        run((ps) => {
+          const where = buildWhere(d, ps, ctx);
+          return `SELECT rule AS r, count(DISTINCT ip) AS ips, count(DISTINCT fp) AS visitors, min(ts) AS first, max(ts) AS last
+          FROM events ${where ? `${where} AND rule != ''` : "WHERE rule != ''"}
+          GROUP BY r`;
+        }),
+        run(
+          (
+            ps,
+          ) => `SELECT ${d.bucket(ps.add(bucketMs, "Int64"))} AS b, ${d.explodeSelect} AS v, outcome, count(*) AS n
+          FROM ${d.explode(buildWhere(d, ps, ctx))}
+          GROUP BY b, v, outcome`,
+        ),
+        run(
+          (
+            ps,
+          ) => `SELECT ${d.explodeSelect} AS v, count(DISTINCT ip) AS ips, count(DISTINCT fp) AS visitors, min(ts) AS first, max(ts) AS last
+          FROM ${d.explode(buildWhere(d, ps, ctx))}
+          GROUP BY v`,
+        ),
+      ]);
+      const flagRule = (v) =>
+        typeof v === "string" && v.startsWith("rule:") ? v.slice(5) : null;
+      const shapeSeries = (r, id) => ({
+        b: Number(r.b),
+        rule: id,
+        outcome: r.outcome,
+        n: Number(r.n),
+      });
+      const shapeTotal = (r, id) => ({
+        rule: id,
+        ips: Number(r.ips),
+        visitors: Number(r.visitors),
+        first: Number(r.first),
+        last: Number(r.last),
+      });
+      return {
+        series: series.map((r) => shapeSeries(r, r.r)),
+        totals: totals.map((r) => shapeTotal(r, r.r)),
+        flagSeries: flagSeries
+          .filter((r) => flagRule(r.v))
+          .map((r) => shapeSeries(r, flagRule(r.v))),
+        flagTotals: flagTotals
+          .filter((r) => flagRule(r.v))
+          .map((r) => shapeTotal(r, flagRule(r.v))),
+      };
     },
 
     async rollups(siteKey, from, to) {

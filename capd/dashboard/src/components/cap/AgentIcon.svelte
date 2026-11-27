@@ -1,7 +1,8 @@
 <script>
 import Icon from "../Icon.svelte";
 
-let { id, size = 16, class: className = "" } = $props();
+const { id, size = 16, class: className = "" } = $props();
+const uid = $props.id();
 
 const svgs = import.meta.glob("../../assets/agents/*.svg", {
   eager: true,
@@ -31,16 +32,37 @@ const BRANDS = {
   hyperagent: "hyperbrowser",
 };
 const MONO = new Set(["agentql", "agi-agent", "maxai"]);
+const ROUND = new Set(["browserflow", "genspark"]);
+const TILES = new Set([
+  "anchor-browser",
+  "browser-use",
+  "browserbase",
+  "dassi",
+  "harpa",
+  "hyperbrowser",
+  "kernel",
+  "magnitude",
+  "rtrvr",
+  "skyvern",
+  "stagehand",
+  "twin",
+  ...ROUND,
+]);
 
 const name = $derived(BRANDS[id] ?? id);
-const svg = $derived(svgs[`../../assets/agents/${name}.svg`]);
+const svg = $derived(
+  svgs[`../../assets/agents/${name}.svg`]?.replace(
+    /(id="|url\(#)([^")]+)/g,
+    `$1$2-${uid}`,
+  ),
+);
 const png = $derived(pngs[`../../assets/agents/${name}.png`]);
 </script>
 
 {#if svg}
   <span class="inline-flex shrink-0 [&>svg]:size-full {className}" style:width="{size}px" style:height="{size}px" aria-hidden="true">{@html svg}</span>
 {:else if png}
-  <img src={png} alt="" width={size} height={size} class="shrink-0 rounded-[4px] {MONO.has(name) ? 'dark:invert' : ''} {className}" />
+  <img src={png} alt="" width={size} height={size} class={["shrink-0", ROUND.has(name) ? "rounded-full" : "rounded-[4px]", MONO.has(name) && "dark:invert", TILES.has(name) && "outline -outline-offset-1 outline-black/8 dark:outline-white/12", className]} />
 {:else}
   <Icon name="bot" {size} class="shrink-0 text-muted-foreground {className}" />
 {/if}

@@ -1,8 +1,9 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { Elysia } from "elysia";
 import { db, incrWithTtl } from "#db";
-import { getClientIp } from "./events/context.js";
+import { getClientIp, requestContext } from "./events/context.js";
 import { OLD_API_KEY_ERROR } from "./hash-migration.js";
+import { verifyAccessToken } from "./oauth-tokens.js";
 import { proxyAuthPasses, proxyAuthSettings } from "./proxy-auth.js";
 import valkeyRateLimit, { rateLimitBucket } from "./ratelimit.js";
 import {
@@ -26,6 +27,8 @@ if (ADMIN_KEY.length < 32)
 
 const LOGIN_WINDOW_MS = 10 * 60_000;
 const CLIENT_FAILURES = 10;
+const SEEN_EVERY_MS = 60_000;
+const seenSlots = new Map();
 
 const windowId = () => Math.floor(Date.now() / LOGIN_WINDOW_MS);
 
@@ -91,7 +94,7 @@ export const auth = new Elysia({
       return { success: false };
     }
 
-    return createSession(cookie);
+    return createSession(cookie, request, srv);
   })
   .post("/proxy", async ({ set, cookie, request, server: srv }) => {
     const { mode } = await proxyAuthSettings();
@@ -112,17 +115,36 @@ export const auth = new Elysia({
       set.status = 401;
       return { success: false, mode };
     }
-    return createSession(cookie);
+    return createSession(cookie, request, srv);
   });
 
-async function createSession(cookie) {
+async function signedInFrom(request, srv) {
+  if (!request) return {};
+  try {
+    const ctx = await requestContext(request, srv);
+    return {
+      ua: ctx.ua.slice(0, 300) || null,
+      browser: ctx.browser || null,
+      os: ctx.os || null,
+      country: ctx.country || null,
+    };
+  } catch {
+    return {};
+  }
+}
+
+async function createSession(cookie, request, srv) {
   const session_token = randomBytes(30).toString("hex");
   const created = Date.now();
   const expires = created + 30 * 24 * 60 * 60 * 1000;
   const hashedToken = tokenId(session_token);
   const ttlSeconds = Math.ceil((expires - Date.now()) / 1000);
+  const from = await signedInFrom(request, srv);
 
-  await db.set(`session:${hashedToken}`, JSON.stringify({ created, expires }));
+  await db.set(
+    `session:${hashedToken}`,
+    JSON.stringify({ created, expires, ...from }),
+  );
   await db.expire(`session:${hashedToken}`, ttlSeconds);
   await db.sadd("sessions", hashedToken);
 
@@ -141,6 +163,19 @@ export const authBeforeHandle = async (ctx) => {
   set.headers["X-Content-Type-Options"] = "nosniff";
   set.headers["X-Frame-Options"] = "DENY";
   set.headers["X-XSS-Protection"] = "1; mode=block";
+
+  if (authorization?.startsWith("Bearer capo_")) {
+    const scope = await verifyAccessToken(authorization.slice(7).trim());
+    if (!scope) {
+      set.status = 401;
+      return {
+        success: false,
+        error: "Unauthorized. This sign-in expired or was revoked.",
+      };
+    }
+    ctx.scope = scope;
+    return;
+  }
 
   if (authorization?.startsWith("Bot ")) {
     const botToken = authorization.replace("Bot ", "").trim();
@@ -242,5 +277,20 @@ export const authBeforeHandle = async (ctx) => {
       error:
         "Unauthorized. This server only accepts dashboard sessions that come through its sign-in proxy.",
     };
+  }
+
+  const now = Date.now();
+  const slot = Math.floor(now / SEEN_EVERY_MS);
+  if (seenSlots.get(hash) !== slot) {
+    seenSlots.set(hash, slot);
+    if (seenSlots.size > 1000) seenSlots.delete(seenSlots.keys().next().value);
+    try {
+      await db.send("SET", [
+        `session-seen:${hash}`,
+        String(now),
+        "PX",
+        String(Math.max(1000, session.expires - now)),
+      ]);
+    } catch {}
   }
 };

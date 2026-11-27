@@ -1,11 +1,5 @@
 <script>
-import {
-  Icon,
-  Menu,
-  MenuItem,
-  MenuLabel,
-  MenuSeparator,
-} from "../../components/cap/index.js";
+import { Icon } from "../../components/cap/index.js";
 import {
   SidebarContent,
   SidebarGroup,
@@ -16,10 +10,19 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "../../components/ui/index.js";
-import { signOut } from "../../lib/api.js";
-import { compact } from "../../lib/format.js";
+import { watchKeyCounts } from "../../lib/live-keys.svelte.js";
 import { app, navigate } from "../../lib/state.svelte.js";
+import SwitchTrigger from "../../polish/shell/SwitchTrigger.svelte";
+import NavPill from "../../polish/sidebar/NavPill.svelte";
 import { KEY_TABS, keyTab } from "../keyTabs.js";
+import UpdateNotice from "./UpdateNotice.svelte";
+
+const LETTERS = {
+  activity: "o",
+  events: "e",
+  protection: "p",
+  configuration: "s",
+};
 
 const ICONS = {
   activity: "dashboard",
@@ -28,12 +31,77 @@ const ICONS = {
   configuration: "settings",
 };
 
+const NAV =
+  "h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] focus-visible:ring-inset text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-transparent data-active:font-normal data-active:text-foreground data-active:hover:bg-transparent data-active:active:bg-transparent [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground";
+
 const sidebar = useSidebar();
 const onKey = $derived(app.route.view === "key");
 const current = $derived(
   app.keys.find((k) => k.siteKey === app.key?.siteKey) ?? app.keys[0],
 );
 const tab = $derived(onKey ? keyTab(app.route.tab) : null);
+
+let switcher = $state(false);
+let KeySwitcher = $state(null);
+let loading;
+
+const loadSwitcher = () => {
+  loading ??= import("../../polish/shell/KeySwitcher.svelte")
+    .then((m) => {
+      KeySwitcher = m.default;
+    })
+    .catch(() => {
+      loading = null;
+    });
+  return loading;
+};
+
+$effect(() => {
+  if (switcher) loadSwitcher();
+});
+
+$effect(() => {
+  const idle = window.requestIdleCallback ?? ((fn) => setTimeout(fn, 1500));
+  idle(loadSwitcher);
+});
+$effect(() => {
+  if (switcher) return watchKeyCounts(10_000);
+});
+
+let leader = $state(false);
+let leaderTimer;
+
+const shortcut = (e) => {
+  const key = e.key.toLowerCase();
+  const was = leader;
+  leader = false;
+  clearTimeout(leaderTimer);
+  if (
+    e.defaultPrevented ||
+    e.metaKey ||
+    e.ctrlKey ||
+    e.altKey ||
+    e.isComposing ||
+    e.target.closest?.(
+      "input, textarea, select, [contenteditable]:not([contenteditable=false])",
+    ) ||
+    document.querySelector(
+      "[role=dialog][data-state=open], [role=alertdialog][data-state=open], [role=menu][data-state=open], [role=listbox]:not([hidden])",
+    )
+  )
+    return;
+  if (was) {
+    if (key !== "k" || !app.keys.length) return;
+    e.preventDefault();
+    switcher = true;
+    return;
+  }
+  if (key !== "g" || e.shiftKey) return;
+  leader = true;
+  leaderTimer = setTimeout(() => {
+    leader = false;
+  }, 1200);
+};
 
 const go = (e, route) => {
   e?.preventDefault();
@@ -42,6 +110,17 @@ const go = (e, route) => {
 };
 </script>
 
+<svelte:window onkeydown={shortcut} onblur={() => (leader = false)} />
+
+{#snippet hint(letter, alert = false)}
+  <span class="sb-end">
+    {#if alert}
+      <span class="sb-alert" class:on={leader} title="Secret key needs a reset"><span class="sr-only">, secret key needs a reset</span></span>
+    {/if}
+    <kbd class="sb-hint" class:on={leader} aria-hidden="true">{letter.toUpperCase()}</kbd>
+  </span>
+{/snippet}
+
 <SidebarHeader class="gap-3 p-0">
   <div class="flex h-9 items-center gap-2 px-2">
     <img src="./public/logo-small.webp" alt="" width="22" height="22" />
@@ -49,37 +128,27 @@ const go = (e, route) => {
   </div>
 
   {#if app.keys.length}
-    <Menu align="start" width="w-(--bits-dropdown-menu-anchor-width)">
-      {#snippet trigger(props)}
-        <SidebarMenuButton {...props} class="h-10 cursor-pointer gap-2.5 rounded-lg bg-sidebar-accent/60 px-2.5 text-[14px] ring-1 ring-border hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent">
-          <Icon name="key" size={18} class="shrink-0 text-muted-foreground" />
-          <span class="min-w-0 flex-1 truncate font-medium">{current?.name}</span>
-          <Icon name="selector" size={14} class="shrink-0 text-faint-foreground" />
-        </SidebarMenuButton>
-      {/snippet}
-      <MenuLabel>Site keys</MenuLabel>
-      {#each app.keys as k (k.siteKey)}
-        <MenuItem
-          icon={k.siteKey === current?.siteKey ? "check" : null}
-          inset
-          onselect={() => go(null, { view: "key", siteKey: k.siteKey, tab: tab ?? "activity" })}
-        >
-          {@const dir = k.difference?.direction}
-          {@const pct = Math.round(Math.abs(Number(k.difference?.value) || 0))}
-          <span class="flex min-w-0 flex-col py-px">
-            <span class="truncate">{k.name}</span>
-            <span class="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
-              {#if k.solvesLast24h && dir && pct}
-                <span class={dir === "up" ? "text-success" : "text-destructive"}><span class="sr-only">{dir === "up" ? "Up" : "Down"} </span>{dir === "up" ? "+" : "\u2212"}{pct}%</span>
-              {/if}
-              <span class="truncate">{k.solvesLast24h ? `${compact(k.solvesLast24h)} solves in 24h` : "No solves in 24h"}</span>
-            </span>
-          </span>
-        </MenuItem>
-      {/each}
-      <MenuSeparator />
-      <MenuItem icon="plus" onselect={() => (app.createKeyOpen = true)}>Create site key</MenuItem>
-    </Menu>
+    {#if KeySwitcher}
+      <KeySwitcher
+        keys={app.keys}
+        {current}
+        bind:open={switcher}
+        hint={leader}
+        tab={tab ?? "activity"}
+        onpick={(k) => go(null, { view: "key", siteKey: k.siteKey, tab: tab ?? "activity" })}
+        oncreate={() => (app.createKeyOpen = true)}
+      />
+    {:else}
+      <SwitchTrigger
+        name={current?.name}
+        hint={leader}
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        onpointerenter={loadSwitcher}
+        onfocus={loadSwitcher}
+        onclick={() => (switcher = true)}
+      />
+    {/if}
   {/if}
 </SidebarHeader>
 
@@ -87,17 +156,19 @@ const go = (e, route) => {
   {#if current}
     <SidebarGroup class="p-0">
       <SidebarGroupLabel class="h-7 px-2 text-xs text-faint-foreground">Key</SidebarGroupLabel>
-      <SidebarMenu class="gap-px">
+      <SidebarMenu class="relative gap-px">
+        <NavPill active={tab} />
         {#each KEY_TABS as t (t.id)}
           <SidebarMenuItem>
             <SidebarMenuButton
               href="#/keys/{current.siteKey}/{t.id}"
               isActive={onKey && tab === t.id}
-              class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground"
+              class={NAV}
               onclick={(e) => go(e, { view: "key", siteKey: current.siteKey, tab: t.id })}
             >
               <Icon name={ICONS[t.id]} size={18} />
-              <span>{t.label}</span>
+              <span class="flex-1">{t.label}</span>
+              {@render hint(LETTERS[t.id], t.id === "configuration" && current.secretOutdated)}
             </SidebarMenuButton>
           </SidebarMenuItem>
         {/each}
@@ -107,7 +178,7 @@ const go = (e, route) => {
     <SidebarGroup class="p-0">
       <SidebarMenu class="gap-px">
         <SidebarMenuItem>
-          <SidebarMenuButton class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground" onclick={() => (app.createKeyOpen = true)}>
+          <SidebarMenuButton class={NAV} onclick={() => (app.createKeyOpen = true)}>
             <Icon name="plus" size={18} />
             <span>Create your first key</span>
           </SidebarMenuButton>
@@ -117,31 +188,140 @@ const go = (e, route) => {
   {/if}
 
   <SidebarGroup class="mt-auto p-0">
-    <SidebarMenu class="gap-px">
+    <UpdateNotice />
+    <SidebarMenu class="relative gap-px">
+      <NavPill active={app.route.view} />
       <SidebarMenuItem>
         <SidebarMenuButton
           href="#/settings"
           isActive={app.route.view === "settings"}
-          class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground"
+          class={NAV}
           onclick={(e) => go(e, { view: "settings" })}
         >
           <Icon name="server" size={18} />
-          <span>Instance settings</span>
+          <span class="flex-1">Instance settings</span>
+          {@render hint("i")}
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground" href="https://trycap.dev/guide/capd/" target="_blank" rel="noopener">
+        <SidebarMenuButton
+          href="#/api"
+          isActive={app.route.view === "api"}
+          class={NAV}
+          onclick={(e) => go(e, { view: "api" })}
+        >
+          <Icon name="code" size={18} />
+          <span class="flex-1">API and MCP</span>
+          {@render hint("a")}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton class="{NAV} sb-docs" href="https://trycap.dev/guide/capd/" target="_blank" rel="noopener">
           <Icon name="book" size={18} />
           <span class="flex-1">Docs</span>
-          <Icon name="external" size={13} />
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton class="h-9 cursor-pointer gap-2.5 rounded-md px-2 text-[14px] text-muted-foreground hover:bg-nav-hover hover:text-foreground active:bg-nav-active data-active:bg-nav-active data-active:font-normal data-active:text-foreground [&_svg]:text-faint-foreground data-active:[&_svg]:text-foreground" onclick={() => signOut({ revoke: true })}>
-          <Icon name="logout" size={18} />
-          <span>Sign out</span>
+          <Icon name="external" size={13} class="sb-docs-arrow" />
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
   </SidebarGroup>
 </SidebarContent>
+
+<style>
+  .sb-end {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .sb-end > * {
+    grid-area: 1 / 1;
+  }
+
+  .sb-alert {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--destructive);
+  }
+
+  .sb-alert.on {
+    opacity: 0;
+    scale: 0.5;
+  }
+
+  .sb-hint {
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 4px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--muted);
+    font: 500 11px/1 var(--font-sans);
+    color: var(--muted-foreground);
+    opacity: 0;
+    scale: 0.9;
+    pointer-events: none;
+  }
+
+  .sb-hint.on {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .sb-end {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .sb-end > * {
+    grid-area: 1 / 1;
+  }
+
+  .sb-alert {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--destructive);
+  }
+
+  .sb-alert.on {
+    opacity: 0;
+    scale: 0.5;
+  }
+
+  .sb-hint {
+      transition:
+        opacity 120ms ease-out,
+        scale 120ms ease-out;
+    }
+
+    .sb-hint.on {
+      transition-duration: 160ms;
+      transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.sb-switcher) {
+      transition: scale 160ms ease-out;
+    }
+
+    :global(.sb-switcher:active) {
+      scale: 0.98;
+    }
+
+    :global(.sb-docs-arrow) {
+      transition: translate 160ms ease-out;
+    }
+
+    @media (hover: hover) {
+      :global(.sb-docs:hover .sb-docs-arrow) {
+        translate: 1px -1px;
+      }
+    }
+  }
+</style>

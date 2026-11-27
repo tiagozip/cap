@@ -94,8 +94,53 @@ const save = () => {
         {/each}
       </div>
     {/if}
-    <pre class="min-w-0 flex-1 overflow-x-auto py-2.5 pr-4 pl-2.5 font-code text-[13px] leading-6"><code class="block w-max font-code"
+    <pre data-code-scroll class="min-w-0 flex-1 overflow-x-auto py-2.5 pr-4 pl-2.5 font-code text-[13px] leading-6"><code class="block w-max font-code"
         >{#if html}{@html html}{:else}{source}{/if}</code
       ></pre>
   </div>
 </figure>
+
+<style>
+  @property --code-fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @property --code-fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    [data-code-scroll] {
+      mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 var(--code-fade-start),
+        #000 calc(100% - var(--code-fade-end)),
+        transparent
+      );
+      animation: code-edges linear both;
+      animation-timeline: scroll(self inline);
+    }
+  }
+
+  @keyframes code-edges {
+    from {
+      --code-fade-start: 0px;
+      --code-fade-end: 32px;
+    }
+    8% {
+      --code-fade-start: 32px;
+    }
+    92% {
+      --code-fade-end: 32px;
+    }
+    to {
+      --code-fade-start: 32px;
+      --code-fade-end: 0px;
+    }
+  }
+</style>

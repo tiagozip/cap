@@ -9,7 +9,7 @@ const dialect = {
   flagHas: (p) => `has(flags, ${p})`,
   flagged: "notEmpty(flags)",
   explodeSelect: "arrayJoin(flags)",
-  explodeFrom: "",
+  explode: (where) => `events ${where}`,
   ilike: (col, p) => `${col} ILIKE ${p}`,
   final: " FINAL",
 };

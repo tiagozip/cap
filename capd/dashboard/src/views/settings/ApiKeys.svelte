@@ -4,20 +4,13 @@ import {
   Empty,
   Icon,
   Skeleton,
-  Table,
   Tag,
 } from "../../components/cap/index.js";
-import {
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../components/ui/index.js";
 import { api } from "../../lib/api.js";
 import { ago } from "../../lib/format.js";
 import { samples } from "../../lib/samples.js";
-import { confirm, toast } from "../../lib/ui.svelte.js";
+import { undoable } from "../../lib/ui.svelte.js";
+import { leave } from "../../polish/settings-b/motion.js";
 import CreateApiKey from "./CreateApiKey.svelte";
 
 let keys = $state(null);
@@ -33,23 +26,26 @@ const load = async () => {
   error = "";
   keys = r;
 };
+
+const rowOf = (k) =>
+  document.querySelector(`[data-apikey="${CSS.escape(k.id)}"]`);
 load();
 
 const remove = async (k) => {
-  const ok = await confirm({
-    title: `Delete "${k.name}"?`,
-    message: "Anything using this API key stops working right away.",
-    confirmText: "Delete API key",
-    danger: true,
-  });
-  if (!ok) return;
-  const res = await api("DELETE", `/settings/apikeys/${k.id}`);
-  if (!res?.success) {
-    toast(res?.error || "Couldn't delete the API key", "error");
-    return;
-  }
+  await leave(rowOf(k));
+  const at = keys.indexOf(k);
+  if (at < 0) return;
   keys = keys.filter((x) => x.id !== k.id);
-  toast("API key deleted");
+  undoable({
+    message: `${k.name} deleted`,
+    commit: async () => {
+      const res = await api("DELETE", `/settings/apikeys/${k.id}`);
+      return res?.success ? null : res?.error || "Couldn't delete the API key";
+    },
+    undo: async () => {
+      keys = keys.toSpliced(at, 0, k);
+    },
+  });
 };
 </script>
 
@@ -59,53 +55,45 @@ const remove = async (k) => {
   {/snippet}
   {#snippet emptyMessage()}
     <Empty title="No API keys yet">
-      Create one to manage site keys from your own scripts.
       {#snippet action()}
         <Button variant="primary" onclick={() => (creating = true)}><Icon name="plus" size={15} />Create API key</Button>
       {/snippet}
     </Empty>
   {/snippet}
   {#snippet children(list)}
-    <div class="flex flex-col gap-4 pb-4">
+    <div class="flex flex-col gap-2 pb-4">
       {#if list.some((k) => k.outdated)}
         <p class="text-sm text-pretty text-destructive" role="status">
           Keys marked "From an older release" stopped working when Cap moved to SHA-256 hashes. Create a new key for each script that used one, then delete the old one.
         </p>
       {/if}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Access</TableHead>
-            <TableHead class="hidden sm:table-cell">Site keys</TableHead>
-            <TableHead class="hidden sm:table-cell">Created</TableHead>
-            <TableHead class="w-10"><span class="sr-only">Actions</span></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {#each list as k (k.id)}
-            <TableRow>
-              <TableCell class="max-w-56 truncate font-medium" title={k.name}>{k.name}</TableCell>
-              <TableCell>
+      <ul class="flex flex-col divide-y divide-border" aria-label="API keys">
+        {#each list as k (k.id)}
+          <li data-apikey={k.id} class="flex min-h-16 items-center gap-3 py-3">
+            <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground" aria-hidden="true">
+              <Icon name="key" size={16} />
+            </span>
+            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <p class="flex min-w-0 items-center gap-2 text-sm font-medium">
+                <span class="truncate" title={k.name}>{k.name}</span>
                 {#if k.outdated}
-                  <Tag tone="danger">From an older release</Tag>
+                  <Tag tone="danger" class="shrink-0">From an older release</Tag>
                 {:else}
-                  <Tag tone={k.readonly ? "neutral" : "warning"}>{k.readonly ? "Read-only" : "Full access"}</Tag>
+                  <Tag tone={k.readonly ? "neutral" : "warning"} class="shrink-0">{k.readonly ? "Read-only" : "Full access"}</Tag>
                 {/if}
-              </TableCell>
-              <TableCell class="hidden text-muted-foreground tabular-nums sm:table-cell">{k.siteKeys ? `${k.siteKeys.length} site key${k.siteKeys.length === 1 ? "" : "s"}` : "All"}</TableCell>
-              <TableCell class="hidden whitespace-nowrap text-muted-foreground sm:table-cell">{ago(Date.parse(k.created))}</TableCell>
-              <TableCell class="text-end">
-                <Button variant="ghost" size="sm" aria-label="Delete API key {k.name}" onclick={() => remove(k)}>Delete</Button>
-              </TableCell>
-            </TableRow>
-          {/each}
-        </TableBody>
-      </Table>
-      <div>
+              </p>
+              <p class="truncate text-sm text-muted-foreground tabular-nums">
+                {k.siteKeys ? `${k.siteKeys.length} site key${k.siteKeys.length === 1 ? "" : "s"}` : "All site keys"}, created {ago(Date.parse(k.created))}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" class="shrink-0" aria-label="Delete API key {k.name}" onclick={() => remove(k)}>Delete</Button>
+          </li>
+        {/each}
+      </ul>
+      <div class="flex h-9">
         <Button onclick={() => (creating = true)}><Icon name="plus" size={15} />Create API key</Button>
       </div>
-  </div>
+    </div>
   {/snippet}
 </Skeleton>
 

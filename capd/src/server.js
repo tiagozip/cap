@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { Elysia, t } from "elysia";
 import { db } from "#db";
 import {
@@ -48,10 +48,15 @@ import { openSecret, sealSecret } from "./secret-box.js";
 import { hashSecret, isCurrentHash } from "./secret-hash.js";
 import {
   invalidateCorsCache,
+  LOGIN_BACKGROUND_MAX_BYTES,
+  loadLoginBackground,
+  loginBackgroundImageKey,
+  saveLoginBackground,
   setCorsDefault,
   setFiltering,
   setHeaders,
   setRatelimit,
+  sniffImageType,
 } from "./settings-cache.js";
 import {
   createShare,
@@ -59,6 +64,12 @@ import {
   listShares,
   revokeShare,
 } from "./share.js";
+import {
+  sendUpdateCheck,
+  setUpdateCheck,
+  updateCheckStatus,
+  updateNotices,
+} from "./update-check.js";
 
 const keyDefaults = {
   difficulty: 4,
@@ -752,14 +763,22 @@ export const server = new Elysia({
 
       const results = await Promise.all(
         hashes.map(async (hash) => {
-          const data = await db.get(`session:${hash}`);
-          return { hash, data };
+          const [data, seen] = await Promise.all([
+            db.get(`session:${hash}`),
+            db.get(`session-seen:${hash}`),
+          ]);
+          return { hash, data, seen: Number(seen) || null };
         }),
       );
 
-      for (const { hash, data } of results) {
+      for (const { hash, data, seen } of results) {
         if (data && /^[0-9a-f]{64}$/.test(hash)) {
-          sessions.push({ token: hash, ...JSON.parse(data) });
+          const parsed = JSON.parse(data);
+          sessions.push({
+            token: hash,
+            ...parsed,
+            seen: seen ?? parsed.created,
+          });
         } else {
           stale.push(hash);
         }
@@ -770,6 +789,7 @@ export const server = new Elysia({
           stale.flatMap((h) => [
             db.srem("sessions", h),
             db.del(`session:${h}`),
+            db.del(`session-seen:${h}`),
           ]),
         );
       }
@@ -778,6 +798,11 @@ export const server = new Elysia({
         token: session.token.slice(-14),
         expires: new Date(session.expires).toISOString(),
         created: new Date(session.created).toISOString(),
+        seen: session.seen ? new Date(session.seen).toISOString() : null,
+        ua: session.ua || null,
+        browser: session.browser || null,
+        os: session.os || null,
+        country: session.country || null,
       }));
     },
     {
@@ -1224,6 +1249,143 @@ export const server = new Elysia({
     },
     { detail: { tags: ["Settings"] } },
   )
+  .get("/settings/updates", () => updateNotices(), {
+    detail: { tags: ["Settings"] },
+  })
+  .get("/settings/update-check", () => updateCheckStatus(), {
+    detail: { tags: ["Settings"] },
+  })
+  .put(
+    "/settings/update-check",
+    async ({ body }) => {
+      await setUpdateCheck(body);
+      if (body.enabled) sendUpdateCheck().catch(() => {});
+      return { success: true, ...(await updateCheckStatus()) };
+    },
+    {
+      body: t.Object({
+        enabled: t.Optional(t.Boolean()),
+        interval: t.Optional(
+          t.Union([
+            t.Literal("daily"),
+            t.Literal("4d"),
+            t.Literal("weekly"),
+            t.Literal("monthly"),
+          ]),
+        ),
+      }),
+      detail: { tags: ["Settings"] },
+    },
+  )
+  .get("/settings/login-background", () => loadLoginBackground(), {
+    detail: { tags: ["Settings"] },
+  })
+  .put(
+    "/settings/login-background",
+    async ({ body, set }) => {
+      const current = await loadLoginBackground();
+      const color = body.color?.toLowerCase() ?? current.color;
+      if (body.mode === "color" && !/^#[0-9a-f]{6}$/.test(color ?? "")) {
+        set.status = 400;
+        return { success: false, error: "Pick a color like #1d3b5a." };
+      }
+      if (body.mode === "image" && !current.image) {
+        set.status = 400;
+        return { success: false, error: "Upload an image first." };
+      }
+      const next = await saveLoginBackground({
+        ...current,
+        mode: body.mode,
+        color: /^#[0-9a-f]{6}$/.test(color ?? "") ? color : current.color,
+        image:
+          current.image && body.focus
+            ? { ...current.image, focus: body.focus }
+            : current.image,
+      });
+      return { success: true, ...next };
+    },
+    {
+      body: t.Object({
+        mode: t.Union([
+          t.Literal("default"),
+          t.Literal("color"),
+          t.Literal("image"),
+        ]),
+        color: t.Optional(t.String({ maxLength: 7 })),
+        focus: t.Optional(
+          t.Tuple([
+            t.Integer({ minimum: 0, maximum: 100 }),
+            t.Integer({ minimum: 0, maximum: 100 }),
+          ]),
+        ),
+      }),
+      detail: { tags: ["Settings"] },
+    },
+  )
+  .put(
+    "/settings/login-background/image",
+    async ({ body, set }) => {
+      const data = body.data.replace(/^data:[\w/+.-]+;base64,/, "");
+      if (data.length > Math.ceil(LOGIN_BACKGROUND_MAX_BYTES / 3) * 4) {
+        set.status = 413;
+        return { success: false, error: "Use an image under 750 KB." };
+      }
+      if (!data || !/^[A-Za-z0-9+/]+={0,2}$/.test(data)) {
+        set.status = 400;
+        return { success: false, error: "That file couldn't be read." };
+      }
+      const bytes = Buffer.from(data, "base64");
+      const type = sniffImageType(bytes);
+      if (!type) {
+        set.status = 415;
+        return { success: false, error: "Use a JPEG, PNG or WebP image." };
+      }
+      const etag = createHash("sha256")
+        .update(bytes)
+        .digest("hex")
+        .slice(0, 20);
+      await db.set(loginBackgroundImageKey(etag), bytes);
+      const current = await loadLoginBackground();
+      const next = await saveLoginBackground({
+        ...current,
+        mode: "image",
+        image: {
+          type,
+          size: bytes.length,
+          etag,
+          updated: Date.now(),
+          focus: [50, 50],
+        },
+      });
+      if (current.image && current.image.etag !== etag)
+        await db.del(loginBackgroundImageKey(current.image.etag));
+      return { success: true, ...next };
+    },
+    {
+      body: t.Object({ data: t.String() }),
+      detail: { tags: ["Settings"] },
+    },
+  )
+  .delete(
+    "/settings/login-background/image",
+    async ({ query }) => {
+      const current = await loadLoginBackground();
+      if (query.etag && current.image?.etag !== query.etag)
+        return { success: true, ...current };
+      const next = await saveLoginBackground({
+        ...current,
+        mode: current.mode === "image" ? "default" : current.mode,
+        image: null,
+      });
+      if (current.image)
+        await db.del(loginBackgroundImageKey(current.image.etag));
+      return { success: true, ...next };
+    },
+    {
+      query: t.Object({ etag: t.Optional(t.String({ maxLength: 64 })) }),
+      detail: { tags: ["Settings"] },
+    },
+  )
   .get(
     "/about",
     async () => {
@@ -1279,6 +1441,7 @@ export const server = new Elysia({
 
       await db.del(`session:${session}`);
       await db.srem("sessions", session);
+      await db.del(`session-seen:${session}`);
 
       return { success: true };
     },

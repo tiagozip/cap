@@ -218,3 +218,55 @@ export function invalidateCorsCache(siteKey) {
     corsCache.clear();
   }
 }
+
+export const LOGIN_BACKGROUND_MAX_BYTES = 750_000;
+export const loginBackgroundImageKey = (etag) =>
+  `settings:login-background:image:${etag}`;
+
+const LOGIN_BACKGROUND_KEY = "settings:login-background";
+const defaultLoginBackground = () => ({
+  mode: "default",
+  color: null,
+  image: null,
+});
+
+let _loginBackground = null;
+
+export async function loadLoginBackground() {
+  const raw = await db.get(LOGIN_BACKGROUND_KEY);
+  try {
+    _loginBackground = raw
+      ? { ...defaultLoginBackground(), ...JSON.parse(raw) }
+      : defaultLoginBackground();
+  } catch {
+    _loginBackground = defaultLoginBackground();
+  }
+  return _loginBackground;
+}
+
+export function getLoginBackground() {
+  return _loginBackground || defaultLoginBackground();
+}
+
+export async function saveLoginBackground(settings) {
+  await db.set(LOGIN_BACKGROUND_KEY, JSON.stringify(settings));
+  _loginBackground = settings;
+  return settings;
+}
+
+export const publicLoginBackground = () => {
+  const { mode, color, image } = getLoginBackground();
+  if (mode === "color" && color) return { mode, color };
+  if (mode === "image" && image)
+    return { mode, version: image.etag, focus: image.focus ?? [50, 50] };
+  return { mode: "default" };
+};
+
+export const sniffImageType = (bytes) => {
+  const at = (i, ...values) => values.every((v, j) => bytes[i + j] === v);
+  if (at(0, 0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image/png";
+  if (at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50))
+    return "image/webp";
+  return null;
+};

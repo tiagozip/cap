@@ -198,14 +198,20 @@ export const shareServer = new Elysia({
   )
   .get(
     "/:token/geo-stats",
-    async ({ params, set }) => {
+    async ({ params, query, set }) => {
       const share = await resolveShare(params.token);
       if (!share) return notFound(set);
-      return cached(`geo:${share.siteKey}`, () =>
-        legacyGeoStats(share.siteKey),
+      const duration = query.chartDuration;
+      return cached(`geo:${share.siteKey}:${duration ?? "alltime"}`, () =>
+        legacyGeoStats(share.siteKey, duration),
       );
     },
     {
       params: t.Object({ token: t.String() }),
+      query: t.Object({
+        chartDuration: t.Optional(
+          t.Union(chartDurations.map((d) => t.Literal(d))),
+        ),
+      }),
     },
   );

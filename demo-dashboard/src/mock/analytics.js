@@ -820,6 +820,11 @@ const planFor = (siteKey, filters, q) => {
   return model ? compile(model, filters, q) : null;
 };
 
+const shiftSeries = (rows, r) =>
+  rows
+    .map((row) => ({ ...row, b: row.b + r.span }))
+    .filter((row) => row.b >= r.from && row.b < r.to);
+
 export function overview(siteKey, opts, retention) {
   const r = resolveRange(opts, retention);
   const plan = planFor(siteKey, opts.filters, opts.q);
@@ -830,6 +835,7 @@ export function overview(siteKey, opts, retention) {
       summary: emptySummary(),
       previous: emptySummary(),
       series: empty(r.from, r.to),
+      previousSeries: empty(r.from, r.to),
       legacy: false,
     };
   }
@@ -841,6 +847,10 @@ export function overview(siteKey, opts, retention) {
       summary: summaryRows(rows),
       previous: summaryRows(prev),
       series: seriesRows(rows, r.from, r.to, r.bucket),
+      previousSeries: shiftSeries(
+        seriesRows(prev, r.from - r.span, r.from, r.bucket),
+        r,
+      ),
       legacy: false,
     };
   }
@@ -851,6 +861,10 @@ export function overview(siteKey, opts, retention) {
     summary: cur.summary,
     previous: prev.summary,
     series: cur.series.map(({ other, ...row }) => row),
+    previousSeries: shiftSeries(
+      prev.series.map(({ other, ...row }) => row),
+      r,
+    ),
     legacy: false,
   };
 }
@@ -872,6 +886,44 @@ export function topDimensions(siteKey, opts, retention) {
   }
   const vol = totalVolume(plan.model, r.from, r.to);
   return analyticTop(plan, dims, limit, vol);
+}
+
+function syntheticShared(model, vol, r) {
+  const total = vol.reduce((a, b) => a + b, 0);
+  if (total < 50 || !model.cohorts?.length) return [];
+  const ranked = model.cohorts.toSorted((a, b) => b.weight - a.weight);
+  const bot =
+    ranked.find((c) => /Headless|python|curl/i.test(c.browser ?? "")) ??
+    ranked.at(-1);
+  const picks = [bot, ...ranked.filter((c) => c !== bot).slice(0, 4)];
+  const span = r.to - r.from;
+  return picks
+    .map((c, i) => {
+      const seed = h3(model.k, c.i, i + 7);
+      const u = unit(seed);
+      const rotator = i === 0;
+      const ips = rotator ? 31 + Math.floor(u * 12) : 3 + Math.floor(u * 6);
+      const n = Math.max(
+        ips,
+        Math.round(total * (rotator ? 0.004 : 0.0006 + u * 0.0008)),
+      );
+      const flagged = Math.round(n * (rotator ? 0.7 + u * 0.2 : u * 0.08));
+      const first = r.from + Math.floor(span * unit(h3(seed, 1, 2)) * 0.5);
+      return {
+        fp: encodeFp(model.k, c.i, (seed >>> 0) % Math.max(1, c.U)),
+        ips,
+        n,
+        networks: rotator ? 11 + Math.floor(u * 6) : 1 + Math.floor(u * 2),
+        countries: rotator ? 6 + Math.floor(u * 5) : 1,
+        blocked: Math.round(n * (rotator ? 0.35 : u * 0.03)),
+        flagged,
+        browser: c.browser ?? "",
+        os: c.os ?? "",
+        first,
+        last: Math.min(Date.now(), r.to - Math.floor(span * u * 0.1)),
+      };
+    })
+    .sort((a, b) => b.ips - a.ips || b.n - a.n);
 }
 
 export function insights(siteKey, opts, retention) {
@@ -900,6 +952,7 @@ export function insights(siteKey, opts, retention) {
       solve: { size: 50, rows: [] },
       hours: [],
       flow: [],
+      previousFlow: [],
       shared: [],
       countries: { current: [], previous: [] },
     };
@@ -914,6 +967,7 @@ export function insights(siteKey, opts, retention) {
       solve: { size: 50, rows: distRows(rows, "solve_ms", 1 / 50, 60_000) },
       hours: hoursOf(seriesRows(rows, hourFrom, r.to, HOUR)).filter((h) => h.n),
       flow: flowRows(rows),
+      previousFlow: flowRows(prev),
       shared: sharedRows(rows),
       countries: {
         current: topRows(rows, "country", 250),
@@ -931,7 +985,13 @@ export function insights(siteKey, opts, retention) {
       (h) => h.n,
     ),
     flow: analyticFlow(plan, vol),
-    shared: [],
+    previousFlow: analyticFlow(plan, prevVol).map((f) => ({
+      ...f,
+      n: Math.round(
+        f.n * (f.outcome === "block" ? 0.8 : f.outcome === "fail" ? 1.15 : 1),
+      ),
+    })),
+    shared: syntheticShared(plan.model, vol, r),
     countries: {
       current: analyticTop(plan, ["country"], 250, vol).country,
       previous: analyticTop(plan, ["country"], 250, prevVol).country,

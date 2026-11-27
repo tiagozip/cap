@@ -67,6 +67,6 @@ mkdir -p ./cap-data && sudo chown 1000:1000 ./cap-data
 
 ## API {#api}
 
-控制台的所有操作都可以通过 REST API 完成，文档位于你实例的 `/swagger`。在 **Instance settings > API keys** 下创建密钥，并以 `Authorization: Bot <api-key>` 的形式发送。
+控制台的所有操作都可以通过 REST API 完成，文档位于你实例的 `/swagger`。在 **API and MCP** 下创建密钥，并以 `Authorization: Bot <api-key>` 的形式发送。
 
 默认情况下，密钥可以执行所有操作。你可以把它设为只读，或限制为部分站点密钥，也可以两者都设置。限定为单个站点密钥的只读密钥可以安全地交给该站点的所有者，让他们查看自己的统计数据。

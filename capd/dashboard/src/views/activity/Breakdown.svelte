@@ -1,16 +1,37 @@
 <script>
-import { Button, Dialog, Input, Skeleton } from "../../components/cap/index.js";
+import {
+  Button,
+  Dialog,
+  Icon,
+  Input,
+  Skeleton,
+} from "../../components/cap/index.js";
 import { Card, SlidingTabs } from "../../components/ui/index.js";
 import { compact } from "../../lib/format.js";
 import { samples } from "../../lib/samples.js";
 
-let { tabs, tint = "var(--foreground)", stale = false, onpick } = $props();
+let {
+  tabs,
+  tint = "var(--foreground)",
+  stale = false,
+  onpick,
+  onpeek,
+} = $props();
 
 const VISIBLE = 8;
 
 let active = $state(tabs[0].id);
 let details = $state(false);
 let query = $state("");
+let sort = $state("n");
+let settled = $state(false);
+
+$effect(() => {
+  const t = setTimeout(() => {
+    settled = true;
+  }, 600);
+  return () => clearTimeout(t);
+});
 
 const tab = $derived(tabs.find((t) => t.id === active) ?? tabs[0]);
 const rows = $derived(tab.rows);
@@ -27,22 +48,51 @@ const filtered = $derived(
 );
 
 const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
+
+const ordered = (list) =>
+  sort === "n" || !tab.risk
+    ? list
+    : [...list].sort(
+        (a, b) =>
+          (b.n >= 5 ? share(b) : -1) - (a.n >= 5 ? share(a) : -1) || b.n - a.n,
+      );
 </script>
 
+{#snippet sorter(id, label)}
+  <button
+    type="button"
+    class="-mx-1 flex h-6 w-16 items-center justify-end gap-0.5 rounded px-1 outline-none transition-[color] duration-100 focus-visible:ring-2 focus-visible:ring-ring [@media(hover:hover)]:hover:text-foreground {sort === id ? 'text-foreground' : ''}"
+    aria-pressed={sort === id}
+    title="Sort by {label.toLowerCase()}"
+    onclick={() => (sort = id)}
+  >
+    <Icon name="down" size={12} class={sort === id ? "" : "opacity-0"} />
+    {label}
+  </button>
+{/snippet}
+
 {#snippet header()}
-  <div class="flex items-center gap-2 px-2 pb-1.5 text-[11px] font-medium text-muted-foreground">
+  <div class="flex items-center gap-2 px-2 pb-1 text-[11px] font-medium text-muted-foreground">
     <span class="mr-auto">{tab.column}</span>
-    {#if tab.risk}<span class="w-14 text-right">Blocked</span>{/if}
-    <span class="w-14 text-right">Events</span>
+    {#if tab.risk}
+      {@render sorter("blocked", "Blocked")}
+      {@render sorter("n", "Events")}
+    {:else}
+      <span class="w-14 text-right">Events</span>
+    {/if}
   </div>
 {/snippet}
 
-{#snippet row(r)}
+{#snippet row(r, i)}
   {@const s = share(r)}
   <li>
     <button
       type="button"
       class="group relative flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] transition-[scale] duration-150"
+      onpointerenter={() => onpeek?.(tab.field, r.value)}
+      onpointerleave={() => onpeek?.(tab.field, null)}
+      onfocus={() => onpeek?.(tab.field, r.value)}
+      onblur={() => onpeek?.(tab.field, null)}
       title="Show events where {tab.column.toLowerCase()} is {tab.name(r)}"
       onclick={() => {
         details = false;
@@ -50,9 +100,10 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
       }}
     >
       <span
-        class="absolute inset-y-0 left-0 rounded-md transition-[width,background-color] duration-300 ease-(--ease-out) motion-reduce:transition-none"
+        class="{settled ? 'bar' : ''} absolute inset-y-0 left-0 rounded-md transition-[width,background-color] duration-300 ease-(--ease-out) motion-reduce:transition-none"
         style:width="{Math.max(1.5, (r.n / peak) * 100)}%"
         style:background="color-mix(in oklab, {tint} 10%, transparent)"
+        style:--delay="{Math.min(i, 8) * 28}ms"
       ></span>
       <span data-bone="ignore" class="absolute inset-0 rounded-md bg-foreground/0 transition-[background-color] duration-100 [@media(hover:hover)]:group-hover:bg-foreground/[0.035]"></span>
       <span class="relative flex min-w-0 flex-1 items-center gap-2">
@@ -95,7 +146,7 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
         {#snippet children(list)}
           {@render header()}
           <ul class="flex flex-col gap-0.5">
-            {#each list.slice(0, VISIBLE) as r (r.value)}{@render row(r)}{/each}
+            {#each ordered(list).slice(0, VISIBLE) as r, i (r.value)}{@render row(r, i)}{/each}
           </ul>
           {#if list.length > VISIBLE}
             <div class="mt-auto flex justify-center pt-2">
@@ -117,7 +168,7 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
     <div class="-mx-2 max-h-[60dvh] overflow-y-auto">
       {@render header()}
       <ul class="flex flex-col gap-0.5">
-        {#each filtered as r (r.value)}{@render row(r)}{/each}
+        {#each ordered(filtered) as r, i (r.value)}{@render row(r, i)}{/each}
       </ul>
       {#if !filtered.length}
         <p class="py-8 text-center text-sm text-muted-foreground">Nothing matches "{query}"</p>
@@ -125,3 +176,18 @@ const share = (r) => (r.n ? (r.blocked ?? 0) / r.n : 0);
     </div>
   </Dialog>
 {/if}
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .bar {
+      transform-origin: left;
+      animation: bar-in 560ms var(--ease-out) var(--delay) backwards;
+    }
+  }
+
+  @keyframes bar-in {
+    from {
+      transform: scaleX(0);
+    }
+  }
+</style>

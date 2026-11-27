@@ -1,0 +1,22 @@
+{
+  "name": "cap-update-check",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "routes": [{ "pattern": "updates.trycap.dev", "custom_domain": true }],
+  "workers_dev": false,
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cap-update-check",
+      "database_id": "2758d815-4887-4ad3-a03c-8d49d673472c"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "LIMIT",
+      "namespace_id": "4804",
+      "simple": { "limit": 6, "period": 60 }
+    }
+  ]
+}

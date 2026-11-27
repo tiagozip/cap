@@ -98,12 +98,15 @@
     }
   }
   ::selection {
-    color: var(--selection-foreground);
     background: var(--selection-background);
   }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
     background: 0 0;
@@ -115,8 +118,12 @@
     background: 0 0;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
+    background: var(--scrollbar-thumb) padding-box;
+    border: 2px solid transparent;
     border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
   }
   .sliding-tab-pill {
     transition:
@@ -167,251 +174,6 @@
     transition-duration: var(--tabs-duration);
     scale: 1;
   }
-  .calendar-month {
-    animation: calendar-month-in 0.22s var(--ease-out);
-  }
-  .calendar-month:is(
-      :lang(ae),
-      :lang(ar),
-      :lang(arc),
-      :lang(bcc),
-      :lang(bqi),
-      :lang(ckb),
-      :lang(dv),
-      :lang(fa),
-      :lang(glk),
-      :lang(he),
-      :lang(ku),
-      :lang(mzn),
-      :lang(nqo),
-      :lang(pnb),
-      :lang(ps),
-      :lang(sd),
-      :lang(ug),
-      :lang(ur),
-      :lang(yi)
-    ) {
-    --calendar-month-side: -1;
-  }
-  .combobox-erasing {
-    animation: combobox-erasing-in 0.22s var(--ease-out);
-  }
-  .calendar-month[data-direction="forward"] {
-    --calendar-month-from: 12px;
-  }
-  .calendar-month[data-direction="back"] {
-    --calendar-month-from: -12px;
-  }
-  .arc {
-    -webkit-mask-composite: source-in;
-    --u: 1px;
-    -webkit-mask-composite: source-in;
-    -webkit-mask-composite: source-in;
-    overflow: clip;
-    -webkit-mask-image:
-      linear-gradient(90deg, #0000, #000 8% 92%, #0000),
-      linear-gradient(#000 88%, #0000);
-    mask-image:
-      linear-gradient(90deg, #0000, #000 8% 92%, #0000),
-      linear-gradient(#000 88%, #0000);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-  }
-  @supports (width: 1cqw) {
-    .arc {
-      --u: min(1px, calc(100cqw / var(--fan, 546)));
-    }
-  }
-  .arc,
-  .arc-card {
-    --arc-turn: 0.46s;
-  }
-  .arc-wheel {
-    transition: transform var(--arc-turn) var(--ease-out);
-    will-change: transform;
-  }
-  .arc-card {
-    border-radius: calc(var(--radius) + 2px);
-    background-color: var(--muted);
-    cursor: pointer;
-    transition:
-      transform var(--arc-turn) var(--ease-out),
-      opacity var(--arc-turn) var(--ease-out);
-    position: absolute;
-    overflow: hidden;
-    box-shadow: 0 12px 28px -12px #00000073;
-  }
-  .attachment-glass {
-    background: var(--background);
-  }
-  @supports (color: color-mix(in lab, red, red)) {
-    .attachment-glass {
-      background: color-mix(in oklab, var(--background) 55%, transparent);
-    }
-  }
-  .attachment-glass {
-    -webkit-backdrop-filter: blur(8px) saturate(1.4);
-    backdrop-filter: blur(8px) saturate(1.4);
-    box-shadow: 0 1px 6px #0003;
-  }
-  .attachment-glass:before {
-    background: 0 0;
-  }
-  .calendar-resize {
-    transition: height 0.22s var(--ease-out);
-  }
-  .calendar-resize[data-resizing] {
-    overflow: hidden;
-  }
-  .calendar-span {
-    z-index: 20;
-    translate: calc(var(--calendar-span-x) - 50%)
-      calc(var(--calendar-span-y) - 50%);
-    transform-origin: 50% 100%;
-    background: var(--calendar-selected);
-    color: var(--calendar-selected-foreground);
-    white-space: nowrap;
-    pointer-events: none;
-    transition:
-      translate 0.16s var(--ease-out),
-      opacity 0.15s var(--ease-out),
-      scale 0.15s var(--ease-out);
-    border-radius: 9999px;
-    padding: 2px 8px;
-    font-size: 12px;
-    line-height: 16px;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-  @starting-style {
-    .calendar-span {
-      opacity: 0;
-      scale: 0.96;
-    }
-  }
-  .calendar-span[data-instant] {
-    transition: none;
-  }
-  .calendar-span[data-landed] {
-    opacity: 0;
-    filter: blur(2px);
-    transition:
-      opacity 0.16s var(--ease-exit),
-      scale 0.16s var(--ease-exit),
-      filter 0.16s var(--ease-exit);
-    scale: 0.96;
-  }
-  .dropzone-card[data-revealing] {
-    -webkit-mask-image: radial-gradient(
-      circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
-      #000 var(--reveal-solid, 0px),
-      transparent var(--reveal-r, 0px)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
-      #000 var(--reveal-solid, 0px),
-      transparent var(--reveal-r, 0px)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
-      #000 var(--reveal-solid, 0px),
-      transparent var(--reveal-r, 0px)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
-      #000 var(--reveal-solid, 0px),
-      transparent var(--reveal-r, 0px)
-    );
-    mask-image: radial-gradient(
-      circle at var(--reveal-x, 50%) var(--reveal-y, 50%),
-      #000 var(--reveal-solid, 0px),
-      transparent var(--reveal-r, 0px)
-    );
-  }
-  .dropzone-edge > .dropzone-edge-solid {
-    opacity: 0;
-  }
-  .dropzone-edge[data-ground] > .dropzone-edge-solid {
-    opacity: 1;
-  }
-  .dropzone-edge[data-ground="full"] > .dropzone-edge-dashed {
-    opacity: 0;
-  }
-  .dropzone-edge[data-ground="rising"] > .dropzone-edge-solid {
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      #000 var(--ground-solid),
-      transparent var(--ground-r)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      #000 var(--ground-solid),
-      transparent var(--ground-r)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      #000 var(--ground-solid),
-      transparent var(--ground-r)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      #000 var(--ground-solid),
-      transparent var(--ground-r)
-    );
-    mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      #000 var(--ground-solid),
-      transparent var(--ground-r)
-    );
-  }
-  .dropzone-edge[data-ground="rising"] > .dropzone-edge-dashed {
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      transparent var(--ground-solid),
-      #000 var(--ground-r)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      transparent var(--ground-solid),
-      #000 var(--ground-r)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      transparent var(--ground-solid),
-      #000 var(--ground-r)
-    );
-    -webkit-mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      transparent var(--ground-solid),
-      #000 var(--ground-r)
-    );
-    mask-image: radial-gradient(
-      circle at var(--ground-x) var(--ground-y),
-      transparent var(--ground-solid),
-      #000 var(--ground-r)
-    );
-  }
-  .dropzone-edge[data-ground="falling"] > .dropzone-edge-solid {
-    opacity: var(--ground-left);
-  }
-  .dropzone-edge[data-ground="falling"] > .dropzone-edge-dashed {
-    opacity: calc(1 - var(--ground-left));
-  }
-  [data-slot="lightbox-chrome"] button > svg {
-    filter: drop-shadow(0 0 1px var(--background))
-      drop-shadow(0 0 1px var(--background))
-      drop-shadow(0 0 6px var(--background));
-  }
-  @supports (color: color-mix(in lab, red, red)) {
-    [data-slot="lightbox-chrome"] button > svg {
-      filter: drop-shadow(0 0 1px var(--background))
-        drop-shadow(0 0 1px var(--background))
-        drop-shadow(
-          0 0 6px color-mix(in oklab, var(--background) 70%, transparent)
-        );
-    }
-  }
   @media (prefers-reduced-motion: reduce) {
     .sliding-tab-pill,
     .sliding-tab-active-label,
@@ -423,31 +185,15 @@
       transition: opacity calc(var(--tabs-duration) * 0.6) linear;
       scale: 1;
     }
-    .calendar-month[data-direction] {
-      --calendar-month-from: 0px;
-    }
-    .calendar-resize {
-      transition: none;
-    }
-    .calendar-span {
-      transition: opacity 0.15s var(--ease-out);
-    }
-    .calendar-span[data-landed] {
-      filter: none;
-      transition: opacity 0.16s var(--ease-exit);
-      scale: 1;
-    }
-    .arc-wheel {
-      transition: none;
-    }
-    .arc-card {
-      transition: opacity 0.16s var(--ease-out);
-    }
   }
   html {
     --lightningcss-light: initial;
     --lightningcss-dark: ;
     color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    font-synthesis-weight: none;
   }
   body {
     background-color: var(--background);
@@ -462,9 +208,5 @@
   optgroup {
     color: canvastext;
     background-color: canvas;
-  }
-  [data-slot="preview-stage"] > * {
-    min-width: 0;
-    max-width: 100%;
   }
 }

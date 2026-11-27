@@ -2,18 +2,17 @@
 import {
   Button,
   Field,
-  Icon,
   Input,
   Row,
   Select,
   Skeleton,
   Spinner,
-  Tag,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { ago, bytes } from "../../lib/format.js";
 import { refreshSettings } from "../../lib/state.svelte.js";
 import { confirm } from "../../lib/ui.svelte.js";
+import Health from "../../polish/settings-c/Health.svelte";
 
 const PROVIDERS = {
   dbip: ["DB-IP Lite", "Free, no account needed."],
@@ -21,10 +20,7 @@ const PROVIDERS = {
     "MaxMind GeoLite2",
     "Free, needs a MaxMind account and license key.",
   ],
-  ipinfo: [
-    "IPInfo",
-    "Looks visitors up through the IPInfo API with your token.",
-  ],
+  ipinfo: ["IPInfo", "Needs an IPInfo token."],
 };
 
 let data = $state(null);
@@ -159,8 +155,12 @@ const remove = async () => {
         <span class="truncate">{progress.file ? `Downloading ${progress.file}` : "Starting download"}</span>
         <span class="text-muted-foreground tabular-nums">{percent === null ? bytes(progress.downloaded) : `${percent}%`}</span>
       </div>
-      <div class="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percent ?? undefined}>
-        <div class="h-full rounded-full bg-primary transition-[width] duration-300 {percent === null ? 'opacity-40' : ''}" style="width: {percent ?? 100}%"></div>
+      <div class="relative h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percent ?? undefined}>
+        {#if percent === null}
+          <div class="ipdb-wait absolute inset-y-0 left-0 w-2/5 rounded-full bg-primary"></div>
+        {:else}
+          <div class="ipdb-fill h-full origin-left rounded-full bg-primary" style="transform: scaleX({percent / 100})"></div>
+        {/if}
       </div>
     </div>
   {/if}
@@ -179,7 +179,7 @@ const remove = async () => {
         .join(" ")}
     >
       <div class="flex flex-wrap items-center gap-2">
-        <Tag tone="success"><Icon name="check" size={12} stroke={2.5} />Active</Tag>
+        <Health tone="ok" class="me-2">Active</Health>
         <Button
           disabled={!!progress || starting}
           onclick={() => {
@@ -224,3 +224,30 @@ const remove = async () => {
     </Row>
 {/if}
 </Skeleton>
+
+<style>
+  .ipdb-wait {
+    transform: translateX(75%);
+    opacity: 0.5;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .ipdb-fill {
+      transition: transform 0.4s var(--ease-out);
+    }
+
+    .ipdb-wait {
+      opacity: 1;
+      animation: ipdb-wait 1.4s var(--ease-in-out) infinite;
+    }
+  }
+
+  @keyframes ipdb-wait {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(250%);
+    }
+  }
+</style>

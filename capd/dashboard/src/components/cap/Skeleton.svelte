@@ -10,6 +10,7 @@ const waiting = $derived(
     (driven && props.data == null && !props.error && !props.empty),
 );
 let held = $state(untrack(() => waiting));
+let settled = $state(false);
 let last = null;
 
 $effect(() => {
@@ -41,6 +42,7 @@ $effect(() => {
     if (!live) return;
     cancel = queueReveal(() => {
       held = false;
+      settled = true;
       untrack(() => props.onreveal?.());
     });
   });
@@ -72,7 +74,7 @@ const phase = $derived(
     {/if}
   </div>
 {:else}
-  <div class="sk-pane {props.class ?? ''}" style={props.style}>
+  <div class="sk-pane {props.class ?? ''}" class:sk-settle={settled} style={props.style}>
     {#if phase === "error"}
       {@render props.errorMessage?.(props.error)}
     {:else if phase === "empty"}
@@ -84,3 +86,18 @@ const phase = $derived(
     {/if}
   </div>
 {/if}
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    .sk-settle {
+      animation: sk-settle 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  }
+
+  @keyframes sk-settle {
+    from {
+      opacity: 0;
+      filter: blur(2px);
+    }
+  }
+</style>

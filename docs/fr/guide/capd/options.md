@@ -67,6 +67,6 @@ mkdir -p ./cap-data && sudo chown 1000:1000 ./cap-data
 
 ## API {#api}
 
-Tout ce que fait le tableau de bord est accessible via une API REST, documentée à `/swagger` sur votre instance. Créez une clé sous **Instance settings > API keys** et envoyez-la sous la forme `Authorization: Bot <api-key>`.
+Tout ce que fait le tableau de bord est accessible via une API REST, documentée à `/swagger` sur votre instance. Créez une clé sous **API and MCP** et envoyez-la sous la forme `Authorization: Bot <api-key>`.
 
 Par défaut, une clé peut tout faire. Vous pouvez la passer en lecture seule, la limiter à certaines clés de site, ou les deux. Vous pouvez confier sans risque une clé en lecture seule limitée à une clé de site au propriétaire de ce site, pour qu'il consulte ses statistiques.

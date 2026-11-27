@@ -6,6 +6,7 @@ import { refreshAssets } from "../assets.js";
 import { getClientIp } from "../events/context.js";
 import { pruneEvents } from "../events/index.js";
 import { rateLimitBucket } from "../ratelimit.js";
+import { sendUpdateCheck } from "../update-check.js";
 import { sweep } from "./db.js";
 import { liveUnavailable } from "./live.js";
 
@@ -50,8 +51,12 @@ export default {
         sweep(),
         (started
           ? Promise.resolve()
-          : startup().then(() => (started = true))
-        ).then(() => Promise.all([pruneEvents(), refreshAssets()])),
+          : startup().then(() => {
+              started = true;
+            })
+        ).then(() =>
+          Promise.all([pruneEvents(), refreshAssets(), sendUpdateCheck()]),
+        ),
       ]),
     );
   },

@@ -1,4 +1,5 @@
 <script>
+import { onDestroy } from "svelte";
 import {
   Button,
   Group,
@@ -7,12 +8,16 @@ import {
   PageHeader,
   Row,
   SectionNav,
+  Select,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { loadCatalog } from "../../lib/catalog.svelte.js";
 import { app, loadKeys } from "../../lib/state.svelte.js";
-import { toast } from "../../lib/ui.svelte.js";
+import { toast, undoable } from "../../lib/ui.svelte.js";
 import { scrollToTop } from "../../lib/utils.js";
+import { describe } from "../../polish/key-settings/changes.js";
+import { drafts } from "../../polish/key-settings/drafts.js";
+import SaveBar from "../../polish/key-settings/SaveBar.svelte";
 import Integration from "../integration/Integration.svelte";
 import Webhooks from "../rules/Webhooks.svelte";
 import Advanced from "./Advanced.svelte";
@@ -23,12 +28,40 @@ import { normalizeOrigin } from "./origins.js";
 import ShareLinks from "./ShareLinks.svelte";
 import WidgetDemo from "./WidgetDemo.svelte";
 
-let form = $state(formFrom(app.key));
+const siteKey = app.key.siteKey;
+let form = $state(drafts.get(siteKey) ?? formFrom(app.key));
+drafts.delete(siteKey);
 let errors = $state({});
 let originBad = $state({});
 let saving = $state("");
 let hooks = $state(null);
 let demoOpen = $state(false);
+let bar = $state();
+
+let copyFrom = $state("");
+const others = $derived(
+  (app.keys ?? [])
+    .filter((k) => k.siteKey !== siteKey)
+    .map((k) => [k.siteKey, k.name || k.siteKey]),
+);
+
+async function copySettings(from) {
+  const res = await api("GET", `/keys/${from}`);
+  copyFrom = "";
+  if (!res?.key?.config) {
+    toast(res?.error || "Couldn't load that key's settings", "error");
+    return;
+  }
+  const next = formFrom({ name: form.name, config: res.key.config });
+  if (!Object.keys(changesOf(next, form)).length) {
+    toast(`${res.key.name || from} already has the same settings`);
+    return;
+  }
+  form = next;
+  errors = {};
+  originBad = {};
+  toast(`Copied from ${res.key.name || from}. Review and save.`);
+}
 
 const loadHooks = () =>
   api("GET", `/keys/${app.key.siteKey}/webhooks`).then((h) => {
@@ -45,6 +78,17 @@ const dirty = $derived(
     JSON.stringify(form.origins.filter((o) => o.trim())) !==
       JSON.stringify(baseline.origins),
 );
+
+const items = $derived(
+  describe(changes, payloadOf(baseline), {
+    ratelimitMax: app.settings.ratelimit?.max ?? 30,
+    ratelimitDuration: app.settings.ratelimit?.duration ?? 5000,
+  }),
+);
+
+onDestroy(() => {
+  if (dirty) drafts.set(siteKey, $state.snapshot(form));
+});
 
 $effect(() => {
   JSON.stringify(form);
@@ -75,12 +119,10 @@ function validate() {
     : -1;
   if (badOrigin >= 0) {
     originBad = { [badOrigin]: true };
-    next.origins =
-      "Enter a valid website, such as https://example.com or *.example.com.";
+    next.origins = "Enter a website like example.com or *.example.com.";
   }
   if (form.corsOn && badOrigin < 0 && !p.corsOrigins)
-    next.origins =
-      "Add at least one website, or turn off the website restriction.";
+    next.origins = "Add a website, or turn this off.";
   errors = next;
   const first = Object.keys(next)[0];
   if (!first) return true;
@@ -93,11 +135,16 @@ function validate() {
     origins: `cfgOrigin-${Math.max(badOrigin, 0)}`,
   };
   document.getElementById(ids[first])?.focus();
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches)
+    bar?.animate(
+      { translate: ["0", "-4px", "3px", "-2px", "1px", "0"] },
+      { duration: 320, easing: "ease-out" },
+    );
   return false;
 }
 
 async function save() {
-  if (!validate()) return;
+  if (saving || !validate()) return;
   const body = { ...changes };
   if (!Object.keys(body).length) {
     form = formFrom(app.key);
@@ -128,9 +175,17 @@ async function save() {
   label="Settings sections"
   items={[
     { id: "cfgSetup", label: "Install" },
-    { id: "cfgGeneral", label: "General" },
-    { id: "cfgAccess", label: "Access" },
-    { id: "cfgPuzzle", label: "Puzzle" },
+    { id: "cfgGeneral", label: "General", dot: "name" in changes },
+    {
+      id: "cfgAccess",
+      label: "Access",
+      dot: ["ratelimitMax", "ratelimitDuration", "corsOrigins", "blockNonBrowserUA", "requiredHeaders"].some((k) => k in changes),
+    },
+    {
+      id: "cfgPuzzle",
+      label: "Puzzle",
+      dot: ["protocol", "sha256Fallback", "difficulty", "challengeCount", "obfuscationLevel"].some((k) => k in changes),
+    },
     { id: "webhooks", label: "Webhooks" },
     { id: "cfgShares", label: "Share links" },
     { id: "cfgDanger", label: "Danger zone" },
@@ -148,7 +203,7 @@ async function save() {
     }}
   >
     <Group id="cfgGeneral" title="General">
-      <Row label="Key name" for="cfgName" help="Only you see it, in the sidebar.">
+      <Row label="Key name" for="cfgName">
         <div class="flex w-full flex-col gap-1.5 md:max-w-sm">
           <Input
             id="cfgName"
@@ -162,7 +217,23 @@ async function save() {
           {#if errors.name}<p id="cfgName-error" class="text-sm text-destructive">{errors.name}</p>{/if}
         </div>
       </Row>
-      <Row label="Demo" help="Try this key's widget on your device and style it.">
+      {#if others.length}
+        <Row label="Copy settings from" for="cfgCopyFrom">
+          <Select
+            id="cfgCopyFrom"
+            class="w-full md:w-64"
+            options={[["", "Choose a key"], ...others]}
+            bind:value={
+              () => copyFrom,
+              (v) => {
+                copyFrom = v;
+                if (v) copySettings(v);
+              }
+            }
+          />
+        </Row>
+      {/if}
+      <Row label="Try this widget">
         <Button onclick={() => (demoOpen = true)}>
           <Icon name="eye" size={14} />
           Open demo
@@ -172,7 +243,7 @@ async function save() {
 
     <Limits bind:form bind:originBad {errors} />
 
-    <Advanced bind:form {errors} />
+    <Advanced bind:form {errors} {baseline} />
   </form>
 
   {#if hooks}
@@ -185,25 +256,39 @@ async function save() {
 </div>
 </div>
 
-<WidgetDemo bind:open={demoOpen} {dirty} />
+<WidgetDemo bind:open={demoOpen} {dirty} onsave={save} />
+
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key !== "s" || !(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
+    if (!dirty || document.querySelector("[role=dialog]")) return;
+    e.preventDefault();
+    save();
+  }}
+  onbeforeunload={(e) => {
+    if (dirty) e.preventDefault();
+  }}
+/>
 
 {#if dirty}
-  <div
-    class="sticky bottom-5 z-40 mx-auto -mt-6 mb-6 flex w-[calc(100%-1.5rem)] max-w-md items-center gap-2 rounded-xl bg-popover py-2 ps-4 pe-2 text-sm text-popover-foreground shadow-overlay transition-[translate,opacity] duration-200 ease-(--ease-out) starting:translate-y-3 starting:opacity-0 motion-reduce:transition-none"
-    role="status"
-  >
-    <span class="me-auto">{Object.keys(errors).length ? "Fix the marked fields to save" : "You have unsaved changes"}</span>
-    <Button
-      variant="ghost"
-      size="sm"
-      onclick={() => {
-        form = formFrom(app.key);
-        errors = {};
-        originBad = {};
-      }}
-    >
-      Discard
-    </Button>
-    <Button variant="primary" size="sm" disabled={!!saving} onclick={save}>{saving || "Save changes"}</Button>
-  </div>
+  <SaveBar
+    bind:bar
+    {items}
+    invalid={Object.keys(errors).length > 0}
+    saving={!!saving}
+    onsave={save}
+    ondiscard={() => {
+      const kept = $state.snapshot(form);
+      form = formFrom(app.key);
+      errors = {};
+      originBad = {};
+      undoable({
+        message: "Changes discarded",
+        commit: () => null,
+        undo: () => {
+          form = kept;
+        },
+      });
+    }}
+  />
 {/if}

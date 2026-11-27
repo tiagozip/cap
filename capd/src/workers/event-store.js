@@ -11,7 +11,7 @@ const dialect = {
     `EXISTS (SELECT 1 FROM json_each(events.flags) WHERE value = ${p})`,
   flagged: "flags <> '[]'",
   explodeSelect: "fj.value",
-  explodeFrom: ", json_each(events.flags) AS fj",
+  explode: (where) => `events, json_each(events.flags) AS fj ${where}`,
   ilike: (col, p) => `${col} LIKE ${p}`,
   final: "",
 };

@@ -17,9 +17,9 @@ let {
 
 const raised = $derived(indicator === "pill" && !flat);
 let root = $state(null);
-const tabEls = {};
-const labelEls = {};
-const iconEls = {};
+const tabEls = $state({});
+const labelEls = $state({});
+const iconEls = $state({});
 let box = $state(null);
 let spans = $state({});
 let iconWidths = $state({});
@@ -83,6 +83,37 @@ $effect(() => {
     cancelled = true;
   };
 });
+
+$effect(() => {
+  if (!root) return;
+  let frame;
+  const ro = new ResizeObserver(() => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(measure);
+  });
+  ro.observe(root);
+  return () => {
+    cancelAnimationFrame(frame);
+    ro.disconnect();
+  };
+});
+
+const step = (event, from) => {
+  const ids = tabs.map((tab) => tab.id);
+  const at = ids.indexOf(from);
+  const flip = getComputedStyle(root).direction === "rtl" ? -1 : 1;
+  const to = {
+    ArrowRight: ids[(at + flip + ids.length) % ids.length],
+    ArrowLeft: ids[(at - flip + ids.length) % ids.length],
+    Home: ids[0],
+    End: ids.at(-1),
+  }[event.key];
+  if (to == null || to === from) return;
+  event.preventDefault();
+  tabEls[to]?.focus();
+  value = to;
+  onChange?.(to);
+};
 
 const pill = $derived(
   box === null
@@ -155,6 +186,7 @@ const clip = (id) => {
         value = tab.id;
         onChange?.(tab.id);
       }}
+      onkeydown={(event) => step(event, tab.id)}
       class={cn(
         "relative z-10 flex-none cursor-pointer rounded-full whitespace-nowrap text-muted-foreground transition-[transform,color,box-shadow] duration-150 ease-out hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:not-data-current:scale-[0.985] motion-reduce:transition-none motion-reduce:active:scale-100",
         raised && "text-foreground/80 dark:text-muted-foreground",

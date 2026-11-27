@@ -41,11 +41,10 @@ export const ACTION_TONES = {
 
 export const ACTION_HELP = {
   block:
-    "Cap rejects the request. A rule that only looks at the request stops the puzzle from loading at all.",
-  allow:
-    "Cap lets the visitor through and skips every rule and automatic block after this one.",
-  flag: "Cap lets the visitor through and adds this rule to the risk flags your server gets back from siteverify.",
-  harder: "Cap gives the visitor a puzzle that takes longer to solve.",
+    "Rejects the request. Rules that only check the request stop the puzzle from loading.",
+  allow: "Lets the visitor through and skips later rules and automatic blocks.",
+  flag: "Lets the visitor through and adds this rule to the risk flags siteverify returns.",
+  harder: "Gives the visitor a puzzle that takes longer to solve.",
 };
 
 export const TEMPLATES = [
@@ -76,7 +75,7 @@ export const TEMPLATES = [
     action: "block",
     match: "all",
     conditions: [
-      { field: "agent", op: "neq", value: "" },
+      { field: "flag", op: "has", value: "agent:*" },
       { field: "agent_verified", op: "is_false" },
     ],
   },
@@ -111,9 +110,12 @@ export const VERDICTS = [
 const lowerFirst = (s) =>
   /^[A-Z][a-z]/.test(s) ? `${s[0].toLowerCase()}${s.slice(1)}` : s;
 
+const anyAgent = (c) =>
+  (c.field === "agent" && c.op === "neq" && !c.value) ||
+  (c.field === "flag" && c.op === "has" && c.value === "agent:*");
+
 export function conditionText(c, lists) {
-  if (c.field === "agent" && c.op === "neq" && !c.value)
-    return "an AI agent was detected";
+  if (anyAgent(c)) return "an AI agent was detected";
   if (c.field === "list" && (c.op === "in_list" || c.op === "not_in_list"))
     return `the visitor is ${c.op === "in_list" ? "on" : "not on"} the ${lists.find((l) => l.id === c.value)?.name ?? c.value} list`;
   const f = catalog.fields[c.field];
@@ -142,8 +144,13 @@ export const ruleSentence = (r, lists) => {
 };
 
 export function conditionParts(c, lists) {
-  if (c.field === "agent" && c.op === "neq" && !c.value)
-    return { field: "AI agent", op: "is present" };
+  if (anyAgent(c)) return { field: "AI agent", op: "is present" };
+  if (c.field === "list" && (c.op === "in_list" || c.op === "not_in_list"))
+    return {
+      field: "Visitor",
+      op: c.op === "in_list" ? "is on" : "isn't on",
+      value: lists.find((l) => l.id === c.value)?.name ?? c.value,
+    };
   const f = catalog.fields[c.field];
   const field =
     c.field === "header" ? `${c.header} header` : (f?.label ?? c.field);

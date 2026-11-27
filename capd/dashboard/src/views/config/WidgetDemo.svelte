@@ -11,6 +11,7 @@ import {
   Slider,
   Spinner,
 } from "../../components/cap/index.js";
+import { CopyButton } from "../../components/ui/index.js";
 import { app } from "../../lib/state.svelte.js";
 import {
   endpointOf,
@@ -20,7 +21,7 @@ import {
 } from "../integration/embed.svelte.js";
 import { highlight } from "../integration/highlight.js";
 
-let { open = $bindable(false), dirty = false } = $props();
+let { open = $bindable(false), dirty = false, onsave } = $props();
 
 const COLORS = [
   ["--cap-background", "Background", "#fdfdfd"],
@@ -72,6 +73,39 @@ const defaults = () => ({
   font: "",
 });
 
+const PRESETS = [
+  ["light", "Light", {}],
+  [
+    "dark",
+    "Dark",
+    {
+      "--cap-background": "#18181b",
+      "--cap-color": "#f4f4f5",
+      "--cap-border-color": "#ffffff1f",
+      "--cap-checkbox-background": "#ffffff0d",
+      "--cap-spinner-color": "#f4f4f5",
+      "--cap-spinner-background-color": "#ffffff26",
+      "--cap-focus-ring": "#60a5fa",
+    },
+  ],
+  [
+    "clear",
+    "Transparent",
+    {
+      "--cap-background": "#00000000",
+      "--cap-border-color": "#8080804d",
+      "--cap-checkbox-background": "#80808014",
+    },
+  ],
+].map(([id, label, colors]) => [
+  id,
+  label,
+  {
+    ...Object.fromEntries(COLORS.map(([k, , d]) => [k, d])),
+    ...colors,
+  },
+]);
+
 const MODES = [
   ["checkbox", "Checkbox", "Visitors click the widget to solve."],
   [
@@ -86,12 +120,51 @@ const MODES = [
   ],
 ];
 
-let look = $state(defaults());
-let mode = $state("checkbox");
+const stored = (() => {
+  try {
+    return JSON.parse(
+      localStorage.getItem(`cap-demo:${app.key.siteKey}`) ?? "null",
+    );
+  } catch {
+    return null;
+  }
+})();
+const base = defaults();
+
+let look = $state({
+  ...base,
+  ...stored?.look,
+  colors: { ...base.colors, ...stored?.look?.colors },
+  sizes: { ...base.sizes, ...stored?.look?.sizes },
+  labels: { ...base.labels, ...stored?.look?.labels },
+});
+let mode = $state(
+  MODES.some(([m]) => m === stored?.mode) ? stored.mode : "checkbox",
+);
+let page = $state(
+  /^#[\da-f]{6}$/i.test(stored?.page ?? "") ? stored.page : "#f1efe9",
+);
 let widgetEl = $state(null);
 let invisible = null;
 let backdrop = $state(
-  document.documentElement.classList.contains("dark") ? "dark" : "light",
+  ["light", "dark", "custom"].includes(stored?.backdrop)
+    ? stored.backdrop
+    : document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light",
+);
+
+$effect(() => {
+  const value = JSON.stringify({ look, mode, backdrop, page });
+  try {
+    localStorage.setItem(`cap-demo:${app.key.siteKey}`, value);
+  } catch {}
+});
+
+const preset = $derived(
+  PRESETS.find(([, , colors]) =>
+    COLORS.every(([k]) => look.colors[k].toLowerCase() === colors[k]),
+  )?.[0],
 );
 let script = $state("idle");
 let run = $state(0);
@@ -106,6 +179,7 @@ const needsClick = $derived(
     app.key.config?.requireInteraction === true,
 );
 const status = $derived(events.mount === mount ? events : { phase: "ready" });
+const statusKey = $derived(script === "ready" ? status.phase : script);
 
 const allowed = $derived(
   app.key.config?.corsOrigins?.length
@@ -133,6 +207,14 @@ const changed = $derived([
   ),
   ...(clean(look.font) ? [["--cap-font", clean(look.font)]] : []),
 ]);
+
+const pristine = $derived(
+  COLORS.every(([k, , d]) => look.colors[k] === d) &&
+    SIZES.every(([k, , d]) => look.sizes[k] === d) &&
+    LABELS.every(([k]) => !look.labels[k]) &&
+    !look.lang &&
+    !look.font,
+);
 
 const styleText = $derived(changed.map(([k, v]) => `${k}: ${v}`).join("; "));
 
@@ -207,8 +289,12 @@ $effect(() => {
   loadWidgetFiles();
   script = customElements.get("cap-widget") ? "ready" : "loading";
   loadWidget().then(
-    () => (script = "ready"),
-    () => (script = "failed"),
+    () => {
+      script = "ready";
+    },
+    () => {
+      script = "failed";
+    },
   );
 });
 
@@ -291,7 +377,7 @@ const solveFromCode = () => {
   bind:open
   size="xl"
   title="Try the widget"
-  description="Solve a real puzzle with this key's saved settings. Solves here count in its activity."
+  description="Solves here count in this key's stats."
 >
   <div class="grid min-w-0 gap-6 {styled ? 'md:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]' : ''} md:gap-8">
     <div class="contents md:sticky md:top-0 md:flex md:min-w-0 md:flex-col md:gap-4 md:self-start">
@@ -302,53 +388,80 @@ const solveFromCode = () => {
 
       <section class="flex min-w-0 flex-col gap-3" aria-label="Preview">
         {#snippet backdropToggle()}
-          <Segmented
-            label="Preview background"
-            size="sm"
-            options={[
-              ["light", "Light"],
-              ["dark", "Dark"],
-            ]}
-            bind:value={backdrop}
-          />
+          <div class="flex items-center gap-2">
+            <Segmented
+              label="Preview background"
+              size="sm"
+              options={[
+                ["light", "Light"],
+                ["dark", "Dark"],
+                ["custom", "Custom"],
+              ]}
+              bind:value={backdrop}
+            />
+            {#if backdrop === "custom"}
+              <span
+                class="cm-swatch relative block size-7 shrink-0 overflow-hidden rounded-md shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--foreground)_15%,transparent)]"
+                style="background: {page}"
+              >
+                <input
+                  type="color"
+                  class="absolute inset-0 size-full cursor-pointer opacity-0"
+                  aria-label="Pick the preview background color"
+                  bind:value={page}
+                />
+              </span>
+            {/if}
+          </div>
         {/snippet}
         {@render heading("Preview", styled ? backdropToggle : undefined)}
 
         {#if dirty}
-          <p class="flex gap-2 text-sm text-pretty text-muted-foreground">
-            <Icon name="info" size={16} class="mt-0.5 shrink-0" />
-            You have unsaved changes. Save them to try them here.
-          </p>
+          <div class="flex items-center gap-3 text-sm text-pretty text-muted-foreground">
+            <Icon name="info" size={16} class="shrink-0" />
+            <span class="me-auto">The widget uses your saved settings, not the unsaved ones.</span>
+            {#if onsave}
+              <Button size="sm" class="-my-1 shrink-0" onclick={async () => {
+                await onsave();
+                run++;
+              }}>Save changes</Button>
+            {/if}
+          </div>
         {/if}
         {#if needsClick && mode !== "checkbox"}
           <p class="flex gap-2 text-sm text-pretty text-muted-foreground">
             <Icon name="info" size={16} class="mt-0.5 shrink-0" />
-            This key blocks solves without a click on the widget, so solve() called from code fails with behavior_no_interaction.
+            This key requires a click on the widget, so solve() from code fails with behavior_no_interaction.
           </p>
         {/if}
         {#if outside}
           <p class="flex gap-2 text-sm text-pretty text-muted-foreground">
             <Icon name="info" size={16} class="mt-0.5 shrink-0" />
-            <span>
-              Only {allowed.join(", ")} can load this key's puzzles. The demo still runs because this dashboard
-              is on the same server as the API, and browsers only apply that list to other websites.
-            </span>
+            <span>Only {allowed.join(", ")} can use this key. The demo still works because it runs on the same server.</span>
           </p>
         {/if}
+      </section>
 
+      <section
+        class="flex min-w-0 flex-col gap-3 max-md:sticky max-md:-top-1 max-md:z-10 max-md:-mx-7 max-md:-mt-4 max-md:bg-popover max-md:px-7 max-md:pt-1 max-md:pb-2 {styled ? 'max-md:border-b max-md:border-border' : ''}"
+        aria-label="Live preview"
+      >
         <div
-          class="grid min-h-56 place-items-center overflow-x-auto rounded-xl p-3 sm:p-6 shadow-[inset_0_0_0_1px_var(--border)] {!styled
+          class="cm-stage grid {styled ? 'min-h-36 md:min-h-56' : 'min-h-40'} place-items-center overflow-x-auto rounded-xl p-3 sm:p-6 shadow-[inset_0_0_0_1px_var(--border)] {!styled
             ? ''
             : backdrop === 'dark'
-              ? 'bg-[#0b0b0c]'
-              : 'bg-white'}"
+              ? 'cm-dark bg-[#0b0b0c]'
+              : backdrop === 'custom'
+                ? ''
+                : 'cm-light bg-white'}"
+          style={styled && backdrop === "custom" ? `background-color: ${page}` : undefined}
         >
           {#if script === "ready" && !styled}
             {@const percent = status.phase === "solved" ? 100 : status.phase === "solving" ? status.progress : 0}
             <div class="flex w-full max-w-xs flex-col gap-1.5">
               <div class="flex items-center justify-between gap-3 text-sm">
                 <span class="text-muted-foreground">Progress</span>
-                <span class="text-muted-foreground tabular-nums">{status.phase === "error" ? "Failed" : `${percent}%`}</span>
+                <span class="tabular-nums {status.phase === 'error' ? 'text-destructive' : 'text-muted-foreground'}">{status.phase === "error" ? "Failed" : `${percent}%`}</span>
               </div>
               <div
                 class="h-1.5 overflow-hidden rounded-[2px] bg-muted"
@@ -359,13 +472,14 @@ const solveFromCode = () => {
                 aria-valuenow={percent}
               >
                 <div
-                  class="h-full rounded-[2px] transition-[width] duration-150 {status.phase === 'error' ? 'bg-destructive' : 'bg-primary'}"
-                  style="width: {status.phase === 'error' ? 100 : percent}%"
+                  class="cm-fill h-full origin-left rounded-[2px] {status.phase === 'error' ? 'bg-destructive' : 'bg-primary'}"
+                  style="transform: scaleX({status.phase === 'error' ? 1 : percent / 100})"
                 ></div>
               </div>
             </div>
           {:else if script === "ready"}
             {#key mount}
+              <div class="cm-enter grid max-w-full place-items-center">
               <cap-widget
                 data-cap-api-endpoint={endpoint}
                 data-cap-lang={look.lang || undefined}
@@ -377,11 +491,12 @@ const solveFromCode = () => {
                 bind:this={widgetEl}
                 {@attach wire}
               ></cap-widget>
+              </div>
             {/key}
           {:else if script === "failed"}
             <p class="max-w-sm text-center text-sm text-pretty {!styled ? 'text-muted-foreground' : backdrop === 'dark' ? 'text-white/70' : 'text-black/60'}">
-              Couldn't load the widget script from jsDelivr or this server's asset route. Check your connection, or set
-              ENABLE_ASSETS_SERVER=true to serve it from here.
+              Couldn't load the widget script. Check your connection, or set ENABLE_ASSETS_SERVER=true to serve it from
+              this server.
             </p>
           {:else}
             <Spinner class="size-5 {backdrop === 'dark' ? 'text-white/60' : 'text-black/50'}" label="Loading the widget" />
@@ -389,28 +504,33 @@ const solveFromCode = () => {
         </div>
 
         <div class="flex min-h-9 items-center justify-between gap-3">
-          <p class="min-w-0 text-sm text-pretty" role="status">
+          <p class="grid min-w-0 text-sm text-pretty" role="status">
+            {#key statusKey}
+            <span class="cm-status col-start-1 row-start-1">
             {#if script !== "ready"}
               <span class="text-muted-foreground">{script === "failed" ? "The widget isn't available." : "Loading the widget"}</span>
             {:else if status.phase === "solving"}
               <span class="text-muted-foreground tabular-nums">Solving, {status.progress}%</span>
             {:else if status.phase === "solved"}
-              <span class="flex gap-1.5">
-                <Icon name="check" size={16} class="mt-0.5 shrink-0 text-success" />
+              <span class="flex items-center gap-1.5">
+                <Icon name="check" size={16} class="cm-pop shrink-0 text-success" />
                 <span>
-                  Solved. The token starts with
-                  <code class="font-mono text-sm break-all">{status.token.slice(0, 20)}…</code>
+                  Solved with token
+                  <code class="font-mono text-[0.8125rem] break-all">{status.token.slice(0, 16)}…</code>
                 </span>
+                <CopyButton text={status.token} label="Copy token" copiedLabel="Token copied" class="-my-1" />
               </span>
             {:else if status.phase === "error"}
               <span class="text-destructive">
-                {status.message}{#if status.code && !status.message.includes(status.code)}{" "}<code class="font-mono text-sm">{status.code}</code>{/if}
+                {status.message}{#if status.code && !status.message.includes(status.code)}{" "}<code class="font-mono text-xs text-muted-foreground">{status.code}</code>{/if}
               </span>
             {:else if mode === "checkbox"}
-              <span class="text-muted-foreground">Click the widget to solve a puzzle.</span>
+              <span class="text-muted-foreground">Click the widget to solve.</span>
             {:else}
               <span class="text-muted-foreground">Call solve() to run a puzzle.</span>
             {/if}
+            </span>
+            {/key}
           </p>
           <div class="flex shrink-0 gap-2">
             {#if styled}
@@ -443,9 +563,28 @@ const solveFromCode = () => {
     <div class="flex min-w-0 flex-col gap-6">
       <section class="flex flex-col gap-3" aria-label="Colors">
         {#snippet resetLook()}
-          <Button size="sm" variant="ghost" class="-me-2.5" onclick={() => (look = defaults())}>Reset styles</Button>
+          <Button size="sm" variant="ghost" class="-me-2.5" disabled={pristine} onclick={() => (look = defaults())}>Reset styles</Button>
         {/snippet}
         {@render heading("Colors", resetLook)}
+        <div class="grid grid-cols-3 gap-2" role="group" aria-label="Color presets">
+          {#each PRESETS as [id, label, colors] (id)}
+            <button
+              type="button"
+              class="cm-preset group flex cursor-pointer flex-col items-start gap-1.5 rounded-lg p-1.5 pb-2 text-start text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring {preset === id ? 'shadow-[inset_0_0_0_1.5px_var(--foreground)]' : 'shadow-[inset_0_0_0_1px_var(--border)]'}"
+              aria-pressed={preset === id}
+              onclick={() => (look.colors = { ...colors })}
+            >
+              <span
+                class="flex h-8 w-full items-center gap-1.5 rounded-[5px] px-1.5 {id === 'clear' ? 'cm-checker' : ''}"
+                style="background-color: {colors['--cap-background']}; box-shadow: inset 0 0 0 1px {colors['--cap-border-color']}"
+              >
+                <span class="size-2.5 shrink-0 rounded-[3px]" style="background: {colors['--cap-checkbox-background']}; box-shadow: inset 0 0 0 1px {colors['--cap-border-color']}"></span>
+                <span class="h-1 w-8 rounded-full opacity-80" style="background: {colors['--cap-color']}"></span>
+              </span>
+              <span class="ps-0.5 text-muted-foreground {preset === id ? 'text-foreground' : ''}">{label}</span>
+            </button>
+          {/each}
+        </div>
         <div class="grid grid-cols-2 gap-x-3 gap-y-3">
           {#each COLORS as [key, label]}
             {@const hex = hexOf(look.colors[key])}
@@ -524,3 +663,73 @@ const solveFromCode = () => {
     {/if}
   </div>
 </Dialog>
+
+<style>
+  .cm-checker {
+    background-image: conic-gradient(
+      color-mix(in oklch, var(--foreground) 10%, transparent) 25%,
+      transparent 0 50%,
+      color-mix(in oklch, var(--foreground) 10%, transparent) 0 75%,
+      transparent 0
+    );
+    background-size: 8px 8px;
+  }
+
+  @media (hover: hover) {
+    .cm-preset:hover {
+      background-color: var(--accent);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cm-preset {
+      transition:
+        background-color 120ms ease-out,
+        box-shadow 160ms ease-out;
+    }
+
+    .cm-stage {
+      transition: background-color 240ms ease-out;
+    }
+
+    .cm-fill {
+      transition: transform 180ms ease-out;
+    }
+
+    .cm-enter {
+      animation: cm-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .cm-status {
+      animation: cm-status 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .cm-status :global(.cm-pop) {
+      animation: cm-pop 360ms cubic-bezier(0.34, 1.4, 0.64, 1) 60ms both;
+    }
+  }
+
+  @keyframes cm-enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+      filter: blur(3px);
+    }
+  }
+
+  @keyframes cm-status {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+      filter: blur(2px);
+    }
+  }
+
+  @keyframes cm-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.25);
+      filter: blur(4px);
+    }
+  }
+</style>

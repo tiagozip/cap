@@ -1,3 +1,34 @@
+<script module>
+const press = { x: 0, y: 0, t: -1e9 };
+let focused = null;
+if (typeof addEventListener !== "undefined") {
+  addEventListener(
+    "pointerdown",
+    (e) => {
+      press.x = e.clientX;
+      press.y = e.clientY;
+      press.t = performance.now();
+    },
+    { capture: true, passive: true },
+  );
+  addEventListener(
+    "focusin",
+    (e) => {
+      if (!e.target.closest?.("[data-slot=dialog-content]")) focused = e.target;
+    },
+    { capture: true },
+  );
+}
+
+const originOf = () => {
+  if (performance.now() - press.t < 800) return { ...press };
+  const box = focused?.isConnected && focused.getBoundingClientRect();
+  return box?.width
+    ? { x: box.left + box.width / 2, y: box.top + box.height / 2 }
+    : null;
+};
+</script>
+
 <script>
 import { Dialog } from "bits-ui";
 import Icon from "../icon/Icon.svelte";
@@ -13,6 +44,18 @@ let {
   children,
   ...rest
 } = $props();
+
+$effect(() => {
+  const origin = ref && originOf();
+  if (!origin) return;
+  const w = ref.offsetWidth;
+  const h = ref.offsetHeight;
+  const clamp = (v, size) => Math.min(size * 1.5, Math.max(size * -0.5, v));
+  ref.style.setProperty(
+    "--dialog-origin",
+    `${clamp(origin.x - (innerWidth - w) / 2, w)}px ${clamp(origin.y - (innerHeight - h) / 2, h)}px`,
+  );
+});
 </script>
 
 <Dialog.Portal {...portalProps}>

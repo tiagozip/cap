@@ -31,6 +31,12 @@ export const SIGNAL_GROUPS = [
       ],
       ["engine_mismatch", "The JavaScript engine doesn't match the browser"],
       ["os_mismatch", "Claims Windows but renders like Linux or macOS"],
+      [
+        "timezone_override",
+        "The timezone was overridden through DevTools, as automation tools do",
+      ],
+      ["libc_mismatch", "The C library doesn't match the claimed OS"],
+      ["editing_mismatch", "Text editing behaves like a different OS"],
       ["languages_inconsistent", "Browser languages are empty or disagree"],
       ["frame_mismatch", "The page and Cap's frame report different values"],
       [

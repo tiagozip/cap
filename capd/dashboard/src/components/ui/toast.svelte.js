@@ -1,10 +1,9 @@
-export const toasts = $state({ notes: [] });
+export const toasts = $state({ notes: [], paused: false });
 
 const timers = new Map();
 let nextId = 0;
-let paused = false;
 
-const lifetimeOf = (note) => {
+export const lifetimeOf = (note) => {
   if (note.state === "pending") return null;
   if (note.lifetime !== undefined) return note.lifetime;
   return note.action ? 6000 : note.description ? 4000 : 2400;
@@ -19,7 +18,8 @@ const schedule = (note) => {
     return;
   }
   const timer = { left, started: performance.now(), handle: 0 };
-  if (!paused) timer.handle = setTimeout(() => dismissToast(note.id), left);
+  if (!toasts.paused)
+    timer.handle = setTimeout(() => dismissToast(note.id), left);
   timers.set(note.id, timer);
 };
 
@@ -27,12 +27,14 @@ export const dismissToast = (id) => {
   const timer = timers.get(id);
   if (timer) clearTimeout(timer.handle);
   timers.delete(id);
-  toasts.notes = toasts.notes.filter((note) => note.id !== id);
+  const note = toasts.notes.find((item) => item.id === id);
+  toasts.notes = toasts.notes.filter((item) => item.id !== id);
+  note?.onclose?.();
 };
 
 export const pauseToasts = (pause) => {
-  if (pause === paused) return;
-  paused = pause;
+  if (pause === toasts.paused) return;
+  toasts.paused = pause;
   const now = performance.now();
   for (const [id, timer] of timers) {
     if (pause) {

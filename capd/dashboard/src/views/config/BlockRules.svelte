@@ -11,6 +11,7 @@ import {
   Skeleton,
   Table,
   Tag,
+  Textarea,
 } from "../../components/cap/index.js";
 import {
   TableBody,
@@ -21,10 +22,11 @@ import {
 } from "../../components/ui/index.js";
 import { api } from "../../lib/api.js";
 import { fullFmt, until } from "../../lib/format.js";
-import { countryFlagEmoji, countryName, countryNames } from "../../lib/geo.js";
+import { countryFlagEmoji, countryName } from "../../lib/geo.js";
 import { samples } from "../../lib/samples.js";
 import { app } from "../../lib/state.svelte.js";
-import { toast } from "../../lib/ui.svelte.js";
+import { toast, undoable } from "../../lib/ui.svelte.js";
+import { parseTargets } from "../../polish/key-settings/target.js";
 
 const sk = app.key.siteKey;
 const TYPES = {
@@ -33,19 +35,12 @@ const TYPES = {
   asn: "Network (ASN)",
   country: "Country",
 };
-const NOUNS = { ip: "IP address", cidr: "IP range", asn: "network" };
-const PLACEHOLDERS = { ip: "1.2.3.4", cidr: "10.0.0.0/8", asn: "AS15169" };
-const countries = Object.entries(countryNames).sort((a, b) =>
-  a[1].localeCompare(b[1]),
-);
+const keyOf = (item) => `${item.type}:${item.ip}`;
 
 let items = $state(null);
 let loadError = $state("");
-let removing = $state(null);
 let adding = $state(false);
-let type = $state("ip");
 let value = $state("");
-let country = $state("");
 let duration = $state("0");
 let submitting = $state(false);
 let addError = $state("");
@@ -63,51 +58,62 @@ async function load() {
 
 load();
 
-async function remove(item) {
-  removing = `${item.type}:${item.ip}`;
-  const res = await api("POST", `/keys/${sk}/unblock-ip`, {
-    type: item.type || "ip",
-    value: item.ip,
+function remove(item) {
+  const at = items.findIndex((x) => keyOf(x) === keyOf(item));
+  items = items.filter((x) => keyOf(x) !== keyOf(item));
+  undoable({
+    message: `Unblocked ${item.type === "country" ? countryName(item.ip) : item.ip}`,
+    commit: async () => {
+      const res = await api("POST", `/keys/${sk}/unblock-ip`, {
+        type: item.type || "ip",
+        value: item.ip,
+      });
+      return res?.error ? res.error : null;
+    },
+    undo: () => {
+      items = items.toSpliced(at, 0, item);
+    },
   });
-  removing = null;
-  if (res?.error) toast(res.error, "error");
-  await load();
 }
 
+const targets = $derived(parseTargets(value));
+const bad = $derived(targets.filter((t) => t.type === "bad"));
+
 async function submit() {
-  const v = type === "country" ? country : value.trim();
-  if (!v) {
-    addError =
-      type === "country"
-        ? "Choose a country to block."
-        : `Enter the ${NOUNS[type]} to block.`;
-    document
-      .getElementById(
-        type === "country" ? "blockRuleCountry" : "blockRuleValue",
-      )
-      ?.focus();
+  if (submitting) return;
+  if (!targets.length || bad.length) {
+    addError = targets.length
+      ? `${bad.map((t) => t.text).join(", ")} isn't an IP, range, network or country.`
+      : "Enter what to block.";
+    document.getElementById("blockRuleValue")?.focus();
     return;
   }
   addError = "";
   submitting = true;
-  const res = await api("POST", `/keys/${sk}/block-ip`, {
-    type,
-    value: v,
-    duration: Number(duration),
-  });
+  const failed = [];
+  for (const t of targets) {
+    const res = await api("POST", `/keys/${sk}/block-ip`, {
+      type: t.type,
+      value: t.value,
+      duration: Number(duration),
+    });
+    if (!res?.success) failed.push([t, res?.error]);
+  }
   submitting = false;
-  if (!res?.success) {
+  const done = targets.length - failed.length;
+  if (done) await load();
+  if (failed.length) {
+    value = failed.map(([t]) => t.text).join("\n");
     addError =
-      res?.error === "Invalid value"
-        ? `That doesn't look like a valid ${NOUNS[type]}.`
-        : res?.error || "Couldn't add the rule. Try again.";
+      failed[0][1] && failed[0][1] !== "Invalid value"
+        ? failed[0][1]
+        : `Couldn't block ${failed.map(([t]) => t.text).join(", ")}.`;
+    if (done) toast(`Blocked ${done} of ${targets.length}`);
     return;
   }
   adding = false;
   value = "";
-  country = "";
-  toast("Block rule added");
-  await load();
+  toast(done === 1 ? "Block rule added" : `${done} block rules added`);
 }
 </script>
 
@@ -133,7 +139,7 @@ async function submit() {
       <p class="py-4 text-sm text-destructive" role="alert">{loadError}</p>
     {/snippet}
     {#snippet emptyMessage()}
-      <Empty>Nobody is blocked. Block an IP address, range, network or country to stop it from solving.</Empty>
+      <Empty>Nobody is blocked yet.</Empty>
     {/snippet}
     {#snippet children(rows)}
       <Table flush>
@@ -146,7 +152,7 @@ async function submit() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {#each rows as item (`${item.type}:${item.ip}`)}
+          {#each rows as item (keyOf(item))}
             <TableRow>
               <TableCell class="font-medium">
                 {#if item.type === "country"}
@@ -167,7 +173,6 @@ async function submit() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={removing === `${item.type}:${item.ip}`}
                   aria-label="Unblock {item.type === 'country' ? countryName(item.ip) : item.ip}"
                   onclick={() => remove(item)}
                 >
@@ -182,7 +187,7 @@ async function submit() {
   </Skeleton>
 </Group>
 
-<Dialog bind:open={adding} title="Block a network" description="Visitors from it can't solve challenges for this key.">
+<Dialog bind:open={adding} title="Block a network" description="IP addresses, ranges, ASNs, network names or countries. Add several on separate lines.">
   <form
     id="blockRuleForm"
     class="flex flex-col gap-4"
@@ -192,40 +197,45 @@ async function submit() {
       submit();
     }}
   >
-    <Field label="What to block" for="blockRuleType">
-      <Select
-        id="blockRuleType"
-        class="w-full"
-        options={Object.entries(TYPES)}
-        bind:value={type}
-        onchange={() => (addError = "")}
+    <Field label="Block" for="blockRuleValue" error={addError}>
+      <Textarea
+        id="blockRuleValue"
+        rows="3"
+        autocomplete="off"
+        spellcheck="false"
+        mono
+        placeholder={"203.0.113.7\n10.0.0.0/8\nAS15169\nGermany"}
+        bind:value
+        invalid={!!addError}
+        aria-describedby={addError ? "blockRuleValue-error" : "blockRulePreview"}
+        oninput={() => (addError = "")}
+        onkeydown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            submit();
+          }
+        }}
       />
     </Field>
-    {#if type === "country"}
-      <Field label="Country" for="blockRuleCountry" error={addError}>
-        <Select
-          id="blockRuleCountry"
-          class="w-full"
-          options={[["", "Choose a country"], ...countries.map(([code, name]) => [code, `${countryFlagEmoji(code)} ${name}`])]}
-          bind:value={country}
-          aria-invalid={addError ? "true" : undefined}
-          aria-describedby={addError ? "blockRuleCountry-error" : undefined}
-        />
-      </Field>
-    {:else}
-      <Field label={type === "asn" ? "ASN number or name" : TYPES[type]} for="blockRuleValue" error={addError}>
-        <Input
-          id="blockRuleValue"
-          type="text"
-          autocomplete="off"
-          spellcheck="false"
-          mono
-          placeholder={PLACEHOLDERS[type]}
-          bind:value
-          invalid={!!addError}
-          aria-describedby={addError ? "blockRuleValue-error" : undefined}
-        />
-      </Field>
+    {#if targets.length}
+      <ul id="blockRulePreview" class="-mt-1 flex flex-col gap-1.5 text-sm" aria-label="Will block">
+        {#each targets as t (`${t.type}:${t.value}`)}
+          <li class="grid min-w-0 grid-cols-[7.25rem_minmax(0,1fr)_auto] items-center gap-2.5 [&>[data-slot=badge]]:justify-self-start">
+            {#if t.type === "bad"}
+              <Tag tone="danger">Not recognised</Tag>
+              <span class="min-w-0 truncate font-mono text-destructive">{t.text}</span>
+            {:else}
+              <Tag>{TYPES[t.type]}</Tag>
+              {#if t.type === "country" || t.detail === "By name"}
+                <span class="min-w-0 truncate">{t.type === "country" ? `${countryFlagEmoji(t.value)} ${countryName(t.value)}` : t.value}</span>
+              {:else}
+                <span class="min-w-0 truncate font-mono">{t.value}</span>
+              {/if}
+              {#if t.detail}<span class="shrink-0 text-muted-foreground tabular-nums">{t.detail}</span>{/if}
+            {/if}
+          </li>
+        {/each}
+      </ul>
     {/if}
     <Field label="For how long" for="blockRuleDuration">
       <Select
@@ -244,8 +254,8 @@ async function submit() {
   </form>
   {#snippet footer()}
     <Button variant="ghost" onclick={() => (adding = false)}>Cancel</Button>
-    <Button type="submit" form="blockRuleForm" variant="danger" disabled={submitting}>
-      {submitting ? "Blocking" : "Block network"}
+    <Button type="submit" form="blockRuleForm" variant="danger" disabled={submitting} aria-busy={submitting}>
+      {submitting ? "Blocking" : targets.length - bad.length > 1 ? `Block ${targets.length - bad.length}` : "Block"}
     </Button>
   {/snippet}
 </Dialog>

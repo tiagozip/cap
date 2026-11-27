@@ -67,6 +67,6 @@ mkdir -p ./cap-data && sudo chown 1000:1000 ./cap-data
 
 ## API {#api}
 
-Alles, was das Dashboard macht, ist auch über eine REST API verfügbar, dokumentiert unter `/swagger` auf deiner Instanz. Lege unter **Instance settings > API keys** einen Key an und schicke ihn als `Authorization: Bot <api-key>` mit.
+Alles, was das Dashboard macht, ist auch über eine REST API verfügbar, dokumentiert unter `/swagger` auf deiner Instanz. Lege unter **API and MCP** einen Key an und schicke ihn als `Authorization: Bot <api-key>` mit.
 
 Ein Key darf standardmäßig alles. Du kannst ihn schreibgeschützt machen, auf bestimmte Site-Keys beschränken oder beides. Einen schreibgeschützten Key für einen einzelnen Site-Key kannst du bedenkenlos dessen Besitzer geben, damit er seine Statistiken abrufen kann.

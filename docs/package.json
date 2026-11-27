@@ -14,5 +14,8 @@
   },
   "devDependencies": {
     "vue": "^3.5.39"
+  },
+  "overrides": {
+    "dompurify": "3.4.18"
   }
 }

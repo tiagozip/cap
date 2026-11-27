@@ -9,7 +9,7 @@ import {
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { app, refreshSettings } from "../../lib/state.svelte.js";
-import { toast } from "../../lib/ui.svelte.js";
+import SaveBar from "../../polish/instance-settings/SaveBar.svelte";
 
 const HEADERS = [
   "accept-encoding",
@@ -95,21 +95,34 @@ const ensureEmptyRow = () => {
   if (extra.size) rows = rows.filter((r) => !extra.has(r.id));
 };
 
+const discard = () => {
+  error = "";
+  max = saved.max;
+  seconds = saved.duration / 1000;
+  corsOn = saved.origins.length > 0;
+  rows = [...saved.origins.map((o) => row(o)), row()];
+  blockUA = saved.blockUA;
+  headersOn = saved.headers.length > 0;
+  headers = [...saved.headers];
+};
+
 const save = async () => {
   error = "";
   const m = Number(max);
   if (dirty.ratelimit && (!Number.isInteger(m) || m < 1 || m > 10000)) {
     error = "Allow between 1 and 10,000 challenges per window.";
-    return;
+    document.getElementById("rl-max")?.focus();
+    return false;
   }
   if (dirty.ratelimit && (duration < 1000 || duration > 3_600_000)) {
     error = "Pick a window between 1 and 3,600 seconds.";
-    return;
+    document.getElementById("rl-window")?.focus();
+    return false;
   }
   if (corsOn && rows.some((r) => r.invalid)) {
     error =
       "Fix the highlighted website addresses, for example https://example.com.";
-    return;
+    return false;
   }
   saving = true;
   const jobs = [];
@@ -133,7 +146,7 @@ const save = async () => {
   const failed = results.find((r) => !r?.success);
   if (failed) {
     error = failed.error || "Couldn't save every change. Try again.";
-    return;
+    return false;
   }
   saved = {
     max: m,
@@ -144,22 +157,21 @@ const save = async () => {
   };
   rows = [...origins.map((o) => row(o)), row()];
   await refreshSettings();
-  toast("Protection defaults saved");
 };
 </script>
 
 <div class="flex flex-col divide-y divide-border">
-  <Row label="Challenges per visitor" help="A visitor who goes over this waits before they get another challenge.">
+  <Row label="Challenges per visitor">
     <div class="flex flex-wrap items-center gap-2 text-sm">
       <label for="rl-max" class="sr-only">Challenges allowed</label>
-      <div class="w-20"><Input id="rl-max" type="number" inputmode="numeric" min="1" max="10000" bind:value={max} /></div>
+      <div class="w-20 tabular-nums"><Input id="rl-max" type="number" inputmode="numeric" min="1" max="10000" bind:value={max} /></div>
       <label for="rl-window" class="text-muted-foreground">every</label>
-      <div class="w-20"><Input id="rl-window" type="number" inputmode="decimal" min="1" max="3600" step="any" bind:value={seconds} /></div>
+      <div class="w-20 tabular-nums"><Input id="rl-window" type="number" inputmode="decimal" min="1" max="3600" step="any" bind:value={seconds} /></div>
       <span class="text-muted-foreground">seconds</span>
     </div>
   </Row>
 
-  <Row label="Only allow my websites" for="cors-on" help="Challenges load only on the sites you list, so nobody else can use your keys.">
+  <Row label="Only allow my websites" for="cors-on">
     <Switch
       id="cors-on"
       bind:checked={corsOn}
@@ -171,6 +183,7 @@ const save = async () => {
       {#if corsOn}
         <div class="flex w-full flex-col gap-2 md:max-w-xs" role="group" aria-label="Allowed websites">
           {#each rows as r (r.id)}
+            <div>
             <Input
               type="text"
               inputmode="url"
@@ -206,17 +219,18 @@ const save = async () => {
                 {/if}
               {/snippet}
             </Input>
+            </div>
           {/each}
         </div>
       {/if}
     {/snippet}
   </Row>
 
-  <Row label="Block scripts and command-line tools" for="block-ua" help="Turns away clients like curl and python-requests before they get a challenge.">
+  <Row label="Block curl, scripts and other non-browsers" for="block-ua">
     <Switch id="block-ua" bind:checked={blockUA} />
   </Row>
 
-  <Row label="Block requests that don't look like a browser" for="req-headers" help="Every real browser sends certain headers. Requests missing any you check here are blocked.">
+  <Row label="Block requests missing browser headers" for="req-headers">
     <Switch
       id="req-headers"
       bind:checked={headersOn}
@@ -236,7 +250,7 @@ const save = async () => {
                   headers = on ? [...headers, h] : headers.filter((x) => x !== h);
                 }}
               />
-              <label for="hdr-{h}" class="cursor-pointer font-mono text-sm">{h}</label>
+              <label for="hdr-{h}" class="cursor-pointer font-mono text-sm whitespace-nowrap">{h}</label>
             </div>
           {/each}
         </div>
@@ -244,12 +258,5 @@ const save = async () => {
     {/snippet}
   </Row>
 
-  <div class="flex flex-wrap items-center justify-end gap-3 py-5">
-    {#if error}
-      <p class="me-auto text-sm text-destructive" role="alert">{error}</p>
-    {:else if anyDirty}
-      <span class="text-sm text-muted-foreground" role="status">Unsaved changes</span>
-    {/if}
-    <Button variant="primary" disabled={!anyDirty || saving} onclick={save}>{saving ? "Saving" : "Save changes"}</Button>
-  </div>
+  <SaveBar dirty={anyDirty} {saving} {error} onsave={save} ondiscard={discard} />
 </div>

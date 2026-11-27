@@ -1,9 +1,20 @@
 @font-face {
   font-family: "IBM Plex Sans";
   src: url(../../fonts/ibm-plex-sans.woff2) format("woff2");
-  font-weight: 100 700;
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
+  unicode-range:
+    U+0000-024F, U+0259, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0300-036F, U+1E00-1E9F, U+1EF2-1EFF, U+2000-22FF, U+25A0-25FF, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url(../../fonts/ibm-plex-sans-extra.woff2) format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0370-052F, U+1EA0-1EF1, U+1F00-1FFF;
 }
 
 @theme inline {
@@ -121,8 +132,8 @@
   --shell-fg-subtle: #5c5c5c;
   --shell-fg-faint: #6d6d6d;
   --scrollbar-thumb: #0000002e;
+  --scrollbar-thumb-hover: #00000052;
   --selection-background: #00000029;
-  --selection-foreground: #000;
   --badge-blue-bg: oklch(62% 0.19 258 / 0.12);
   --badge-blue-fg: oklch(48% 0.17 258);
   --badge-green-bg: oklch(62% 0.16 152 / 0.12);
@@ -359,8 +370,8 @@
   --check-ring-color: #ffffff1f;
   --check-arc-color: #9a9a9a;
   --scrollbar-thumb: #ffffff24;
+  --scrollbar-thumb-hover: #ffffff45;
   --selection-background: #ffffff2e;
-  --selection-foreground: #fff;
   --otp-trail-color: #ffffff8c;
   --otp-success-color: oklch(75% 0.15 240);
   --badge-blue-bg: oklch(62% 0.19 258 / 0.2);

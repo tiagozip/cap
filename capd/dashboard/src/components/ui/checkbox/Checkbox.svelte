@@ -32,7 +32,7 @@ const shapes = { square: "rounded-[4px]", round: "rounded-full" };
     <span data-slot="checkbox-indicator" class="grid place-content-center text-current">
       {#if mixed}
         <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" class="size-3">
-          <path d="M2 5h6" />
+          <path d="M2 5h6" style:--check-len="6" />
         </svg>
       {:else}
         <svg
@@ -51,3 +51,24 @@ const shapes = { square: "rounded-[4px]", round: "rounded-full" };
     </span>
   {/snippet}
 </Checkbox.Root>
+
+<style>
+  :global(.t-check[data-slot="checkbox"][aria-checked="mixed"] svg path) {
+    stroke-dashoffset: 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.t-check[data-slot="checkbox"]) {
+      transition:
+        background var(--check-box) var(--check-ease),
+        border-color var(--check-box) var(--check-ease),
+        box-shadow var(--check-box) var(--check-ease),
+        scale 0.15s var(--ease-out);
+    }
+    :global(.t-check[data-slot="checkbox"]:active:not(:disabled)) {
+      scale: 0.9;
+    }
+    :global(.t-check[data-slot="checkbox"][aria-checked="mixed"] svg path) {
+      transition: stroke-dashoffset var(--check-draw) var(--check-ease);
+    }
+  }
+</style>

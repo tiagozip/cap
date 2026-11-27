@@ -15,7 +15,7 @@ let { title, description, id, action, children, flush = false } = $props();
   <CardHeader class={[action && "grid-cols-[1fr_auto]", description && "grid-rows-[auto_auto]"]}>
     <CardTitle><h2 {id} class="scroll-mt-24">{title}</h2></CardTitle>
     {#if description}<CardDescription class="max-w-xl text-pretty">{description}</CardDescription>{/if}
-    {#if action}<CardAction>{@render action()}</CardAction>{/if}
+    {#if action}<CardAction class={description ? "" : "row-span-1"}>{@render action()}</CardAction>{/if}
   </CardHeader>
   <CardContent class={flush ? "px-0" : "divide-y divide-border"}>
     {@render children()}

@@ -78,38 +78,51 @@ const emptyBucket = (b) => ({
   flagged: 0,
 });
 
+const addRow = (buckets, row, b = row.b) => {
+  const bucket = buckets.get(b) ?? buckets.set(b, emptyBucket(b)).get(b);
+  if (row.outcome === "block") bucket.blocked += row.n;
+  else if (row.outcome === "limit") bucket.limited += row.n;
+  else if (row.type === "challenge" && row.outcome === "pass")
+    bucket.challenges += row.n;
+  else if (row.type === "redeem" && row.outcome === "pass")
+    bucket.solved += row.n;
+  else if (row.type === "redeem" && row.outcome === "fail")
+    bucket.failed += row.n;
+  else if (row.type === "siteverify" && row.outcome === "pass")
+    bucket.verified += row.n;
+  bucket.flagged += row.flagged;
+};
+
 export async function overview(
   siteKey,
-  { range, from, to, bucket, filters = [], q } = {},
+  { range, from, to, bucket, filters = [], q, compare = true } = {},
 ) {
   const queries = getQueries();
   const r = resolveRange({ range, from, to, bucket });
   const ctx = { siteKey, from: r.from, to: r.to, filters, q };
   const prevCtx = { ...ctx, from: r.from - r.span, to: r.from };
 
-  const [summary, previous, rows, firstTs] = await Promise.all([
+  const [summary, previous, rows, prevRows, firstTs] = await Promise.all([
     queries.summary(ctx),
     queries.summary(prevCtx),
     queries.series(ctx, r.bucket),
+    compare ? queries.series(prevCtx, r.bucket) : null,
     filters.length || q ? null : queries.firstEventTs(siteKey),
   ]);
 
   const buckets = new Map();
-  for (let b = r.from; b < r.to; b += r.bucket) buckets.set(b, emptyBucket(b));
-  for (const row of rows) {
-    const bucket =
-      buckets.get(row.b) ?? buckets.set(row.b, emptyBucket(row.b)).get(row.b);
-    if (row.outcome === "block") bucket.blocked += row.n;
-    else if (row.outcome === "limit") bucket.limited += row.n;
-    else if (row.type === "challenge" && row.outcome === "pass")
-      bucket.challenges += row.n;
-    else if (row.type === "redeem" && row.outcome === "pass")
-      bucket.solved += row.n;
-    else if (row.type === "redeem" && row.outcome === "fail")
-      bucket.failed += row.n;
-    else if (row.type === "siteverify" && row.outcome === "pass")
-      bucket.verified += row.n;
-    bucket.flagged += row.flagged;
+  const prevBuckets = new Map();
+  for (let b = r.from; b < r.to; b += r.bucket) {
+    buckets.set(b, emptyBucket(b));
+    prevBuckets.set(b, emptyBucket(b));
+  }
+  for (const row of rows) addRow(buckets, row);
+  const prevFrom = r.from - r.span;
+  const shifted = (t) =>
+    r.from + Math.floor((t - prevFrom) / r.bucket) * r.bucket;
+  for (const row of prevRows ?? []) {
+    const b = shifted(row.b);
+    if (b >= r.from && b < r.to) addRow(prevBuckets, row, b);
   }
 
   let legacy = false;
@@ -139,6 +152,11 @@ export async function overview(
           previous.solved += row.verified;
           previous.failed += row.failed;
           previous.limited += row.ratelimited;
+          const bucket = prevBuckets.get(shifted(row.hour));
+          if (!bucket) continue;
+          bucket.solved += row.verified;
+          bucket.failed += row.failed;
+          bucket.limited += row.ratelimited;
         }
       }
     }
@@ -149,6 +167,9 @@ export async function overview(
     summary,
     previous,
     series: [...buckets.values()].sort((a, b) => a.b - b.b),
+    ...(compare && {
+      previousSeries: [...prevBuckets.values()].sort((a, b) => a.b - b.b),
+    }),
     legacy,
     storage: getStore()?.kind,
   };
@@ -178,16 +199,25 @@ export async function insights(
   const r = resolveRange({ range, from, to });
   const ctx = { siteKey, from: r.from, to: r.to, filters, q };
   const prevCtx = { ...ctx, from: r.from - r.span, to: r.from };
-  const [scores, solve, hours, flow, shared, countries, previous] =
-    await Promise.all([
-      queries.distribution(ctx, "score", 100, 1),
-      queries.distribution(ctx, "solve_ms", 1 / 50, 60_000),
-      queries.series(ctx, HOUR),
-      queries.flow(ctx),
-      queries.sharedClients(ctx),
-      queries.top(ctx, "country", 250),
-      queries.top(prevCtx, "country", 250),
-    ]);
+  const [
+    scores,
+    solve,
+    hours,
+    flow,
+    previousFlow,
+    shared,
+    countries,
+    previous,
+  ] = await Promise.all([
+    queries.distribution(ctx, "score", 100, 1),
+    queries.distribution(ctx, "solve_ms", 1 / 50, 60_000),
+    queries.series(ctx, HOUR),
+    queries.flow(ctx),
+    queries.flow(prevCtx),
+    queries.sharedClients(ctx),
+    queries.top(ctx, "country", 250),
+    queries.top(prevCtx, "country", 250),
+  ]);
   const byHour = new Map();
   for (const row of hours) {
     const h = byHour.get(row.b) ?? { b: row.b, n: 0, bad: 0 };
@@ -201,6 +231,7 @@ export async function insights(
     solve: { size: 50, rows: solve },
     hours: [...byHour.values()],
     flow,
+    previousFlow,
     shared,
     countries: { current: countries, previous },
   };
@@ -331,7 +362,12 @@ export async function legacyKeyStats(siteKey, chartDuration = "today") {
     const earliest = Math.min(first ?? Date.now(), ...roll.map((r) => r.hour));
     from = Math.floor(earliest / DAY) * DAY;
   }
-  const o = await overview(siteKey, { from, to: spec.to, bucket: spec.bucket });
+  const o = await overview(siteKey, {
+    from,
+    to: spec.to,
+    bucket: spec.bucket,
+    compare: false,
+  });
   const series = new Map();
   for (const s of o.series) {
     const b = Math.floor(s.b / spec.bucket) * spec.bucket;
@@ -374,10 +410,14 @@ export async function legacyKeyStats(siteKey, chartDuration = "today") {
   };
 }
 
-export async function legacyGeoStats(siteKey) {
+export async function legacyGeoStats(siteKey, chartDuration) {
+  const spec =
+    chartDuration && chartDuration !== "alltime"
+      ? LEGACY_DURATIONS[chartDuration]?.()
+      : null;
   const top = await topDimensions(siteKey, {
-    from: 0,
-    to: Date.now() + MIN,
+    from: spec?.from ?? 0,
+    to: spec?.to ?? Date.now() + MIN,
     filters: [{ field: "type", value: "challenge" }],
     dims: ["country", "asn_org", "platform", "os"],
     limit: 100,
@@ -397,6 +437,7 @@ export async function legacyGeoStats(siteKey) {
     totalPlatform: sum(top.platform),
     oses: shape(top.os),
     totalOs: sum(top.os),
+    ...(chartDuration && { range: chartDuration }),
   };
 }
 

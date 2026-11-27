@@ -1,33 +1,42 @@
 <script>
 import {
   Button,
-  CopyText,
+  CopyButton,
   Dialog,
   Group,
+  Input,
   Row,
+  Spinner,
 } from "../../components/cap/index.js";
 import { api } from "../../lib/api.js";
 import { app, loadKeys, navigate } from "../../lib/state.svelte.js";
-import { confirm, toast } from "../../lib/ui.svelte.js";
+import { toast } from "../../lib/ui.svelte.js";
+import RevealedValue from "../../polish/config-misc/RevealedValue.svelte";
 import { setSecret } from "./secret.svelte.js";
 
-let secret = $state(null);
-let showSecret = $state(false);
-let busy = $state("");
+let rotating = $state(false);
+let step = $state("confirm");
+let secret = $state("");
+
+let deleting = $state(false);
+let typed = $state("");
+let busy = $state(false);
+
+const keyName = $derived(app.key?.name ?? "");
+const matches = $derived(typed.trim() === keyName.trim());
+
+const openRotate = () => {
+  step = "confirm";
+  secret = "";
+  rotating = true;
+};
 
 async function rotate() {
-  const ok = await confirm({
-    title: "Reset the secret key?",
-    message:
-      "Your server stops verifying tokens until you replace the old secret with the new one.",
-    confirmText: "Reset secret key",
-    danger: true,
-  });
-  if (!ok) return;
-  busy = "rotate";
+  if (step !== "confirm") return;
+  step = "busy";
   const res = await api("POST", `/keys/${app.key.siteKey}/rotate-secret`);
-  busy = "";
   if (!res?.secretKey) {
+    step = "confirm";
     toast(res?.error || "Couldn't reset the secret key", "error");
     return;
   }
@@ -36,25 +45,19 @@ async function rotate() {
   app.key.secretOutdated = false;
   const listed = app.keys.find((k) => k.siteKey === app.key.siteKey);
   if (listed) listed.secretOutdated = false;
-  showSecret = true;
+  step = "done";
 }
 
 async function remove() {
-  const ok = await confirm({
-    title: `Delete ${app.key?.name}?`,
-    message:
-      "This deletes the key with its stats, rules, lists and share links. Sites using it stop working. You can't undo this.",
-    confirmText: "Delete key",
-    danger: true,
-  });
-  if (!ok) return;
-  busy = "delete";
+  if (!matches || busy) return;
+  busy = true;
   const res = await api("DELETE", `/keys/${app.key.siteKey}`);
-  busy = "";
+  busy = false;
   if (!res?.success) {
     toast(res?.error || "Couldn't delete the key", "error");
     return;
   }
+  deleting = false;
   toast("Key deleted");
   await loadKeys();
   navigate({ view: "home" });
@@ -66,27 +69,103 @@ async function remove() {
   <Row
     label="Reset secret key"
     help={app.key?.secretOutdated
-      ? "This key's secret is from an older Cap release, and /siteverify rejects it. Reset it and give your server the new one."
-      : "Use this if the secret leaked or you lost it. Your server stops verifying tokens until you give it the new key."}
+      ? "This secret is from an older Cap release and /siteverify rejects it."
+      : "Your server can't verify tokens until it has the new one."}
   >
-    <Button size="sm" class="self-start text-destructive md:self-auto" disabled={!!busy} onclick={rotate}>
-      {busy === "rotate" ? "Resetting" : "Reset secret key"}
+    <Button
+      size="sm"
+      variant={app.key?.secretOutdated ? "danger" : "secondary"}
+      class="self-start md:self-auto {app.key?.secretOutdated ? '' : 'text-destructive'}"
+      onclick={openRotate}
+    >
+      Reset secret key
     </Button>
   </Row>
-  <Row label="Delete key" help="Deletes its stats, rules, lists and share links. Sites using it stop working.">
-    <Button size="sm" class="self-start text-destructive md:self-auto" disabled={!!busy} onclick={remove}>
-      {busy === "delete" ? "Deleting" : "Delete key"}
+  <Row label="Delete key">
+    <Button
+      size="sm"
+      class="self-start text-destructive md:self-auto"
+      onclick={() => {
+        typed = "";
+        deleting = true;
+      }}
+    >
+      Delete key
     </Button>
   </Row>
 </Group>
 
 <Dialog
-  bind:open={showSecret}
-  title="New secret key"
-  description="Put it on your server in place of the old one. You can reveal it again under Add Cap to your site."
+  bind:open={rotating}
+  title={step === "done" ? "New secret key" : "Reset the secret key?"}
+  description={step === "done"
+    ? "The old secret stopped working. Put this one on your server."
+    : "The current secret stops working right away, so /siteverify fails until your server has the new one."}
 >
-  <CopyText value={secret ?? ""} label="Copy secret key" />
+  {#if step === "done"}
+    <div class="flex flex-col gap-3">
+      <RevealedValue value={secret} label="Copy secret key" />
+      <div class="ks-swap flex items-center justify-between gap-3 rounded-[10px] border border-border py-1 ps-3 pe-1">
+        <code class="min-w-0 truncate font-mono text-sm text-muted-foreground">CAP_SECRET={secret.slice(0, 6)}…</code>
+        <CopyButton text={`CAP_SECRET=${secret}`} label="Copy as .env line" copiedLabel=".env line copied" />
+      </div>
+    </div>
+  {:else}
+    <ul class="flex flex-col gap-2 text-sm text-pretty text-muted-foreground">
+      <li class="flex gap-2.5"><span class="ks-step">1</span>Reset, then copy the new secret.</li>
+      <li class="flex gap-2.5"><span class="ks-step">2</span>Replace CAP_SECRET on your server and redeploy.</li>
+    </ul>
+  {/if}
   {#snippet footer()}
-    <Button variant="primary" onclick={() => (showSecret = false)}>Done</Button>
+    {#if step === "done"}
+      <Button variant="primary" onclick={() => (rotating = false)}>Done</Button>
+    {:else}
+      <Button disabled={step === "busy"} onclick={() => (rotating = false)}>Cancel</Button>
+      <Button variant="danger" aria-busy={step === "busy"} onclick={rotate}>
+        {#if step === "busy"}<Spinner class="size-3.5" label="Resetting" />{/if}
+        Reset secret key
+      </Button>
+    {/if}
   {/snippet}
 </Dialog>
+
+<Dialog
+  bind:open={deleting}
+  title="Delete {keyName}?"
+  description="This deletes the key with its stats, rules, lists and share links. Sites using it stop working. You can't undo this."
+>
+  <form
+    class="flex flex-col gap-1.5"
+    onsubmit={(e) => {
+      e.preventDefault();
+      remove();
+    }}
+  >
+    <label for="ksDeleteName" class="text-sm">Type <span class="font-medium select-all">{keyName}</span> to confirm</label>
+    <Input id="ksDeleteName" autocomplete="off" spellcheck="false" bind:value={typed} />
+  </form>
+  {#snippet footer()}
+    <Button disabled={busy} onclick={() => (deleting = false)}>Cancel</Button>
+    <Button variant="danger" disabled={!matches} aria-busy={busy} onclick={remove}>
+      {#if busy}<Spinner class="size-3.5" label="Deleting" />{/if}
+      Delete key
+    </Button>
+  {/snippet}
+</Dialog>
+
+<style>
+  .ks-step {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: var(--muted);
+    color: var(--foreground);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+
+</style>

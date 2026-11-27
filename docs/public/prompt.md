@@ -204,7 +204,7 @@ You cannot read the user's dashboard. Ask them explicitly, and tell them exactly
 
 If you will need to create or manage keys programmatically, ask for a **dashboard API key** instead:
 
-> In the dashboard, go to **Instance settings > API keys**, create one, and paste it here. I'll use it to create the site key for you.
+> In the dashboard, go to **API and MCP**, create one, and paste it here. I'll use it to create the site key for you.
 
 With that API key you can create a site key directly:
 

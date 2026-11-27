@@ -2,6 +2,8 @@
 import { DropdownMenu } from "bits-ui";
 import { getContext, setContext } from "svelte";
 import { cn } from "../../../lib/utils.js";
+import "../../../polish/overlays/motion.css";
+import { glide } from "../../../polish/overlays/glide.js";
 import { menuSizes, sizeKey } from "./sizes.js";
 
 let {
@@ -20,6 +22,11 @@ let {
 const inherited = getContext(sizeKey);
 const resolved = $derived(size ?? inherited?.() ?? "default");
 setContext(sizeKey, () => resolved);
+
+let pad = $state(null);
+$effect(() => {
+  if (ref && pad) return glide(ref, pad);
+});
 </script>
 
 <DropdownMenu.Portal {...portalProps}>
@@ -32,12 +39,13 @@ setContext(sizeKey, () => resolved);
     data-slot="dropdown-menu-content"
     data-size={resolved}
     class={cn(
-      "z-50 max-h-(--bits-floating-available-height) w-(--bits-floating-anchor-width) origin-(--bits-floating-transform-origin) overflow-x-hidden overflow-y-auto bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] outline-none data-[state=closed]:animate-out data-[state=closed]:overflow-hidden data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+      "relative z-50 max-h-(--bits-floating-available-height) w-(--bits-floating-anchor-width) overflow-x-hidden overflow-y-auto bg-popover text-popover-foreground outline-none data-ending-style:overflow-hidden",
       menuSizes[resolved].panel,
       className,
     )}
     {...rest}
   >
+    <span bind:this={pad} data-slot="menu-glide" aria-hidden="true"></span>
     {@render children?.()}
   </DropdownMenu.Content>
 </DropdownMenu.Portal>

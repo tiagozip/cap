@@ -1,4 +1,5 @@
 <script>
+import { untrack } from "svelte";
 import { cn } from "../../../lib/utils.js";
 import { dismissToast, pauseToasts, toasts } from "../toast.svelte.js";
 import ToastPill from "./ToastPill.svelte";
@@ -19,7 +20,8 @@ const heights = $derived(notes.map((note) => sizes[note.id]?.height ?? 36));
 const deck = $derived(notes[0] ? sizes[notes[0].id] : undefined);
 
 $effect(() => {
-  pauseToasts(open || hidden);
+  const pause = open || hidden;
+  untrack(() => pauseToasts(pause));
 });
 
 const remembered = new Map();
@@ -51,12 +53,14 @@ const place = (id) => placements[id] ?? remembered.get(id) ?? fallback;
 
 const measure = (node, id) => {
   const observer = new ResizeObserver(() => {
-    const { maxWidth, maxHeight } = node.style;
+    const { maxWidth, maxHeight, minWidth } = node.style;
     node.style.maxWidth = "";
     node.style.maxHeight = "";
+    node.style.minWidth = "";
     const next = { width: node.offsetWidth, height: node.offsetHeight };
     node.style.maxWidth = maxWidth;
     node.style.maxHeight = maxHeight;
+    node.style.minWidth = minWidth;
     const current = sizes[id];
     if (current?.width === next.width && current?.height === next.height)
       return;
@@ -126,6 +130,7 @@ const leave = (_node, params) => {
         class="toast-cap relative flex flex-col"
         style:max-width={place(note.id).behind && deck ? `${deck.width}px` : undefined}
         style:max-height={place(note.id).behind && deck ? `${deck.height}px` : undefined}
+        style:min-width={place(note.id).behind && deck ? `${deck.width}px` : undefined}
         {@attach (node) => measure(node, note.id)}
       >
         <ToastPill
@@ -149,6 +154,7 @@ const leave = (_node, params) => {
       transform 300ms cubic-bezier(0.23, 1, 0.32, 1),
       opacity 300ms cubic-bezier(0.23, 1, 0.32, 1),
       max-width 300ms cubic-bezier(0.23, 1, 0.32, 1),
+      min-width 300ms cubic-bezier(0.23, 1, 0.32, 1),
       max-height 300ms cubic-bezier(0.23, 1, 0.32, 1);
   }
   @media (prefers-reduced-motion: reduce) {

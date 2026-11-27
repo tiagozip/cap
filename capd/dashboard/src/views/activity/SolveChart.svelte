@@ -40,12 +40,16 @@ const bins = $derived.by(() => {
   return out;
 });
 
+const at = (v) =>
+  (PER_DOUBLING * Math.log2(Math.max(solve.size, v) / solve.size) - span.lo) /
+  (span.hi - span.lo);
+
 const ticks = $derived(
   TICKS.filter((v) => v >= edge(span.lo) && v <= edge(span.hi)).map((v) => ({
     x:
       (PER_DOUBLING * Math.log2(v / solve.size) - span.lo) /
       (span.hi - span.lo),
-    label: latency(v),
+    label: latency(v).replace(/\.0s$/, "s"),
   })),
 );
 
@@ -85,23 +89,32 @@ const stats = $derived.by(() => {
 });
 </script>
 
+{#snippet marks()}
+  {#if stats}
+    {@const x = Math.min(1, Math.max(0, at(stats.median)))}
+    <div data-bone="ignore" class="pointer-events-none absolute inset-y-0 z-10 border-s border-dashed border-foreground/35" style:left="{x * 100}%">
+      <span class="absolute -top-4 rounded-[4px] px-1 text-[11px] leading-4 whitespace-nowrap text-muted-foreground tabular-nums {x > 0.75 ? 'end-1' : 'start-1'}">Median {latency(stats.median)}</span>
+    </div>
+  {/if}
+{/snippet}
+
 <Bars
   {bins}
+  {marks}
   bind:hover
   label="Solves by how long the proof of work took"
   title={(b) => `${latency(b.from)} to ${latency(b.to)}`}
   {ticks}
+  empty="No solves in this period"
 />
 
-<div class="mt-4 border-t border-border pt-4">
-  <p class="max-w-md text-sm text-pretty text-muted-foreground">
-    {#if !stats}
-      No solves in this period.
-    {:else}
+{#if stats}
+  <div class="mt-4 border-t border-border pt-4">
+    <p class="max-w-md text-sm text-pretty text-muted-foreground">
       Half of all solves finish in <span class="font-medium text-foreground tabular-nums">{latency(stats.median)}</span>.
       The fastest tenth take under <span class="font-medium text-foreground tabular-nums">{latency(stats.p10)}</span>, and
       <span class="font-medium tabular-nums {stats.fastBad > stats.allBad * 1.5 ? 'text-warning' : 'text-foreground'}">{stats.fastBad}%</span>
       of those were flagged or blocked, against {stats.allBad}% overall.
-    {/if}
-  </p>
-</div>
+    </p>
+  </div>
+{/if}

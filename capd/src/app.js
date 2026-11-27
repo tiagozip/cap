@@ -1,5 +1,6 @@
 import { swagger } from "@elysiajs/swagger";
 import { Elysia } from "elysia";
+import { db } from "#db";
 import { loadIPDB } from "#ipdb";
 import { liveServer, startLive } from "#live";
 import { uuidv7 } from "#platform";
@@ -11,20 +12,29 @@ import { capServer } from "./cap.js";
 import { initEvents } from "./events/index.js";
 import { migrateOldHashes } from "./hash-migration.js";
 import { healthServer } from "./health.js";
+import { exportRoutes, insightRoutes } from "./insight-routes.js";
+import { mcpServer } from "./mcp.js";
+import { oauthServer } from "./oauth.js";
 import { migrateLegacyBlocks } from "./policy/rules.js";
 import { startWebhooks } from "./policy/webhooks.js";
 import { policyRoutes } from "./policy-routes.js";
+import valkeyRateLimit from "./ratelimit.js";
 import { server } from "./server.js";
 import {
   checkCorsOrigin,
   corsTarget,
+  getLoginBackground,
   loadCorsDefault,
   loadFiltering,
   loadHeaders,
+  loadLoginBackground,
   loadRatelimit,
+  loginBackgroundImageKey,
+  publicLoginBackground,
 } from "./settings-cache.js";
 import { shareServer } from "./share.js";
 import { siteverifyServer } from "./siteverify.js";
+import { startUpdateCheck } from "./update-check.js";
 
 export async function startup() {
   await initEvents();
@@ -39,6 +49,7 @@ export async function startup() {
   startAssets();
   await loadSettingsCaches();
   loadIPDB().catch((e) => console.warn("[cap] IP DB load:", e.message));
+  startUpdateCheck();
 }
 
 export async function loadSettingsCaches() {
@@ -47,8 +58,45 @@ export async function loadSettingsCaches() {
     loadRatelimit(),
     loadCorsDefault(),
     loadFiltering(),
+    loadLoginBackground(),
   ]);
 }
+
+const loginBackgroundServer = new Elysia({ name: "cap-login-background" })
+  .use(valkeyRateLimit({ duration: 10_000, max: 60 }))
+  .get("/login-background.json", async ({ set }) => {
+    set.headers["cache-control"] = "no-cache";
+    set.headers["x-content-type-options"] = "nosniff";
+    await loadLoginBackground().catch(() => {});
+    return publicLoginBackground();
+  })
+  .get("/login-background", async ({ request, query }) => {
+    const { mode, image } = await loadLoginBackground().catch(() =>
+      getLoginBackground(),
+    );
+    const missing = () =>
+      new Response("Not found", {
+        status: 404,
+        headers: { "cache-control": "no-cache" },
+      });
+    if (mode !== "image" || !image) return missing();
+    const headers = {
+      etag: `"${image.etag}"`,
+      "cache-control":
+        query.v === image.etag
+          ? "public, max-age=31536000, immutable"
+          : "public, no-cache",
+      "x-content-type-options": "nosniff",
+      "content-security-policy": "default-src 'none'",
+    };
+    if (request.headers.get("if-none-match") === headers.etag)
+      return new Response(null, { status: 304, headers });
+    const bytes = await db.getBuffer(loginBackgroundImageKey(image.etag));
+    if (!bytes) return missing();
+    return new Response(bytes, {
+      headers: { ...headers, "content-type": image.type },
+    });
+  });
 
 export function createApp(options = {}, { docs = true } = {}) {
   const app = new Elysia(options);
@@ -58,7 +106,13 @@ export function createApp(options = {}, { docs = true } = {}) {
         scalarConfig: {
           customCss: `.section-header-wrapper .section-header.tight { margin-top: 10px; }`,
         },
-        exclude: ["/", "/auth/login", "/share"],
+        exclude: [
+          "/",
+          "/auth/login",
+          "/share",
+          "/login-background",
+          "/login-background.json",
+        ],
         documentation: {
           tags: [
             {
@@ -184,16 +238,28 @@ export function createApp(options = {}, { docs = true } = {}) {
     })
     .use(publicStatic)
     .use(healthServer)
-    .get("/", ({ cookie, set }) =>
-      servePage(
-        cookie.cap_authed?.value === "yes" ? "index.html" : "login.html",
-        set,
-      ),
-    )
+    .use(loginBackgroundServer)
+    .get("/", async ({ cookie, set }) => {
+      if (cookie.cap_authed?.value === "yes")
+        return servePage("index.html", set);
+      await loadLoginBackground().catch(() => {});
+      const loginBackground = publicLoginBackground();
+      return servePage("login.html", set, {
+        loginBackground,
+        preload:
+          loginBackground.mode === "image"
+            ? `./login-background?v=${loginBackground.version}`
+            : undefined,
+      });
+    })
     .use(auth)
+    .use(oauthServer)
+    .use(mcpServer(() => app))
     .use(liveServer)
     .use(server)
     .use(policyRoutes)
+    .use(exportRoutes)
+    .use(insightRoutes)
     .use(shareServer)
     .use(assetsServer)
     .use(capServer)

@@ -1,7 +1,7 @@
 import { tv } from "tailwind-variants";
 
 export const buttonVariants = tv({
-  base: "group/button relative isolate inline-flex shrink-0 items-center justify-center rounded-lg bg-clip-padding text-sm font-medium whitespace-nowrap transition-ring outline-none select-none before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:border before:border-transparent before:transition-[scale,background-color,border-color] before:duration-150 before:ease-out focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:before:transition-none active:not-aria-[haspopup]:not-data-[variant=push]:before:scale-[0.985] data-[state=on]:not-data-[variant=push]:before:scale-[0.985] [&.w-full]:motion-safe:active:not-aria-[haspopup]:not-data-[variant=push]:before:scale-[0.997_0.985] [&.w-full]:motion-safe:data-[state=on]:not-data-[variant=push]:before:scale-[0.997_0.985] motion-reduce:active:before:scale-100 motion-reduce:data-[state=on]:before:scale-100 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  base: "group/button relative isolate inline-flex shrink-0 items-center justify-center rounded-lg bg-clip-padding text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,outline-color,scale] duration-(--ring-duration) ease-(--ease-out) outline-none motion-reduce:transition-none select-none before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:border before:border-transparent before:transition-[scale,background-color,border-color] before:duration-150 before:ease-out focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:before:transition-none motion-safe:active:not-aria-[haspopup]:not-data-[variant=push]:scale-[0.97] [&.w-full]:motion-safe:active:not-aria-[haspopup]:not-data-[variant=push]:scale-[0.99] data-[state=on]:not-data-[variant=push]:before:scale-[0.985] [&.w-full]:motion-safe:data-[state=on]:not-data-[variant=push]:before:scale-[0.997_0.985] motion-reduce:data-[state=on]:before:scale-100 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   variants: {
     variant: {
       default: "t-raise t-raise-primary text-primary-foreground",
@@ -39,6 +39,10 @@ export const buttonVariants = tv({
     flat: { true: "t-flat", false: "" },
   },
   compoundVariants: [
+    {
+      variant: "link",
+      class: "px-0",
+    },
     {
       rounded: true,
       size: "xs",

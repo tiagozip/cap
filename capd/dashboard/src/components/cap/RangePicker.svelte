@@ -1,13 +1,11 @@
 <script>
 import Icon from "../Icon.svelte";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "../ui/index.js";
+import DropdownMenu from "../ui/dropdown-menu/DropdownMenu.svelte";
+import DropdownMenuContent from "../ui/dropdown-menu/DropdownMenuContent.svelte";
+import DropdownMenuRadioGroup from "../ui/dropdown-menu/DropdownMenuRadioGroup.svelte";
+import DropdownMenuRadioItem from "../ui/dropdown-menu/DropdownMenuRadioItem.svelte";
+import DropdownMenuShortcut from "../ui/dropdown-menu/DropdownMenuShortcut.svelte";
+import DropdownMenuTrigger from "../ui/dropdown-menu/DropdownMenuTrigger.svelte";
 import Button from "./Button.svelte";
 
 let { value, ranges, onchange, class: className = "" } = $props();

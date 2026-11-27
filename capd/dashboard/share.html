@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cap stats</title>
     <meta name="robots" content="noindex" />
+    <meta name="description" content="Read-only CAPTCHA stats shared from Cap." />
+    <meta property="og:title" content="Cap stats" />
+    <meta property="og:description" content="Read-only CAPTCHA stats shared from Cap." />
+    <meta name="theme-color" content="#fcfcfd" />
     <link rel="icon" href="./public/logo-small.webp" />
     <script>
       (() => {
@@ -15,6 +19,7 @@
         const dark = pref === "dark" || (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.classList.toggle("dark", dark);
         document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document.querySelector('meta[name="theme-color"]').content = dark ? "#1b1b1e" : "#fcfcfd";
       })();
     </script>
   </head>

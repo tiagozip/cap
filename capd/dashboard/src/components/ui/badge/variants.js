@@ -1,7 +1,7 @@
 import { tv } from "tailwind-variants";
 
 export const badgeVariants = tv({
-  base: "group/badge t-label relative isolate inline-flex w-fit shrink-0 items-center justify-center gap-1 rounded-full border border-transparent py-0.5 font-medium whitespace-nowrap transition-ring before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:border before:border-transparent before:transition-[scale,background-color,border-color] before:duration-150 before:ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:before:transition-none aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [a,button]:active:before:scale-[0.97] motion-reduce:[a,button]:active:before:scale-100 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  base: "group/badge t-label relative isolate inline-flex w-fit shrink-0 items-center justify-center gap-1 border border-transparent py-0.5 font-medium whitespace-nowrap transition-ring before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:border before:border-transparent before:transition-[scale,background-color,border-color] before:duration-150 before:ease-out focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 motion-reduce:before:transition-none aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [a,button]:active:before:scale-[0.97] motion-reduce:[a,button]:active:before:scale-100 [&>svg]:pointer-events-none [&>svg]:size-3!",
   variants: {
     variant: {
       default: "t-raise t-raise-primary text-primary-foreground",
@@ -19,8 +19,8 @@ export const badgeVariants = tv({
       tint: "t-raise t-raise-tint",
     },
     size: {
-      default: "h-6 px-2 text-sm",
-      sm: "h-5 px-1.5 text-xs",
+      default: "h-6 rounded-[6px] px-2 text-sm",
+      sm: "h-5 rounded-[5px] px-1.5 text-xs",
     },
   },
   defaultVariants: { variant: "default", size: "default" },

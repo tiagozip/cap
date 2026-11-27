@@ -391,6 +391,57 @@ export function detectAutomation(S, opts = {}) {
     false,
   );
 
+  const tzo = isNum(S.tzo) ? S.tzo : null;
+  const tzShift =
+    tzo !== null && tzo !== 0 && tzo % 15 === 0 && Math.abs(tzo) <= 1680;
+  add(
+    "timezone_override",
+    !tzShift,
+    tzo === null
+      ? "not measured"
+      : tzShift
+        ? `Intl is ${-tzo} minutes off the system clock`
+        : "consistent",
+    false,
+  );
+
+  const claimsWindows = /Windows NT/.test(ua);
+  const claimsUnix = /Macintosh|Mac OS X|X11|Linux x86_64|CrOS/.test(ua);
+  const lc = Array.isArray(S.lc) ? S.lc : [];
+  const libcWin = lc[0] === 2147483647 && lc[1] === false;
+  const libcUnix = lc[0] === 1215752191 && lc[1] === true;
+  const libcLie =
+    !mobile &&
+    ((claimsWindows && libcUnix) || (claimsUnix && !claimsWindows && libcWin));
+  add(
+    "libc_mismatch",
+    !libcLie,
+    !libcWin && !libcUnix
+      ? "not measured"
+      : libcLie
+        ? `C library behaves like ${libcWin ? "Windows" : "Linux or macOS"}`
+        : "consistent",
+    false,
+  );
+
+  const ws = S.ws === 3 || S.ws === 4 ? S.ws : null;
+  const editLie =
+    !mobile &&
+    chromium &&
+    !gecko &&
+    ws !== null &&
+    ((claimsWindows && ws === 3) || (claimsUnix && !claimsWindows && ws === 4));
+  add(
+    "editing_mismatch",
+    !editLie,
+    ws === null
+      ? "not measured"
+      : editLie
+        ? `word step ${ws} contradicts the claimed OS`
+        : "consistent",
+    false,
+  );
+
   const lg = Array.isArray(S.langs) ? S.langs : [];
   const langOdd = lg[0] === 0 || (isNum(lg[0]) && lg[0] > 0 && lg[1] === false);
   add(

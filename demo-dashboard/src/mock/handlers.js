@@ -6,7 +6,7 @@ import {
   risk,
   WEBHOOK_TRIGGERS,
 } from "virtual:cap-demo-server";
-import { isIp, parseCidr } from "../../../capd/src/policy/ip.js";
+import { ipInCidr, isIp, parseCidr } from "../../../capd/src/policy/ip.js";
 import {
   cleanAgentActions,
   cleanSignalActions,
@@ -701,6 +701,83 @@ route(
   ),
 );
 
+const EXPORT_COLUMNS = [
+  "time",
+  "id",
+  "ts",
+  "type",
+  "outcome",
+  "reason",
+  "ip",
+  "country",
+  "asn",
+  "asn_org",
+  "ua",
+  "browser",
+  "os",
+  "platform",
+  "origin",
+  "lang",
+  "fp",
+  "protocol",
+  "solve_ms",
+  "score",
+  "verdict",
+  "agent",
+  "agent_confidence",
+  "agent_verified",
+  "flags",
+  "rule",
+  "token_id",
+];
+
+const csvCell = (v) => {
+  if (v == null) return "";
+  const s = Array.isArray(v) ? v.join(" ") : String(v);
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+  return /[",\n\r]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
+};
+
+route(
+  "GET",
+  "/keys/:siteKey/events/export",
+  withKey(({ key, query }) => {
+    const opts = queryOpts(query);
+    const csv = query.get("format") !== "ndjson";
+    const rows = [];
+    let cursor;
+    while (rows.length < 5000) {
+      const page = listEvents(
+        key.siteKey,
+        { ...opts, cursor, limit: 200 },
+        retention(),
+      );
+      rows.push(...page.events);
+      if (!page.next) break;
+      cursor = page.next;
+    }
+    const lines = rows.map((e) =>
+      csv
+        ? EXPORT_COLUMNS.map((c) =>
+            csvCell(c === "time" ? new Date(e.ts).toISOString() : e[c]),
+          ).join(",")
+        : JSON.stringify(e),
+    );
+    if (csv) lines.unshift(EXPORT_COLUMNS.join(","));
+    const day = new Date(rows.at(-1)?.ts ?? Date.now())
+      .toISOString()
+      .slice(0, 10);
+    return {
+      export: true,
+      body: `${lines.join("\n")}\n`,
+      type: csv
+        ? "text/csv; charset=utf-8"
+        : "application/x-ndjson; charset=utf-8",
+      filename: `cap-${key.siteKey}-events-${day}.${csv ? "csv" : "ndjson"}`,
+    };
+  }),
+);
+
 route(
   "GET",
   "/keys/:siteKey/events/:id",
@@ -714,6 +791,647 @@ route(
   "GET",
   "/keys/:siteKey/rules",
   withKey(({ key }) => rulesOut(state.rules[key.siteKey] ?? [])),
+);
+
+const previewValue = (c, e) => {
+  if (c.field === "header" || c.field.endsWith("_velocity")) return null;
+  if (c.field === "visitor") return e.fp;
+  if (c.field === "flag")
+    return (e.flags ?? []).filter((f) => !f.startsWith("rule:"));
+  return e[c.field];
+};
+
+const inPreviewList = (id, e) => {
+  const list = state.lists.find((l) => l.id === id);
+  const now = Date.now();
+  return (list?.items ?? []).some((i) => {
+    if (i.expires && i.expires <= now) return false;
+    const v = String(i.value).toLowerCase();
+    if (i.kind === "ip") return e.ip?.toLowerCase() === v;
+    if (i.kind === "cidr") {
+      const parsed = parseCidr(i.value);
+      return !!(parsed && e.ip && ipInCidr(e.ip, parsed));
+    }
+    if (i.kind === "asn") return String(e.asn) === v;
+    if (i.kind === "org") return e.asn_org?.toLowerCase() === v;
+    if (i.kind === "country") return e.country?.toLowerCase() === v;
+    if (i.kind === "ua") return !!e.ua?.toLowerCase().includes(v);
+    if (i.kind === "visitor") return e.fp === i.value;
+    return false;
+  });
+};
+
+const previewTest = (c, e) => {
+  const v = previewValue(c, e);
+  if (c.op === "exists") return v != null && v !== "";
+  if (c.op === "not_exists") return v == null || v === "";
+  if (c.op === "is_true") return v === true;
+  if (c.op === "is_false") return v !== true;
+  if (c.op === "in_list") return inPreviewList(c.value, e);
+  if (c.op === "not_in_list") return !inPreviewList(c.value, e);
+  if (c.op === "has" || c.op === "not_has") {
+    const flags = v ?? [];
+    const found = c.value.endsWith("*")
+      ? flags.some((f) => f.startsWith(c.value.slice(0, -1)))
+      : flags.includes(c.value);
+    return c.op === "has" ? found : !found;
+  }
+  if (v == null || v === "")
+    return c.op === "neq" || c.op === "not_in" || c.op === "not_contains";
+  if (RULE_FIELDS[c.field]?.type === "number") {
+    const n = Number(v);
+    if (c.op === "eq") return n === c.value;
+    if (c.op === "neq") return n !== c.value;
+    if (c.op === "gt") return n > c.value;
+    if (c.op === "gte") return n >= c.value;
+    if (c.op === "lt") return n < c.value;
+    if (c.op === "lte") return n <= c.value;
+    return false;
+  }
+  const lower = String(v).toLowerCase();
+  const want = Array.isArray(c.value) ? "" : String(c.value).toLowerCase();
+  if (c.op === "eq") return lower === want;
+  if (c.op === "neq") return lower !== want;
+  if (c.op === "contains") return lower.includes(want);
+  if (c.op === "not_contains") return !lower.includes(want);
+  if (c.op === "starts_with") return lower.startsWith(want);
+  if (c.op === "matches") {
+    try {
+      return new RegExp(c.value, "i").test(String(v));
+    } catch {
+      return false;
+    }
+  }
+  if (c.op === "in" || c.op === "not_in") {
+    const found = c.value.some((x) => {
+      if (x.toLowerCase() === lower) return true;
+      const parsed = x.includes("/") && parseCidr(x);
+      return !!(parsed && c.field === "ip" && ipInCidr(String(v), parsed));
+    });
+    return c.op === "in" ? found : !found;
+  }
+  return false;
+};
+
+const previewHits = (rule, e) => {
+  for (const c of rule.conditions) {
+    const ok = previewTest(c, e);
+    if (rule.match === "all" && !ok) return false;
+    if (rule.match === "any" && ok) return true;
+  }
+  return rule.match === "all";
+};
+
+const PREVIEW_UNSEEN = new Set(["header", "ip_velocity", "visitor_velocity"]);
+
+function simulatePreview(rules, sample) {
+  const per = new Map(
+    rules.map((r) => [
+      r.id,
+      {
+        matched: 0,
+        decided: 0,
+        stages: { challenge: 0, redeem: 0 },
+        outcomes: { pass: 0, fail: 0, block: 0, limit: 0 },
+        changes: { blocked: 0, unblocked: 0 },
+        estimate: { matched: 0, blocked: 0, unblocked: 0 },
+        ips: new Set(),
+        visitors: new Set(),
+        top: { ip: new Map(), country: new Map(), asn_org: new Map() },
+        examples: [],
+      },
+    ]),
+  );
+  const totals = {
+    events: 0,
+    block: 0,
+    allow: 0,
+    flag: 0,
+    harder: 0,
+    blocked: 0,
+    unblocked: 0,
+  };
+  for (const [e, w] of sample) {
+    const stage = e.type === "redeem" ? "redeem" : "challenge";
+    totals.events += w;
+    const lifted = e.outcome === "block" && e.reason !== "rate_limited";
+    const passed = e.outcome !== "block" && e.outcome !== "limit";
+    let action = null;
+    let flagged = false;
+    let harder = false;
+    for (const rule of rules) {
+      const requestOnly = rule.conditions.every(
+        (c) => RULE_FIELDS[c.field]?.stage === "request",
+      );
+      if (stage === "challenge" && !requestOnly) continue;
+      if (!previewHits(rule, e)) continue;
+      const c = per.get(rule.id);
+      c.matched++;
+      c.estimate.matched += w;
+      c.stages[stage]++;
+      if (c.outcomes[e.outcome] != null) c.outcomes[e.outcome]++;
+      if (e.ip) c.ips.add(e.ip);
+      if (e.fp) c.visitors.add(e.fp);
+      for (const f of ["ip", "country", "asn_org"])
+        if (e[f]) c.top[f].set(e[f], (c.top[f].get(e[f]) ?? 0) + 1);
+      if (c.examples.length < 5) c.examples.push(e);
+      if (action || rule.enabled === false) continue;
+      c.decided++;
+      if (rule.action === "flag") flagged = true;
+      else if (rule.action === "harder") harder = true;
+      else {
+        action = rule.action;
+        if (action === "block" && passed) {
+          c.changes.blocked++;
+          c.estimate.blocked += w;
+        }
+        if (action === "allow" && lifted) {
+          c.changes.unblocked++;
+          c.estimate.unblocked += w;
+        }
+      }
+    }
+    if (action === "block") totals.block += w;
+    if (action === "allow") totals.allow += w;
+    if (flagged) totals.flag += w;
+    if (harder) totals.harder += w;
+    if (action === "block" && passed) totals.blocked += w;
+    const ruleBlocked = e.outcome === "block" && e.reason?.startsWith("rule:");
+    if ((action === "allow" && lifted) || (ruleBlocked && action !== "block"))
+      totals.unblocked += w;
+  }
+  for (const k of Object.keys(totals)) totals[k] = Math.round(totals[k]);
+  return { per, totals };
+}
+
+route(
+  "POST",
+  "/keys/:siteKey/rules/preview",
+  withKey(({ key, body }) => {
+    const { rules, error } = validateRules(body?.rules);
+    if (error) return fail(error);
+    const lists = new Set(state.lists.map((l) => l.id));
+    const missing = rules.find((r) =>
+      r.conditions.some((c) => c.field === "list" && !lists.has(c.value)),
+    );
+    if (missing)
+      return fail(`Rule "${missing.name}" points at a list that doesn't exist`);
+    const range = body?.range ?? "24h";
+    const span = overview(key.siteKey, { range }, retention()).range;
+    const windows = 12;
+    const step = Math.ceil((span.to - span.from) / windows);
+    const sample = [];
+    const kinds = [
+      [{ field: "type", neg: false, value: "redeem" }],
+      [
+        { field: "type", neg: false, value: "challenge" },
+        { field: "outcome", neg: false, value: "block" },
+        { field: "outcome", neg: false, value: "limit" },
+      ],
+    ];
+    for (let i = 0; i < windows; i++) {
+      const from = span.from + i * step;
+      const to = Math.min(span.to, from + step);
+      for (const filters of kinds) {
+        const { events } = listEvents(
+          key.siteKey,
+          { from, to, filters, limit: 250 },
+          retention(),
+        );
+        if (!events.length) continue;
+        const total = overview(key.siteKey, { from, to, filters }, retention())
+          .summary.total;
+        const w = Math.max(1, total / events.length);
+        for (const e of events) sample.push([e, w]);
+      }
+    }
+    sample.sort((a, b) => b[0].ts - a[0].ts);
+    const draft = simulatePreview(rules, sample);
+    const saved = simulatePreview(state.rules[key.siteKey] ?? [], sample);
+    const topOf = (m) =>
+      [...m]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([value, n]) => ({ value, n }));
+    return {
+      range: { from: span.from, to: span.to },
+      sampled: sample.length,
+      estimated: sample.some(([, w]) => w > 1),
+      ipMasked: state.settings.analytics.ipMode !== "full",
+      rules: rules.map((r) => {
+        const c = draft.per.get(r.id);
+        return {
+          id: r.id,
+          name: r.name,
+          action: r.action,
+          enabled: r.enabled !== false,
+          stage: r.conditions.every(
+            (x) => RULE_FIELDS[x.field]?.stage === "request",
+          )
+            ? "challenge"
+            : "redeem",
+          unseen: [
+            ...new Set(
+              r.conditions
+                .map((x) => x.field)
+                .filter((f) => PREVIEW_UNSEEN.has(f)),
+            ),
+          ],
+          matched: c.matched,
+          decided: c.decided,
+          stages: c.stages,
+          outcomes: c.outcomes,
+          changes: c.changes,
+          estimate: {
+            matched: Math.round(c.estimate.matched),
+            blocked: Math.round(c.estimate.blocked),
+            unblocked: Math.round(c.estimate.unblocked),
+          },
+          ips: c.ips.size,
+          visitors: c.visitors.size,
+          top: {
+            ip: topOf(c.top.ip),
+            country: topOf(c.top.country),
+            asn_org: topOf(c.top.asn_org),
+          },
+          examples: c.examples,
+        };
+      }),
+      totals: { draft: draft.totals, saved: saved.totals },
+    };
+  }),
+);
+
+route(
+  "GET",
+  "/keys/:siteKey/analytics/checks",
+  withKey(({ key, query }) => {
+    const range = query.get("range") ?? "7d";
+    const base = overview(
+      key.siteKey,
+      { range, filters: [{ field: "type", neg: false, value: "redeem" }] },
+      retention(),
+    );
+    const span = base.range.to - base.range.from;
+    const prevWin = { from: base.range.from - span, to: base.range.from };
+    const dims = ["flag", "agent"];
+    const now = topDimensions(
+      key.siteKey,
+      { range, dims, limit: 40 },
+      retention(),
+    );
+    const before = topDimensions(
+      key.siteKey,
+      { ...prevWin, dims, limit: 100 },
+      retention(),
+    );
+    const total = (b) =>
+      b.challenges +
+      b.solved +
+      b.failed +
+      b.blocked +
+      b.limited +
+      b.verified +
+      (b.other ?? 0);
+    const build = (dim) => {
+      const prev = new Map((before[dim] ?? []).map((r) => [r.value, r.n]));
+      const out = {};
+      for (const row of now[dim] ?? []) {
+        if (dim === "flag" && String(row.value).startsWith("rule:")) continue;
+        const o = overview(
+          key.siteKey,
+          { range, filters: [{ field: dim, neg: false, value: row.value }] },
+          retention(),
+        );
+        out[row.value] = {
+          n: row.n,
+          blocked: row.blocked ?? 0,
+          previous: prev.get(row.value) ?? 0,
+          series: o.series.map(total),
+        };
+      }
+      for (const [value, n] of prev) {
+        if (out[value] || (dim === "flag" && value.startsWith("rule:")))
+          continue;
+        out[value] = {
+          n: 0,
+          blocked: 0,
+          previous: n,
+          series: base.series.map(() => 0),
+        };
+      }
+      return out;
+    };
+    return {
+      range: base.range,
+      attempts: {
+        current: base.summary.total,
+        previous: base.previous.total,
+      },
+      flags: build("flag"),
+      agents: build("agent"),
+    };
+  }),
+);
+
+route("GET", "/lists/:id/hits", ({ params, query }) => {
+  const list = state.lists.find((l) => l.id === params.id);
+  if (!list) return fail("List not found");
+  const range = query.get("range") ?? "7d";
+  const columns = { ip: "ip", asn: "asn", country: "country", visitor: "fp" };
+  const now = Date.now();
+  const items = (list.items ?? [])
+    .filter((i) => !i.expires || i.expires > now)
+    .slice(0, 1000);
+  const byKind = new Map();
+  for (const i of items) {
+    if (!columns[i.kind] && i.kind !== "org") continue;
+    byKind.set(i.kind, [...(byKind.get(i.kind) ?? []), String(i.value)]);
+  }
+  const hits = {};
+  const add = (key, row) => {
+    const cur = hits[key] ?? { n: 0, blocked: 0 };
+    cur.n += row.n;
+    cur.blocked += row.blocked ?? 0;
+    hits[key] = cur;
+  };
+  let span = null;
+  for (const key of state.keys) {
+    for (const [kind, values] of byKind) {
+      if (kind === "org") {
+        const wanted = new Set(values.map((v) => v.toLowerCase()));
+        const top = topDimensions(
+          key.siteKey,
+          { range, dims: ["asn_org"], limit: 100 },
+          retention(),
+        );
+        for (const row of top.asn_org ?? [])
+          if (wanted.has(String(row.value).toLowerCase()))
+            add(`org:${String(row.value).toLowerCase()}`, row);
+        continue;
+      }
+      const field = columns[kind];
+      const top = topDimensions(
+        key.siteKey,
+        {
+          range,
+          filters: values.map((value) => ({ field, neg: false, value })),
+          dims: [field],
+          limit: 100,
+        },
+        retention(),
+      );
+      for (const row of top[field] ?? []) add(`${kind}:${row.value}`, row);
+    }
+    span ??= overview(key.siteKey, { range }, retention()).range;
+  }
+  return {
+    range: { from: span?.from ?? now, to: span?.to ?? now },
+    counted: items.filter((i) => i.kind !== "cidr" && i.kind !== "ua").length,
+    total: items.length,
+    uncounted: [
+      ...new Set(
+        items.map((i) => i.kind).filter((k) => k === "cidr" || k === "ua"),
+      ),
+    ],
+    hits,
+  };
+});
+
+route(
+  "GET",
+  "/keys/:siteKey/analytics/movers",
+  withKey(({ key, query }) => {
+    const opts = queryOpts(query);
+    const range = opts.range ?? "24h";
+    const dims = [
+      "country",
+      "asn_org",
+      "flag",
+      "agent",
+      "reason",
+      "browser",
+      "rule",
+    ];
+    const cur = overview(key.siteKey, { ...opts, range }, retention());
+    const span = cur.range.to - cur.range.from;
+    const prevWin = { from: cur.range.from - span, to: cur.range.from };
+    const nowTop = topDimensions(
+      key.siteKey,
+      { ...opts, range, dims, limit: 50 },
+      retention(),
+    );
+    const prevTop = topDimensions(
+      key.siteKey,
+      { ...opts, range: undefined, ...prevWin, dims, limit: 50 },
+      retention(),
+    );
+    const total = cur.summary.total;
+    const previousTotal = cur.previous.total;
+    const scale = previousTotal ? total / previousTotal : 1;
+    const out = [];
+    for (const dim of dims) {
+      const current = nowTop[dim] ?? [];
+      const previous = new Map((prevTop[dim] ?? []).map((r) => [r.value, r]));
+      const prevFloor =
+        previous.size < 50
+          ? 0
+          : Math.min(...[...previous.values()].map((r) => r.n));
+      const consider = (value, c, p0) => {
+        if (
+          (dim === "flag" && /^(rule|agent):/.test(value)) ||
+          (dim === "reason" && String(value).startsWith("rule:"))
+        )
+          return;
+        const n = c?.n ?? 0;
+        const p = p0?.n ?? prevFloor;
+        if (Math.max(n, p) < 20) return;
+        const expected = p * scale;
+        const score = (n - expected) / Math.sqrt(expected + n + 1);
+        if (Math.abs(score) < 3) return;
+        const label = c?.label ?? p0?.label;
+        out.push({
+          dim,
+          value,
+          ...(label != null && { label }),
+          n,
+          previous: p,
+          expected: Math.round(expected),
+          change: p0 && p ? n / p - 1 : null,
+          blocked: c?.blocked ?? 0,
+          score: Math.round(score * 10) / 10,
+        });
+      };
+      const listed = new Set(current.map((r) => r.value));
+      for (const r of current) consider(r.value, r, previous.get(r.value));
+      if (current.length < 50)
+        for (const r of previous.values())
+          if (!listed.has(r.value)) consider(r.value, null, r);
+    }
+    out.sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
+    return {
+      range: { from: cur.range.from, to: cur.range.to },
+      total,
+      previousTotal,
+      movers: out.slice(0, 12),
+    };
+  }),
+);
+
+route(
+  "GET",
+  "/keys/:siteKey/rules/stats",
+  withKey(({ key, query }) => {
+    const range = query.get("range") ?? "24h";
+    const rules = state.rules[key.siteKey] ?? [];
+    const top = topDimensions(
+      key.siteKey,
+      { range, dims: ["rule", "flag"], limit: 100 },
+      retention(),
+    );
+    const viaRule = new Set(top.rule.map((r) => r.value));
+    const ids = new Set([
+      ...rules.map((r) => r.id),
+      ...viaRule,
+      ...top.flag
+        .filter((f) => f.value.startsWith("rule:"))
+        .map((f) => f.value.slice(5)),
+    ]);
+    const hitsOf = (b) =>
+      b.challenges +
+      b.solved +
+      b.failed +
+      b.blocked +
+      b.limited +
+      b.verified +
+      (b.other ?? 0);
+    let span = null;
+    const out = {};
+    for (const id of ids) {
+      const action = rules.find((r) => r.id === id)?.action;
+      const flagged = action === "flag" || (!action && !viaRule.has(id));
+      const filters = [
+        flagged
+          ? { field: "flag", neg: false, value: `rule:${id}` }
+          : { field: "rule", neg: false, value: id },
+      ];
+      const o = overview(key.siteKey, { range, filters }, retention());
+      span = o.range;
+      const series = o.series.map(hitsOf);
+      const hits = series.reduce((a, b) => a + b, 0);
+      const firstAt = series.findIndex((n) => n > 0);
+      const { failed, blocked, limited } = o.summary;
+      out[id] = {
+        hits,
+        previous: o.previous.total,
+        outcomes: {
+          pass: Math.max(0, hits - failed - blocked - limited),
+          fail: failed,
+          block: blocked,
+          limit: limited,
+        },
+        ips: o.summary.ips,
+        visitors: o.summary.clients,
+        first: firstAt >= 0 ? o.series[firstAt].b : null,
+        last: hits
+          ? (listEvents(key.siteKey, { range, filters, limit: 1 }, retention())
+              .events[0]?.ts ?? null)
+          : null,
+        series,
+        ...(!action && { removed: true }),
+      };
+    }
+    span ??= overview(key.siteKey, { range }, retention()).range;
+    return { range: span, rules: out };
+  }),
+);
+
+route(
+  "GET",
+  "/keys/:siteKey/events/:id/context",
+  withKey(({ key, params }) => {
+    const detail = eventDetail(key.siteKey, decodeURIComponent(params.id));
+    if (!detail?.event) return fail("Event not found");
+    const e = detail.event;
+    const retain = retention();
+    const to = Date.now() + MIN;
+    const from = to - retain * 86_400_000;
+    const week = to - 7 * 86_400_000;
+    const footprint = (field, value, since) => {
+      if (value == null || value === "") return null;
+      const filters = [{ field, neg: false, value: String(value) }];
+      const o = overview(key.siteKey, { from: since, to, filters }, retain);
+      if (!o.summary.total) return null;
+      const seen = o.series.filter((b) => hitsOf(b) > 0);
+      const s = o.summary;
+      return {
+        total: s.total,
+        blocked: s.blocked,
+        limited: s.limited,
+        failed: s.failed,
+        solved: s.solved,
+        flagged: s.flagged,
+        ips: s.ips,
+        visitors: s.clients,
+        first: seen[0]?.b ?? e.ts,
+        last: Math.max(e.ts, seen.at(-1)?.b ?? e.ts),
+      };
+    };
+    const hitsOf = (b) =>
+      b.challenges +
+      b.solved +
+      b.failed +
+      b.blocked +
+      b.limited +
+      b.verified +
+      (b.other ?? 0);
+    const ip = footprint("ip", e.ip, from);
+    const network = e.asn ? footprint("asn", e.asn, week) : null;
+    const weekTotal = e.asn
+      ? overview(key.siteKey, { from: week, to }, retain).summary.total
+      : 0;
+    const lists = state.lists
+      .map((l) => {
+        const hit = (l.items ?? []).find(
+          (i) =>
+            (i.kind === "ip" && i.value === e.ip) ||
+            (i.kind === "asn" && Number(i.value) === e.asn) ||
+            (i.kind === "country" && i.value === e.country) ||
+            (i.kind === "visitor" && i.value === e.fp),
+        );
+        return (
+          hit && { id: l.id, name: l.name, kind: hit.kind, value: hit.value }
+        );
+      })
+      .filter(Boolean);
+    const rules = (state.rules[key.siteKey] ?? [])
+      .filter((r) =>
+        r.conditions.some(
+          (c) =>
+            (c.field === "country" && c.op === "eq" && c.value === e.country) ||
+            (c.field === "list" && lists.some((l) => l.id === c.value)),
+        ),
+      )
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        action: r.action,
+        enabled: r.enabled !== false,
+      }));
+    return {
+      ip: ip && { ...ip, keys: 1 },
+      network: network && {
+        ...network,
+        asn: e.asn,
+        asn_org: e.asn_org,
+        share: weekTotal ? network.total / weekTotal : null,
+      },
+      visitor: footprint("fp", e.fp, from),
+      lists,
+      rules,
+      window: { from, to, networkFrom: week },
+    };
+  }),
 );
 
 route(
@@ -945,6 +1663,54 @@ route("PUT", "/settings/analytics", ({ body }) => {
   return { success: true, settings: { ...state.settings.analytics } };
 });
 
+const loginBackground = () => {
+  if (!state.settings.loginBackground)
+    state.settings.loginBackground = {
+      mode: "default",
+      color: null,
+      image: null,
+    };
+  return state.settings.loginBackground;
+};
+
+route("GET", "/settings/login-background", () => loginBackground());
+
+route("PUT", "/settings/login-background", ({ body }) => {
+  const bg = loginBackground();
+  if (body?.mode) bg.mode = body.mode;
+  if (body?.color !== undefined) bg.color = body.color;
+  if (body?.focus && bg.image) bg.image.focus = body.focus;
+  save();
+  return { success: true, ...bg };
+});
+
+route("PUT", "/settings/login-background/image", ({ body }) => {
+  const data = String(body?.data ?? "");
+  const type = data.match(/^data:(image\/(?:jpeg|png|webp));base64,/)?.[1];
+  if (!type) return fail("Use a JPEG, PNG or WebP image.");
+  const size = Math.floor(((data.length - data.indexOf(",") - 1) * 3) / 4);
+  if (size > 750_000) return fail("Use an image under 750 KB.");
+  const bg = loginBackground();
+  bg.mode = "image";
+  bg.image = {
+    type,
+    size,
+    etag: newHex(10),
+    updated: Date.now(),
+    focus: [50, 50],
+  };
+  save();
+  return { success: true, ...bg };
+});
+
+route("DELETE", "/settings/login-background/image", () => {
+  const bg = loginBackground();
+  bg.image = null;
+  if (bg.mode === "image") bg.mode = "default";
+  save();
+  return { success: true, ...bg };
+});
+
 route("GET", "/settings/sessions", () =>
   state.sessions
     .filter((s) => s.expires > Date.now())
@@ -952,6 +1718,11 @@ route("GET", "/settings/sessions", () =>
       token: s.token,
       expires: new Date(s.expires).toISOString(),
       created: new Date(s.created).toISOString(),
+      seen: new Date(s.seen ?? s.created).toISOString(),
+      ua: s.ua ?? null,
+      browser: s.browser ?? null,
+      os: s.os ?? null,
+      country: s.country ?? null,
     })),
 );
 
@@ -1125,6 +1896,134 @@ route("GET", "/settings/assets/latest", () => ({
 }));
 
 route("GET", "/about", () => ({ bun: about.bun, ver: about.ver }));
+
+const updateCheck = () => {
+  state.settings.updateCheck ??= {
+    enabled: true,
+    interval: "daily",
+    lastSent: Date.now() - 42 * MIN,
+  };
+  return state.settings.updateCheck;
+};
+
+const UPDATE_INTERVALS = { daily: 1, "4d": 4, weekly: 7, monthly: 30 };
+
+const updateCheckStatus = () => {
+  const { enabled, interval, lastSent } = updateCheck();
+  const solves = state.keys
+    .map((k) => solvesByKey(k.siteKey).current)
+    .reduce((a, b) => a + b, 0);
+  const bucket = (n) => (n > 0 ? 10 ** Math.floor(Math.log10(n)) : 0);
+  return {
+    enabled,
+    lockedByEnv: false,
+    interval,
+    lastSent,
+    nextCheck: lastSent + UPDATE_INTERVALS[interval] * 86_400_000,
+    report: {
+      id: "q7Rk2mXa",
+      version: about.ver,
+      runtime: "bun",
+      keys: bucket(state.keys.length),
+      solves: bucket(solves),
+      memory: 64,
+      vars: "AgFp",
+    },
+  };
+};
+
+route("GET", "/settings/update-check", () => updateCheckStatus());
+
+route("PUT", "/settings/update-check", ({ body }) => {
+  const s = updateCheck();
+  if (typeof body?.enabled === "boolean") {
+    s.enabled = body.enabled;
+    if (body.enabled) s.lastSent = Date.now();
+  }
+  if (UPDATE_INTERVALS[body?.interval]) s.interval = body.interval;
+  save();
+  return { success: true, ...updateCheckStatus() };
+});
+
+route("GET", "/settings/updates", () => {
+  const { enabled, interval, lastSent } = updateCheck();
+  return {
+    enabled,
+    interval,
+    nextCheck: enabled
+      ? lastSent + UPDATE_INTERVALS[interval] * 86_400_000
+      : null,
+    version: about.ver,
+    checkedAt: enabled ? lastSent : null,
+    latest: null,
+    advisories: [],
+  };
+});
+
+const grants = () => {
+  if (state.grants) return state.grants;
+  const now = Date.now();
+  const [shop, docs] = state.keys.map((k) => k.siteKey);
+  const call = (ago, tool, status = 200, siteKey) => ({
+    t: now - ago * MIN,
+    tool,
+    status,
+    ...(siteKey && { siteKey }),
+  });
+  state.grants = [
+    {
+      id: newHex(12),
+      clientName: "Claude Code",
+      access: "full",
+      siteKeys: null,
+      created: now - 12 * 86_400_000,
+      lastUsed: now - 6 * MIN,
+      log: [
+        call(6, "search_events", 200, shop),
+        call(7, "get_event", 200, shop),
+        call(9, "get_top", 200, shop),
+        call(14, "block_ip", 200, shop),
+        call(15, "get_rules", 200, shop),
+        call(16, "set_rules", 400, shop),
+        call(18, "set_rules", 200, shop),
+        call(64, "get_analytics", 200, docs),
+        call(66, "list_site_keys"),
+        call(190, "list_lists"),
+        call(192, "add_list_items", 200),
+        call(1450, "get_insights", 200, shop),
+        call(1452, "list_site_keys"),
+      ],
+    },
+    {
+      id: newHex(12),
+      clientName: "Cursor",
+      access: "read",
+      siteKeys: shop ? [shop] : null,
+      created: now - 3 * 86_400_000,
+      lastUsed: now - 26 * 60 * MIN,
+      log: [
+        call(26 * 60, "get_analytics", 200, shop),
+        call(26 * 60 + 1, "search_events", 200, shop),
+        call(26 * 60 + 2, "block_ip", 403, shop),
+        call(26 * 60 + 3, "get_site_key", 200, shop),
+      ],
+    },
+  ];
+  return state.grants;
+};
+
+route("GET", "/oauth/grants", () => grants().map(({ log, ...g }) => g));
+
+route("GET", "/oauth/grants/:id/log", ({ params }) => {
+  const g = grants().find((x) => x.id === params.id);
+  return g ? { calls: g.log } : fail("App not found");
+});
+
+route("DELETE", "/oauth/grants/:id", ({ params }) => {
+  state.grants = grants().filter((x) => x.id !== params.id);
+  save();
+  return { success: true };
+});
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

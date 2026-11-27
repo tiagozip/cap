@@ -947,6 +947,74 @@ describe("detectAutomation headless research checks", () => {
     expect(detectAutomation(S).riskFlags).not.toContain("os_mismatch");
   });
 
+  test("a DevTools timezone override is flagged", () => {
+    const S = human();
+    S.tzo = -540;
+    expect(detectAutomation(S).riskFlags).toContain("timezone_override");
+    S.tzo = 0;
+    expect(detectAutomation(S).riskFlags).not.toContain("timezone_override");
+    S.tzo = 7;
+    expect(detectAutomation(S).riskFlags).not.toContain("timezone_override");
+  });
+
+  test("a windows claim with a unix C library is flagged", () => {
+    const S = human();
+    S.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
+    S.lc = [1215752191, true];
+    expect(detectAutomation(S).riskFlags).toContain("libc_mismatch");
+    S.lc = [2147483647, false];
+    expect(detectAutomation(S).riskFlags).not.toContain("libc_mismatch");
+  });
+
+  test("a mac claim with the windows C library is flagged", () => {
+    const S = human();
+    S.lc = [2147483647, false];
+    expect(detectAutomation(S).riskFlags).toContain("libc_mismatch");
+    S.lc = [1215752191, true];
+    expect(detectAutomation(S).riskFlags).not.toContain("libc_mismatch");
+    S.lc = null;
+    expect(detectAutomation(S).riskFlags).not.toContain("libc_mismatch");
+  });
+
+  test("a word step that contradicts the OS is flagged", () => {
+    const S = human();
+    S.ws = 4;
+    expect(detectAutomation(S).riskFlags).toContain("editing_mismatch");
+    S.ws = 3;
+    expect(detectAutomation(S).riskFlags).not.toContain("editing_mismatch");
+    S.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36";
+    expect(detectAutomation(S).riskFlags).toContain("editing_mismatch");
+    S.ws = 4;
+    expect(detectAutomation(S).riskFlags).not.toContain("editing_mismatch");
+  });
+
+  test("word steps from gecko and webkit are not flagged", () => {
+    const firefox = human();
+    firefox.ua =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0";
+    firefox.uaDataPresent = false;
+    firefox.engine = {
+      ...firefox.engine,
+      hasChrome: false,
+      hasMozInnerScreenX: true,
+    };
+    firefox.ws = 3;
+    expect(detectAutomation(firefox).riskFlags).not.toContain(
+      "editing_mismatch",
+    );
+    const safari = human();
+    safari.ua =
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15";
+    safari.uaDataPresent = false;
+    safari.engine = { ...safari.engine, hasChrome: false };
+    safari.ws = 4;
+    expect(detectAutomation(safari).riskFlags).not.toContain(
+      "editing_mismatch",
+    );
+  });
+
   test("forced colors on windows is not flagged", () => {
     const S = human();
     S.ua =

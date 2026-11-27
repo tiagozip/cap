@@ -15,6 +15,7 @@ import {
   Table,
   Tag,
 } from "../../components/cap/index.js";
+import Odometer from "../../components/cap/Odometer.svelte";
 import {
   Card,
   CardContent,
@@ -35,6 +36,8 @@ import { catalog, loadCatalog } from "../../lib/catalog.svelte.js";
 import { compact } from "../../lib/format.js";
 import { app, navigate, openEvents } from "../../lib/state.svelte.js";
 import { toast } from "../../lib/ui.svelte.js";
+import { loadSample } from "../../polish/protection/impact.js";
+import { policyDiff } from "../../polish/protection/policy.js";
 import BlockRules from "../config/BlockRules.svelte";
 import { PRESETS, presetOf } from "../config/presets.js";
 import Rules from "../rules/Rules.svelte";
@@ -100,7 +103,9 @@ const toggleSection = (label) => {
 let narrow = $state(false);
 $effect(() => {
   const mq = matchMedia("(width < 40rem)");
-  const sync = () => (narrow = mq.matches);
+  const sync = () => {
+    narrow = mq.matches;
+  };
   sync();
   mq.addEventListener("change", sync);
   return () => mq.removeEventListener("change", sync);
@@ -143,9 +148,55 @@ const applyPreset = (p) => {
   form.behavior = c.behavior;
 };
 
+const seconds = (rate, difficulty = form.hashwxDifficulty) => {
+  const s = Number(difficulty) / rate;
+  return s < 10 ? Number(s.toFixed(1)) : Math.round(s);
+};
+const solveHelp = $derived(
+  `About ${seconds(1_480_000)} s on a laptop and ${seconds(600_000)} s on a phone.`,
+);
+
 const dirty = $derived(
   JSON.stringify(toPatch(form)) !== JSON.stringify(toPatch(saved)),
 );
+
+let week = $state(null);
+$effect(() => {
+  if (!dirty || week) return;
+  loadSample(key.siteKey, "redeem", 7).then(
+    (s) => {
+      week = s;
+    },
+    () => {},
+  );
+});
+const COVERED = [
+  "signals",
+  "agentActions",
+  "agents",
+  "signedAgents",
+  "behavior",
+  "threshold",
+  "scripted",
+];
+const covered = $derived(
+  COVERED.some((k) => JSON.stringify(form[k]) !== JSON.stringify(saved[k])),
+);
+const diff = $derived(
+  week && covered ? policyDiff(week, saved, form, catalog.signedAgents) : null,
+);
+const diffText = $derived.by(() => {
+  if (!diff) return null;
+  const { more, fewer } = diff;
+  if (more && fewer)
+    return {
+      n: more,
+      after: ` more blocked, ${compact(fewer)} more let through last week`,
+    };
+  if (more) return { n: more, after: " more solves blocked last week" };
+  if (fewer) return { n: fewer, after: " more solves let through last week" };
+  return { text: "No change to last week's solves" };
+});
 
 const signals = $derived(
   catalog.signals.flatMap((g) =>
@@ -162,17 +213,25 @@ const matches = (...texts) => {
   const q = checkQuery.trim().toLowerCase();
   return !q || texts.some((t) => t?.toLowerCase().includes(q));
 };
+let show = $state("all");
 const shownSignals = $derived(
-  signals.filter((s) => matches(s.text, s.group, s.id)),
+  signals.filter(
+    (s) => (show === "all" || seen?.[s.id]) && matches(s.text, s.group, s.id),
+  ),
 );
 const shownAgents = $derived(
-  catalog.agents.filter(([id, name, about]) =>
-    matches(id, name, about, "AI agents"),
+  catalog.agents.filter(
+    ([id, name, about]) =>
+      (show === "all" || agentSeen[id]) &&
+      matches(id, name, about, "AI agents"),
   ),
 );
 
 const seenCount = $derived(
-  seen ? Object.values(seen).filter(Boolean).length : null,
+  seen
+    ? signals.filter((s) => seen[s.id]).length +
+        catalog.agents.filter(([id]) => agentSeen[id]).length
+    : null,
 );
 
 const ROWS = [
@@ -238,7 +297,7 @@ async function save() {
 {#snippet sectionHead(label, count)}
   {@const shown = sectionOpen(label)}
   <TableRow class="bg-muted/50 hover:bg-muted/50">
-    <TableCell colspan={narrow ? 2 : 3} class="h-9 p-0!">
+    <TableCell colspan={narrow ? 2 : 3} class="h-9! p-0!">
       <button
         type="button"
         class="flex h-9 w-full cursor-pointer items-center gap-1.5 ps-6 pe-6 text-left text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset md:ps-10 [.cap-card_&]:ps-5"
@@ -251,6 +310,12 @@ async function save() {
       </button>
     </TableCell>
   </TableRow>
+{/snippet}
+
+{#snippet changedDot(changed)}
+  <span
+    class="size-1.5 shrink-0 rounded-full bg-primary {changed ? '' : 'scale-50 opacity-0'} motion-safe:transition-[scale,opacity] motion-safe:duration-200 motion-safe:ease-(--ease-out)"
+  >{#if changed}<span class="sr-only">Unsaved change</span>{/if}</span>
 {/snippet}
 
 {#snippet seenLink(n, filter)}
@@ -270,10 +335,7 @@ async function save() {
 <PageHeader title="Protection" />
 
 <div class="flex max-w-4xl flex-col gap-6 px-4 pt-5 pb-12 md:px-5">
-  <Group
-    id="protLevel"
-    title="Defaults"
-  >
+  <Group id="protLevel" title="Defaults">
     <RadioGroup
       aria-labelledby="protLevel"
       class="gap-2 py-5 sm:grid-cols-3"
@@ -285,24 +347,40 @@ async function save() {
         }
       }
     >
-      {#each PRESETS as p (p.id)}
+      {#each PRESETS as p, i (p.id)}
         <label
           data-checked={level === p.id || undefined}
           data-focus-ring={focusRing === p.id || undefined}
-          class="flex cursor-pointer flex-col gap-1 rounded-xl bg-card p-3.5 shadow-control transition-[scale] duration-150 ease-out active:scale-[0.98] data-focus-ring:ring-2 data-focus-ring:ring-ring data-checked:bg-primary/[0.06] data-checked:shadow-[inset_0_0_0_1.5px_var(--primary)] motion-reduce:transition-none [@media(hover:hover)]:hover:bg-muted/60 [@media(hover:hover)]:data-checked:hover:bg-primary/[0.06]"
+          class="group/preset relative isolate flex cursor-pointer flex-col gap-1 rounded-xl bg-card p-3.5 shadow-control data-focus-ring:ring-2 data-focus-ring:ring-ring motion-safe:transition-[scale] motion-safe:duration-150 motion-safe:ease-out motion-safe:active:scale-[0.98] [@media(hover:hover)]:hover:bg-muted/60 [@media(hover:hover)]:data-checked:hover:bg-card"
           onfocusin={(e) => (focusRing = e.target.matches(":focus-visible") ? p.id : null)}
           onfocusout={() => (focusRing = null)}
         >
+          <span
+            aria-hidden="true"
+            class="pointer-events-none absolute inset-0 -z-10 scale-[0.97] rounded-xl bg-primary/[0.035] opacity-0 dark:bg-primary/[0.07] shadow-[inset_0_0_0_1.5px_var(--primary)] group-data-checked/preset:scale-100 group-data-checked/preset:opacity-100 motion-safe:transition-[scale,opacity] motion-safe:duration-200 motion-safe:ease-(--ease-out)"
+          ></span>
           <span class="flex items-center justify-between gap-2 text-sm font-medium">
-            {p.name}
+            <span class="flex items-center gap-2.5">
+              {p.name}
+              <span aria-hidden="true" class="flex gap-0.5">
+                {#each [0, 1, 2] as j}
+                  <span
+                    class="h-1 w-2.5 rounded-[1px] {j > i ? 'bg-muted-foreground/15' : 'bg-muted-foreground/70 group-data-checked/preset:bg-primary'}"></span>
+                {/each}
+              </span>
+            </span>
             <RadioGroupItem value={p.id} class="focus-visible:ring-0" />
           </span>
           <span class="text-sm text-pretty text-muted-foreground">{p.text}</span>
+          <span class="mt-auto pt-1.5 text-xs text-faint-foreground tabular-nums">About {seconds(600_000, p.config.hashwxDifficulty)} s on a phone</span>
         </label>
       {/each}
+      {#if level === "custom"}
+        <p class="pt-1 text-xs text-pretty text-muted-foreground sm:col-span-3">These settings don't match a default. Picking one changes difficulty, automation tools, scripted clicks and robotic movement.</p>
+      {/if}
     </RadioGroup>
     {#if form.protocol === "hashwx"}
-      <Row label="HashWX difficulty" help="How many hashes a solve takes on average. Higher means a longer wait on slow devices.">
+      <Row label="HashWX difficulty" help={solveHelp}>
         <div class="flex w-full max-w-72 items-center gap-3">
           <Slider
             bind:value={() => Number(form.hashwxDifficulty), (v) => (form.hashwxDifficulty = v)}
@@ -334,19 +412,19 @@ async function save() {
             <p class="text-sm text-pretty text-warning md:text-right">{row.blockNote}</p>
           {/if}
           {#if row.id === "agents"}
-            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-muted-foreground">
-              <Checkbox bind:checked={form.signedAgents} label="Always let in agents that sign their requests" />
-              Always let in agents that sign their requests
+            <label class="flex cursor-pointer items-start gap-2.5 text-sm text-muted-foreground">
+              <span class="flex h-[1lh] items-center"><Checkbox bind:checked={form.signedAgents} label="Let in agents that sign their requests" /></span>
+              Let in agents that sign their requests
             </label>
           {/if}
         {/snippet}
       </Row>
     {/each}
     {#if form.behavior !== "off"}
-      <Row label="{form.behavior === 'block' ? 'Block' : 'Flag'} when Cap is this sure" help="For robotic movement. Lower catches more bots and more false alarms.">
-        <div class="flex w-full max-w-64 items-center gap-3">
+      <Row label="{form.behavior === 'block' ? 'Block' : 'Flag'} when Cap is this sure" help="Lower catches more bots, and more people by mistake.">
+        <div class="flex w-full max-w-72 items-center gap-3">
           <Slider bind:value={form.threshold} min={0.4} max={1} step={0.05} size="sm" thumbLabel="{form.behavior === 'block' ? 'Block' : 'Flag'} when Cap is this sure" />
-          <output class="w-10 text-right text-sm tabular-nums">{Math.round(form.threshold * 100)}%</output>
+          <output class="w-20 shrink-0 text-right text-sm tabular-nums">{Math.round(form.threshold * 100)}%</output>
         </div>
       </Row>
       <Row label="Count weak signals" for="protStrict" help="Catches more bots, and some people using voice control.">
@@ -356,7 +434,7 @@ async function save() {
         <Row
           label="Require a click or key press"
           for="protRequire"
-          help="Block solves where nobody touched the widget. Leave it off for invisible widgets."
+          help="Leave off for invisible widgets."
         >
           <Switch id="protRequire" bind:checked={form.requireInteraction} />
         </Row>
@@ -372,12 +450,24 @@ async function save() {
     <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 pt-2.5 pb-3">
       <span class="flex min-w-0 items-center gap-1.5 text-sm">
         <span class="font-semibold">Single checks</span>
-        {#if seenCount}<span class="text-muted-foreground tabular-nums">{seenCount} fired this week</span>{/if}
       </span>
-      <InputGroup class="w-full sm:w-64">
+      <span class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+      {#if seenCount}
+        <Segmented
+          size="sm"
+          label="Which checks to show"
+          options={[
+            ["all", "All"],
+            ["fired", `Fired this week, ${seenCount}`],
+          ]}
+          bind:value={show}
+        />
+      {/if}
+      <InputGroup class="w-full sm:w-56">
         <InputGroupAddon><Icon name="search" size={15} /></InputGroupAddon>
         <InputGroupInput bind:value={checkQuery} placeholder="Search checks" aria-label="Search checks" />
       </InputGroup>
+      </span>
     </div>
     <Skeleton data={seen} sample={{}} label="Loading checks">
       {#snippet children(counts)}
@@ -387,7 +477,7 @@ async function save() {
             <TableRow>
               <TableHead>Check</TableHead>
               <TableHead class="w-px text-right! whitespace-nowrap max-sm:hidden">This week</TableHead>
-              <TableHead class="w-px max-sm:w-[8.25rem]">Action</TableHead>
+              <TableHead class="w-px max-sm:w-[9.125rem]"><span class="ps-3.5">Action</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -411,6 +501,8 @@ async function save() {
                 </TableCell>
                 <TableCell class="text-right whitespace-nowrap max-sm:hidden">{@render seenLink(counts[s.id], `flag:${s.id}`)}</TableCell>
                 <TableCell>
+                  <span class="flex items-center gap-2">
+                  {@render changedDot((form.signals[s.id] ?? "report") !== (saved.signals[s.id] ?? "report"))}
                   <Select
                     size="sm"
                     class="w-24 sm:w-28"
@@ -425,6 +517,7 @@ async function save() {
                       else form.signals[s.id] = v;
                     }}
                   />
+                  </span>
                 </TableCell>
               </TableRow>
               {/if}
@@ -437,13 +530,13 @@ async function save() {
                     <span class="flex min-w-0 items-center gap-2.5"><AgentIcon {id} /><span class="truncate">{name}</span>{#if catalog.signedAgents.includes(id)}
                       <Tip label="Signs requests">
                         {#snippet children(props)}
-                          <span {...props} tabindex="0" class="-ms-1 flex shrink-0 rounded-full text-info outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                          <button {...props} type="button" class="-ms-1 flex shrink-0 cursor-default rounded-full text-info outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
                               <path fill="currentColor" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
                               <path d="m9 12 2 2 4-4" fill="none" stroke="#fff" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             <span class="sr-only">Signs requests</span>
-                          </span>
+                          </button>
                         {/snippet}
                       </Tip>
                     {/if}</span>
@@ -453,6 +546,8 @@ async function save() {
                 </TableCell>
                 <TableCell class="text-right whitespace-nowrap max-sm:hidden">{@render seenLink(agentSeen[id], `agent:${id}`)}</TableCell>
                 <TableCell>
+                  <span class="flex items-center gap-2">
+                  {@render changedDot((form.agentActions[id] ?? "default") !== (saved.agentActions[id] ?? "default"))}
                   <Select
                     size="sm"
                     class="w-24 sm:w-28"
@@ -468,11 +563,12 @@ async function save() {
                       else form.agentActions[id] = v;
                     }}
                   />
+                  </span>
                 </TableCell>
               </TableRow>
             {/each}
             {#if !shownSignals.length && !shownAgents.length}
-              <TableRow><TableCell colspan="3" class="text-muted-foreground">No checks match "{checkQuery.trim()}".</TableCell></TableRow>
+              <TableRow><TableCell colspan="3" class="text-muted-foreground">{checkQuery.trim() ? `No checks match "${checkQuery.trim()}".` : "No checks fired this week."}</TableCell></TableRow>
             {/if}
           </TableBody>
         </Table>
@@ -480,15 +576,26 @@ async function save() {
       {/snippet}
     </Skeleton>
   </Card>
+  {#if dirty}
+    <div
+      class="sticky bottom-5 z-40 flex w-full max-w-md items-center gap-2 self-center rounded-xl bg-popover py-2 ps-4 pe-2 text-sm text-popover-foreground shadow-overlay transition-[translate,opacity] duration-200 ease-(--ease-out) starting:translate-y-3 starting:opacity-0 motion-reduce:transition-none"
+      role="status"
+    >
+      <span class="me-auto flex min-w-0 flex-col">
+        <span>Unsaved changes</span>
+        {#if diffText}
+          <span class="text-xs text-pretty text-muted-foreground tabular-nums transition-[opacity,translate] duration-200 ease-(--ease-out) starting:-translate-y-0.5 starting:opacity-0 motion-reduce:transition-none">
+            {#if diffText.text}{diffText.text}{:else}<Odometer class="text-popover-foreground" value={diffText.n} format={compact} />{diffText.after}{/if}
+          </span>
+        {/if}
+      </span>
+      <Button variant="ghost" size="sm" onclick={() => (form = fromConfig({ ...(key.config ?? {}) }))}>Discard</Button>
+      <Button variant="primary" size="sm" disabled={saving} aria-busy={saving} onclick={save}>
+        <span class="grid justify-items-center">
+          <span class="col-start-1 row-start-1 {saving ? 'invisible' : ''}">Save changes</span>
+          <span class="col-start-1 row-start-1 {saving ? '' : 'invisible'}">Saving</span>
+        </span>
+      </Button>
+    </div>
+  {/if}
 </div>
-
-{#if dirty}
-  <div
-    class="sticky bottom-5 z-40 mx-auto mt-6 flex w-[calc(100%-1.5rem)] max-w-md items-center gap-2 rounded-xl bg-popover py-2 ps-4 pe-2 text-sm text-popover-foreground shadow-overlay transition-[translate,opacity] duration-200 ease-(--ease-out) starting:translate-y-3 starting:opacity-0 motion-reduce:transition-none"
-    role="status"
-  >
-    <span class="me-auto">You have unsaved changes</span>
-    <Button variant="ghost" size="sm" onclick={() => (form = fromConfig({ ...(key.config ?? {}) }))}>Discard</Button>
-    <Button variant="primary" size="sm" disabled={saving} onclick={save}>{saving ? "Saving" : "Save changes"}</Button>
-  </div>
-{/if}

@@ -30,8 +30,8 @@ const percent = $derived(
   >
     <div
       data-slot="progress-indicator"
-      class={cn("h-full bg-primary transition-all motion-reduce:transition-none", indicatorClass)}
-      style:width={`${percent}%`}
+      class={cn("h-full w-full bg-primary motion-safe:transition-[translate] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]", indicatorClass)}
+      style:translate={`${percent - 100}% 0`}
     ></div>
   </Progress.Root>
 </div>

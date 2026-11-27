@@ -9,6 +9,7 @@ let {
   href,
   onselect,
   hint,
+  disabled = false,
   children,
 } = $props();
 const variant = $derived(danger ? "destructive" : "default");
@@ -21,11 +22,11 @@ const variant = $derived(danger ? "destructive" : "default");
 {/snippet}
 
 {#if href}
-  <DropdownMenuItem {variant} onSelect={onselect}>
+  <DropdownMenuItem {variant} {disabled} onSelect={onselect}>
     {#snippet child({ props })}
       <a {href} {...props} target={href.startsWith("http") ? "_blank" : undefined} rel="noopener">{@render body()}</a>
     {/snippet}
   </DropdownMenuItem>
 {:else}
-  <DropdownMenuItem {variant} onSelect={onselect}>{@render body()}</DropdownMenuItem>
+  <DropdownMenuItem {variant} {disabled} onSelect={onselect}>{@render body()}</DropdownMenuItem>
 {/if}

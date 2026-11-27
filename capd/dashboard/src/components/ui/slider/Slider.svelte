@@ -58,7 +58,7 @@ let keyboardFocus = $state(false);
           keyboardFocus = true;
         }}
         class={cn(
-          "relative block shrink-0 rounded-full bg-primary ring-offset-background outline-hidden transition-ring select-none after:absolute after:-inset-2 data-disabled:pointer-events-none",
+          "slider-thumb relative block shrink-0 cursor-grab rounded-full bg-primary data-active:cursor-grabbing ring-offset-background outline-hidden transition-ring select-none after:absolute after:-inset-2 data-disabled:pointer-events-none",
           thumbClasses[size],
           keyboardFocus && "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         )}
@@ -66,3 +66,19 @@ let keyboardFocus = $state(false);
     {/each}
   {/snippet}
 </Slider.Root>
+
+<style>
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.slider-thumb) {
+      transition:
+        scale 180ms cubic-bezier(0.23, 1, 0.32, 1),
+        color var(--ring-duration) var(--ease-out),
+        background-color var(--ring-duration) var(--ease-out),
+        box-shadow var(--ring-duration) var(--ease-out);
+    }
+
+    :global(.slider-thumb[data-active]) {
+      scale: 1.12;
+    }
+  }
+</style>

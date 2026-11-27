@@ -3,6 +3,9 @@ const INK = {
   keyword: "text-info",
   string: "text-success",
   number: "text-warning",
+  attr: "text-warning",
+  builtin: "text-warning",
+  punct: "text-muted-foreground",
 };
 
 const KEYWORDS = new Set([
@@ -11,6 +14,7 @@ const KEYWORDS = new Set([
   "var",
   "import",
   "export",
+  "default",
   "from",
   "await",
   "new",
@@ -32,6 +36,20 @@ const KEYWORDS = new Set([
   "typeof",
   "in",
   "of",
+  "def",
+  "func",
+  "defer",
+  "struct",
+  "not",
+  "None",
+  "True",
+  "False",
+  "nil",
+  "exit",
+  "empty",
+  "require",
+  "unless",
+  "using",
 ]);
 const BUILTINS = new Set([
   "fetch",
@@ -45,33 +63,36 @@ const BUILTINS = new Set([
 
 const TOKENS = new RegExp(
   [
-    "(&lt;!--[\\s\\S]*?--&gt;)",
-    "(\\/\\/[^\\n]*)",
-    "(#[\\da-fA-F]{3,8}\\b)",
-    "(#[^\\n]*)",
-    "(\"[^\"\\n]*\"|'[^'\\n]*'|`[^`]*`)",
-    "(&lt;\\/?[a-zA-Z][\\w-]*)",
-    "([a-zA-Z][\\w-]*)(?==)",
-    "\\b([A-Za-z_$][\\w$]*)\\b",
-    "\\b(\\d+(?:\\.\\d+)?)\\b",
+    "(?<comment>&lt;!--[\\s\\S]*?--&gt;|(?<![:\\w])\\/\\/[^\\n]*)",
+    "(?<hex>#[\\da-fA-F]{3,8}\\b)",
+    "(?<hash>#[^\\n]*)",
+    "(?<str>\"[^\"\\n]*\"|'[^'\\n]*'|`[^`]*`)",
+    "(?<tag>&lt;\\/?[a-zA-Z][\\w-]*)",
+    "(?<close>\\/?&gt;)",
+    "(?<entity>&(?:amp|lt|gt);)",
+    "(?<attr>@?[a-zA-Z][\\w:-]*)(?==)",
+    "\\b(?<word>[A-Za-z_$][\\w$]*)",
+    "(?<![:.\\w])(?<num>\\d+(?:\\.\\d+)?)\\b",
+    "(?<arrow>=&gt;)",
+    "(?<punct>[{}()[\\];,:=])",
   ].join("|"),
   "g",
 );
 
+const ink = (kind, text) => `<span class="${INK[kind]}">${text}</span>`;
+
 export const highlight = (text) =>
   String(text)
     .replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[m])
-    .replace(TOKENS, (m, html, slash, hex, hash, str, tag, attr, word, num) => {
-      const comment = html || slash || hash;
-      if (comment) return `<span class="${INK.comment}">${comment}</span>`;
-      if (hex) return `<span class="${INK.number}">${hex}</span>`;
-      if (str) return `<span class="${INK.string}">${str}</span>`;
-      if (tag) return `<span class="${INK.keyword}">${tag}</span>`;
-      if (attr) return `<span class="text-warning">${attr}</span>`;
-      if (word && KEYWORDS.has(word))
-        return `<span class="${INK.keyword}">${word}</span>`;
-      if (word && BUILTINS.has(word))
-        return `<span class="text-warning">${word}</span>`;
-      if (num) return `<span class="${INK.number}">${num}</span>`;
+    .replace(TOKENS, (m, ...args) => {
+      const g = args.at(-1);
+      if (g.comment || g.hash) return ink("comment", m);
+      if (g.hex || g.num) return ink("number", m);
+      if (g.str) return ink("string", m);
+      if (g.tag) return ink("keyword", m);
+      if (g.close || g.arrow || g.punct) return ink("punct", m);
+      if (g.attr) return ink("attr", m);
+      if (KEYWORDS.has(g.word)) return ink("keyword", m);
+      if (BUILTINS.has(g.word)) return ink("builtin", m);
       return m;
     });

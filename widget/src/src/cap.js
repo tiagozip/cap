@@ -634,9 +634,14 @@
     }
 
     #resetSpeculativeState() {
+      this.#retireSpeculativeState();
+      this.#attachInteractionListeners();
+    }
+
+    #retireSpeculativeState() {
+      this.#detachInteractionListeners();
       this.#dropChallenge(this.#speculative);
       this.#speculative = this.#makeSpeculativeState();
-      this.#attachInteractionListeners();
     }
 
     #dropChallenge(spec) {
@@ -1053,7 +1058,7 @@
       if (this.#hasHaptics) navigator.vibrate([10, 50, 20, 30, 40]);
 
       this.#logInvisible();
-      this.#resetSpeculativeState();
+      this.#retireSpeculativeState();
       this.#solving = false;
       return { success: true, token: this.token };
     }
@@ -1515,7 +1520,7 @@
           this.dispatchEvent("solve", { token: resp.token });
           this.token = resp.token;
 
-          this.#resetSpeculativeState();
+          this.#retireSpeculativeState();
 
           if (this.#resetTimer) clearTimeout(this.#resetTimer);
           const expiresIn = new Date(resp.expires).getTime() - Date.now();

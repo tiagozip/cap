@@ -19,6 +19,7 @@ let {
 } = $props();
 
 let edited = $state(false);
+let dismissed = false;
 
 const widths = {
   sm: "sm:max-w-md",
@@ -33,6 +34,11 @@ const widths = {
   onOpenChange={(v) => {
     if (v) return;
     edited = false;
+    dismissed = true;
+  }}
+  onOpenChangeComplete={(v) => {
+    if (v || !dismissed) return;
+    dismissed = false;
     onclose?.();
   }}
 >
@@ -48,9 +54,11 @@ const widths = {
         <DialogDescription class="text-pretty">{description}</DialogDescription>
       {/if}
     </DialogHeader>
-    <div class="-mx-7 -my-1 flex min-h-0 flex-col gap-4 overflow-y-auto px-7 py-1">
-      {@render children()}
-    </div>
+    {#if children}
+      <div class="-mx-7 -my-1 flex min-h-0 flex-col gap-4 overflow-y-auto px-7 py-1">
+        {@render children()}
+      </div>
+    {/if}
     {#if footer}
       <DialogFooter>{@render footer()}</DialogFooter>
     {/if}

@@ -17,6 +17,9 @@ body {
   font-family: var(--font-sans);
 }
 
-.no-transitions * {
+.no-transitions,
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
   transition: none !important;
 }

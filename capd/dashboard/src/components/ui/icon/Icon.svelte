@@ -1,5 +1,7 @@
 <script>
-const { name, class: className, size = 24, stroke = 2, ...rest } = $props();
+import Glyph from "./Glyph.svelte";
+
+const { name, class: className, size = 24, stroke = 1.75, ...rest } = $props();
 
 const circle = "M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0";
 const paths = {
@@ -53,8 +55,9 @@ const paths = {
 };
 </script>
 
-<svg
-  xmlns="http://www.w3.org/2000/svg"
+<Glyph
+  {name}
+  {paths}
   width={size}
   height={size}
   viewBox="0 0 24 24"
@@ -63,11 +66,6 @@ const paths = {
   stroke-width={stroke}
   stroke-linecap="round"
   stroke-linejoin="round"
-  aria-hidden="true"
   class={className}
   {...rest}
->
-  {#each paths[name] ?? [] as d (d)}
-    <path {d} />
-  {/each}
-</svg>
+/>

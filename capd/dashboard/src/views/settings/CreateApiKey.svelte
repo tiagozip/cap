@@ -1,14 +1,16 @@
 <script>
+import { tick } from "svelte";
 import {
   Button,
   Checkbox,
-  CopyText,
   Dialog,
   Field,
   Input,
   Segmented,
   Switch,
+  Tag,
 } from "../../components/cap/index.js";
+import { CopyCheck } from "../../components/ui/index.js";
 import { api } from "../../lib/api.js";
 import { app } from "../../lib/state.svelte.js";
 
@@ -23,6 +25,22 @@ let error = $state("");
 let invalid = $state("");
 let busy = $state(false);
 let created = $state(null);
+let copied = $state(false);
+let copyButton = $state(null);
+
+const copyOrClose = async () => {
+  if (copied) {
+    onclose();
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(created);
+    copied = true;
+  } catch {
+    const node = document.getElementById("apikey-value");
+    if (node) getSelection()?.selectAllChildren(node);
+  }
+};
 
 const submit = async (e) => {
   e.preventDefault();
@@ -51,6 +69,8 @@ const submit = async (e) => {
     return;
   }
   created = res.apiKey;
+  await tick();
+  copyButton?.focus();
 };
 </script>
 
@@ -61,9 +81,18 @@ const submit = async (e) => {
   {onclose}
 >
   {#if created}
-    <Field label="API key">
-      <CopyText value={created} label="Copy API key" />
-    </Field>
+    <div class="flex flex-col gap-2">
+      <div class="flex min-w-0 items-center gap-2">
+        <span class="min-w-0 truncate text-sm font-medium" title={name.trim()}>{name.trim()}</span>
+        <Tag tone={readonly ? "neutral" : "warning"}>{readonly ? "Read-only" : "Full access"}</Tag>
+        <Tag>{access === "scoped" ? `${siteKeys.length} site key${siteKeys.length === 1 ? "" : "s"}` : "All site keys"}</Tag>
+      </div>
+      <code
+        id="apikey-value"
+        class="block rounded-[10px] bg-muted px-3 py-2.5 font-mono text-sm leading-relaxed break-all select-all"
+      >{created}</code>
+      <span class="sr-only" role="status">{copied ? "API key copied" : ""}</span>
+    </div>
   {:else}
     <form id="apikey-form" class="flex flex-col gap-5" onsubmit={submit} novalidate>
       <Field label="Name" for="apikey-name" error={invalid === "name" ? error : ""}>
@@ -133,7 +162,10 @@ const submit = async (e) => {
   {/if}
   {#snippet footer()}
     {#if created}
-      <Button variant="primary" onclick={onclose}>Done</Button>
+      <Button variant="primary" class="min-w-34 ps-3.5" bind:ref={copyButton} onclick={copyOrClose}>
+        <CopyCheck {copied} />
+        {copied ? "Done" : "Copy API key"}
+      </Button>
     {:else}
       <Button onclick={onclose}>Cancel</Button>
       <Button type="submit" variant="primary" form="apikey-form" disabled={busy}>{busy ? "Creating API key" : "Create API key"}</Button>

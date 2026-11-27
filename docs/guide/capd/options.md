@@ -17,6 +17,7 @@ Most settings live in the dashboard, under **Instance settings** for the whole s
 | `ANALYTICS` | Where Cap keeps analytics: `duckdb`, `clickhouse`, `redis` or `off`. `redis` keeps hourly totals in Valkey and `off` stores nothing, see [totals only or no analytics](./index.md#analytics-off). When unset, Cap uses ClickHouse if `CLICKHOUSE_URL` is set and DuckDB otherwise. |
 | `WEBHOOK_ALLOW_PRIVATE` | Set to `true` to let webhooks post to private and loopback addresses, like an n8n on your LAN. |
 | `DUCKDB_MEMORY_LIMIT`, `DUCKDB_THREADS` | Limits for DuckDB, `256MB` and `2` by default. |
+| `CAP_UPDATE_CHECK` | Set to `0` to turn off the [update checks](./update-checks.md). |
 
 ## Client IPs behind a proxy
 
@@ -67,6 +68,24 @@ mkdir -p ./cap-data && sudo chown 1000:1000 ./cap-data
 
 ## API
 
-Everything the dashboard does is available over a REST API, documented at `/swagger` on your instance. Create a key under **Instance settings > API keys** and send it as `Authorization: Bot <api-key>`.
+Everything the dashboard does is available over a REST API, documented at `/swagger` on your instance. Create a key under **API and MCP** and send it as `Authorization: Bot <api-key>`. **Copy API docs** on the same page copies a Markdown description of every endpoint, which you can paste into an AI agent.
 
 A key can do everything by default. You can make it read-only, limit it to some site keys, or both. A read-only key for one site key is safe to hand to that site's owner for their stats.
+
+### MCP server
+
+capd runs an [MCP](https://modelcontextprotocol.io) server at `/mcp`. It has a tool for each API endpoint, so an agent can do anything you can do in the dashboard, apart from changing proxy sign-in.
+
+Agents sign in with OAuth. The first time one connects, your browser opens a capd page that asks you to allow it. You choose full or read-only access, and all site keys or only some. Approved agents show up under **API and MCP > Connected apps**, where you can disconnect them. The page also has the setup for Claude Code, Codex, Cursor and VS Code. For Claude Code:
+
+```bash
+claude mcp add --transport http capd https://cap.example.com/mcp
+```
+
+For Codex:
+
+```bash
+codex mcp add capd --url https://cap.example.com/mcp
+```
+
+An agent that can't do OAuth can send an API key instead, as `Authorization: Bearer <api-key>`. It then gets the same access as the key.

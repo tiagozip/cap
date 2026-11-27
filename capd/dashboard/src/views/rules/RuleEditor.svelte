@@ -1,5 +1,7 @@
 <script>
 import { untrack } from "svelte";
+import { flip } from "svelte/animate";
+import { cubicOut } from "svelte/easing";
 import {
   Button,
   Dialog,
@@ -9,17 +11,29 @@ import {
   Segmented,
   Select,
 } from "../../components/cap/index.js";
+import { api, qs } from "../../lib/api.js";
 import { catalog } from "../../lib/catalog.svelte.js";
+import { compact } from "../../lib/format.js";
+import { app } from "../../lib/state.svelte.js";
+import RuleImpact from "../../polish/protection/RuleImpact.svelte";
 import ListEditor from "../lists/ListEditor.svelte";
 import {
   ACTION_HELP,
   ACTION_LABELS,
   NO_VALUE_OPS,
   OP_LABELS,
+  ruleSentence,
   VERDICTS,
 } from "./rules.js";
 
-let { rule, editing, lists: initialLists, onsave, onclose } = $props();
+let {
+  rule,
+  editing,
+  ahead = [],
+  lists: initialLists,
+  onsave,
+  onclose,
+} = $props();
 
 let lists = $state(
   untrack(() => initialLists.filter((l) => !l.id.startsWith("blk_"))),
@@ -51,22 +65,81 @@ let nameError = $state("");
 let nameInput = $state(null);
 let condsEl = $state(null);
 
+const calm = () =>
+  !matchMedia("(prefers-reduced-motion: no-preference)").matches;
+
+const rise = () =>
+  calm()
+    ? { duration: 0 }
+    : {
+        duration: 220,
+        easing: cubicOut,
+        css: (t, u) =>
+          `opacity:${t};transform:translateY(${u * -6}px);filter:blur(${u * 3}px)`,
+      };
+
+const sink = () =>
+  calm()
+    ? { duration: 0 }
+    : {
+        duration: 140,
+        css: (t, u) =>
+          `opacity:${t};transform:scale(${1 - u * 0.02});filter:blur(${u * 4}px)`,
+      };
+
+const settle = (node, rects) =>
+  flip(node, rects, { duration: calm() ? 0 : 260, easing: cubicOut });
+
+const filled = (c) =>
+  NO_VALUE_OPS.includes(c.op) ||
+  c.field === "agent" ||
+  (`${c.value ?? ""}`.trim() !== "" &&
+    (c.field !== "header" || !!c.header?.trim()));
+
+const suggestion = $derived.by(() => {
+  if (!draft.conditions.every(filled)) return "";
+  const text = ruleSentence(draft, lists);
+  return text.length <= 80 ? text : "";
+});
+
 const STAGES = [
   ["request", "About the request"],
   ["result", "About the solve"],
 ];
 const typeOf = (c) => catalog.fields[c.field]?.type ?? "string";
 
+const DIMS = {
+  country: "country",
+  asn: "asn",
+  asn_org: "asn_org",
+  ip: "ip",
+  browser: "browser",
+  os: "os",
+  platform: "platform",
+  origin: "origin",
+  lang: "lang",
+  visitor: "fp",
+};
+let seen = $state({});
+api(
+  "GET",
+  `/keys/${app.key.siteKey}/analytics/top${qs({ range: "7d", dims: Object.values(DIMS).join(","), limit: 25 })}`,
+).then((top) => {
+  if (top && !top.error) seen = top;
+});
+
 const datalistFor = (c) =>
-  typeOf(c) === "flag"
-    ? "ruleFlagOptions"
-    : c.field === "agent"
-      ? "ruleAgentOptions"
-      : c.field === "verdict"
-        ? "ruleVerdictOptions"
-        : c.field === "agent_confidence"
-          ? "ruleConfOptions"
-          : undefined;
+  seen[DIMS[c.field]]?.length
+    ? `ruleSeen-${c.field}`
+    : typeOf(c) === "flag"
+      ? "ruleFlagOptions"
+      : c.field === "agent"
+        ? "ruleAgentOptions"
+        : c.field === "verdict"
+          ? "ruleVerdictOptions"
+          : c.field === "agent_confidence"
+            ? "ruleConfOptions"
+            : undefined;
 
 const placeholderFor = (c) =>
   c.op === "in" || c.op === "not_in"
@@ -97,7 +170,8 @@ function addCondition() {
 }
 
 async function save() {
-  if (!draft.name.trim()) {
+  const name = draft.name.trim() || suggestion;
+  if (!name) {
     nameError = "Give the rule a name so you can find it later.";
     nameInput?.focus();
     return;
@@ -106,13 +180,21 @@ async function save() {
   error = "";
   const res = await onsave({
     ...$state.snapshot(draft),
-    name: draft.name.trim(),
+    name,
     factor: Number(draft.factor) || 2,
   });
   busy = false;
   if (!res.success) error = res.error || "Couldn't save this rule";
 }
 </script>
+
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || listEditor || busy) return;
+    e.preventDefault();
+    save();
+  }}
+/>
 
 <Dialog title={editing ? "Edit rule" : "New rule"} size="md" {onclose}>
   <div class="flex flex-col gap-2">
@@ -130,16 +212,20 @@ async function save() {
       <span>of these match</span>
     </div>
 
-    <ol class="flex flex-col gap-1.5" bind:this={condsEl}>
+    <ol class="relative flex flex-col gap-1.5" bind:this={condsEl}>
       {#each draft.conditions as c, i (c)}
         {@const type = typeOf(c)}
-        <li class="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-start gap-1.5">
-          <span class="flex h-9 items-center justify-end text-sm text-muted-foreground">{i === 0 ? "where" : draft.match === "any" ? "or" : "and"}</span>
+        <li class="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-start gap-1.5" out:sink animate:settle>
+          <span class="flex h-9 items-center justify-end text-sm text-muted-foreground">
+            {#key i === 0 ? "where" : draft.match}
+              <span>{i === 0 ? "where" : draft.match === "any" ? "or" : "and"}</span>
+            {/key}
+          </span>
           <div class="flex min-w-0 flex-wrap items-center gap-1 rounded-lg bg-muted p-1 shadow-[inset_0_0_0_1px_var(--border)]">
             <Select
               id="condField{i}"
               size="sm"
-              class="w-44 max-w-full"
+              class="w-40 max-w-full"
               aria-label="Condition {i + 1} field"
               value={c.field}
               onchange={(e) => setField(c, e.currentTarget.value)}
@@ -158,7 +244,7 @@ async function save() {
             <Select
               id="condOp{i}"
               size="sm"
-              class="w-32 max-w-full"
+              class="w-28 max-w-full"
               aria-label="Condition {i + 1} comparison"
               bind:value={c.op}
               options={(catalog.ops[type] ?? []).map((o) => [o, OP_LABELS[o]])}
@@ -196,6 +282,7 @@ async function save() {
                     type="number"
                     step="any"
                     inputmode="decimal"
+                    list={datalistFor(c)}
                     bind:value={c.value}
                   />
                 </div>
@@ -254,14 +341,18 @@ async function save() {
         </span>
       {/if}
     </div>
-    <p class="text-sm text-pretty text-muted-foreground">{ACTION_HELP[draft.action]}</p>
+    {#key draft.action}
+      <p class="text-sm text-pretty text-muted-foreground">{ACTION_HELP[draft.action]}</p>
+    {/key}
   </div>
+
+  <RuleImpact rule={draft} {ahead} siteKey={app.key.siteKey} ready={draft.conditions.every(filled)} />
 
   <Field label="Name" for="ruleName" error={nameError}>
     <Input
       id="ruleName"
       maxlength={80}
-      placeholder="Block datacenter traffic"
+      placeholder={suggestion || "Block datacenter traffic"}
       bind:ref={nameInput}
       bind:value={draft.name}
       invalid={!!nameError}
@@ -274,6 +365,15 @@ async function save() {
     <p class="text-sm text-destructive" role="alert">{error}</p>
   {/if}
 
+  {#each Object.entries(DIMS) as [field, dim] (field)}
+    {#if seen[dim]?.length}
+      <datalist id="ruleSeen-{field}">
+        {#each seen[dim] as row (row.value)}
+          <option value={row.value}>{compact(row.n)} this week</option>
+        {/each}
+      </datalist>
+    {/if}
+  {/each}
   <datalist id="ruleFlagOptions">
     {#each catalog.signals.flatMap((g) => g.signals) as [id] (id)}
       <option value={id}></option>
@@ -299,7 +399,7 @@ async function save() {
 
   {#snippet footer()}
     <Button onclick={onclose}>Cancel</Button>
-    <Button variant="primary" disabled={busy} onclick={save}>{editing ? "Save rule" : "Add rule"}</Button>
+    <Button variant="primary" disabled={busy} aria-keyshortcuts="Meta+Enter Control+Enter" onclick={save}>{editing ? "Save rule" : "Add rule"}</Button>
   {/snippet}
 </Dialog>
 

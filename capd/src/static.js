@@ -61,7 +61,7 @@ const pagePolicy = (nonce) =>
     "object-src 'none'",
   ].join("; ");
 
-export const servePage = async (name, set) => {
+export const servePage = async (name, set, page) => {
   set.headers["content-type"] = "text/html; charset=utf-8";
   set.headers["cache-control"] = "no-cache";
   set.headers["x-content-type-options"] = "nosniff";
@@ -86,7 +86,7 @@ export const servePage = async (name, set) => {
     .replaceAll("<script", `<script nonce="${nonce}"`)
     .replace(
       "<head>",
-      `<head><script nonce="${nonce}">window.CAP_SCRIPT_NONCE=${JSON.stringify(nonce)}</script>`,
+      `<head><script nonce="${nonce}">window.CAP_SCRIPT_NONCE=${JSON.stringify(nonce)}${page ? `;window.CAP_PAGE=${JSON.stringify(page).replaceAll("<", "\\u003c")}` : ""}</script>${page?.preload ? `<link rel="preload" as="image" href="${page.preload}" fetchpriority="high">` : ""}`,
     );
 };
 
