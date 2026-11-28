@@ -231,6 +231,7 @@ export function detectAutomation(S, opts = {}) {
     "ua_hints_blank",
     !blankHints,
     blankHints ? "user agent overridden without client hints" : "ok",
+    false,
   );
 
   const st = isPlainObject(S.stealth) ? S.stealth : {};

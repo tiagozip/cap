@@ -897,11 +897,13 @@ describe("detectAutomation headless research checks", () => {
     expect(r.riskFlags).toEqual([]);
   });
 
-  test("a user agent override without hints blocks on desktop", () => {
+  test("blank client hints on desktop are a risk flag, not a block", () => {
     const S = human();
     S.uaData.brands = [];
     S.hev = { pv: "", ar: "", fv: "", bi: "", fl: "" };
-    expect(detectAutomation(S).blockedBy).toContain("ua_hints_blank");
+    const r = detectAutomation(S);
+    expect(r.pass).toBe(true);
+    expect(r.riskFlags).toContain("ua_hints_blank");
   });
 
   test("a --user-agent flag that only blanks high-entropy hints passes", () => {

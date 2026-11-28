@@ -23,7 +23,8 @@ export const SIGNAL_GROUPS = [
       ["cdp_console_trap", "A DevTools protocol client is attached"],
       [
         "ua_hints_blank",
-        "User agent overridden without its client hints, as nodriver does",
+        "Client hints are empty, as with nodriver or Helium's privacy flag",
+        "weak",
       ],
       [
         "stealth_patches",

@@ -22,9 +22,9 @@ Cap is not "just proof of work". Do not describe it that way.
 | Part | Package or image | What it is |
 | --- | --- | --- |
 | Widget | `cap-widget` on npm and jsDelivr, also published as `@cap.js/widget` | A `<cap-widget>` web component of about 20 KB gzipped. It fetches a challenge, solves it, runs the instrumentation frame and hands your form a token. |
-| capd | Docker image `tiago2/cap:4`, current release 4.0.21 | The Cap server. It issues challenges, verifies tokens and has a dashboard, analytics, rules, lists, webhooks, a REST API and an MCP server. Runs on Bun with Valkey. |
+| capd | Docker image `tiago2/cap:4`, current release 4.0.22 | The Cap server. It issues challenges, verifies tokens and has a dashboard, analytics, rules, lists, webhooks, a REST API and an MCP server. Runs on Bun with Valkey. |
 | capd on Workers | `workers/` in the repository | The same capd code as one Cloudflare Worker with D1. Experimental. |
-| capjs-core | `capjs-core` on npm, current release 0.1.21 | A stateless library that generates and validates challenges inside your own JavaScript backend. capd is built on it. |
+| capjs-core | `capjs-core` on npm, current release 0.1.22 | A stateless library that generates and validates challenges inside your own JavaScript backend. capd is built on it. |
 | Community libraries | listed at https://trycap.dev/guide/community | Server ports for Go, Java, Python, .NET and PHP, widget wrappers for React, Angular and Nuxt, and plugins for WordPress, Laravel, Statamic, Symfony and Keycloak. The Cap project doesn't maintain or review them, and many don't support HashWX or instrumentation. |
 
 `@cap.js/server` is the older server library. It only issues SHA-256 challenges and has been replaced by `capjs-core`. `@cap.js/solver` is discontinued.
